@@ -318,3 +318,36 @@ exactly; brief prints the caveat. Mutations (earliest instead of previous
 kickoff; caveat dropped): both red.
 
 Suite: 75 → 78, all green.
+
+---
+
+## 2026-09-11 — G4 version control, G5 hygiene (logged late: first recorded only in commit messages)
+
+**G4 — `git init`.** Baseline commit `8f705cb` (67 green). Tracked: code,
+tests, `fpl_run.bat`, docs, and `projection_log.csv` — the point-in-time log is
+the one data file that cannot be regenerated, and its history now shows what
+was forecast and when. Ignored: `fpl_export_gw*.json` and `reports/`
+(regenerated every run), `__pycache__/`. **`fpl.sqlite` is ignored and has no
+backup** — it is binary, rewritten nightly, and holds the only copy of
+`price_history` (5 daily samples, 6–10 Sep, no gaps), which cannot be
+backfilled from the API. Back it up separately. `fpl_edge_xg_fixes.patch`
+removed in `03b91a9`; applied and mutation-verified 2026-09-07, content kept in
+the baseline.
+
+**G5 — hygiene.**
+- `sec_eo` divided by `n_rivals` unguarded; a one-entry league crashed with
+  ZeroDivisionError. Now prints "no rivals to compare against" and returns.
+  Test `test_one_entry_league_does_not_crash_ownership`; mutation (guard
+  disabled): red.
+- `sec_backtest` built a ticker it overwrote inside its loop; `sec_wildcard`
+  assigned a `quota` it never read. Both removed — dead code, no behaviour
+  change (the ticker removal landed in the same commit as R2, whose effect on
+  backtest output is recorded in the G1 entry).
+- `CLAUDE_fable chat.md`: GW4 deadline 15:30 → **14:30 CEST** (per
+  `next_deadline()`: 12:30 UTC); line/test counts updated to 1816 / 1031 / 75;
+  `fpl_xg.py` marked gone (not in the folder); known-bugs section marked fixed;
+  backlog section pointed at `BACKLOG.md`. Six edits, each matched exactly once.
+
+**Not yet logged, by design:** G3, the export-grain fix and A3 are built and
+verified but held until after the 11 Sep 23:55 run; their entry is written and
+lands with them.
