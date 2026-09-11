@@ -351,3 +351,58 @@ the baseline.
 **Not yet logged, by design:** G3, the export-grain fix and A3 are built and
 verified but held until after the 11 Sep 23:55 run; their entry is written and
 lands with them.
+
+---
+
+## 2026-09-11 22:04 CEST — P1 evaluation FROZEN (supplements the G2 entry; do not edit)
+
+Written before GW4 kicks off. Player-level outcome, inclusive boundary and
+cost reporting are Boris's changes; the predictor-timing, population and
+exclusion rules are what the player-level outcome needs to be unambiguous. Any
+amendment goes in a new, timestamped entry committed before **Sat 12 Sep 16:00
+CEST**. After kickoff nothing here changes.
+
+**Predictor value — one per player, fixed before GW4.** Minutes share over
+GW1–3 = `mins_last4` in the GW3 export ÷ (90 × fixtures the player's team played
+in GW1–3). All 20 teams played exactly 3, so the denominator is 270 for
+everyone. The GW5-time value is **not** used: its window (GW1–4) contains GW4's
+outcome.
+
+**Population.** The `xg` rows for event 4 in `projection_log.csv` as they stand
+at the GW4 deadline (Sat 12 Sep 14:30 CEST), one row per `player_id`. A player
+is dropped if his team did not play in both GW4 and GW5 (blank or postponement)
+— he did not have two chances to blank. Currently 256; final after the last
+pre-deadline recording.
+
+**Flag.** Minutes share **≤ 0.667, inclusive** — with a 270-minute
+denominator, **≤ 180 minutes**. 180 is the most common total after 270 (started
+two of three, or 60 minutes in all three); the inclusive boundary puts 9
+players in the flagged group. Currently 84 flagged, 172 not.
+
+**Primary outcome.** Blanked in at least one of GW4 or GW5: 0 minutes in a
+gameweek his team played. One row per player.
+
+**Pass criterion.** Blank rate (flagged) − blank rate (unflagged), 95% interval
+from `_gap_ci()`. Passes only if the lower bound is above zero. Anything else
+is *unproven*, not *disproven*.
+
+**Reported alongside — not part of the pass criterion:**
+1. The full 2×2 table (flagged / unflagged × blanked / not), so every rate can
+   be recovered from it.
+2. The cost of excluding on the flag (BACKLOG Part 3 D1). Of the flagged players:
+   - the share who did **not** blank — featured in both GW4 and GW5;
+   - the share who played **every available minute** — 90 in every fixture of
+     GW4 and GW5.
+3. Of all players who did not blank, the share who were flagged — the good
+   players the screen throws away, as a fraction of all good players.
+4. Secondary, labelled **optimistic**: the pooled player-gameweek version (two
+   rows per player). Each player counts twice and blanking is correlated
+   within a player, so its interval is too narrow.
+
+**Known residual optimism.** Players on the same team share rotation shocks
+(a manager rotating after a European week), so even one row per player is not
+fully independent. Noted, not corrected.
+
+**Power at the current group sizes (84 / 172).** Blank rates 35% vs 7% → gap
++0.28 ± 0.11, clears. 25% vs 10% → +0.15 ± 0.10, clears. 20% vs 12% → +0.08 ±
+0.10, **spans zero**. The test can detect a large separation, not a modest one.
