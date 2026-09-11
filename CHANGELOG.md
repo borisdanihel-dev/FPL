@@ -288,3 +288,33 @@ zero". Mutation (interval ignored): red. Printed claims in `sec_wildcard` and
 findings in `CLAUDE_opusChat.md` corrected, with the old claim kept visible.
 
 Suite: 67 → 75 tests, all green.
+
+---
+
+## 2026-09-11 — A2 measured (not applied), A1 built
+
+**A2 — starts floor on `--section wildcard`: counted, not applied** (per Part 3,
+the floor waits for P1). Window = last 3 GWs, status `a`:
+
+| filter | GK | DEF | MID | FWD | all |
+|---|---|---|---|---|---|
+| current `mins_last4 >= 45` | 21 | 104 | 122 | 26 | 273 |
+| strict: started all 3 | 18 | 63 | 64 | 14 | 159 |
+| loose: started 2+ of 3 | 20 | 81 | 92 | 19 | 212 |
+
+No position thins below a squad's needs (2/5/5/3) under either. All 15 of the
+current squad pass strict. **Khalaili — the best arbitrage candidate found —
+fails strict** (2/3 starts, 199 min) and survives only the loose floor. That is
+the concrete cost of "started every available gameweek", and it should be
+weighed when P1 reports.
+
+**A1 — rest days in `--brief`.** `days_since_last_PL_match()` gives days from a
+team's previous PL kickoff to its first kickoff in the target GW; the XI block
+shows it as `rest Nd` with a printed caveat that it is a calendar fact, its
+effect on points is untested, and cup/European minutes are invisible to the
+API. No marker for short rest — it must not read as a reason to bench someone.
+GW4 XI: 5–9 days everywhere. Tests: 22-day and 3-day turnarounds computed
+exactly; brief prints the caveat. Mutations (earliest instead of previous
+kickoff; caveat dropped): both red.
+
+Suite: 75 → 78, all green.

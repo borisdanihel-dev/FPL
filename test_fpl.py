@@ -1020,6 +1020,28 @@ class Grading(unittest.TestCase):
         self.assertNotIn(blanked["web_name"], pop, "a blank was graded as 0")
 
 
+class RestDays(unittest.TestCase):
+    """BACKLOG A1: a calendar fact, labelled as one."""
+
+    def test_rest_counts_from_the_previous_pl_kickoff(self):
+        d = make_export()   # GW3 kicked off 2026-08-23, GW4 2026-09-14
+        self.assertEqual(
+            E.days_since_last_pl_match(d, TEAMS[0], d["gameweek"] + 1), 22)
+
+    def test_short_turnaround_is_measured(self):
+        d = make_export()
+        nxt = d["gameweek"] + 1
+        f = next(f for f in d["fixtures_next6"]
+                 if f["event"] == nxt and TEAMS[0] in (f["home"], f["away"]))
+        f["kickoff_time"] = "2026-08-26T19:45:00Z"   # Tuesday after Saturday
+        self.assertEqual(E.days_since_last_pl_match(d, TEAMS[0], nxt), 3)
+
+    def test_brief_states_the_limits_of_rest_days(self):
+        out = run("brief", make_export())
+        self.assertIn("rest", out)
+        self.assertIn("not a fatigue measure", out)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):

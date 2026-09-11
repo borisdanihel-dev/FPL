@@ -382,6 +382,30 @@ def sec_bench(d):
     print()
 
 
+def days_since_last_pl_match(d, team, event):
+    """Days from the team's previous Premier League kickoff to its first
+    kickoff in `event`. A calendar fact, not a signal: whether short rest costs
+    points has never been tested, and cup and European matches are invisible to
+    the FPL API, so this is not a fatigue measure. None when either is unknown.
+    """
+    from datetime import datetime
+
+    def when(f):
+        k = f.get("kickoff_time")
+        return datetime.fromisoformat(k.replace("Z", "+00:00")) if k else None
+
+    fx = (d.get("fixtures_played") or []) + (d.get("fixtures_next6") or [])
+    ours = [(f["event"], when(f)) for f in fx if team in (f["home"], f["away"])]
+    upcoming = [t for ev, t in ours if ev == event and t]
+    if not upcoming:
+        return None
+    start = min(upcoming)
+    before = [t for _, t in ours if t and t < start]
+    if not before:
+        return None
+    return (start - max(before)).days
+
+
 def sec_brief(d, horizon):
     me = my_name(d)
     gw = d["gameweek"]
@@ -436,8 +460,13 @@ def sec_brief(d, horizon):
         _, opp, fdr = nextfx(r["team"])
         p = by_name.get(r["web_name"], {})
         mark = "  <-- soft spot" if fdr >= 4 else ""
+        rest = days_since_last_pl_match(d, r["team"], nxt)
+        rest = f"{rest:>2}d" if rest is not None else "  -"
         print(f"    {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{opp:>10} "
-              f"fdr{fdr}  L4:{p.get('pts_last4',0):>3}{mark}")
+              f"fdr{fdr}  L4:{p.get('pts_last4',0):>3}  rest {rest}{mark}")
+    print("    rest = days since the team's previous PL match. A calendar fact,")
+    print("    not a signal: its effect on points is untested, and cup and")
+    print("    European minutes are invisible to the FPL API - not a fatigue measure.")
 
     print(f"\n  BENCH")
     for r in [x for x in mine if x["slot"] > 11]:
