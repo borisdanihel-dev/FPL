@@ -165,6 +165,9 @@ def sec_eo(d, top=12):
     gw = d["gameweek"]
     entries = sorted({r["entry_name"] for r in d["squads"]})
     n_rivals = len(entries) - 1
+    if n_rivals < 1:
+        print("\n  Only one entry in the league - no rivals to compare against.\n")
+        return
     chip_at = {c["entry_name"]: c["name"] for c in d["chips_used"] if c["event"] == gw}
 
     owns = defaultdict(dict)      # player -> entry -> multiplier
@@ -266,6 +269,31 @@ def gw_index(d):
     for k in idx:
         idx[k].sort(key=lambda r: r["event"])
     return idx
+
+
+def fixtures_by_team_event(d):
+    """(team, event) -> FDRs of that team's finished fixtures that gameweek.
+
+    Grading needs it to tell a benched player from a blank. No row for a player
+    whose team played means no minutes and 0 points - that forecast must be
+    graded, or a model is never penalised for backing someone who did not
+    feature. No fixture at all is a blank or a postponement: nothing to grade.
+    """
+    out = defaultdict(list)
+    for f in d.get("fixtures_played") or []:
+        out[(f["home"], f["event"])].append(f["h_fdr"])
+        out[(f["away"], f["event"])].append(f["a_fdr"])
+    return out
+
+
+def _player_key(d):
+    """Key for joining forecasts to results. web_name is not unique - 17 names
+    are shared this season - so use the element id when the export carries it.
+    Older exports have names only and fall back to them."""
+    rows = d.get("player_gw_recent") or []
+    if rows and "player_id" in rows[0]:
+        return lambda r: int(r["player_id"] if "player_id" in r else r["id"])
+    return lambda r: r["web_name"]
 
 
 def sec_defcon(d, min_mins=180, top=15):
@@ -633,7 +661,6 @@ def sec_wildcard(d, horizon):
         print("  Could not assemble a valid squad inside the budget.\n")
         return
 
-    quota = {1: 2, 2: 5, 3: 5, 4: 3}
     spend = sum(p["price"] for p in squad)
     print("  " + "-" * 74)
     print(f"  ONE VALID SQUAD  (£{spend:.1f}m of £{budget:.1f}m, "
@@ -729,11 +756,24 @@ def _best_xi(squad):
 
 
 def _spearman(a, b):
+    """Rank correlation, tied values sharing their average rank.
+
+    Ties are the norm here - most players score 1 or 2 in a week. Ranking them
+    in input order made the answer depend on row order, and the export's row
+    order (points DESC) is correlated with any form-based prediction, which
+    pushed those correlations negative by construction.
+    """
     def rank(v):
         order = sorted(range(len(v)), key=lambda i: v[i])
-        r = [0] * len(v)
-        for pos, i in enumerate(order):
-            r[i] = pos
+        r = [0.0] * len(v)
+        i = 0
+        while i < len(order):
+            j = i
+            while j + 1 < len(order) and v[order[j + 1]] == v[order[i]]:
+                j += 1
+            for k in range(i, j + 1):
+                r[order[k]] = (i + j) / 2.0
+            i = j + 1
         return r
     n = len(a)
     if n < 3:
@@ -756,6 +796,41 @@ def _rho_verdict(rho):
     return "inverted - actively misleading"
 
 
+def backtest_population(d, train, target):
+    """Everyone with 90+ training minutes whose team played the target week.
+
+    A player with no target-week row was benched and scored 0; he is graded,
+    not dropped - dropping him removes exactly the cases a minutes signal
+    exists to catch. Grouped by element id where the export has it: two players
+    sharing a web_name are two players.
+    """
+    key = _player_key(d)
+    fx = fixtures_by_team_event(d)
+    by = defaultdict(list)
+    for r in d.get("player_gw_recent", []):
+        by[key(r)].append(r)
+    built = []
+    for rows in by.values():
+        tr = [r for r in rows if r["event"] in train]
+        te = [r for r in rows if r["event"] == target]
+        if not tr:
+            continue
+        team = tr[0]["team"]
+        if not te and (team, target) not in fx:
+            continue                      # blank or postponed: nothing to grade
+        mins = sum(r["mins"] for r in tr)
+        if mins < 90:
+            continue
+        built.append({
+            "web_name": tr[0]["web_name"], "team": team, "pos": tr[0]["pos"],
+            "pts_last4": sum(r["pts"] for r in tr), "mins_last4": mins,
+            "actual": sum(r["pts"] for r in te),          # 0 when benched
+            "target_fdr": te[0].get("fdr") if te else min(fx[(team, target)]),
+            "benched": not te,
+        })
+    return built
+
+
 def sec_backtest(d, horizon):
     """Score the projection model against a gameweek it did not see."""
     idx = gw_index(d)
@@ -773,23 +848,7 @@ def sec_backtest(d, horizon):
 
     target = events[-1]
     train = events[:-1]
-    tick, _ = build_ticker(d, horizon)
-
-    built = []
-    for name, rows in idx.items():
-        tr = [r for r in rows if r["event"] in train]
-        te = [r for r in rows if r["event"] == target]
-        if not tr or not te:
-            continue
-        mins = sum(r["mins"] for r in tr)
-        if mins < 90:
-            continue
-        built.append({
-            "web_name": name, "team": tr[0]["team"], "pos": tr[0]["pos"],
-            "pts_last4": sum(r["pts"] for r in tr), "mins_last4": mins,
-            "actual": sum(r["pts"] for r in te),
-            "target_fdr": te[0].get("fdr"),
-        })
+    built = backtest_population(d, train, target)
 
     priors = positional_priors(built)
     personal = personal_priors(d)
@@ -811,7 +870,8 @@ def sec_backtest(d, horizon):
     rho = _spearman([pr for pr, _, _ in scored], [ac for _, ac, _ in scored])
 
     print(f"\n  trained on GW{train[0]}-{train[-1]}, tested on GW{target}, "
-          f"{n} players with minutes in both")
+          f"{n} players ({sum(p['benched'] for p in built)} benched that week, "
+          f"graded as 0)")
     print(f"  priors: {len(personal)} players anchored to their own last season, "
           f"rest to positional median")
     print("  (fixture adjustment ON - using each player's actual FDR that week)"
@@ -1527,6 +1587,39 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
     return len(rows)
 
 
+def grade_forecasts(d, log):
+    """Pair every logged forecast with what the player actually scored.
+
+    Returns ({(source, event): [(predicted, actual), ...]},
+             {(source, event): count still pending}).
+    A player whose team played but who has no row got no minutes and is graded
+    against 0. Only a blank or postponed fixture goes ungraded.
+    """
+    key = _player_key(d)
+    actual = defaultdict(dict)
+    for r in d.get("player_gw_recent", []):
+        k = key(r)
+        actual[r["event"]][k] = actual[r["event"]].get(k, 0) + r["pts"]
+    fx = fixtures_by_team_event(d)
+    team_of = {key(p): p["team"] for p in d.get("all_players", [])}
+
+    graded = defaultdict(list)
+    pending = defaultdict(int)
+    for r in log:
+        ev = int(r["event"])
+        if ev not in actual:
+            pending[(r["source"], ev)] += 1
+            continue
+        k = key(r)
+        a = actual[ev].get(k)
+        if a is None:
+            if (team_of.get(k), ev) not in fx:
+                continue                  # blank or postponed: nothing to grade
+            a = 0                         # team played, he did not: scored 0
+        graded[(r["source"], ev)].append((float(r["predicted"]), a))
+    return graded, pending
+
+
 def sec_calibration(d, horizon, path=None):
     """Rolling accuracy across every gameweek we forecast in advance."""
     print("=" * 78)
@@ -1538,22 +1631,7 @@ def sec_calibration(d, horizon, path=None):
         print("    python fpl_edge.py --record\n")
         return
 
-    actual = defaultdict(dict)
-    for r in d.get("player_gw_recent", []):
-        actual[r["event"]][r["web_name"]] = \
-            actual[r["event"]].get(r["web_name"], 0) + r["pts"]
-
-    graded = defaultdict(list)
-    pending = defaultdict(int)
-    for r in log:
-        ev = int(r["event"])
-        if ev not in actual:
-            pending[(r["source"], ev)] += 1
-            continue
-        a = actual[ev].get(r["web_name"])
-        if a is None:
-            continue
-        graded[(r["source"], ev)].append((float(r["predicted"]), a))
+    graded, pending = grade_forecasts(d, log)
 
     if not graded:
         weeks = sorted({e for _, e in pending})

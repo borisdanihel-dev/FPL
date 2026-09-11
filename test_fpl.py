@@ -916,5 +916,109 @@ class SyncSQL(unittest.TestCase):
                                      f"values but has {cols} columns")
 
 
+class RankCorrelation(unittest.TestCase):
+    """The ruler every verdict in this project is read from."""
+
+    def test_rho_does_not_depend_on_row_order(self):
+        """Ties broken by input order let the export's points-DESC row order
+        push form-based rho negative. Shuffling rows must not move the answer."""
+        import random
+        rng = random.Random(7)
+        pred = [rng.choice([0.5, 1.0, 1.0, 2.0, 3.5]) for _ in range(120)]
+        act = [rng.choice([0, 1, 1, 2, 2, 2, 3, 6, 8]) for _ in range(120)]
+        base = E._spearman(pred, act)
+        idx = list(range(120))
+        for _ in range(25):
+            rng.shuffle(idx)
+            self.assertAlmostEqual(
+                E._spearman([pred[i] for i in idx], [act[i] for i in idx]),
+                base, places=12, msg="rho changed when only the row order did")
+
+    def test_tied_values_share_their_average_rank(self):
+        # ranks of [1, 2, 2, 3] are [0, 1.5, 1.5, 3]: hand-computed rho 3/sqrt(10)
+        self.assertAlmostEqual(E._spearman([1, 2, 2, 3], [1, 2, 3, 4]),
+                               3 / 10 ** 0.5, places=12)
+
+
+class Grading(unittest.TestCase):
+    """Who gets graded. A forecast that is never scored can never be wrong."""
+
+    @staticmethod
+    def _log(d, players, predicted=4.0):
+        return [{"made_at": "x", "source": "xg", "event": str(d["gameweek"]),
+                 "player_id": str(p["id"]), "web_name": p["web_name"],
+                 "predicted": str(predicted)} for p in players]
+
+    @staticmethod
+    def _drop_rows(d, names, event):
+        d["player_gw_recent"] = [r for r in d["player_gw_recent"]
+                                 if not (r["web_name"] in names
+                                         and r["event"] == event)]
+
+    @staticmethod
+    def _blank(d, team, event):
+        d["fixtures_played"] = [f for f in d["fixtures_played"]
+                                if not (f["event"] == event
+                                        and team in (f["home"], f["away"]))]
+
+    def test_benched_player_is_graded_as_zero(self):
+        d = make_export()
+        gw, p = d["gameweek"], d["all_players"][5]
+        self._drop_rows(d, {p["web_name"]}, gw)
+        graded, _ = E.grade_forecasts(d, self._log(d, [p], 4.0))
+        self.assertEqual(graded[("xg", gw)], [(4.0, 0)],
+                         "a benched player's forecast was skipped, not graded")
+
+    def test_true_blank_is_not_graded(self):
+        d = make_export()
+        gw, p = d["gameweek"], d["all_players"][5]
+        self._drop_rows(d, {p["web_name"]}, gw)
+        self._blank(d, p["team"], gw)
+        graded, _ = E.grade_forecasts(d, self._log(d, [p]))
+        self.assertNotIn(("xg", gw), graded,
+                         "a team with no fixture was graded as if benched")
+
+    def test_players_sharing_a_web_name_are_graded_separately(self):
+        """17 web_names are shared this season. Keyed by name, both players'
+        points were summed and each forecast graded against the total."""
+        d = make_export()
+        gw = d["gameweek"]
+        ids = {p["web_name"]: p["id"] for p in d["all_players"]}
+        for r in d["player_gw_recent"]:
+            r["player_id"] = ids[r["web_name"]]
+        a, b = d["all_players"][3], d["all_players"][4]
+        for r in d["player_gw_recent"]:
+            if r["web_name"] == b["web_name"]:
+                r["web_name"] = a["web_name"]
+        b["web_name"] = a["web_name"]
+        pts = sorted(sum(r["pts"] for r in d["player_gw_recent"]
+                         if r["player_id"] == pid and r["event"] == gw)
+                     for pid in (a["id"], b["id"]))
+        self.assertNotEqual(pts[0], pts[1], "fixture cannot tell them apart")
+        graded, _ = E.grade_forecasts(d, self._log(d, [a, b]))
+        self.assertEqual(sorted(x for _, x in graded[("xg", gw)]), pts,
+                         "two players sharing a name were graded on their sum")
+
+    def test_backtest_keeps_benched_players_and_drops_blanks(self):
+        d = make_export()
+        gw = d["gameweek"]
+        benched, blanked = d["all_players"][5], d["all_players"][8]
+        self.assertNotEqual(benched["team"], blanked["team"])
+        self._drop_rows(d, {benched["web_name"], blanked["web_name"]}, gw)
+        self._blank(d, blanked["team"], gw)
+        pop = {p["web_name"]: p
+               for p in E.backtest_population(d, list(range(1, gw)), gw)}
+        self.assertIn(benched["web_name"], pop, "benched player dropped")
+        self.assertEqual(pop[benched["web_name"]]["actual"], 0)
+        self.assertNotIn(blanked["web_name"], pop, "a blank was graded as 0")
+
+
+class Hygiene(unittest.TestCase):
+
+    def test_one_entry_league_does_not_crash_ownership(self):
+        out = run("eo", make_export(n_entries=1))
+        self.assertIn("no rivals", out)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
