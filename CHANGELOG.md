@@ -212,3 +212,19 @@ under 4 days, 81 are 4–5.
 
 Full write-up and the resulting reprioritisation: `BACKLOG.md` Part 2. Nothing
 changed in code; suite still 67 green.
+
+---
+
+## 2026-09-11 21:15 CEST — P1 predictor definition FROZEN (BACKLOG Part 3, G2)
+
+Frozen before GW4 kicks off (Sat 12 Sep 16:00 CEST). **Do not edit this entry.**
+The git commit that adds it is the timestamp. GW3 was already inspected for two
+candidate predictors and is exploratory; GW4 and GW5 are clean tests only
+because the definition below was fixed before they were played.
+
+> Minutes share over the last `min(4, gws_played)` gameweeks.
+> Population: the recorded `xg` forecast set.
+> Benched but team played = 0. True blank gameweek = excluded.
+
+Use, per BACKLOG Part 3 D1: floor protection (exclude players likely to blank),
+**not** ranking the players who start.
