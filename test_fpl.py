@@ -27,6 +27,13 @@ MY_ID = 999
 UNICODE_NAMES = ["Muharemović", "Groß", "João Pedro", "Ødegaard", "Horníček"]
 
 
+def _kickoff(base, days, hhmm):
+    """ISO kickoff `days` after `base` - valid for any gameweek, so tests can
+    simulate GW18 or GW38 without inventing the 33rd of September."""
+    from datetime import date, timedelta
+    return f"{date.fromisoformat(base) + timedelta(days=days)}T{hhmm}:00Z"
+
+
 def make_export(gw=3, n_entries=4, with_gw_rows=True, with_all_players=True,
                 blank_team=None, horizon_gws=6, double_team=None):
     """A synthetic export with known, checkable properties."""
@@ -86,12 +93,12 @@ def make_export(gw=3, n_entries=4, with_gw_rows=True, with_all_players=True,
         for a, b in zip(pool[0::2], pool[1::2]):
             fixtures.append({"event": ev, "home": a, "away": b,
                              "h_fdr": 2 + (ev % 3), "a_fdr": 2 + ((ev + 1) % 3),
-                             "kickoff_time": f"2026-09-{10+ev:02d}T14:00:00Z"})
+                             "kickoff_time": _kickoff("2026-09-10", ev, "14:00")})
         if double_team and ev == gw + 1:
             opp = next(t for t in TEAMS if t != double_team)
             fixtures.append({"event": ev, "home": double_team, "away": opp,
                              "h_fdr": 2, "a_fdr": 2,
-                             "kickoff_time": f"2026-09-{10+ev:02d}T18:00:00Z"})
+                             "kickoff_time": _kickoff("2026-09-10", ev, "18:00")})
 
     played = []
     for ev in range(1, gw + 1):
@@ -99,7 +106,7 @@ def make_export(gw=3, n_entries=4, with_gw_rows=True, with_all_players=True,
             played.append({"event": ev, "home": a, "away": b,
                            "h_goals": (ev + len(a)) % 4, "a_goals": ev % 3,
                            "h_fdr": 2 + (ev % 3), "a_fdr": 2 + ((ev + 1) % 3),
-                           "kickoff_time": f"2026-08-{20+ev:02d}T14:00:00Z"})
+                           "kickoff_time": _kickoff("2026-08-20", ev, "14:00")})
 
     out = {
         "schema": 2, "generated": "2026-09-07T00:00:00+00:00",
@@ -1163,6 +1170,91 @@ class P1Evaluation(unittest.TestCase):
                         {"event": ev, "player_id": pid, "mins": 90, "pts": 2})
         self.assertTrue(P1.evaluate(pre, post, log)["verdict"]
                         .startswith("FAIL - inverted"))
+
+
+class OwnModelAtGW18(unittest.TestCase):
+    """BACKLOG G3. The first blanks and doubles land around GW18; by then the
+    log rows are frozen, so the own branch must already handle them."""
+
+    @staticmethod
+    def _record(source, **kw):
+        from datetime import datetime, timedelta, timezone
+        tmp = tempfile.mkdtemp()
+        try:
+            path = os.path.join(tmp, "log.csv")
+            d = make_export(gw=17, **kw)
+            when = datetime.now(timezone.utc) + timedelta(days=3)
+            for f in d["fixtures_next6"]:
+                if f["event"] == d["gameweek"] + 1:
+                    f["kickoff_time"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
+            with redirect_stdout(io.StringIO()):
+                E.record_projections(d, 6, source, None, path)
+            return d, {r["web_name"]: float(r["predicted"])
+                       for r in E.read_log(path)}
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_own_model_skips_a_blank(self):
+        d, logged = self._record("own", blank_team="HUL")
+        hull = {p["web_name"] for p in d["all_players"] if p["team"] == "HUL"}
+        self.assertTrue(logged, "nothing logged at all")
+        self.assertFalse(hull & set(logged),
+                         "own model forecast a team with no fixture")
+
+    def test_own_model_sums_a_double(self):
+        _, one = self._record("own")
+        _, two = self._record("own", double_team=TEAMS[0])
+        on_team = {p["web_name"] for p in make_export(gw=17)["all_players"]
+                   if p["team"] == TEAMS[0]}
+        names = sorted(on_team & set(one) & set(two))
+        self.assertTrue(names, "no logged player on the doubled team")
+        for nm in names:
+            self.assertGreater(two[nm], one[nm] * 1.5,
+                               f"{nm}: own model did not sum both fixtures")
+
+
+class ExportGrain(unittest.TestCase):
+    """player_gw holds one GAMEWEEK total per player. The export must too."""
+
+    def test_double_gameweek_exports_one_row_per_player(self):
+        """The fixtures join fanned a double out to two rows, each carrying the
+        whole gameweek's points: 12 real points graded as 24."""
+        import sqlite3
+        ns = {}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        db.executemany("INSERT INTO teams (id,name,short_name,strength) "
+                       "VALUES (?,?,?,3)", [(1, "A", "AAA"), (2, "B", "BBB"),
+                                            (3, "C", "CCC")])
+        db.execute("INSERT INTO players (id,web_name,team_id,position,now_cost)"
+                   " VALUES (10,'Doubler',1,3,60)")
+        db.executemany("INSERT INTO fixtures (id,event,team_h,team_a,"
+                       "team_h_difficulty,team_a_difficulty,finished) "
+                       "VALUES (?,?,?,?,2,4,1)",
+                       [(1, 1, 1, 2), (2, 1, 3, 1), (3, 2, 1, 3)])
+        db.executemany("INSERT INTO player_gw (player_id,event,minutes,"
+                       "total_points) VALUES (?,?,?,?)",
+                       [(10, 1, 180, 12), (10, 2, 90, 5)])
+        tmp = tempfile.mkdtemp()
+        cwd = os.getcwd()
+        try:
+            os.chdir(tmp)
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, 2)
+            rows = E.load("fpl_export_gw2.json")["player_gw_recent"]
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmp)
+        gw1 = [r for r in rows if r["event"] == 1]
+        self.assertEqual(len(gw1), 1, "a double gameweek exported twice")
+        self.assertEqual(gw1[0]["pts"], 12)
+        self.assertIsNone(gw1[0]["fdr"],
+                          "a gameweek total was attributed to one of two matches")
+        gw2 = next(r for r in rows if r["event"] == 2)
+        self.assertEqual((gw2["fdr"], gw2["player_id"]), (2, 10))
 
 
 class Hygiene(unittest.TestCase):

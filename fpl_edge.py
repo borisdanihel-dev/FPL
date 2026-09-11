@@ -1596,8 +1596,11 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
             if p["status"] != "a" or p["mins_last4"] < 45:
                 continue
             fx = [f for f in tick.get(p["team"], []) if f[0] == target]
-            t = {p["team"]: fx} if fx else {}
-            proj, _, _ = project(p, t, horizon, d["gameweek"], priors, personal)
+            if not fx:
+                continue                  # blank gameweek: no fixture, no forecast
+            # double gameweek: two matches, so two forecasts - as the xg branch
+            proj = sum(project(p, {p["team"]: [f]}, horizon, d["gameweek"],
+                               priors, personal)[0] for f in fx)
             if proj > 0:
                 rows.append((p["id"], p["web_name"], round(proj, 3)))
 

@@ -457,3 +457,45 @@ missing fixture read as a blank, no minutes read as zero, an exclusive boundary,
 predictor read from the post export, id-less export accepted, cost counting
 only full-minute players, thin-cell warning suppressed, caveat dropped, inverted
 result reported as unproven — each red. Suite 78 → 88.
+
+---
+
+## 2026-09-12 — after the last GW4 recording: G3, export grain, A3
+
+Held back until the 11 Sep 23:55 run had recorded GW4, so nothing on the
+recording or sync path changed before it. Built and verified in a sandbox
+beforehand; the files applied are byte-identical to the verified copies.
+
+**G3 — `own` branch skips blanks and sums doubles**, matching `xg`. Tests at a
+simulated GW18 (the fixture's date helper now builds real dates for any
+gameweek — at GW18 it used to emit the 33rd of September). Mutation (old code
+restored): both tests red. Single-fixture output unchanged: GW4 regenerated
+with the patched code, 527/527 rows identical to what the 23:55 run recorded,
+so the frozen GW4 forecasts are untouched.
+
+The run that this waited for: 11 Sep 23:55:11–23:55:21, gate open (88 tests),
+**272 `own` and 255 `xg` forecasts, 14h34m before the deadline** — the last
+automated recording before it, since Saturday's 23:55 run falls after the 14:30
+deadline and the guard will refuse. Frozen P1 population: 255 players, 84
+flagged, 171 unflagged, 0 undefined.
+
+**Export grain — one `player_gw_recent` row per player per gameweek, carrying
+`player_id`.** `player_gw` holds a gameweek *total*; the fixtures join fanned a
+double out into two copies of it (12 points graded as 24), and names are not
+unique (17 shared). Now `GROUP BY g.player_id, g.event`, plus `n_fixtures`;
+per-match columns are NULL when there is more than one match, because a
+gameweek total cannot be attributed to one of two fixtures. Test: synthetic
+double → one row, 12 points, `fdr` NULL. Mutation (GROUP BY removed): red.
+Checked against a copy of the real `fpl.sqlite`: 929 rows before and after,
+identical apart from the two new columns, no other export section changed.
+Grading switches to ids automatically; on GW3 the backtest population goes
+224 → 225 (one same-name pair had been merged).
+
+**A3 — log naming.** `fpl_run.bat` stamps by the **UTC** date — the date
+`price_history` uses — so a catch-up after local midnight is filed under the
+day whose price sample it wrote; and the header appends instead of truncating.
+Verified: two runs on one date leave two headers in one log; the stamp
+expression yields UTC (hour 19 at 21:xx CEST); a simulated 01:56 CEST run on
+11 Sep stamps 2026-09-10. The 01:56 catch-up log was copied to
+`reports/run_2026-09-10.log` before the 23:55 run overwrote it under the old
+scheme.

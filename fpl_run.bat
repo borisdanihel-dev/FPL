@@ -11,11 +11,14 @@ REM UTF-8 everywhere: player names contain accents that cp1252 cannot encode
 set PYTHONIOENCODING=utf-8
 chcp 65001 >nul 2>&1
 
-for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set STAMP=%%i
+REM Stamp by the UTC date, the same date price_history uses, so a catch-up run
+REM after midnight is filed under the day whose price sample it wrote.
+for /f %%i in ('powershell -NoProfile -Command "Get-Date ([DateTime]::UtcNow) -Format yyyy-MM-dd"') do set STAMP=%%i
 if not exist reports mkdir reports
 set LOG=reports\run_%STAMP%.log
 
-echo ==== run %STAMP% ==== > "%LOG%"
+REM Append: a second run on the same date must not erase the first run's log.
+echo ==== run %STAMP% UTC, started %DATE% %TIME% local ==== >> "%LOG%"
 echo working dir: %CD% >> "%LOG%"
 
 REM find python even when Task Scheduler gives a bare PATH

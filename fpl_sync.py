@@ -392,19 +392,22 @@ def export(db, gw):
         GROUP BY pl.id ORDER BY pl.position, pl.total_points DESC""", (gw, gw))
 
     out["player_gw_recent"] = q(db, """
-        SELECT g.event, pl.web_name, t.short_name AS team, pl.position AS pos,
+        SELECT g.event, g.player_id, pl.web_name, t.short_name AS team,
+               pl.position AS pos,
                g.total_points AS pts, g.minutes AS mins, g.starts,
                g.goals AS g_, g.assists AS a_, g.clean_sheets AS cs,
                g.goals_conceded AS gc, g.bonus, g.bps,
                g.defensive_contribution AS defcon,
                ROUND(g.expected_goals,2) AS xg, ROUND(g.expected_assists,2) AS xa,
-               CASE WHEN f.team_h=pl.team_id THEN ta.short_name
-                    ELSE th.short_name END AS opp,
-               CASE WHEN f.team_h=pl.team_id THEN 'H' ELSE 'A' END AS venue,
-               CASE WHEN f.team_h=pl.team_id THEN f.team_h_difficulty
-                    ELSE f.team_a_difficulty END AS fdr,
-               CASE WHEN f.team_h=pl.team_id THEN f.team_a_score
-                    ELSE f.team_h_score END AS opp_goals
+               COUNT(f.id) AS n_fixtures,
+               CASE WHEN COUNT(f.id)=1 THEN MAX(CASE WHEN f.team_h=pl.team_id
+                    THEN ta.short_name ELSE th.short_name END) END AS opp,
+               CASE WHEN COUNT(f.id)=1 THEN MAX(CASE WHEN f.team_h=pl.team_id
+                    THEN 'H' ELSE 'A' END) END AS venue,
+               CASE WHEN COUNT(f.id)=1 THEN MAX(CASE WHEN f.team_h=pl.team_id
+                    THEN f.team_h_difficulty ELSE f.team_a_difficulty END) END AS fdr,
+               CASE WHEN COUNT(f.id)=1 THEN MAX(CASE WHEN f.team_h=pl.team_id
+                    THEN f.team_a_score ELSE f.team_h_score END) END AS opp_goals
         FROM player_gw g
         JOIN players pl ON pl.id=g.player_id
         JOIN teams t ON t.id=pl.team_id
@@ -413,6 +416,10 @@ def export(db, gw):
         LEFT JOIN teams th ON th.id=f.team_h
         LEFT JOIN teams ta ON ta.id=f.team_a
         WHERE g.event BETWEEN ?-5 AND ? AND g.minutes>0
+        -- one row per player per gameweek. player_gw holds a GW TOTAL, so the
+        -- fixtures join must not fan a double out into two copies of it, and
+        -- the per-match columns stay NULL when there is more than one match.
+        GROUP BY g.player_id, g.event
         ORDER BY g.event, g.total_points DESC""", (gw, gw))
 
     out["fixtures_played"] = q(db, """
