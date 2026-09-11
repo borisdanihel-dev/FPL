@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+# regenerated from the API / DB on every run
+fpl_export_gw*.json
+reports/
+# binary, rewritten nightly - holds the only copy of price_history: back it up separately
+fpl.sqlite

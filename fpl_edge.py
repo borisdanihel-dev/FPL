@@ -1,0 +1,1732 @@
+"""
+fpl_edge.py  —  turns fpl_export_gwN.json into decision output.
+
+Standard library only. Offline: reads the export, prints nothing it can't prove
+from the data.
+
+Usage:
+    python fpl_edge.py                        # auto-picks the newest export here
+    python fpl_edge.py --horizon 5
+    python fpl_edge.py --section eo,defcon
+    python fpl_edge.py --out report.txt       # also write to a file
+    python fpl_edge.py fpl_export_gw3.json    # or name one explicitly
+    python fpl_edge.py --brief                # 20-line pre-deadline summary
+    python fpl_edge.py --diff                 # vs the previous export
+    python fpl_edge.py --diff fpl_export_gw2.json
+    python fpl_edge.py --section wildcard --horizon 6
+"""
+
+import argparse
+import glob
+import json
+import os
+import re
+import sys
+from collections import defaultdict
+
+POS = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
+DEFCON_THRESHOLD = {2: 10, 3: 12}          # DEF needs 10 CBIT, MID needs 12 CBIRT
+FIRST_HALF_CHIPS = ["wildcard", "freehit", "bboost", "3xc"]
+CHIP_LABEL = {"wildcard": "WC", "freehit": "FH", "bboost": "BB", "3xc": "TC"}
+
+
+# ---------------------------------------------------------------------------
+# helpers
+# ---------------------------------------------------------------------------
+
+def newest_export(folder="."):
+    """Highest-numbered fpl_export_gwN.json in `folder`, else newest by mtime."""
+    files = glob.glob(os.path.join(folder, "fpl_export_gw*.json"))
+    if not files:
+        return None
+    def gw_of(f):
+        m = re.search(r"gw(\d+)", os.path.basename(f))
+        return int(m.group(1)) if m else -1
+    return max(files, key=lambda f: (gw_of(f), os.path.getmtime(f)))
+
+
+def load(path):
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def my_name(d):
+    """My entry name. Uses entry_id when the export carries it, else infers
+    from the i_own flags in league_ownership."""
+    my_id = d.get("my_entry")
+    for row in d.get("squads", []):
+        if my_id is not None and row.get("entry_id") == my_id:
+            return row["entry_name"]
+
+    mine = {p["web_name"] for p in d.get("league_ownership", []) if p.get("i_own")}
+    counts = defaultdict(int)
+    for row in d.get("squads", []):
+        if row["web_name"] in mine:
+            counts[row["entry_name"]] += 1
+    if not counts:
+        return None
+    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
+        print(f"  ! cannot identify your entry: {ranked[0][0]} and {ranked[1][0]} "
+              f"match equally. Re-run fpl_sync.py to export entry_id.")
+    return ranked[0][0]
+
+
+def previous_export(current, folder="."):
+    """The export one gameweek older than `current`, if it is sitting here."""
+    files = glob.glob(os.path.join(folder, "fpl_export_gw*.json"))
+    def gw_of(f):
+        m = re.search(r"gw(\d+)", os.path.basename(f))
+        return int(m.group(1)) if m else -1
+    cur = gw_of(current)
+    older = [f for f in files if -1 < gw_of(f) < cur]
+    return max(older, key=gw_of) if older else None
+
+
+def estimate_free_transfers(d):
+    """Reconstruct the FT balance from the transfer + chip log.
+
+    1 FT per GW, banked to a max of 5. Wildcard/Free Hit consume that
+    gameweek's own FT but preserve anything banked before it.
+    Estimate only - confirm in the app before acting.
+    """
+    me = my_name(d)
+    gw = d["gameweek"]
+    made = defaultdict(int)
+    for t in d["transfers"]:
+        if t["entry_name"] == me:
+            made[t["event"]] += 1
+    chip_at = {c["event"]: c["name"] for c in d["chips_used"]
+               if c["entry_name"] == me}
+
+    ft = 1
+    for g in range(2, gw + 1):
+        if g > 2:
+            ft = min(5, ft + 1)
+        if chip_at.get(g) in ("wildcard", "freehit"):
+            ft = min(5, ft - 1) if ft > 0 else 0
+        else:
+            ft = max(0, ft - made.get(g, 0))
+    return min(5, ft + 1)          # the transfer granted for the upcoming GW
+
+
+def build_ticker(d, horizon):
+    """team -> [(gw, 'OPP (H)', fdr), ...] for the next `horizon` gameweeks."""
+    tick = defaultdict(list)
+    gws = sorted({f["event"] for f in d["fixtures_next6"]})[:horizon]
+    for f in d["fixtures_next6"]:
+        if f["event"] not in gws:
+            continue
+        tick[f["home"]].append((f["event"], f"{f['away']} (H)", f["h_fdr"]))
+        tick[f["away"]].append((f["event"], f"{f['home']} (A)", f["a_fdr"]))
+    for t in tick:
+        tick[t].sort()
+    return tick, gws
+
+
+def fdr_avg(tick, team):
+    fx = tick.get(team, [])
+    return sum(x[2] for x in fx) / len(fx) if fx else 0.0
+
+
+# ---------------------------------------------------------------------------
+# sections
+# ---------------------------------------------------------------------------
+
+def sec_league(d):
+    print("=" * 78)
+    print(f"LEAGUE  (after GW{d['gameweek']})")
+    print("=" * 78)
+    me = my_name(d)
+
+    used = defaultdict(set)
+    for c in d["chips_used"]:
+        if c["event"] <= 19:
+            used[c["entry_name"]].add(c["name"])
+
+    lead = d["standings"][0]["total"]
+    print(f"{'':2s} {'team':22s} {'GW':>4} {'tot':>5} {'gap':>5} {'val':>6} "
+          f"{'bench':>5}  chips left (1st half)")
+    for s in d["standings"]:
+        left = [CHIP_LABEL[c] for c in FIRST_HALF_CHIPS if c not in used[s["entry_name"]]]
+        flag = ">>" if s["entry_name"] == me else "  "
+        print(f"{flag} {s['entry_name'][:22]:22s} {s['event_total']:>4} {s['total']:>5} "
+              f"{s['total']-lead:>5} {s['value']/10:>6.1f} {s['points_on_bench']:>5}  "
+              f"{' '.join(left) if left else '-none-'}")
+    print()
+
+
+def sec_eo(d, top=12):
+    """Ownership gap (forward-looking) + last GW's captaincy effect (historical)."""
+    print("=" * 78)
+    print("MINI-LEAGUE OWNERSHIP")
+    print("=" * 78)
+    me = my_name(d)
+    gw = d["gameweek"]
+    entries = sorted({r["entry_name"] for r in d["squads"]})
+    n_rivals = len(entries) - 1
+    chip_at = {c["entry_name"]: c["name"] for c in d["chips_used"] if c["event"] == gw}
+
+    owns = defaultdict(dict)      # player -> entry -> multiplier
+    meta = {}
+    for r in d["squads"]:
+        owns[r["web_name"]][r["entry_name"]] = r["multiplier"]
+        meta[r["web_name"]] = (r["team"], r["pos"], r["price"])
+
+    rows = []
+    for name, by_entry in owns.items():
+        mine_own = 1 if me in by_entry else 0
+        rival_own = sum(1 for k in by_entry if k != me)
+        my_mult = by_entry.get(me, 0)
+        rival_mult = [by_entry[k] for k in by_entry if k != me]
+        chipped = sum(1 for k in by_entry
+                      if k != me and by_entry[k] >= 3 and chip_at.get(k) == "3xc")
+        rows.append({
+            "name": name, "team": meta[name][0], "pos": POS[meta[name][1]],
+            "price": meta[name][2],
+            "mine_own": mine_own, "rival_own": rival_own,
+            "own_gap": mine_own - rival_own / n_rivals,
+            "mult_gap": my_mult - sum(rival_mult) / n_rivals,
+            "chipped": chipped,
+        })
+
+    print(f"\n  YOU DON'T OWN, THEY DO   (forward-looking: every point is a loss)")
+    print(f"  {'player':15s}{'team':5s}{'pos':4s}{'£':>6}{'rivals':>8}{'gap/pt':>8}")
+    for r in sorted(rows, key=lambda x: x["own_gap"])[:top]:
+        if r["own_gap"] >= 0:
+            break
+        print(f"  {r['name'][:15]:15s}{r['team']:5s}{r['pos']:4s}{r['price']:>6.1f}"
+              f"{r['rival_own']:>5}/{n_rivals}{r['own_gap']:>+8.2f}")
+
+    print(f"\n  YOU OWN, THEY MOSTLY DON'T   (your differentials)")
+    print(f"  {'player':15s}{'team':5s}{'pos':4s}{'£':>6}{'rivals':>8}{'gap/pt':>8}")
+    for r in sorted(rows, key=lambda x: -x["own_gap"])[:top]:
+        if r["own_gap"] <= 0:
+            break
+        print(f"  {r['name'][:15]:15s}{r['team']:5s}{r['pos']:4s}{r['price']:>6.1f}"
+              f"{r['rival_own']:>5}/{n_rivals}{r['own_gap']:>+8.2f}")
+
+    capt = [r for r in rows if abs(r["mult_gap"]) > 0.01 and r["mine_own"]]
+    if capt:
+        print(f"\n  CAPTAINCY EFFECT IN GW{gw}   (historical - not a transfer signal)")
+        print(f"  {'player':15s}{'team':5s}{'mult gap':>10}  note")
+        for r in sorted(capt, key=lambda x: x["mult_gap"])[:top]:
+            note = ""
+            if r["chipped"]:
+                note = (f"{r['chipped']} rival(s) played Triple Captain - "
+                        f"spent, cannot recur")
+            print(f"  {r['name'][:15]:15s}{r['team']:5s}{r['mult_gap']:>+10.2f}  {note}")
+
+    print("\n  gap/pt = net points gained on the average rival per point that player")
+    print("  scores. Ownership gap is what transfers change. The captaincy block")
+    print("  reflects one past gameweek only.\n")
+
+
+def sec_squad(d, horizon):
+    print("=" * 78)
+    print(f"YOUR SQUAD  (form, flags, next {horizon} fixtures)")
+    print("=" * 78)
+    me = my_name(d)
+    tick, _ = build_ticker(d, horizon)
+    by_name = {p["web_name"]: p for p in d["all_players"]}
+
+    mine = [r for r in d["squads"] if r["entry_name"] == me]
+    mine.sort(key=lambda r: r["slot"])
+    for r in mine:
+        p = by_name.get(r["web_name"], {})
+        fx = tick.get(r["team"], [])
+        run = " ".join(f"{o.split()[0]}{o.split()[1][1]}{f}" for _, o, f in fx)
+        flag = ""
+        if p.get("status") and p["status"] != "a":
+            flag = f"  !! {p['status']} {p.get('news','')[:40]}"
+        loc = "XI " if r["slot"] <= 11 else "BEN"
+        print(f"{loc} {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{r['team']:5s}{r['price']:>5.1f} "
+              f"pts{p.get('total_points',0):>3} L4:{p.get('pts_last4',0):>3} "
+              f"m{p.get('mins_last4',0):>4} fdr{fdr_avg(tick, r['team']):>4.1f}  {run}{flag}")
+    print()
+
+
+def sec_ticker(d, horizon):
+    print("=" * 78)
+    print(f"FIXTURE TICKER  (next {horizon}, sorted by average difficulty)")
+    print("=" * 78)
+    tick, gws = build_ticker(d, horizon)
+    for team in sorted(tick, key=lambda t: fdr_avg(tick, t)):
+        fx = tick[team]
+        cells = " ".join(f"{o:>10}{f}" for _, o, f in fx)
+        print(f"  {team:5s} {fdr_avg(tick, team):>4.2f}  {cells}")
+    print()
+
+
+def gw_index(d):
+    """web_name -> list of per-gameweek rows, newest last. Empty if not exported."""
+    idx = defaultdict(list)
+    for r in d.get("player_gw_recent", []):
+        idx[r["web_name"]].append(r)
+    for k in idx:
+        idx[k].sort(key=lambda r: r["event"])
+    return idx
+
+
+def sec_defcon(d, min_mins=180, top=15):
+    """Per-90 defensive contribution vs threshold, plus real hit rate."""
+    idx = gw_index(d)
+    print("=" * 78)
+    print("DEFCON RATE  (per 90 vs threshold: DEF 10, MID 12)")
+    if not idx:
+        print("  hit rate unavailable - re-run fpl_sync.py to export per-gameweek rows")
+    print("=" * 78)
+    for pos in (2, 3):
+        rows = []
+        for p in d["all_players"]:
+            if p["pos"] != pos or p["mins_last4"] < min_mins:
+                continue
+            per90 = p["defcon_last4"] / p["mins_last4"] * 90
+            rows.append((per90, p))
+        rows.sort(key=lambda x: -x[0])
+        thr = DEFCON_THRESHOLD[pos]
+        print(f"\n  {POS[pos]} (threshold {thr}/match)")
+        print(f"    {'player':15s}{'team':5s}{'£':>5}  {'/90':>6} {'margin':>7} "
+              f"{'hit':>7} {'per game':>12}  {'own%':>5}")
+        for per90, p in rows[:top]:
+            gws = [g for g in idx.get(p["web_name"], []) if g["mins"] >= 60]
+            if gws:
+                hits = sum(1 for g in gws if (g["defcon"] or 0) >= thr)
+                rate = f"{hits}/{len(gws)}"
+                seq = " ".join(str(g["defcon"] or 0) for g in gws[-6:])
+            else:
+                rate, seq = "-", "-"
+            print(f"    {p['web_name'][:15]:15s}{p['team']:5s}{p['price']:>5.1f}  "
+                  f"{per90:>6.1f} {per90-thr:>+7.1f} {rate:>7} {seq:>12}  "
+                  f"{p['owned_pct']:>5.1f}")
+    print("\n  hit = gameweeks at or above the threshold, out of starts.")
+    print("  per game = raw actions per gameweek, oldest first. A player at 10.0/90")
+    print("  who went 4-16-10 is a coin flip; one who went 10-10-10 is an asset.\n")
+
+
+def sec_value(d, horizon, min_mins=135, top=12):
+    print("=" * 78)
+    print(f"FORM x FIXTURES  (last-4 pts per £m, weighted by next-{horizon} difficulty)")
+    print("=" * 78)
+    tick, _ = build_ticker(d, horizon)
+    for pos in (1, 2, 3, 4):
+        rows = []
+        for p in d["all_players"]:
+            if p["pos"] != pos or p["mins_last4"] < min_mins:
+                continue
+            if p["status"] != "a":
+                continue
+            fdr = fdr_avg(tick, p["team"])
+            if not fdr:
+                continue
+            ppm = p["pts_last4"] / p["price"]
+            score = ppm * (5.0 - fdr) / 2.0
+            rows.append((score, ppm, fdr, p))
+        rows.sort(key=lambda x: -x[0])
+        print(f"\n  {POS[pos]}")
+        print(f"    {'player':15s}{'team':5s}{'£':>5} {'L4':>4} {'pts/£m':>7} "
+              f"{'fdr':>5} {'score':>6} {'own%':>6}")
+        for score, ppm, fdr, p in rows[:top]:
+            print(f"    {p['web_name'][:15]:15s}{p['team']:5s}{p['price']:>5.1f} "
+                  f"{p['pts_last4']:>4} {ppm:>7.2f} {fdr:>5.2f} {score:>6.2f} "
+                  f"{p['owned_pct']:>6.1f}")
+    print()
+
+
+def sec_bench(d):
+    print("=" * 78)
+    print("BENCH AUDIT")
+    print("=" * 78)
+    me = my_name(d)
+    for entry in sorted({r["entry_name"] for r in d["squads"]}):
+        rows = [r for r in d["squads"] if r["entry_name"] == entry]
+        bench = [r for r in rows if r["slot"] > 11]
+        xi = [r for r in rows if r["slot"] <= 11 and r["pos"] != 1]
+        lost = sum((r["gw_points"] or 0) for r in bench if r["pos"] != 1)
+        worst = min(((r["gw_points"] or 0), r["web_name"]) for r in xi) if xi else (0, "-")
+        best = max(((r["gw_points"] or 0), r["web_name"]) for r in bench
+                   if r["pos"] != 1) if bench else (0, "-")
+        flag = ">>" if entry == me else "  "
+        gain = max(0, best[0] - worst[0])
+        print(f"{flag} {entry[:22]:22s} bench={lost:>3}  best benched {best[1][:12]:12s}"
+              f"({best[0]:>2})  worst XI {worst[1][:12]:12s}({worst[0]:>2})  "
+              f"perfect-XI gain +{gain}")
+    print()
+
+
+def sec_brief(d, horizon):
+    me = my_name(d)
+    gw = d["gameweek"]
+    nxt = gw + 1
+    tick, _ = build_ticker(d, horizon)
+    by_name = {p["web_name"]: p for p in d["all_players"]}
+    mine = sorted([r for r in d["squads"] if r["entry_name"] == me],
+                  key=lambda r: r["slot"])
+    stand = next(s for s in d["standings"] if s["entry_name"] == me)
+    lead = d["standings"][0]
+
+    used = {c["name"] for c in d["chips_used"]
+            if c["entry_name"] == me and c["event"] <= 19}
+    left = [CHIP_LABEL[c] for c in FIRST_HALF_CHIPS if c not in used]
+    ft = estimate_free_transfers(d)
+
+    print("=" * 78)
+    print(f"BRIEF  ->  GW{nxt}     rank {stand['rank']}/{len(d['standings'])}   "
+          f"{stand['total']} pts   {stand['total']-lead['total']:+d} on leader")
+    print(f"         bank £{stand['bank']/10:.1f}m   ~{ft} free transfer(s)   "
+          f"chips: {' '.join(left) if left else 'none'}")
+    print("=" * 78)
+
+    def nextfx(team):
+        """Fixtures for gameweek `nxt` specifically - blank teams report BLANK,
+        double gameweeks report both."""
+        fx = [f for f in tick.get(team, []) if f[0] == nxt]
+        if not fx:
+            return (nxt, "BLANK", 5)
+        if len(fx) > 1:
+            return (nxt, " + ".join(f[1].split()[0] for f in fx),
+                    min(f[2] for f in fx))
+        return fx[0]
+
+    alerts = []
+    for r in mine:
+        p = by_name.get(r["web_name"], {})
+        if p.get("status", "a") != "a":
+            alerts.append(f"{r['web_name']} ({p.get('status')}, "
+                          f"{p.get('chance_next_round')}%) {p.get('news','')[:45]}")
+    if alerts:
+        print("\n  FLAGGED")
+        for a in alerts:
+            print(f"    !! {a}")
+    else:
+        print("\n  FLAGGED: none - all 15 available")
+
+    xi = [r for r in mine if r["slot"] <= 11]
+    print(f"\n  XI, GW{nxt} fixture (weakest last)")
+    rows = sorted(xi, key=lambda r: -nextfx(r["team"])[2])
+    for r in rows:
+        _, opp, fdr = nextfx(r["team"])
+        p = by_name.get(r["web_name"], {})
+        mark = "  <-- soft spot" if fdr >= 4 else ""
+        print(f"    {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{opp:>10} "
+              f"fdr{fdr}  L4:{p.get('pts_last4',0):>3}{mark}")
+
+    print(f"\n  BENCH")
+    for r in [x for x in mine if x["slot"] > 11]:
+        _, opp, fdr = nextfx(r["team"])
+        print(f"    {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{opp:>10} fdr{fdr}")
+
+    weak = [r for r in xi if nextfx(r["team"])[2] >= 4]
+    if weak:
+        budget = stand["bank"] / 10
+        print(f"\n  UPGRADE SHORTLIST  (fdr>=4 spots, budget £{budget:.1f}m + sale)")
+        for r in weak:
+            cash = budget + r["price"]
+            pool = [p for p in d["all_players"]
+                    if p["pos"] == r["pos"] and p["price"] <= cash
+                    and p["status"] == "a" and p["mins_last4"] >= 135
+                    and p["web_name"] not in {m["web_name"] for m in mine}]
+            pool.sort(key=lambda p: -(p["pts_last4"] / p["price"]
+                                      * (5.0 - fdr_avg(tick, p["team"])) / 2.0))
+            names = ", ".join(f"{p['web_name']} {p['team']} £{p['price']:.1f}"
+                              for p in pool[:3])
+            print(f"    out {r['web_name'][:14]:15s}(£{cash:.1f}m to spend) -> {names}")
+    print()
+
+
+def sec_diff(d, prev, horizon):
+    print("=" * 78)
+    print(f"DIFF  GW{prev.get('gameweek','?')} -> GW{d['gameweek']}")
+    print("=" * 78)
+    me = my_name(d)
+
+    missing = [k for k in ("standings", "all_players", "chips_used", "squads")
+               if k not in prev]
+    if missing:
+        print(f"\n  ! older export is missing: {', '.join(missing)}")
+        print("    It was written by an earlier version of fpl_sync.py.")
+        print("    Those blocks are skipped; the rest still runs.")
+
+    if prev.get("gameweek") == d["gameweek"]:
+        print(f"\n  ! both exports are GW{d['gameweek']} - the comparison is")
+        print("    against itself. Delete the stale file and diff from the next GW.")
+
+    a = {s["entry_name"]: s for s in prev.get("standings", [])}
+    if not a:
+        print("\n  TABLE: no comparable standings in the older export")
+    if a:
+        print("\n  TABLE")
+    for s in (d["standings"] if a else []):
+        o = a.get(s["entry_name"])
+        if not o:
+            continue
+        dr = o["rank"] - s["rank"]
+        arrow = f"{dr:+d}" if dr else " ="
+        flag = ">>" if s["entry_name"] == me else "  "
+        print(f"{flag} {s['entry_name'][:22]:22s} {s['rank']}({arrow})  "
+              f"{s['total']:>4} ({s['total']-o['total']:+d})  "
+              f"val {s['value']/10:>5.1f} ({(s['value']-o['value'])/10:+.1f})")
+
+    pa = {p["web_name"]: p for p in prev.get("all_players", [])}
+    mine = {r["web_name"] for r in d["squads"] if r["entry_name"] == me}
+
+    if not pa:
+        print("\n  price moves / new flags / form movers: need 'all_players' in "
+              "both exports - skipped")
+        _diff_chips(d, prev)
+        return
+
+    print("\n  YOUR SQUAD: price moves")
+    moved = False
+    for n in sorted(mine):
+        p, o = next((x for x in d["all_players"] if x["web_name"] == n), None), pa.get(n)
+        if p and o and p["price"] != o["price"]:
+            moved = True
+            print(f"    {n[:15]:15s}{p['team']:5s} £{o['price']:.1f} -> "
+                  f"£{p['price']:.1f}  ({p['price']-o['price']:+.1f})")
+    if not moved:
+        print("    none")
+
+    print("\n  NEW FLAGS (owned by anyone in the league)")
+    league = {r["web_name"] for r in d["squads"]}
+    newflag = False
+    for p in d["all_players"]:
+        if p["web_name"] not in league or p["status"] == "a":
+            continue
+        o = pa.get(p["web_name"])
+        if o and o["status"] == "a":
+            newflag = True
+            print(f"    !! {p['web_name'][:15]:15s}{p['team']:5s}{p['status']} "
+                  f"{p.get('chance_next_round')}%  {p['news'][:45]}")
+    if not newflag:
+        print("    none")
+
+    print("\n  FORM MOVERS  (last-4 points, biggest gains, 60+ mins)")
+    rows = []
+    for p in d["all_players"]:
+        o = pa.get(p["web_name"])
+        if not o or p["mins_last4"] < 60 or p["status"] != "a":
+            continue
+        rows.append((p["pts_last4"] - o["pts_last4"], p))
+    rows.sort(key=lambda x: -x[0])
+    for delta, p in rows[:10]:
+        own = " *YOURS*" if p["web_name"] in mine else ""
+        print(f"    {p['web_name'][:15]:15s}{p['team']:5s}£{p['price']:>5.1f} "
+              f"L4 {p['pts_last4']:>3} ({delta:+d})  own {p['owned_pct']:>5.1f}%{own}")
+
+    _diff_chips(d, prev)
+
+
+def _diff_chips(d, prev):
+    if "chips_used" not in prev:
+        print("\n  CHIPS PLAYED SINCE: not comparable (older export lacks the data)\n")
+        return
+    ca = {(c["entry_name"], c["name"]) for c in prev["chips_used"]}
+    fresh = [c for c in d["chips_used"] if (c["entry_name"], c["name"]) not in ca]
+    print("\n  CHIPS PLAYED SINCE")
+    if fresh:
+        for c in fresh:
+            print(f"    {c['entry_name'][:22]:22s} {CHIP_LABEL.get(c['name'], c['name'])} "
+                  f"GW{c['event']}")
+    else:
+        print("    none")
+    print()
+
+
+SHRINK = 4.0        # prior weight, in matches
+
+
+def positional_priors(players):
+    """Median points per 90 among established starters, per position."""
+    priors = {}
+    for pos in (1, 2, 3, 4):
+        vals = sorted(p["pts_last4"] / p["mins_last4"] * 90
+                      for p in players
+                      if p["pos"] == pos and p["mins_last4"] >= 180)
+        priors[pos] = vals[len(vals) // 2] if vals else 3.0
+    return priors
+
+
+def personal_priors(d):
+    """web_name -> that player's own points per 90 last season.
+
+    A much stronger anchor than a positional median: it stops Haaland and a
+    rotation striker being shrunk toward the same number. Empty if the export
+    has no history (run: python fpl_sync.py --history).
+    """
+    best = {}
+    for h in d.get("player_history", []):
+        if h["minutes"] < 450:
+            continue
+        cur = best.get(h["web_name"])
+        if cur is None or h["season"] > cur["season"]:
+            best[h["web_name"]] = h
+    return {k: v["pts"] / v["minutes"] * 90 for k, v in best.items()}
+
+
+def project(p, tick, horizon, gws_played, priors, personal=None):
+    """Per-gameweek projection: form shrunk toward a positional prior,
+    scaled by minutes reliability, adjusted for fixtures."""
+    mins = p.get("mins_last4", 0)
+    if mins < 45:
+        return 0.0, 0.0, 0.0
+    raw90 = p["pts_last4"] / mins * 90
+    matches = mins / 90.0
+    prior = ((personal or {}).get(p.get("web_name"))
+             or priors.get(p["pos"], 3.0))
+    per90 = (raw90 * matches + prior * SHRINK) / (matches + SHRINK)
+    reliability = min(1.0, mins / (90.0 * max(1, gws_played)))
+    fdr = fdr_avg(tick, p["team"]) or 3.0
+    fdr_adj = 1.0 + (3.0 - fdr) * 0.12
+    return per90 * reliability * fdr_adj, per90, fdr
+
+
+def sec_wildcard(d, horizon):
+    """Shortlists by position, then one budget-valid squad built from them."""
+    print("=" * 78)
+    print(f"WILDCARD DRAFT  (next {horizon} gameweeks)")
+    print("=" * 78)
+    me = my_name(d)
+    tick, gws = build_ticker(d, horizon)
+    gws_played = d["gameweek"]
+    stand = next(s for s in d["standings"] if s["entry_name"] == me)
+    budget = (stand["value"] + stand["bank"]) / 10.0
+
+    priors = positional_priors(d["all_players"])
+    personal = personal_priors(d)
+    pool = []
+    for p in d["all_players"]:
+        if p["status"] != "a" or p["mins_last4"] < 45:
+            continue
+        if not fdr_avg(tick, p["team"]):
+            continue
+        proj, per90, fdr = project(p, tick, horizon, gws_played, priors, personal)
+        if proj <= 0:
+            continue
+        q = dict(p)
+        q["proj"] = proj
+        q["per90"] = per90
+        q["fdr"] = fdr
+        q["vpm"] = proj / p["price"]
+        pool.append(q)
+
+    print(f"\n  budget £{budget:.1f}m   (squad value £{stand['value']/10:.1f}m "
+          f"+ bank £{stand['bank']/10:.1f}m)")
+    print(f"  {len(pool)} players pass the availability and minutes filter")
+    print("  priors (median pts/90 of established starters): "
+          + ", ".join(f"{POS[k]} {v:.1f}" for k, v in sorted(priors.items())) + "\n")
+
+    for pos in (1, 2, 3, 4):
+        cands = sorted([p for p in pool if p["pos"] == pos],
+                       key=lambda x: -x["proj"])[:8]
+        print(f"  {POS[pos]} - highest projected per gameweek")
+        print(f"    {'player':15s}{'team':5s}{'£':>6}{'proj':>7}{'/90':>7}"
+              f"{'fdr':>6}{'own%':>7}{'pts/£m':>8}")
+        for p in cands:
+            print(f"    {p['web_name'][:15]:15s}{p['team']:5s}{p['price']:>6.1f}"
+                  f"{p['proj']:>7.2f}{p['per90']:>7.2f}{p['fdr']:>6.2f}"
+                  f"{p['owned_pct']:>7.1f}{p['vpm']:>8.2f}")
+        print()
+
+    squad = _build_squad(pool, budget)
+    if not squad:
+        print("  Could not assemble a valid squad inside the budget.\n")
+        return
+
+    quota = {1: 2, 2: 5, 3: 5, 4: 3}
+    spend = sum(p["price"] for p in squad)
+    print("  " + "-" * 74)
+    print(f"  ONE VALID SQUAD  (£{spend:.1f}m of £{budget:.1f}m, "
+          f"proj {sum(p['proj'] for p in squad):.1f} pts/GW across all 15)")
+    print("  " + "-" * 74)
+    for pos in (1, 2, 3, 4):
+        grp = sorted([p for p in squad if p["pos"] == pos], key=lambda x: -x["proj"])
+        line = ", ".join(f"{p['web_name']} ({p['team']} £{p['price']:.1f})" for p in grp)
+        print(f"    {POS[pos]:4s} {line}")
+
+    xi = _best_xi(squad)
+    bench = [p for p in squad if p not in xi]
+    print(f"\n    XI proj    {sum(p['proj'] for p in xi):>6.2f} pts/GW")
+    print(f"    bench proj {sum(p['proj'] for p in bench):>6.2f} pts/GW   "
+          f"<- Bench Boost is worth roughly this much")
+
+    mine = {r["web_name"] for r in d["squads"] if r["entry_name"] == me}
+    keep = [p["web_name"] for p in squad if p["web_name"] in mine]
+    print(f"\n    keeps from your current 15 ({len(keep)}): {', '.join(sorted(keep))}")
+
+    print("\n  ! Run --section backtest before trusting the ordering above.")
+    print("    On GW1-2 -> GW3 this projection scored a rank correlation of")
+    print("    roughly zero, i.e. no better than shuffling. Use the shortlists")
+    print("    as a price-and-fixture filter, not as a ranking.")
+    print("\n  HOW THIS IS SCORED  (read before trusting it)")
+    print("    Raw points per 90 is shrunk toward the positional median with a")
+    print(f"    {SHRINK:.0f}-match prior, so a hot start over 2-3 games does not read as")
+    print("    permanent. Then scaled by minutes reliability and adjusted +/-12%")
+    print("    per point of fixture difficulty. This ranks candidates; it does not")
+    print("    predict. Treat the squad as a starting point, not an answer.\n")
+
+
+def _build_squad(pool, budget):
+    """Greedy by value-per-million, then hill-climb swaps to spend the rest."""
+    quota = {1: 2, 2: 5, 3: 5, 4: 3}
+    picked, spent = [], 0.0
+    club = defaultdict(int)
+    filled = defaultdict(int)
+
+    for p in sorted(pool, key=lambda x: -x["vpm"]):
+        if filled[p["pos"]] >= quota[p["pos"]] or club[p["team"]] >= 3:
+            continue
+        if spent + p["price"] > budget:
+            continue
+        picked.append(p)
+        spent += p["price"]
+        filled[p["pos"]] += 1
+        club[p["team"]] += 1
+    if sum(filled.values()) < 15:
+        return None
+
+    for _ in range(400):
+        best = None
+        for out in picked:
+            for inn in pool:
+                if inn["pos"] != out["pos"] or inn in picked:
+                    continue
+                if spent - out["price"] + inn["price"] > budget:
+                    continue
+                if inn["team"] != out["team"] and club[inn["team"]] >= 3:
+                    continue
+                gain = inn["proj"] - out["proj"]
+                if gain > 0 and (best is None or gain > best[0]):
+                    best = (gain, out, inn)
+        if not best:
+            break
+        _, out, inn = best
+        picked.remove(out)
+        picked.append(inn)
+        spent += inn["price"] - out["price"]
+        club[out["team"]] -= 1
+        club[inn["team"]] += 1
+    return picked
+
+
+def _best_xi(squad):
+    """Highest-projecting legal XI: 1 GK, 3-5 DEF, 2-5 MID, 1-3 FWD."""
+    by = {k: sorted([p for p in squad if p["pos"] == k], key=lambda x: -x["proj"])
+          for k in (1, 2, 3, 4)}
+    best, best_pts = None, -1
+    for ndef in range(3, 6):
+        for nmid in range(2, 6):
+            nfwd = 10 - ndef - nmid
+            if not 1 <= nfwd <= 3:
+                continue
+            xi = by[1][:1] + by[2][:ndef] + by[3][:nmid] + by[4][:nfwd]
+            if len(xi) != 11:
+                continue
+            pts = sum(p["proj"] for p in xi)
+            if pts > best_pts:
+                best, best_pts = xi, pts
+    return best or []
+
+
+def _spearman(a, b):
+    def rank(v):
+        order = sorted(range(len(v)), key=lambda i: v[i])
+        r = [0] * len(v)
+        for pos, i in enumerate(order):
+            r[i] = pos
+        return r
+    n = len(a)
+    if n < 3:
+        return 0.0
+    ra, rb = rank(a), rank(b)
+    ma, mb = sum(ra) / n, sum(rb) / n
+    num = sum((ra[i] - ma) * (rb[i] - mb) for i in range(n))
+    den = (sum((ra[i] - ma) ** 2 for i in range(n))
+           * sum((rb[i] - mb) ** 2 for i in range(n))) ** 0.5
+    return num / den if den else 0.0
+
+
+def _rho_verdict(rho):
+    if rho >= 0.35:
+        return "usable"
+    if rho >= 0.20:
+        return "weak but real"
+    if rho > -0.10:
+        return "no signal - this is noise"
+    return "inverted - actively misleading"
+
+
+def sec_backtest(d, horizon):
+    """Score the projection model against a gameweek it did not see."""
+    idx = gw_index(d)
+    print("=" * 78)
+    print("BACKTEST  (projection vs what actually happened)")
+    print("=" * 78)
+    if not idx:
+        print("\n  Needs per-gameweek rows. Run:  python fpl_sync.py --refetch\n")
+        return
+
+    events = sorted({r["event"] for r in d.get("player_gw_recent", [])})
+    if len(events) < 3:
+        print(f"\n  Only {len(events)} gameweek(s) of history. Needs 3+ to hold one out.\n")
+        return
+
+    target = events[-1]
+    train = events[:-1]
+    tick, _ = build_ticker(d, horizon)
+
+    built = []
+    for name, rows in idx.items():
+        tr = [r for r in rows if r["event"] in train]
+        te = [r for r in rows if r["event"] == target]
+        if not tr or not te:
+            continue
+        mins = sum(r["mins"] for r in tr)
+        if mins < 90:
+            continue
+        built.append({
+            "web_name": name, "team": tr[0]["team"], "pos": tr[0]["pos"],
+            "pts_last4": sum(r["pts"] for r in tr), "mins_last4": mins,
+            "actual": sum(r["pts"] for r in te),
+            "target_fdr": te[0].get("fdr"),
+        })
+
+    priors = positional_priors(built)
+    personal = personal_priors(d)
+    have_fdr = any(r.get("fdr") is not None
+                   for rows in idx.values() for r in rows)
+    scored = []
+    for p in built:
+        tick = {p["team"]: [(target, "x", p["target_fdr"])]} if p.get("target_fdr") else {}
+        proj, _, _ = project(p, tick, horizon, len(train), priors, personal)
+        scored.append((proj, p["actual"], p))
+
+    n = len(scored)
+    mean_actual = sum(ac for _, ac, _ in scored) / n
+    mae = sum(abs(pr - ac) for pr, ac, _ in scored) / n
+    bias = sum(pr - ac for pr, ac, _ in scored) / n
+    mae_base = sum(abs(p["pts_last4"] / max(1, len(train)) - ac)
+                   for _, ac, p in scored) / n
+    mae_const = sum(abs(mean_actual - ac) for _, ac, _ in scored) / n
+    rho = _spearman([pr for pr, _, _ in scored], [ac for _, ac, _ in scored])
+
+    print(f"\n  trained on GW{train[0]}-{train[-1]}, tested on GW{target}, "
+          f"{n} players with minutes in both")
+    print(f"  priors: {len(personal)} players anchored to their own last season, "
+          f"rest to positional median")
+    print("  (fixture adjustment ON - using each player's actual FDR that week)"
+          if have_fdr else
+          "  (fixture adjustment OFF - re-export to include per-match FDR)")
+    print(f"    model                  MAE {mae:>5.2f}   bias {bias:>+5.2f}")
+    print(f"    flat average of training MAE {mae_base:>5.2f}")
+    print(f"    CONSTANT ({mean_actual:.2f} for all)  MAE {mae_const:>5.2f}"
+          f"   <- the bar that matters")
+    if mae < mae_const:
+        print(f"    PASS: beats a constant guess by {mae_const-mae:.2f} pts/player")
+    else:
+        print(f"    FAIL: WORSE than guessing the mean, by {mae-mae_const:.2f} "
+              f"pts/player")
+    print(f"\n    Spearman rank correlation {rho:>+6.3f}   "
+          f"({_rho_verdict(rho)})")
+    print("    Ordering is what a squad picker needs. Below about +0.20 the")
+    print("    projection is not usable for ranking players.")
+
+    print("\n  BIAS BY PROJECTION QUINTILE  (is it overconfident at the top?)")
+    ordered = sorted(scored, key=lambda x: x[0])
+    k = max(1, n // 5)
+    for i in range(5):
+        grp = ordered[i * k:(i + 1) * k] if i < 4 else ordered[4 * k:]
+        if not grp:
+            continue
+        mp = sum(x[0] for x in grp) / len(grp)
+        ma = sum(x[1] for x in grp) / len(grp)
+        print(f"    Q{i+1}  proj {grp[0][0]:>4.1f}-{grp[-1][0]:<4.1f} n={len(grp):>3}"
+              f"  projected {mp:>5.2f}  actual {ma:>5.2f}  bias {mp-ma:>+5.2f}")
+    print("    A rising bias down this column means the model is reading noise")
+    print("    as signal: the players it likes least outscore the ones it likes most.")
+
+    print("\n  BIAS BY POSITION")
+    for pos in (1, 2, 3, 4):
+        grp = [x for x in scored if x[2]["pos"] == pos]
+        if not grp:
+            continue
+        print(f"    {POS[pos]:4s} n={len(grp):>3}  "
+              f"MAE {sum(abs(a - b) for a, b, _ in grp)/len(grp):>5.2f}  "
+              f"bias {sum(a - b for a, b, _ in grp)/len(grp):>+5.2f}")
+
+    scored.sort(key=lambda x: x[0] - x[1])
+    print("\n  WORST UNDER-CALLS  (it said low, they hauled)")
+    for pr, ac, p in scored[:6]:
+        print(f"    {p['web_name'][:15]:15s}{p['team']:5s} proj {pr:>5.2f}  "
+              f"actual {ac:>3}")
+    print("\n  WORST OVER-CALLS  (it said high, they blanked)")
+    for pr, ac, p in scored[-6:][::-1]:
+        print(f"    {p['web_name'][:15]:15s}{p['team']:5s} proj {pr:>5.2f}  "
+              f"actual {ac:>3}")
+    print("\n  One gameweek is noise. Read the trend across several runs, not this.\n")
+
+
+def sec_fdr(d, horizon):
+    """Does FPL's difficulty rating actually predict what happened?"""
+    print("=" * 78)
+    print("FDR AUDIT  (rating vs result, all finished fixtures)")
+    print("=" * 78)
+    played = d.get("fixtures_played")
+    if not played:
+        print("\n  Needs finished fixtures with scores. Run:  python fpl_sync.py")
+        print("  (re-export with the current fpl_sync.py to include them)\n")
+        return
+
+    # one row per team-match: the difficulty they were given, what they did
+    obs = []
+    for f in played:
+        if f["h_goals"] is None or f["a_goals"] is None:
+            continue
+        obs.append((f["h_fdr"], f["h_goals"], f["a_goals"], f["home"], "H", f["event"]))
+        obs.append((f["a_fdr"], f["a_goals"], f["h_goals"], f["away"], "A", f["event"]))
+    if not obs:
+        print("\n  No finished fixtures with scores yet.\n")
+        return
+
+    print(f"\n  {len(obs)//2} matches, {len(obs)} team-performances\n")
+    print(f"  {'FDR':>4}{'n':>5}{'goals for':>11}{'conceded':>10}"
+          f"{'clean sheets':>14}{'win rate':>10}")
+    buckets = defaultdict(list)
+    for fdr, gf, ga, *_ in obs:
+        buckets[fdr].append((gf, ga))
+    for fdr in sorted(buckets):
+        rows = buckets[fdr]
+        n = len(rows)
+        gf = sum(r[0] for r in rows) / n
+        ga = sum(r[1] for r in rows) / n
+        cs = sum(1 for r in rows if r[1] == 0) / n
+        wr = sum(1 for r in rows if r[0] > r[1]) / n
+        print(f"  {fdr:>4}{n:>5}{gf:>11.2f}{ga:>10.2f}{cs:>13.0%}{wr:>10.0%}")
+
+    lo = [r for f, *r in [(f, gf, ga) for f, gf, ga, *_ in obs] if f <= 2]
+    hi = [r for f, *r in [(f, gf, ga) for f, gf, ga, *_ in obs] if f >= 4]
+    if lo and hi:
+        gf_lo = sum(r[0] for r in lo) / len(lo)
+        gf_hi = sum(r[0] for r in hi) / len(hi)
+        cs_lo = sum(1 for r in lo if r[1] == 0) / len(lo)
+        cs_hi = sum(1 for r in hi if r[1] == 0) / len(hi)
+        print(f"\n  easy (FDR<=2) vs hard (FDR>=4)")
+        print(f"    goals scored   {gf_lo:.2f}  vs  {gf_hi:.2f}   "
+              f"gap {gf_lo-gf_hi:+.2f}")
+        print(f"    clean sheets   {cs_lo:>4.0%}  vs  {cs_hi:>4.0%}   "
+              f"gap {cs_lo-cs_hi:+.0%}")
+        if gf_lo - gf_hi < 0.3:
+            print("    The rating is barely separating attacking output. Weight it lightly.")
+        if abs(cs_lo - cs_hi) < 0.10:
+            print("    The rating is not separating clean sheets at all.")
+
+    print("\n  BIGGEST UPSETS  (favourite by 2+ difficulty points, lost or drew)")
+    ups = []
+    for f in played:
+        if f["h_goals"] is None:
+            continue
+        gap = f["a_fdr"] - f["h_fdr"]
+        if gap >= 2 and f["h_goals"] <= f["a_goals"]:
+            ups.append((abs(gap), f, f["home"], f["away"]))
+        elif gap <= -2 and f["a_goals"] <= f["h_goals"]:
+            ups.append((abs(gap), f, f["away"], f["home"]))
+    if not ups:
+        print("    none - the ratings held up")
+    for gap, f, fav, dog in sorted(ups, key=lambda x: -x[0]):
+        print(f"    GW{f['event']}  {f['home']} {f['h_goals']}-{f['a_goals']} "
+              f"{f['away']}   {fav} was favoured by {gap}")
+    print()
+
+
+def _mean_sd(v):
+    n = len(v)
+    if not n:
+        return 0, 0.0, 0.0
+    m = sum(v) / n
+    sd = (sum((x - m) ** 2 for x in v) / (n - 1)) ** 0.5 if n > 1 else 0.0
+    return n, m, sd
+
+
+def _gap_ci(a, b):
+    """Difference in means and its 95% interval. Returns (gap, halfwidth)."""
+    n1, m1, s1 = _mean_sd(a)
+    n2, m2, s2 = _mean_sd(b)
+    if not n1 or not n2:
+        return 0.0, float("inf")
+    se = (s1 ** 2 / n1 + s2 ** 2 / n2) ** 0.5
+    return m1 - m2, 1.96 * se
+
+
+def sec_sensitivity(d, horizon):
+    """Does fixture difficulty move returns - and is the move bigger than noise?"""
+    print("=" * 78)
+    print("FIXTURE SENSITIVITY  (per player-match, with 95% intervals)")
+    print("=" * 78)
+    rows = [r for r in d.get("player_gw_recent", [])
+            if r.get("fdr") is not None and r["mins"] >= 60]
+    if not rows:
+        print("\n  Needs per-match FDR. Re-export with the current fpl_sync.py\n")
+        return
+
+    print(f"\n  {len(rows)} player-matches of 60+ minutes\n")
+    print(f"  {'':5s}{'easy FDR<=2':>16}{'hard FDR>=4':>16}{'gap':>8}"
+          f"{'95% interval':>20}  verdict")
+    real = []
+    for pos in (1, 2, 3, 4):
+        e = [r["pts"] for r in rows if r["pos"] == pos and r["fdr"] <= 2]
+        h = [r["pts"] for r in rows if r["pos"] == pos and r["fdr"] >= 4]
+        if not e or not h:
+            continue
+        n1, m1, _ = _mean_sd(e)
+        n2, m2, _ = _mean_sd(h)
+        gap, ci = _gap_ci(e, h)
+        sig = abs(gap) > ci
+        if sig:
+            real.append(POS[pos])
+        print(f"  {POS[pos]:5s}{m1:>8.2f} (n={n1:>3}){m2:>8.2f} (n={n2:>3})"
+              f"{gap:>8.2f}{gap-ci:>11.2f} to {gap+ci:<6.2f}  "
+              f"{'REAL' if sig else 'noise'}")
+
+    print("\n  CHASING EASY vs AVOIDING HARD")
+    for pos in (1, 2, 3, 4):
+        a = [r["pts"] for r in rows if r["pos"] == pos and r["fdr"] <= 2]
+        b = [r["pts"] for r in rows if r["pos"] == pos and r["fdr"] == 3]
+        c = [r["pts"] for r in rows if r["pos"] == pos and r["fdr"] >= 4]
+        if not (a and b and c):
+            continue
+        g1, c1 = _gap_ci(a, b)
+        g2, c2 = _gap_ci(b, c)
+        print(f"    {POS[pos]:5s} FDR2 over FDR3 {g1:>+6.2f} (+-{c1:.2f})"
+              f"    FDR3 over FDR4+ {g2:>+6.2f} (+-{c2:.2f})")
+
+    print("\n  HOME vs AWAY")
+    for pos in (1, 2, 3, 4):
+        h = [r["pts"] for r in rows if r["pos"] == pos and r["venue"] == "H"]
+        a = [r["pts"] for r in rows if r["pos"] == pos and r["venue"] == "A"]
+        if not (h and a):
+            continue
+        gap, ci = _gap_ci(h, a)
+        print(f"    {POS[pos]:5s} gap {gap:>+5.2f}  +-{ci:.2f}   "
+              f"{'REAL' if abs(gap) > ci else 'noise'}")
+
+    print("\n  Only rows marked REAL survive the sample size. Everything else is")
+    print("  a difference this data cannot distinguish from chance - do not spend")
+    print("  transfers on it. Re-run as gameweeks accumulate and the intervals")
+    print("  will narrow.")
+    if real:
+        print(f"  Currently real: {', '.join(real)}.\n")
+    else:
+        print("  Nothing is currently distinguishable from noise.\n")
+
+
+def sec_arbitrage(d, horizon):
+    """Players whose FPL position is worth more than the role they actually play."""
+    print("=" * 78)
+    print("POSITION ARBITRAGE  (the scoring system is wrong about these players)")
+    print("=" * 78)
+    ap = [p for p in d["all_players"] if p["minutes"] >= 180 and p["status"] == "a"]
+    if not ap:
+        print("\n  Not enough minutes played yet.\n")
+        return
+    tick, _ = build_ticker(d, horizon)
+
+    print("\n  A defender who plays forward earns 6 for a goal AND 4 for a clean")
+    print("  sheet. FPL fixes position in July and rarely changes it.\n")
+
+    for pos, label in ((2, "DEFENDERS with attacking output"),
+                       (3, "MIDFIELDERS carrying defensive load (DEFCON + goals)")):
+        rows = []
+        for p in ap:
+            if p["pos"] != pos:
+                continue
+            per90 = (p["xg"] + p["xa"]) / p["minutes"] * 90
+            dc90 = p["defcon_last4"] / max(1, p["mins_last4"]) * 90
+            score = per90 if pos == 2 else per90 + dc90 / 12.0
+            rows.append((score, per90, dc90, p))
+        rows.sort(key=lambda x: -x[0])
+        print(f"  {label}")
+        print(f"    {'player':15s}{'team':5s}{'£':>5}{'xG+xA/90':>10}{'DEFCON/90':>11}"
+              f"{'own%':>7}{'fdr':>6}")
+        for score, per90, dc90, p in rows[:8]:
+            print(f"    {p['web_name'][:15]:15s}{p['team']:5s}{p['price']:>5.1f}"
+                  f"{per90:>10.2f}{dc90:>11.1f}{p['owned_pct']:>7.1f}"
+                  f"{fdr_avg(tick, p['team']):>6.2f}")
+        print()
+
+    thr = [p for p in ap if p.get("threat") is not None and p["pos"] in (3, 4)]
+    if thr:
+        print("  CHANCE QUALITY vs FINISHING  (threat is FPL's shot-danger index)")
+        print("  High threat, few returns = chances are coming, goals have not.\n")
+        rows = []
+        for p in thr:
+            t90 = p["threat"] / p["minutes"] * 90
+            ret = p["goals"] + p["assists"]
+            rows.append((t90, ret, p))
+        rows.sort(key=lambda x: -x[0])
+        print(f"    {'player':15s}{'team':5s}{'£':>5}{'threat/90':>11}"
+              f"{'G+A':>6}{'xG+xA':>8}{'own%':>7}")
+        for t90, ret, p in rows[:10]:
+            flag = "  <-- due" if t90 > 40 and ret <= 1 else ""
+            print(f"    {p['web_name'][:15]:15s}{p['team']:5s}{p['price']:>5.1f}"
+                  f"{t90:>11.1f}{ret:>6}{p['xg']+p['xa']:>8.2f}"
+                  f"{p['owned_pct']:>7.1f}{flag}")
+        print()
+    else:
+        print("  threat unavailable - re-export with the current fpl_sync.py\n")
+
+
+def sec_consistency(d, horizon):
+    """Floor vs ceiling: who delivers every week, who is all-or-nothing."""
+    print("=" * 78)
+    print("CONSISTENCY  (delivery pattern, not total)")
+    print("=" * 78)
+    idx = gw_index(d)
+    if not idx:
+        print("\n  Needs per-gameweek rows. Run:  python fpl_sync.py --refetch\n")
+        return
+
+    rows = []
+    for name, gws in idx.items():
+        played = [g for g in gws if g["mins"] >= 60]
+        if len(played) < 3:
+            continue
+        pts = [g["pts"] for g in played]
+        n = len(pts)
+        mean = sum(pts) / n
+        sd = (sum((x - mean) ** 2 for x in pts) / (n - 1)) ** 0.5
+        blanks = sum(1 for x in pts if x <= 2)
+        rows.append({"name": name, "team": played[0]["team"],
+                     "pos": played[0]["pos"], "pts": pts, "mean": mean,
+                     "sd": sd, "blanks": blanks, "floor": min(pts),
+                     "ceiling": max(pts), "n": n})
+
+    if not rows:
+        print("\n  Not enough full appearances yet.\n")
+        return
+
+    good = [r for r in rows if r["mean"] >= 3.0]
+    print(f"\n  {len(rows)} players with 3+ full appearances, "
+          f"{len(good)} averaging 3.0+\n")
+
+    print("  METRONOMES  (good average, small swing - captain and bench-boost picks)")
+    print(f"    {'player':15s}{'team':5s}{'pos':4s}{'mean':>6}{'swing':>7}"
+          f"{'floor':>6}{'blanks':>7}   per game")
+    for r in sorted(good, key=lambda x: (x["sd"], -x["mean"]))[:10]:
+        seq = " ".join(str(x) for x in r["pts"][-6:])
+        print(f"    {r['name'][:15]:15s}{r['team']:5s}{POS[r['pos']]:4s}"
+              f"{r['mean']:>6.1f}{r['sd']:>7.1f}{r['floor']:>6}{r['blanks']:>7}"
+              f"   {seq}")
+
+    print("\n  LOTTERY TICKETS  (same average, huge swing - differentials, not anchors)")
+    for r in sorted(good, key=lambda x: -x["sd"])[:8]:
+        seq = " ".join(str(x) for x in r["pts"][-6:])
+        print(f"    {r['name'][:15]:15s}{r['team']:5s}{POS[r['pos']]:4s}"
+              f"{r['mean']:>6.1f}{r['sd']:>7.1f}{r['floor']:>6}{r['blanks']:>7}"
+              f"   {seq}")
+
+    me = my_name(d)
+    mine = {r["web_name"] for r in d["squads"] if r["entry_name"] == me}
+    ours = [r for r in rows if r["name"] in mine]
+    if ours:
+        print("\n  YOUR SQUAD")
+        for r in sorted(ours, key=lambda x: -x["mean"]):
+            seq = " ".join(str(x) for x in r["pts"][-6:])
+            tag = ""
+            if r["mean"] >= 3 and r["sd"] <= 2:
+                tag = "  steady"
+            elif r["sd"] >= 4:
+                tag = "  volatile"
+            print(f"    {r['name'][:15]:15s}{r['team']:5s}{POS[r['pos']]:4s}"
+                  f"{r['mean']:>6.1f}{r['sd']:>7.1f}{r['floor']:>6}"
+                  f"{r['blanks']:>7}   {seq}{tag}")
+
+    print("\n  swing is the standard deviation of gameweek scores. Three matches is")
+    print("  far too few to trust an individual figure - read it again at GW8.\n")
+
+
+def load_projections(path):
+    """Read an external projections CSV. Tolerant about column names.
+
+    Wants a player identifier and a predicted-points column. Recognised:
+      id / element / element_id / player_id      -> FPL element id
+      name / web_name / player / Player          -> player name
+      xPts / pred / points / prediction / proj    -> forecast
+      gw / event / gameweek                      -> optional gameweek
+    """
+    import csv
+    ID_COLS = ("id", "element", "element_id", "player_id")
+    NAME_COLS = ("web_name", "name", "player", "player_name")
+    PTS_COLS = ("xpts", "pred", "prediction", "points", "proj", "predicted_points",
+                "xp", "forecast")
+    GW_COLS = ("gw", "event", "gameweek", "round")
+
+    out = {}
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        reader = csv.DictReader(fh)
+        if not reader.fieldnames:
+            return out, "empty file"
+        low = {c.lower().strip(): c for c in reader.fieldnames}
+        id_c = next((low[c] for c in ID_COLS if c in low), None)
+        name_c = next((low[c] for c in NAME_COLS if c in low), None)
+        pts_c = next((low[c] for c in PTS_COLS if c in low), None)
+        gw_c = next((low[c] for c in GW_COLS if c in low), None)
+        if pts_c is None:
+            return out, f"no forecast column found in: {', '.join(reader.fieldnames)}"
+        if id_c is None and name_c is None:
+            return out, "no player id or name column found"
+        for row in reader:
+            try:
+                val = float(row[pts_c])
+            except (TypeError, ValueError):
+                continue
+            key = None
+            if id_c and row.get(id_c, "").strip():
+                try:
+                    key = ("id", int(float(row[id_c])))
+                except ValueError:
+                    key = None
+            if key is None and name_c:
+                key = ("name", row[name_c].strip())
+            if key is None:
+                continue
+            gw = None
+            if gw_c and row.get(gw_c, "").strip():
+                try:
+                    gw = int(float(row[gw_c]))
+                except ValueError:
+                    gw = None
+            out.setdefault(key, {})[gw] = val
+    return out, None
+
+
+def defcon_expectation(d):
+    """web_name -> expected DEFCON points per start, from measured hit rate.
+
+    Models trained before 2025/26 have never seen this scoring category, so
+    their forecasts are missing up to 2 points per match for defensive players.
+    This estimates the gap without touching the model.
+    """
+    idx = gw_index(d)
+    out = {}
+    for name, rows in idx.items():
+        starts = [r for r in rows if r["mins"] >= 60 and r.get("defcon") is not None]
+        if not starts:
+            continue
+        thr = DEFCON_THRESHOLD.get(starts[0]["pos"])
+        if not thr:                       # GK and FWD have no threshold
+            out[name] = 0.0
+            continue
+        hits = sum(1 for r in starts if (r["defcon"] or 0) >= thr)
+        out[name] = 2.0 * hits / len(starts)
+    return out
+
+
+def sec_compare(d, horizon, proj_path=None):
+    """Score an external projection against the same bar our own model failed."""
+    print("=" * 78)
+    print("EXTERNAL PROJECTION  (scored against the same bar)")
+    print("=" * 78)
+    if not proj_path:
+        print("\n  Pass one:  python fpl_edge.py --section compare "
+              "--projections openfpl.csv\n")
+        return
+    if not os.path.exists(proj_path):
+        print(f"\n  Not found: {proj_path}\n")
+        return
+
+    ext, err = load_projections(proj_path)
+    if err:
+        print(f"\n  Could not read {os.path.basename(proj_path)}: {err}\n")
+        return
+    print(f"\n  {len(ext)} players loaded from {os.path.basename(proj_path)}")
+
+    idx = gw_index(d)
+    events = sorted({r["event"] for r in d.get("player_gw_recent", [])})
+    if len(events) < 2:
+        print("  Need at least 2 gameweeks of results to score against.\n")
+        return
+    target = events[-1]
+
+    by_name = {p["web_name"]: p for p in d["all_players"]}
+    pairs, unmatched = [], 0
+    for name, rows in idx.items():
+        te = [r for r in rows if r["event"] == target]
+        if not te:
+            continue
+        actual = sum(r["pts"] for r in te)
+        pid = by_name.get(name, {}).get("id")
+        vals = ext.get(("id", pid)) if pid is not None else None
+        if vals is None:
+            vals = ext.get(("name", name))
+        if vals is None:
+            unmatched += 1
+            continue
+        pred = vals.get(target, vals.get(None))
+        if pred is None:
+            pred = next(iter(vals.values()))
+        pairs.append((pred, actual, name))
+
+    if len(pairs) < 20:
+        print(f"  Only matched {len(pairs)} players ({unmatched} unmatched).")
+        print("  Check the CSV uses FPL element ids or matching web_names.\n")
+        return
+
+    n = len(pairs)
+    mean_actual = sum(a for _, a, _ in pairs) / n
+    mae = sum(abs(p - a) for p, a, _ in pairs) / n
+    mae_const = sum(abs(mean_actual - a) for _, a, _ in pairs) / n
+    rho = _spearman([p for p, _, _ in pairs], [a for _, a, _ in pairs])
+    bias = sum(p - a for p, a, _ in pairs) / n
+
+    # DEFCON did not exist before 2025/26. Add it back for models that predate it.
+    dc = defcon_expectation(d)
+    adj = [(p + dc.get(nm, 0.0), a, nm) for p, a, nm in pairs]
+    mae_adj = sum(abs(p - a) for p, a, _ in adj) / n
+    rho_adj = _spearman([p for p, _, _ in adj], [a for _, a, _ in adj])
+    bias_adj = sum(p - a for p, a, _ in adj) / n
+    added = sum(dc.get(nm, 0.0) for _, _, nm in pairs) / n
+
+    print(f"  matched {n}, unmatched {unmatched}, scored on GW{target}\n")
+    print(f"    external               MAE {mae:>5.2f}   bias {bias:>+5.2f}")
+    print(f"    CONSTANT ({mean_actual:.2f} for all)  MAE {mae_const:>5.2f}")
+    print(f"    {'PASS' if mae < mae_const else 'FAIL'}: "
+          f"{'beats' if mae < mae_const else 'worse than'} a constant guess by "
+          f"{abs(mae_const-mae):.2f}")
+    print(f"\n    Spearman rank correlation {rho:>+6.3f}   ({_rho_verdict(rho)})")
+
+    print(f"\n  DEFCON-CORRECTED  (adds 2 x measured hit rate; +{added:.2f} "
+          f"pts/player on average)")
+    print(f"    corrected              MAE {mae_adj:>5.2f}   bias {bias_adj:>+5.2f}")
+    print(f"    Spearman rank correlation {rho_adj:>+6.3f}   "
+          f"({_rho_verdict(rho_adj)})")
+    better = "helps" if mae_adj < mae else "hurts"
+    print(f"    the correction {better}: MAE {mae-mae_adj:>+.2f}, "
+          f"rho {rho_adj-rho:>+.3f}")
+    print("    Apply this to any model trained before 2025/26 - the scoring")
+    print("    category did not exist when it was fitted.")
+
+    print("\n  Our own model scored rho near zero. Anything above +0.20 here is")
+    print("  a real improvement and should drive the wildcard. Below that, it is")
+    print("  no better than what we already discarded.\n")
+
+    pairs.sort(key=lambda x: x[0] - x[1])
+    print("  WORST UNDER-CALLS")
+    for pr, ac, nm in pairs[:5]:
+        print(f"    {nm[:18]:18s} predicted {pr:>6.2f}  actual {ac:>3}")
+    print("  WORST OVER-CALLS")
+    for pr, ac, nm in pairs[-5:][::-1]:
+        print(f"    {nm[:18]:18s} predicted {pr:>6.2f}  actual {ac:>3}")
+    print()
+
+
+GOAL_VALUE = {1: 6, 2: 6, 3: 5, 4: 4}
+CS_VALUE = {1: 4, 2: 4, 3: 1, 4: 0}
+
+
+def cs_rate_by_fdr(d):
+    """Measured clean-sheet rate per difficulty bucket, from finished fixtures.
+    Falls back to a flat prior when the export has no results yet."""
+    played = d.get("fixtures_played") or []
+    buckets = defaultdict(list)
+    for f in played:
+        if f.get("h_goals") is None or f.get("a_goals") is None:
+            continue
+        buckets[f["h_fdr"]].append(1 if f["a_goals"] == 0 else 0)
+        buckets[f["a_fdr"]].append(1 if f["h_goals"] == 0 else 0)
+    out = {}
+    for fdr in (2, 3, 4, 5):
+        v = buckets.get(fdr, [])
+        out[fdr] = sum(v) / len(v) if len(v) >= 6 else None
+    known = [x for x in out.values() if x is not None]
+    default = sum(known) / len(known) if known else 0.28
+    return {k: (v if v is not None else default) for k, v in out.items()}, default
+
+
+def history_rates(d):
+    """web_name -> last season's xG and xA per 90, for shrinking components."""
+    best = {}
+    for h in d.get("player_history", []):
+        if h["minutes"] < 900:
+            continue
+        cur = best.get(h["web_name"])
+        if cur is None or h["season"] > cur["season"]:
+            best[h["web_name"]] = h
+    return {k: ((v.get("xg") or 0) / v["minutes"] * 90,
+                (v.get("xa") or 0) / v["minutes"] * 90)
+            for k, v in best.items()}
+
+
+def project_xg(p, fdr, gws_played, cs_table, cs_default, hist, ict_pct=0.5):
+    """Bottom-up expected points. Every term is a scoring rule, not a fitted
+    weight, so it can be read and argued with line by line."""
+    pos = p["pos"]
+    if p.get("mins_last4", 0) < 45:          # recent-activity gate
+        return 0.0
+    # xG and xA are SEASON totals, so the rate must use season minutes.
+    # Before GW5 these are identical; after it they diverge badly.
+    mins = p.get("minutes") or p.get("mins_last4", 0)
+
+    # starts_last4 counts a 4-gameweek window, so the denominator must too.
+    # Distinguish "field absent" from "present and zero" - a player who has
+    # stopped starting should read near zero, not fall back to season starts.
+    starts = p.get("starts_last4")
+    if starts is None:
+        starts, window = p.get("starts") or 0, gws_played
+    else:
+        window = min(4, gws_played)
+    p_start = min(1.0, starts / max(1, window))
+    chance = p.get("chance_next_round")
+    if chance is not None:
+        p_start *= float(chance) / 100.0
+    if p_start <= 0:
+        return 0.0
+    exp_mins = 90.0 * p_start
+
+    # attacking: this season's rate shrunk toward last season's, weight decaying
+    xg90 = (p.get("xg") or 0) / mins * 90
+    xa90 = (p.get("xa") or 0) / mins * 90
+    prior_w = max(2.0, 8.0 - gws_played)
+    hx, ha = hist.get(p["web_name"], (None, None))
+    matches = mins / 90.0
+    if hx is not None:
+        xg90 = (xg90 * matches + hx * prior_w) / (matches + prior_w)
+        xa90 = (xa90 * matches + ha * prior_w) / (matches + prior_w)
+
+    goals = xg90 * (exp_mins / 90.0) * GOAL_VALUE.get(pos, 5)
+    assists = xa90 * (exp_mins / 90.0) * 3.0
+
+    p_cs = cs_table.get(fdr, cs_default)
+    clean = p_cs * CS_VALUE.get(pos, 0) * p_start
+
+    appearance = 2.0 * p_start
+    defcon = p.get("_defcon_pts", 0.0) * p_start
+    bonus = 0.8 * ict_pct * p_start          # top ICT ~0.8 bonus/gw, bottom ~0
+
+    return appearance + goals + assists + clean + defcon + bonus
+
+
+LOG_PATH = "projection_log.csv"
+LOG_FIELDS = ["made_at", "source", "event", "player_id", "web_name", "predicted"]
+
+
+def next_deadline(d, event):
+    """UTC deadline for a gameweek: 90 minutes before its first kickoff.
+    None if the export has no fixtures for it."""
+    from datetime import datetime, timedelta, timezone
+    kos = [f["kickoff_time"] for f in d.get("fixtures_next6", [])
+           if f["event"] == event and f.get("kickoff_time")]
+    if not kos:
+        return None
+    first = min(kos)
+    try:
+        dt = datetime.fromisoformat(first.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt - timedelta(minutes=90)
+
+
+def read_log(path=None):
+    import csv
+    path = path or LOG_PATH
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as fh:
+        return [r for r in csv.DictReader(fh)]
+
+
+def record_projections(d, horizon, source="own", proj_path=None, path=None):
+    """Store this model's forecast for the NEXT gameweek, before it is played.
+
+    Point-in-time discipline: refuses to write once the deadline has passed, so
+    the log can never contain a forecast made with knowledge of the result.
+    Re-running before the deadline replaces the entry with fresher data.
+    """
+    import csv
+    from datetime import datetime, timezone
+    path = path or LOG_PATH
+    target = d["gameweek"] + 1
+    dl = next_deadline(d, target)
+    now = datetime.now(timezone.utc)
+    if dl is None:
+        print(f"  no fixtures for GW{target} in this export - nothing recorded")
+        return 0
+    if now > dl:
+        print(f"  GW{target} deadline passed ({dl:%Y-%m-%d %H:%M} UTC). "
+              f"Refusing to record - it would not be a genuine forecast.")
+        return 0
+
+    rows = []
+    if proj_path:
+        ext, err = load_projections(proj_path)
+        if err:
+            print(f"  could not read {proj_path}: {err}")
+            return 0
+        by_id = {p["id"]: p for p in d["all_players"]}
+        by_nm = {p["web_name"]: p for p in d["all_players"]}
+        for key, vals in ext.items():
+            p = by_id.get(key[1]) if key[0] == "id" else by_nm.get(key[1])
+            if not p:
+                continue
+            v = vals.get(target, vals.get(None))
+            if v is None:
+                v = next(iter(vals.values()))
+            rows.append((p["id"], p["web_name"], v))
+    elif source == "xg":
+        tick, _ = build_ticker(d, horizon)
+        cs_table, cs_default = cs_rate_by_fdr(d)
+        hist = history_rates(d)
+        dc = defcon_expectation(d)
+        icts = sorted(p.get("influence", 0) + p.get("creativity", 0)
+                      + p.get("threat", 0) for p in d["all_players"])
+        for p in d["all_players"]:
+            if p["status"] != "a" or p["mins_last4"] < 45:
+                continue
+            fx = [f for f in tick.get(p["team"], []) if f[0] == target]
+            if not fx:
+                continue                  # blank gameweek: no fixture, no forecast
+            ict = (p.get("influence", 0) + p.get("creativity", 0)
+                   + p.get("threat", 0))
+            pct = (sum(1 for x in icts if x < ict) / len(icts)) if icts else 0.5
+            q = dict(p, _defcon_pts=dc.get(p["web_name"], 0.0))
+            # double gameweek: two matches, so two lots of everything
+            proj = sum(project_xg(q, f[2], d["gameweek"], cs_table, cs_default,
+                                  hist, pct) for f in fx)
+            if proj > 0:
+                rows.append((p["id"], p["web_name"], round(proj, 3)))
+    else:
+        tick, _ = build_ticker(d, horizon)
+        priors = positional_priors(d["all_players"])
+        personal = personal_priors(d)
+        for p in d["all_players"]:
+            if p["status"] != "a" or p["mins_last4"] < 45:
+                continue
+            fx = [f for f in tick.get(p["team"], []) if f[0] == target]
+            t = {p["team"]: fx} if fx else {}
+            proj, _, _ = project(p, t, horizon, d["gameweek"], priors, personal)
+            if proj > 0:
+                rows.append((p["id"], p["web_name"], round(proj, 3)))
+
+    if not rows:
+        print("  nothing to record")
+        return 0
+
+    existing = read_log(path)
+    keep = [r for r in existing
+            if not (r["source"] == source and int(r["event"]) == target)]
+    stamp = now.isoformat(timespec="seconds")
+    for pid, nm, val in rows:
+        keep.append({"made_at": stamp, "source": source, "event": str(target),
+                     "player_id": str(pid), "web_name": nm,
+                     "predicted": str(val)})
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=LOG_FIELDS)
+        w.writeheader()
+        w.writerows(keep)
+    print(f"  recorded {len(rows)} forecasts for GW{target} as '{source}' "
+          f"({dl - now} before deadline)")
+    return len(rows)
+
+
+def sec_calibration(d, horizon, path=None):
+    """Rolling accuracy across every gameweek we forecast in advance."""
+    print("=" * 78)
+    print("CALIBRATION  (accumulated forecast record)")
+    print("=" * 78)
+    log = read_log(path)
+    if not log:
+        print("\n  No forecasts recorded yet. Run before each deadline:")
+        print("    python fpl_edge.py --record\n")
+        return
+
+    actual = defaultdict(dict)
+    for r in d.get("player_gw_recent", []):
+        actual[r["event"]][r["web_name"]] = \
+            actual[r["event"]].get(r["web_name"], 0) + r["pts"]
+
+    graded = defaultdict(list)
+    pending = defaultdict(int)
+    for r in log:
+        ev = int(r["event"])
+        if ev not in actual:
+            pending[(r["source"], ev)] += 1
+            continue
+        a = actual[ev].get(r["web_name"])
+        if a is None:
+            continue
+        graded[(r["source"], ev)].append((float(r["predicted"]), a))
+
+    if not graded:
+        weeks = sorted({e for _, e in pending})
+        print(f"\n  {len(log)} forecasts recorded for GW{weeks} - "
+              f"not played yet.\n")
+        return
+
+    print(f"\n  {'source':10s}{'GW':>4}{'n':>6}{'MAE':>7}{'const':>7}"
+          f"{'rho':>8}{'bias':>7}   verdict")
+    by_source = defaultdict(list)
+    for (src, ev), pairs in sorted(graded.items()):
+        n = len(pairs)
+        mean = sum(a for _, a in pairs) / n
+        mae = sum(abs(p - a) for p, a in pairs) / n
+        const = sum(abs(mean - a) for _, a in pairs) / n
+        rho = _spearman([p for p, _ in pairs], [a for _, a in pairs])
+        bias = sum(p - a for p, a in pairs) / n
+        by_source[src].extend(pairs)
+        print(f"  {src[:10]:10s}{ev:>4}{n:>6}{mae:>7.2f}{const:>7.2f}"
+              f"{rho:>8.3f}{bias:>+7.2f}   "
+              f"{'beats const' if mae < const else 'loses'}")
+
+    print()
+    for src, pairs in sorted(by_source.items()):
+        n = len(pairs)
+        weeks = len({e for s, e in graded if s == src})
+        mean = sum(a for _, a in pairs) / n
+        mae = sum(abs(p - a) for p, a in pairs) / n
+        const = sum(abs(mean - a) for _, a in pairs) / n
+        rho = _spearman([p for p, _ in pairs], [a for _, a in pairs])
+        se = (1.0 / (n - 1)) ** 0.5 if n > 2 else 1.0
+        print(f"  {src.upper()} over {weeks} gameweek(s), {n} forecasts")
+        print(f"    MAE {mae:.3f} vs constant {const:.3f}   "
+              f"rho {rho:+.3f} +-{1.96*se:.3f}")
+        verdict = ("real signal" if rho - 1.96 * se > 0.10
+                   else "still indistinguishable from noise")
+        print(f"    {verdict}")
+        if weeks < 3:
+            print(f"    {3-weeks} more gameweek(s) before this is worth acting on.")
+        print()
+
+    for (src, ev), cnt in sorted(pending.items()):
+        print(f"  {cnt} forecasts pending for {src} GW{ev}")
+    if pending:
+        print()
+
+
+SECTIONS = {
+    "league": lambda d, h: sec_league(d),
+    "eo": lambda d, h: sec_eo(d),
+    "squad": sec_squad,
+    "ticker": sec_ticker,
+    "defcon": lambda d, h: sec_defcon(d),
+    "value": sec_value,
+    "bench": lambda d, h: sec_bench(d),
+    "brief": sec_brief,
+    "wildcard": sec_wildcard,
+    "backtest": sec_backtest,
+    "fdr": sec_fdr,
+    "sensitivity": sec_sensitivity,
+    "arbitrage": sec_arbitrage,
+    "consistency": sec_consistency,
+    "compare": lambda d, h: sec_compare(d, h, PROJECTIONS_PATH),
+    "calibration": lambda d, h: sec_calibration(d, h),
+}
+
+PROJECTIONS_PATH = None
+
+
+def force_utf8():
+    """Windows consoles default to cp1252 and choke on names like Muharemovic.
+    Re-encode our own streams as UTF-8, replacing anything that still fails."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
+class _Tee:
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, data):
+        for st in self.streams:
+            try:
+                st.write(data)
+            except UnicodeEncodeError:
+                enc = getattr(st, "encoding", None) or "ascii"
+                st.write(data.encode(enc, "replace").decode(enc, "replace"))
+
+    def flush(self):
+        for st in self.streams:
+            try:
+                st.flush()
+            except Exception:
+                pass
+
+
+def main():
+    force_utf8()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("export", nargs="?", default=None,
+                    help="fpl_export_gwN.json (default: newest in this folder)")
+    ap.add_argument("--out", help="also write the report to this file")
+    ap.add_argument("--record", action="store_true",
+                    help="store this model's forecast for the next gameweek "
+                         "(refuses once the deadline has passed)")
+    ap.add_argument("--source", default="own",
+                    help="label for --record, e.g. openfpl")
+    ap.add_argument("--projections",
+                    help="external projections CSV to score (use with "
+                         "--section compare)")
+    ap.add_argument("--brief", action="store_true",
+                    help="short pre-deadline summary only")
+    ap.add_argument("--diff", nargs="?", const="auto", default=None,
+                    help="compare against an older export (default: previous GW)")
+    ap.add_argument("--horizon", type=int, default=6, help="fixtures to look ahead")
+    ap.add_argument("--section", default="all",
+                    help="comma list: " + ",".join(SECTIONS))
+    args = ap.parse_args()
+
+    global PROJECTIONS_PATH
+    PROJECTIONS_PATH = args.projections
+
+    path = args.export or newest_export()
+    if not path:
+        sys.exit("No fpl_export_gw*.json found here. Run fpl_sync.py first, "
+                 "or pass the filename: python fpl_edge.py fpl_export_gw3.json")
+    if not os.path.exists(path):
+        sys.exit(f"Not found: {path}")
+    print(f"[reading {os.path.basename(path)}]\n")
+
+    d = load(path)
+    if args.record:
+        record_projections(d, args.horizon, args.source, args.projections)
+        if args.section == "all":
+            return
+    if args.brief:
+        args.section = "brief"
+    if args.section == "all":
+        want = [w for w in SECTIONS
+                if w not in ("brief", "wildcard", "backtest", "compare",
+                             "calibration")]
+    else:
+        want = args.section.split(",")
+
+    prev = None
+    if args.diff:
+        ppath = previous_export(path) if args.diff == "auto" else args.diff
+        if not ppath or not os.path.exists(ppath):
+            print("[no earlier export found to diff against - skipping]\n")
+        else:
+            prev = load(ppath)
+            print(f"[diffing against {os.path.basename(ppath)}]\n")
+
+    sink = open(args.out, "w", encoding="utf-8") if args.out else None
+    real = sys.stdout
+    try:
+        if sink:
+            sys.stdout = _Tee(real, sink)
+        if prev:
+            sec_diff(d, prev, args.horizon)
+        for s in want:
+            if s not in SECTIONS:
+                continue
+            SECTIONS[s](d, args.horizon)
+    finally:
+        sys.stdout = real
+        if sink:
+            sink.close()
+            print(f"[written to {args.out}]")
+
+
+if __name__ == "__main__":
+    main()
