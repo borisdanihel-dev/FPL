@@ -18,12 +18,12 @@ Everything is standard-library Python. No pip. Keep it that way.
 | file | role |
 |---|---|
 | `fpl_sync.py` (494 lines) | API → SQLite (`fpl.sqlite`) → `fpl_export_gwN.json`. Schema migrations in place, so old DBs upgrade. |
-| `fpl_edge.py` (1722 lines) | Report generator. ~16 sections, `--section a,b,c`, `--brief`, `--diff` (vs previous export), `--out file`, `--record --source own\|xg` (forecast logging), `--horizon N`. |
-| `test_fpl.py` (821 lines, 61 tests) | unittest. Synthetic export dicts, no network. Run before every change. |
+| `fpl_edge.py` (1816 lines, 2026-09-11) | Report generator. ~16 sections, `--section a,b,c`, `--brief`, `--diff` (vs previous export), `--out file`, `--record --source own\|xg` (forecast logging), `--horizon N`. |
+| `test_fpl.py` (1031 lines, 75 tests, 2026-09-11) | unittest. Synthetic export dicts, no network. Run before every change. |
 | `fpl_run.bat` | Daily job: tests → sync → record both forecast sources → report. UTF-8 forced (`PYTHONIOENCODING`, `chcp 65001`) because player names have accents. |
 | `projection_log.csv` | Point-in-time forecasts. Columns: `made_at,source,event,player_id,web_name,predicted`. |
 | `reports/` | dated report + run log per day |
-| `fpl_xg.py`, `test_fpl_xg.py` | **obsolete** — a standalone xG module written before Boris integrated his own `project_xg` inline. Delete or ignore. |
+| `fpl_xg.py`, `test_fpl_xg.py` | **gone** — the obsolete standalone xG module is not in the folder (checked 2026-09-11). |
 
 ## Data flow
 
@@ -80,7 +80,7 @@ trailing slash once served a stale cache. Names come only from
 6. Every projection term should be a scoring rule you can read and argue with,
    not a fitted weight.
 
-## Known bugs (patch supplied as `fpl_edge_xg_fixes.patch`, may not be applied yet)
+## Known bugs — FIXED (patch applied and mutation-verified 2026-09-07; patch file removed 2026-09-11, see git history)
 
 In `project_xg` / the `xg` branch of `record_projections`:
 
@@ -97,7 +97,7 @@ Known omissions (not bugs; fix when calibration shows the bias):
   the hour often; `player_gw_recent` has minutes per game to build a p60)
 - `saves` is in the `player_gw` table but not in the `player_gw_recent` export
 
-## Backlog, in priority order
+## Backlog, in priority order — superseded by `BACKLOG.md` (Parts 1–3)
 
 1. Apply the three fixes above; add tests for each (a season-vs-window minutes
    test, a p_start-at-GW10 test, a blank-GW test).
@@ -130,7 +130,7 @@ fpl_run.bat                                          # the whole daily job
 
 Schedule `fpl_run.bat` daily (Task Scheduler) so `price_history` accumulates
 and forecasts are recorded before each deadline. GW4 deadline: Sat 12 Sep
-2026, 15:30 CEST.
+2026, **14:30 CEST** (corrected 2026-09-11; was 15:30 — `next_deadline()` gives 12:30 UTC).
 
 ## FPL context the code serves (so recommendations stay consistent)
 
