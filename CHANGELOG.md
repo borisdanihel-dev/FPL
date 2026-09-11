@@ -228,3 +228,63 @@ because the definition below was fixed before they were played.
 
 Use, per BACKLOG Part 3 D1: floor protection (exclude players likely to blank),
 **not** ranking the players who start.
+
+---
+
+## 2026-09-11 — G1: the ruler fixed and every rho on record re-derived
+
+**R1 — tie-corrected Spearman.** Tied values now share their average rank.
+Test: shuffling the input rows must not change rho; known value
+`rho([1,2,2,3],[1,2,3,4]) = 3/sqrt(10)`. Mutation (old ranker): both red.
+
+**R2 — grade the whole population.** `grade_forecasts()` and
+`backtest_population()` grade a benched player (team played, no row) as 0 and
+leave a true blank ungraded; they join on element id when the export carries
+it. Tests: benched graded as 0, blank not graded, shared web_name graded
+separately, backtest keeps benched and drops blanks. Mutations: 5 of 5 red.
+Recording path untouched: GW4 regenerated with the patched code, 529/529
+identical to the log.
+
+**Found while building R2 — two more grading defects, not yet fixed** (both
+need `fpl_sync.py`, deferred until after the 11 Sep 23:55 run so nothing on
+tonight's path changed):
+- 17 web_names are shared by 2+ players; 13 of them (Palmer, Johnson, James,
+  King, Martinez, ...) are in the GW4 log. `player_gw_recent` has no player id,
+  so name-keyed grading summed both players' points. The grader now uses ids;
+  the export must start carrying them.
+- A double gameweek exports **two** rows per player, each carrying the full
+  gameweek total (the fixtures join fans out). Synthetic check: 12 real points
+  graded as 24. Latent until the first DGW.
+
+**R3 — every rho on record, re-derived.** The old ruler reproduces all three
+failed-attempt rows exactly (MAE 2.51/2.47/2.55, const 2.38, rho
+−0.073/−0.025/−0.026), so the reconstruction is faithful.
+
+| `project()` attempt | MAE | const | old rho | fixed rho (95% CI) |
+|---|---|---|---|---|
+| 1 shrink to positional median | 2.49 | 2.36 | −0.073 | +0.152 (+0.020..+0.283) |
+| 2 + fixture term | 2.45 | 2.36 | −0.025 | **+0.182** (+0.050..+0.313) |
+| 3 + personal priors | 2.55 | 2.36 | −0.026 | +0.151 (+0.019..+0.282) |
+
+Still fails: MAE loses to a constant in every row, no rho reaches +0.20. But
+every interval clears zero — weak, not absent. Played-only, attempt 3 is
++0.059, so most of it is spotting who gets benched (BACKLOG Part 3 D1).
+
+Quintile pattern: mean actual points **rise** with the projection (Q1 2.93 →
+Q5 3.83). "The lowest-rated outscore the highest-rated" was a per-quintile
+bias misread as a cross-quintile comparison — it is overconfidence (spread too
+wide: bias Q1 −1.04, Q5 +1.70), not inversion.
+
+Form, GW1-2 per 90 → GW3, fixed ruler: points +0.061 (CI −0.070..+0.193), xG
++0.133 (+0.002..+0.265), goals +0.135 (+0.004..+0.267). The recorded
+−0.202 / −0.077 / −0.092 do not reproduce under either ruler with this
+population.
+
+**Verdicts.** `_rho_verdict` ignored sample size and called +0.151 on 224
+players "no signal - this is noise". It now reads the 95% interval: +0.151/224
+→ "real but weak - below the +0.20 bar"; +0.30/20 → "indistinguishable from
+zero". Mutation (interval ignored): red. Printed claims in `sec_wildcard` and
+`sec_compare` ("no better than shuffling", "rho near zero") and the two
+findings in `CLAUDE_opusChat.md` corrected, with the old claim kept visible.
+
+Suite: 67 → 75 tests, all green.

@@ -682,9 +682,10 @@ def sec_wildcard(d, horizon):
     print(f"\n    keeps from your current 15 ({len(keep)}): {', '.join(sorted(keep))}")
 
     print("\n  ! Run --section backtest before trusting the ordering above.")
-    print("    On GW1-2 -> GW3 this projection scored a rank correlation of")
-    print("    roughly zero, i.e. no better than shuffling. Use the shortlists")
-    print("    as a price-and-fixture filter, not as a ranking.")
+    print("    On GW1-2 -> GW3 (re-measured 2026-09-11) this projection ranked")
+    print("    players at rho +0.15: real but weak, below the +0.20 bar, and")
+    print("    mostly from spotting who gets benched. Use the shortlists as a")
+    print("    price-and-fixture filter, not as a ranking.")
     print("\n  HOW THIS IS SCORED  (read before trusting it)")
     print("    Raw points per 90 is shrunk toward the positional median with a")
     print(f"    {SHRINK:.0f}-match prior, so a hot start over 2-3 games does not read as")
@@ -786,14 +787,18 @@ def _spearman(a, b):
     return num / den if den else 0.0
 
 
-def _rho_verdict(rho):
-    if rho >= 0.35:
-        return "usable"
-    if rho >= 0.20:
-        return "weak but real"
-    if rho > -0.10:
-        return "no signal - this is noise"
-    return "inverted - actively misleading"
+def _rho_verdict(rho, n):
+    """Read a rank correlation against the project's bar: +0.20, with a 95%
+    interval clear of zero. The interval decides whether it is real at all -
+    +0.15 on 224 players is real; +0.30 on 20 players is not."""
+    half = 1.96 / (n - 1) ** 0.5 if n > 2 else float("inf")
+    if rho - half <= 0 <= rho + half:
+        return "indistinguishable from zero"
+    if rho < 0:
+        return "inverted - actively misleading"
+    if rho < 0.20:
+        return "real but weak - below the +0.20 bar"
+    return "clears +0.20 this week - needs three graded weeks"
 
 
 def backtest_population(d, train, target):
@@ -887,7 +892,7 @@ def sec_backtest(d, horizon):
         print(f"    FAIL: WORSE than guessing the mean, by {mae-mae_const:.2f} "
               f"pts/player")
     print(f"\n    Spearman rank correlation {rho:>+6.3f}   "
-          f"({_rho_verdict(rho)})")
+          f"({_rho_verdict(rho, n)})")
     print("    Ordering is what a squad picker needs. Below about +0.20 the")
     print("    projection is not usable for ranking players.")
 
@@ -1352,22 +1357,23 @@ def sec_compare(d, horizon, proj_path=None):
     print(f"    {'PASS' if mae < mae_const else 'FAIL'}: "
           f"{'beats' if mae < mae_const else 'worse than'} a constant guess by "
           f"{abs(mae_const-mae):.2f}")
-    print(f"\n    Spearman rank correlation {rho:>+6.3f}   ({_rho_verdict(rho)})")
+    print(f"\n    Spearman rank correlation {rho:>+6.3f}   ({_rho_verdict(rho, n)})")
 
     print(f"\n  DEFCON-CORRECTED  (adds 2 x measured hit rate; +{added:.2f} "
           f"pts/player on average)")
     print(f"    corrected              MAE {mae_adj:>5.2f}   bias {bias_adj:>+5.2f}")
     print(f"    Spearman rank correlation {rho_adj:>+6.3f}   "
-          f"({_rho_verdict(rho_adj)})")
+          f"({_rho_verdict(rho_adj, n)})")
     better = "helps" if mae_adj < mae else "hurts"
     print(f"    the correction {better}: MAE {mae-mae_adj:>+.2f}, "
           f"rho {rho_adj-rho:>+.3f}")
     print("    Apply this to any model trained before 2025/26 - the scoring")
     print("    category did not exist when it was fitted.")
 
-    print("\n  Our own model scored rho near zero. Anything above +0.20 here is")
-    print("  a real improvement and should drive the wildcard. Below that, it is")
-    print("  no better than what we already discarded.\n")
+    print("\n  Our own model ranks at about +0.15 (GW3, re-measured 2026-09-11):")
+    print("  real but below the +0.20 bar. Anything clearing +0.20 over three")
+    print("  graded weeks is a real improvement and may drive the wildcard.")
+    print("  Below that, it is no better than what we already discarded.\n")
 
     pairs.sort(key=lambda x: x[0] - x[1])
     print("  WORST UNDER-CALLS")

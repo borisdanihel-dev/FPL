@@ -53,9 +53,13 @@ hard cutoff GW16–17.
 All from this season's data, all reproducible from the export. **These are the
 output that matters — the code is scaffolding around them.**
 
-**Form is anti-predictive.** GW1–2 points per 90 predicting GW3 points:
-Spearman −0.202, SE ≈ 0.10. Significantly negative. xG is less bad (−0.077)
-than goals (−0.092), both less bad than points, but none is positive yet.
+**Form is not predictive** *(corrected 2026-09-11 — previously "anti-predictive,
+−0.202"; see CHANGELOG)*. The old figure came from a ranker that broke ties in
+the export's points-DESC row order, which pushes form-based correlations
+negative by construction, and from grading only players who played. Fixed
+ruler, GW1–2 per 90 → GW3 points: points +0.061 (CI −0.070..+0.193),
+xG +0.133 (CI +0.002..+0.265), goals +0.135 (CI +0.004..+0.267). Nothing is
+negative. The original −0.202 / −0.077 / −0.092 could not be reproduced.
 
 **FDR predicts clean sheets, not goals.** Over 30 matches: teams rated easy
 (FDR ≤2) versus hard (≥4) scored 1.38 vs 1.31 goals — a 0.06 gap, noise.
@@ -84,9 +88,27 @@ rank correlation. Ordering is what a squad picker needs; below ~+0.20 it's unusa
 | + fixture term (actual per-match FDR) | 2.47 | worse | −0.025 |
 | + personal priors (last-season ppg) | 2.55 | worse | −0.026 |
 
-Quintile bias is inverted: the players it rates lowest outscore the ones it
-rates highest (Q1 bias −1.92, Q5 +1.08). Three gameweeks cannot support
-per-player point forecasting.
+*Re-derived 2026-09-11 with the fixed ruler (tie-corrected ranks, benched
+players graded as 0). The old ruler reproduces every row above exactly, so the
+reconstruction is faithful:*
+
+| Attempt | MAE | vs constant 2.36 | rho (95% CI) |
+|---|---|---|---|
+| shrinkage to positional median | 2.49 | worse | +0.152 (+0.020..+0.283) |
+| + fixture term | 2.45 | worse | **+0.182** (+0.050..+0.313) |
+| + personal priors | 2.55 | worse | +0.151 (+0.019..+0.282) |
+
+**Still fails** — MAE loses to a constant in every row and no rho reaches +0.20.
+But it is weak, not absent: every interval clears zero. Most of it is spotting
+who gets benched — played-only, attempt 3 is +0.059. The fixture term helps;
+personal priors hurt.
+
+*Corrected:* the quintile pattern is **overconfidence, not inversion**. Mean
+actual points rise with the projection (Q1 2.93 → Q5 3.83); the bias column is
+negative at the bottom and positive at the top (Q1 −1.04, Q5 +1.70) because the
+projections are spread too wide. The old claim that the lowest-rated outscore
+the highest-rated was a misreading of a per-quintile bias as a cross-quintile
+comparison. Three gameweeks still cannot support per-player point forecasting.
 
 `project()` is retained only as the `own` baseline in the head-to-head. It
 should not drive decisions.

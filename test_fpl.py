@@ -934,6 +934,13 @@ class RankCorrelation(unittest.TestCase):
                 E._spearman([pred[i] for i in idx], [act[i] for i in idx]),
                 base, places=12, msg="rho changed when only the row order did")
 
+    def test_verdict_reads_the_interval_not_just_the_size(self):
+        """+0.151 on 224 players was labelled 'noise' though its interval
+        excludes zero; a large rho on a handful of players is the reverse."""
+        self.assertIn("below the +0.20 bar", E._rho_verdict(0.151, 224))
+        self.assertIn("indistinguishable", E._rho_verdict(0.30, 20))
+        self.assertIn("indistinguishable", E._rho_verdict(-0.05, 224))
+
     def test_tied_values_share_their_average_rank(self):
         # ranks of [1, 2, 2, 3] are [0, 1.5, 1.5, 3]: hand-computed rho 3/sqrt(10)
         self.assertAlmostEqual(E._spearman([1, 2, 2, 3], [1, 2, 3, 4]),
