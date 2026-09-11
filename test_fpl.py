@@ -19,6 +19,7 @@ from contextlib import redirect_stdout
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                            # noqa: E402
+import p1_eval as P1                                            # noqa: E402
 
 TEAMS = ["ARS", "BHA", "CHE", "CRY", "HUL", "LIV", "MCI", "MUN", "NEW", "NFO"]
 ENTRIES = ["My Team", "Rival A", "Rival B", "Rival C"]
@@ -1040,6 +1041,128 @@ class RestDays(unittest.TestCase):
         out = run("brief", make_export())
         self.assertIn("rest", out)
         self.assertIn("not a fatigue measure", out)
+
+
+def _p1_world():
+    """Four teams, one fixture a week each. GW1-3 in the pre export, GW4-5
+    results in the post export. Each player pins one reading of the rules."""
+    def fx(ev, h, a):
+        return {"event": ev, "home": h, "away": a, "h_goals": 1, "a_goals": 0,
+                "h_fdr": 3, "a_fdr": 3, "kickoff_time": None}
+    pairs = (("AAA", "BBB"), ("CCC", "DDD"))
+    pre_fx = [fx(ev, h, a) for ev in (1, 2, 3) for h, a in pairs]
+    post_fx = pre_fx + [fx(ev, h, a) for ev in (4, 5) for h, a in pairs]
+    spec = {        # id: (team, GW1-3 minutes, GW4 minutes, GW5 minutes)
+        1: ("AAA", 270, 90, 90),   # nailed: unflagged, never blanks
+        2: ("AAA", 180, 0, 90),    # exactly on the boundary: flagged; benched GW4
+        3: ("BBB", 181, 90, 90),   # one minute over: unflagged
+        4: ("BBB", 180, 60, 60),   # the 60-minute substitute: flagged, never blanks
+        5: ("CCC", 0, 90, 90),     # no GW1-3 minutes: predictor undefined
+        6: ("DDD", 270, 90, 0),    # nailed, benched GW5: unflagged, blanks
+    }
+    pre = {"gameweek": 3, "fixtures_played": pre_fx,
+           "all_players": [{"id": i, "team": t, "mins_last4": m}
+                           for i, (t, m, _, _) in spec.items()]}
+    # post-time minutes are absurd on purpose: if they leak, nobody is flagged
+    post = {"gameweek": 5, "fixtures_played": post_fx,
+            "all_players": [{"id": i, "team": t, "mins_last4": 999}
+                            for i, (t, _, _, _) in spec.items()],
+            "player_gw_recent": [
+                {"event": ev, "player_id": i, "web_name": f"P{i}", "mins": m,
+                 "pts": 2}
+                for i, (_, _, m4, m5) in spec.items()
+                for ev, m in ((4, m4), (5, m5)) if m > 0]}
+    log = [{"source": "xg", "event": "4", "player_id": str(i)} for i in spec]
+    return pre, post, log
+
+
+class P1Evaluation(unittest.TestCase):
+    """The frozen P1 evaluation. Each test pins one reading that could
+    otherwise be chosen after the result was visible."""
+
+    @staticmethod
+    def _by_id(r):
+        return {p["id"]: p for p in r["players"]}
+
+    def test_newcombe_matches_the_published_example(self):
+        # Newcombe (1998) example: 56/70 vs 48/80, hybrid score: 0.0524 to 0.3339
+        d, lo, hi = P1.newcombe(56, 70, 48, 80)
+        self.assertAlmostEqual(d, 0.2, places=12)
+        self.assertAlmostEqual(lo, 0.0524, places=4)
+        self.assertAlmostEqual(hi, 0.3339, places=4)
+
+    def test_interval_does_not_collapse_on_empty_cells(self):
+        """The normal approximation gives 0 +- 0 for 0/20 vs 0/30: certainty
+        from no events. A thin cell must widen the interval, not erase it."""
+        _, lo, hi = P1.newcombe(0, 20, 0, 30)
+        self.assertLess(lo, -0.05)
+        self.assertGreater(hi, 0.05)
+
+    def test_benched_is_a_blank_but_a_blank_team_drops_the_player(self):
+        pre, post, log = _p1_world()
+        self.assertTrue(self._by_id(P1.evaluate(pre, post, log))[2]["blank"],
+                        "no minutes while his team played must be a blank")
+        post["fixtures_played"] = [
+            f for f in post["fixtures_played"]
+            if not (f["event"] == 5 and "DDD" in (f["home"], f["away"]))]
+        r = P1.evaluate(pre, post, log)
+        self.assertNotIn(6, self._by_id(r), "a team with no fixture read as a blank")
+        self.assertIn(6, r["dropped"][P1.DROP_FIXTURE])
+
+    def test_no_prior_minutes_is_dropped_not_read_as_zero(self):
+        r = P1.evaluate(*_p1_world())
+        self.assertNotIn(5, self._by_id(r))
+        self.assertIn(5, r["dropped"][P1.DROP_PREDICTOR])
+
+    def test_boundary_is_inclusive(self):
+        by = self._by_id(P1.evaluate(*_p1_world()))
+        self.assertTrue(by[2]["flag"], "180 of 270 must be flagged")
+        self.assertFalse(by[3]["flag"], "181 of 270 must not be")
+
+    def test_predictor_comes_from_gw1_3_only(self):
+        """The GW5-time window spans GW1-4 and contains GW4's outcome."""
+        self.assertTrue(self._by_id(P1.evaluate(*_p1_world()))[4]["flag"])
+        with self.assertRaises(ValueError):
+            P1.predictor(_p1_world()[1])
+
+    def test_the_60_minute_substitute_is_counted_as_a_cost(self):
+        """Flagged at 180 (60 a game), never blanks, never plays every minute.
+        'Every available minute' alone would hide him."""
+        r = P1.evaluate(*_p1_world())
+        p = self._by_id(r)[4]
+        self.assertTrue(p["flag"] and not p["blank"] and not p["full"])
+        self.assertGreater(r["cost"]["flagged_did_not_blank"],
+                           r["cost"]["flagged_every_minute"])
+
+    def test_post_export_without_ids_is_refused(self):
+        pre, post, log = _p1_world()
+        for row in post["player_gw_recent"]:
+            del row["player_id"]
+        with self.assertRaises(ValueError):
+            P1.evaluate(pre, post, log)
+
+    def test_thin_cells_and_the_power_caveat_are_printed(self):
+        out = P1.report(P1.evaluate(*_p1_world()))
+        self.assertIn("thin cell", out)
+        self.assertIn("UNPROVEN, not disproven", out)
+
+    def test_a_screen_pointing_the_wrong_way_is_a_fail_not_unproven(self):
+        pre, post, log = _p1_world()
+        pre["all_players"], post["all_players"] = [], []
+        post["player_gw_recent"], log[:] = [], []
+        for i in range(60):
+            pid, flagged = 100 + i, i < 30
+            team = ("AAA", "BBB", "CCC", "DDD")[i % 4]
+            pre["all_players"].append({"id": pid, "team": team,
+                                       "mins_last4": 90 if flagged else 270})
+            post["all_players"].append({"id": pid, "team": team})
+            log.append({"source": "xg", "event": "4", "player_id": str(pid)})
+            if flagged:                 # flagged all play, unflagged all benched
+                for ev in (4, 5):
+                    post["player_gw_recent"].append(
+                        {"event": ev, "player_id": pid, "mins": 90, "pts": 2})
+        self.assertTrue(P1.evaluate(pre, post, log)["verdict"]
+                        .startswith("FAIL - inverted"))
 
 
 class Hygiene(unittest.TestCase):

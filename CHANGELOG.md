@@ -406,3 +406,54 @@ fully independent. Noted, not corrected.
 **Power at the current group sizes (84 / 172).** Blank rates 35% vs 7% → gap
 +0.28 ± 0.11, clears. 25% vs 10% → +0.15 ± 0.10, clears. 20% vs 12% → +0.08 ±
 0.10, **spans zero**. The test can detect a large separation, not a modest one.
+
+---
+
+## 2026-09-11 22:30 CEST — P1 evaluation code FROZEN: `p1_eval.py` (amends the 22:04 entry; do not edit)
+
+The 22:04 entry fixed the rules in prose. This fixes how they are read, in code,
+before GW4 kicks off, so no edge case is decided after its effect on the answer
+is visible. Run once, on the first export after GW5 has finished:
+`python p1_eval.py fpl_export_gw3.json fpl_export_gw5.json`.
+
+**Pinned readings — each one a place where a plausible choice changes the number:**
+
+- **A missing row is never read on its own.** Whether a player's team played is
+  read from finished fixtures. No row + team played = blank. Team had no
+  finished fixture = player dropped, with the reason. The same missing row means
+  opposite things in the two cases.
+- **An undefined predictor is dropped, never read as zero.** No GW1–3 minutes,
+  or absent from the GW3 export → dropped and counted. (Cannot occur for this
+  population: `xg` recording already requires 45+ GW1–3 minutes. Real run: 256
+  players, 0 undefined, 84 flagged, 172 not.)
+- **The predictor comes from the GW3 export only.** Handing it any other export
+  raises.
+- **The team is the one at forecast time.** A player whose club differs between
+  the two exports is dropped.
+- **The post export must be GW5–GW9 and carry `player_id`.** GW4 falls out of the
+  six-week window after GW9, and web_names are not unique; both are refused
+  rather than guessed.
+- **Interval: Newcombe's hybrid score (1998, method 10), not the normal
+  approximation.** `_gap_ci` was written for mean points; on proportions it
+  collapses to 0 ± 0 when a cell is empty. Newcombe reproduces the published
+  example (56/70 vs 48/80 → 0.0524 .. 0.3339) and stays wide on empty cells. The
+  raw 2×2 counts are always printed, with a warning when any cell is under 5.
+- **Three verdicts, not two.** Lower bound above zero → **PASS**. Upper bound
+  below zero → **FAIL — inverted**: the screen points the wrong way.
+  Otherwise → **UNPROVEN, not disproven.**
+
+**Power caveat, written into the verdict** — corrected from the "roughly 20
+points" proposed in review. At 84 flagged / 172 unflagged, 80% power needs a gap
+of **13–16 points** (unflagged blank rate 5–15%), and a **10-point gap is about a
+coin flip** (50% power at 8–11 points). A failure is consistent with a real
+effect of moderate size.
+
+**Cost reported alongside, both readings:** flagged players who did not blank,
+and flagged players who played every available minute. The first counts the
+nailed 60-minute substitute; the second hides him.
+
+**Verified:** 10 tests (`P1Evaluation`); 10 mutations — Wald interval, a
+missing fixture read as a blank, no minutes read as zero, an exclusive boundary,
+predictor read from the post export, id-less export accepted, cost counting
+only full-minute players, thin-cell warning suppressed, caveat dropped, inverted
+result reported as unproven — each red. Suite 78 → 88.
