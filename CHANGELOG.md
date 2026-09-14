@@ -678,3 +678,38 @@ is exactly why it is a hard bar to beat on rank correlation and why BUILD_SPEC
 ignoring a blank, ignoring a double, an uncapped denominator, `or` instead of
 `is None`, and injury doubt dropped — each red. Suite 103 → 108, and the gate
 passes under the batch environment.
+
+---
+
+## 2026-09-14 — Step 2: reliability as a function of training window (2025/26)
+
+`python fpl_hist.py historical/2025-26 --windows 4,8,12,20,38`. Odd vs even
+gameweeks within each window, tie-corrected Spearman, `population="appeared"`
+for minutes. r_half, with n in brackets:
+
+| metric | GW4 | GW8 | GW12 | GW20 | GW38 |
+|---|---|---|---|---|---|
+| minutes | 0.760 (402) | 0.895 (436) | 0.938 (452) | 0.961 (485) | 0.970 (537) |
+| xgi | 0.536 (250) | 0.621 (335) | 0.662 (365) | 0.722 (409) | 0.795 (454) |
+| defcon | 0.511 (250) | 0.582 (335) | 0.622 (365) | 0.739 (409) | 0.787 (454) |
+| xg | 0.393 | 0.539 | 0.627 | 0.703 | 0.737 |
+| xa | 0.451 | 0.533 | 0.560 | 0.616 | 0.679 |
+| bps | 0.033 | 0.081 | 0.203 | 0.269 | 0.319 |
+| pts | 0.041 | 0.120 | 0.184 | 0.238 | 0.312 |
+
+**What it says.** `minutes` is usable from the first window (0.76 at GW4) and
+near its ceiling by GW8 (0.895). The attacking inputs and DEFCON sit at 0.51–0.54
+on four gameweeks — this season's GW1–4 figures of 0.50–0.56 are right on that
+curve — and reach ~0.62 by GW8 and ~0.66–0.72 by GW12–20. **Points and BPS are
+indistinguishable from zero on four gameweeks** (GW4 intervals −0.08..0.17 and
+−0.09..0.16); points does not clear zero until GW8 and never passes 0.32. This
+is the reliability side only; when the *model* becomes usable is Step 3's
+question, since a reliable input still has to beat `minutes` on outcomes.
+
+**Correction to the entry above ("canonical slice…"):** its full-season table
+gives minutes 0.978 on n=841. That was computed before `population` became a
+parameter, i.e. over every player in the game. Under the default that
+reproduces the BUILD_SPEC baseline — appeared at least once — the full-season
+figure is **0.970 on n=537**. The other six rows are unaffected (they are per-90
+and already gated on minutes in both halves). Both readings are now recorded;
+neither changes the ordering or any conclusion.
