@@ -18,6 +18,7 @@ Usage:
 
 import argparse
 import glob
+import math
 import json
 import os
 import re
@@ -752,10 +753,212 @@ def reliability_table(rel, title="RELIABILITY  (split-half, odd vs even gameweek
         if v["undefined"]:
             lines.append(f"  {m:10s}{v['n']:>6}{'undefined - no variance in a half':>45}")
             continue
+        lo = max(-1.0, v['r_half'] - v['ci'])      # the normal approximation is
+        hi = min(1.0, v['r_half'] + v['ci'])       # unbounded; a correlation is not
         lines.append(f"  {m:10s}{v['n']:>6}{v['r_half']:>9.3f}{v['r_full']:>9.3f}"
-                     f"{v['r_half'] - v['ci']:>10.3f} ..{v['r_half'] + v['ci']:>6.3f}"
-                     f"{v['weight']:>9.0%}")
+                     f"{lo:>10.3f} ..{hi:>6.3f}{v['weight']:>9.0%}")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# reliability-weighted projection (BUILD_SPEC 2) - reads the canonical slice
+# ---------------------------------------------------------------------------
+
+XGI_GOAL_SHARE = 0.62          # BUILD_SPEC 2: xGI split between goals and assists
+ALL_TERMS = frozenset({"xgi", "cs", "defcon"})
+ABLATION = (("p_start", frozenset()), ("+xgi", frozenset({"xgi"})),
+            ("+cs", frozenset({"xgi", "cs"})), ("+defcon", ALL_TERMS))
+
+
+def reliability_inputs(c, gws_played=None, min_mins=45, prior_mins=180):
+    """Everything project_reliability() needs, computed once from a TRAINING
+    slice: measured weights, positional priors, per-player rates and P(start),
+    team rates. Nothing here may come from the target gameweek - callers pass
+    canonical_through(c, t - 1), and the leakage test holds them to it.
+    """
+    gws = c["through_gw"] if gws_played is None else gws_played
+    rel = measure_reliability(c, metrics=("xgi", "defcon"), min_mins=min_mins)
+    weights = {m: (0.0 if rel[m]["undefined"] else rel[m]["weight"])
+               for m in ("xgi", "defcon")}
+
+    lo = gws - min(4, gws)
+    tot = defaultdict(lambda: defaultdict(float))
+    team_xg, team_ev = defaultdict(float), defaultdict(set)
+    for r in c["rows"]:
+        t = tot[r["player_id"]]
+        t["minutes"] += r["minutes"] or 0
+        t["xgi"] += (r["xg"] or 0) + (r["xa"] or 0)
+        t["defcon"] += r["defcon"] or 0
+        if lo < r["event"] <= gws:
+            t["starts_last4"] += r["starts"] or 0
+            t["mins_last4"] += r["minutes"] or 0
+        team = c["players"].get(r["player_id"], {}).get("team")
+        if team is not None:
+            team_xg[team] += r["xg"] or 0
+            team_ev[team].add(r["event"])
+
+    players = {}
+    for pid, p in c["players"].items():
+        t = tot.get(pid)
+        m = t["minutes"] if t else 0.0
+        players[pid] = {
+            "pos": p["pos"], "team": p["team"], "minutes": m,
+            "mins_last4": t["mins_last4"] if t else 0.0,
+            "xgi90": (t["xgi"] / m * 90) if m else None,
+            "defcon90": (t["defcon"] / m * 90) if m else None,
+            "p_start": start_probability(
+                {"starts_last4": t["starts_last4"] if t else 0,
+                 "chance_next_round": p["chance_next_round"]}, gws),
+        }
+
+    priors = {}
+    for pos in (1, 2, 3, 4):
+        for k in ("xgi90", "defcon90"):
+            vals = sorted(v[k] for v in players.values()
+                          if v["pos"] == pos and v["minutes"] >= prior_mins
+                          and v[k] is not None)
+            priors[(pos, k)] = vals[len(vals) // 2] if vals else 0.0
+
+    played = defaultdict(lambda: {"n": 0, "ga": 0.0})
+    for mt in c["team_matches"]:
+        played[mt["team"]]["n"] += 1
+        played[mt["team"]]["ga"] += mt["goals_against"] or 0
+    teams = {}
+    for team in set(played) | set(team_xg):
+        n = played[team]["n"] if team in played else len(team_ev[team])
+        teams[team] = {
+            "gc_per_match": played[team]["ga"] / n if team in played and n else None,
+            "xg_per_match": team_xg[team] / n if team in team_xg and n else None}
+    gcs = [v["gc_per_match"] for v in teams.values() if v["gc_per_match"] is not None]
+    xgs = [v["xg_per_match"] for v in teams.values() if v["xg_per_match"] is not None]
+    return {"gws": gws, "weights": weights, "reliability": rel, "priors": priors,
+            "players": players, "teams": teams,
+            "league_gc": sum(gcs) / len(gcs) if gcs else 1.3,
+            "league_xg": sum(xgs) / len(xgs) if xgs else 1.3}
+
+
+def project_reliability(pid, inputs, fixtures, terms=ALL_TERMS):
+    """Expected points for one player over `fixtures`, a list of
+    (opponent, was_home) for the target gameweek. Every term is a scoring rule
+    times a measured probability - no fitted weights, no points term.
+
+        xP = 2 * P(start)
+           + xGI * 0.62 * GOAL_VALUE[pos] * P(start)
+           + xGI * 0.38 * 3               * P(start)
+           + P(clean sheet) * CS_VALUE[pos] * P(start)
+           + 2 * P(DEFCON threshold)        * P(start)
+
+    Rates are shrunk toward the positional prior by the measured reliability
+    (BUILD_SPEC 2.1) - components, never the output. Clean sheet is Poisson on
+    measured team rates (2.2). DEFCON is logistic on the threshold (2.3).
+    No fixture -> None: a blank gets no forecast. Double -> summed (2.5).
+    `terms` switches components off for the ablation; P(start) always stays.
+    """
+    if not fixtures:
+        return None
+    p = inputs["players"].get(pid)
+    if p is None:
+        return None
+    ps = p["p_start"]
+    if ps <= 0:
+        return 0.0
+    pos, w = p["pos"], inputs["weights"]
+
+    def shrunk(key, metric):
+        prior = inputs["priors"].get((pos, key), 0.0)
+        obs = p[key]
+        return prior if obs is None else obs * w[metric] + prior * (1 - w[metric])
+
+    xgi = shrunk("xgi90", "xgi")
+    dc = shrunk("defcon90", "defcon")
+    gc = inputs["teams"].get(p["team"], {}).get("gc_per_match")
+    gc = inputs["league_gc"] if gc is None else gc
+
+    total = 0.0
+    for opp, _home in fixtures:
+        xp = 2.0 * ps
+        if "xgi" in terms:
+            xp += xgi * XGI_GOAL_SHARE * GOAL_VALUE.get(pos, 5) * ps
+            xp += xgi * (1 - XGI_GOAL_SHARE) * 3.0 * ps
+        if "cs" in terms and CS_VALUE.get(pos, 0):
+            oxg = inputs["teams"].get(opp, {}).get("xg_per_match")
+            oxg = inputs["league_xg"] if oxg is None else oxg
+            lam = gc * (oxg / inputs["league_xg"]) if inputs["league_xg"] else gc
+            xp += math.exp(-lam) * CS_VALUE[pos] * ps
+        if "defcon" in terms and pos in DEFCON_THRESHOLD:
+            xp += 2.0 / (1.0 + math.exp(-(dc - DEFCON_THRESHOLD[pos]) / 2.0)) * ps
+        total += xp
+    return total
+
+
+# ---------------------------------------------------------------------------
+# rolling-origin backtest (HISTORICAL_VALIDATION 3-5) - same functions as live
+# ---------------------------------------------------------------------------
+
+BASELINES = ("minutes", "points", "xgi", "bottomup")
+
+
+def backtest_week(c, t, gate_mins=45):
+    """Train on GW1..t-1, predict GW t, for every baseline and every ablation
+    stage at once. Leak-free by construction: inputs come from
+    canonical_through(c, t-1); the target week contributes only the fixture
+    pairing before the fact and the actual points after it.
+
+    Population: at least `gate_mins` minutes over the last four training
+    gameweeks (the live recording gate) and a fixture in GW t. A player with
+    no row in GW t was benched and scores 0 - graded, not dropped.
+    """
+    train = canonical_through(c, t - 1)
+    inp = reliability_inputs(train, gws_played=t - 1)
+    fx = defaultdict(list)
+    for m in c["team_matches"]:
+        if m["event"] == t:
+            fx[m["team"]].append((m["opponent"], m["was_home"]))
+    actual, mins_t = defaultdict(float), defaultdict(float)
+    for r in c["rows"]:
+        if r["event"] == t:
+            actual[r["player_id"]] += r["pts"] or 0
+            mins_t[r["player_id"]] += r["minutes"] or 0
+    lo = t - 1 - min(4, t - 1)
+    recent = defaultdict(lambda: [0.0, 0.0])
+    for r in train["rows"]:
+        if r["event"] > lo:
+            recent[r["player_id"]][0] += r["pts"] or 0
+            recent[r["player_id"]][1] += r["minutes"] or 0
+
+    out = []
+    for pid, p in inp["players"].items():
+        if p["mins_last4"] < gate_mins:
+            continue
+        f = fx.get(p["team"])
+        if not f:
+            continue
+        pts4, min4 = recent[pid]
+        preds = {"minutes": p["p_start"] * len(f),
+                 "points": pts4 / min4 * 90 if min4 else 0.0,
+                 "xgi": p["xgi90"] or 0.0}
+        for label, terms in ABLATION:
+            preds[label] = project_reliability(pid, inp, f, terms)
+        preds["bottomup"] = preds["+defcon"]
+        out.append({"pid": pid, "pos": p["pos"], "event": t,
+                    "actual": actual.get(pid, 0.0),
+                    "featured": mins_t.get(pid, 0.0) >= 60, "preds": preds})
+    return out
+
+
+def score_rows(rows, source, featured_only=False):
+    """Tie-corrected rho with interval, MAE, and the constant-predictor MAE,
+    for one source over a pooled set of backtest rows."""
+    sel = [r for r in rows if not featured_only or r["featured"]]
+    n = len(sel)
+    if n < 3:
+        return {"n": n, "rho": None, "ci": None, "mae": None, "const": None}
+    pred = [r["preds"][source] for r in sel]
+    act = [r["actual"] for r in sel]
+    mean = sum(act) / n
+    return {"n": n, "rho": _spearman(pred, act), "ci": 1.96 / (n - 1) ** 0.5,
+            "mae": sum(abs(p - a) for p, a in zip(pred, act)) / n,
+            "const": sum(abs(mean - a) for a in act) / n}
 
 
 SHRINK = 4.0        # prior weight, in matches
@@ -1759,6 +1962,20 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
                 continue
             proj = start_probability(p, d["gameweek"]) * len(fx)
             if proj > 0:
+                rows.append((p["id"], p["web_name"], round(proj, 3)))
+    elif source == "bottomup":
+        # BUILD_SPEC 2 on the live export. The canonical slice carries the
+        # export's rows (currently the last six gameweeks), so weights and
+        # rates come from that window; the historical run uses full windows.
+        tick, _ = build_ticker(d, horizon)
+        inp = reliability_inputs(canonical_from_export(d), gws_played=d["gameweek"])
+        for p in d["all_players"]:
+            if p["status"] != "a" or p["mins_last4"] < 45:
+                continue
+            fx = [(f[1].split()[0], f[1].endswith("(H)"))
+                  for f in tick.get(p["team"], []) if f[0] == target]
+            proj = project_reliability(p["id"], inp, fx)   # None on a blank
+            if proj:
                 rows.append((p["id"], p["web_name"], round(proj, 3)))
     elif source == "xg":
         tick, _ = build_ticker(d, horizon)

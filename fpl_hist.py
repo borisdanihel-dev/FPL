@@ -8,6 +8,7 @@ the model here: if the historical run passes, it is our code that passed.
 
     python fpl_hist.py historical/2025-26 --season 2025/26
     python fpl_hist.py historical/2025-26 --windows 4,8,12,20,38
+    python fpl_hist.py historical/2025-26 --backtest          # Steps 3-5
 
 Two things this adapter owns, because they are properties of the source and not
 of the model:
@@ -131,12 +132,101 @@ def canonical_from_vaastav(folder, season=None):
         "players": players, "rows": rows, "team_matches": matches, "notes": notes})
 
 
+WINDOWS = ((4, 7), (8, 11), (12, 19), (20, 37))      # training gameweeks
+POSN = {0: "ALL", 1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
+
+
+def _fmt(sc):
+    if sc["rho"] is None:
+        return f"{'-':>7} {'(n<3)':>16}"
+    lo, hi = max(-1.0, sc["rho"] - sc["ci"]), min(1.0, sc["rho"] + sc["ci"])
+    return f"{sc['rho']:>+7.3f} {lo:>+7.3f}..{hi:<+7.3f}"
+
+
+def backtest_report(c, first=5, last=None):
+    """Steps 3-5. Rolling origin GW `first`..`last`; rows pooled by training
+    window; every figure per position with its interval; the crossover named
+    per position or its absence stated."""
+    last = last or c["through_gw"]
+    rows = []
+    for t in range(first, last + 1):
+        rows.extend(E.backtest_week(c, t))
+    out = [f"ROLLING-ORIGIN BACKTEST  {c['season']}  GW{first}-{last}, "
+           f"{len(rows)} player-gameweeks graded, blanks counted as 0"]
+
+    def pool(lo, hi, pos):
+        return [r for r in rows if lo <= r["event"] - 1 <= hi
+                and (pos == 0 or r["pos"] == pos)]
+
+    for featured in (False, True):
+        out += ["", "=" * 78,
+                ("RHO, PLAYERS WHO FEATURED (60+ min) - how well do the starters do"
+                 if featured else
+                 "RHO, WHOLE POPULATION - who blanks and who scores"),
+                "=" * 78]
+        for pos in (0, 1, 2, 3, 4):
+            out.append(f"\n  {POSN[pos]}   (rho, 95% interval)")
+            out.append(f"  {'training':10s}{'n':>5}" + "".join(f"{s:>24}" for s in E.BASELINES))
+            for lo, hi in WINDOWS:
+                sel = pool(lo, hi, pos)
+                scs = {s: E.score_rows(sel, s, featured) for s in E.BASELINES}
+                n = scs["minutes"]["n"]
+                out.append(f"  GW{lo:>2}-{hi:<5}{n:>5}" + "".join(f"{_fmt(scs[s]):>24}" for s in E.BASELINES))
+        if not featured:
+            out += ["", "  CROSSOVER - first window where bottomup's rho exceeds minutes' (whole population)"]
+            for pos in (1, 2, 3, 4):
+                found = None
+                for lo, hi in WINDOWS:
+                    sel = pool(lo, hi, pos)
+                    b, m = E.score_rows(sel, "bottomup"), E.score_rows(sel, "minutes")
+                    if b["rho"] is not None and m["rho"] is not None and b["rho"] > m["rho"]:
+                        clear = b["rho"] - b["ci"] > m["rho"]
+                        found = (lo, hi, b["rho"], m["rho"], clear)
+                        break
+                if found:
+                    lo, hi, b, m, clear = found
+                    out.append(f"    {POSN[pos]:4s} GW{lo}-{hi}: bottomup {b:+.3f} vs minutes {m:+.3f}"
+                               + ("  (bottomup's lower bound clears minutes)" if clear
+                                  else "  (inside the interval - not separable)"))
+                else:
+                    out.append(f"    {POSN[pos]:4s} no crossover: minutes is never beaten")
+
+    out += ["", "=" * 78, "MAE vs CONSTANT, whole population, per position, 20-37 GWs training", "=" * 78]
+    for pos in (0, 1, 2, 3, 4):
+        sel = pool(20, 37, pos)
+        cells = []
+        for s in E.BASELINES:
+            sc = E.score_rows(sel, s)
+            cells.append(f"{sc['mae']:>6.2f}" if sc["mae"] is not None else f"{'-':>6}")
+        const = E.score_rows(sel, "minutes")["const"]
+        out.append(f"  {POSN[pos]:4s} n={len(sel):>5}  " + "  ".join(f"{s} {v}" for s, v in zip(E.BASELINES, cells))
+                   + (f"   constant {const:.2f}" if const is not None else ""))
+
+    out += ["", "=" * 78, "ABLATION - rho after each term, whole population (featured in brackets)", "=" * 78]
+    out.append(f"  {'window':10s}{'pos':5s}" + "".join(f"{lbl:>20}" for lbl, _ in E.ABLATION) + f"{'minutes':>20}")
+    for lo, hi in WINDOWS:
+        for pos in (0, 1, 2, 3, 4):
+            sel = pool(lo, hi, pos)
+            cells = []
+            for lbl, _ in list(E.ABLATION) + [("minutes", None)]:
+                a, f = E.score_rows(sel, lbl), E.score_rows(sel, lbl, True)
+                cells.append("-" if a["rho"] is None else
+                             f"{a['rho']:+.3f} ({f['rho']:+.3f})" if f["rho"] is not None else f"{a['rho']:+.3f}")
+            out.append(f"  GW{lo:>2}-{hi:<5}{POSN[pos]:5s}" + "".join(f"{x:>20}" for x in cells))
+    out.append("\n  A term that does not move rho is decoration. Read per position: the")
+    out.append("  clean-sheet term should matter for GK/DEF and not for FWD.")
+    return "\n".join(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("folder", help="a vaastav season folder, e.g. historical/2025-26")
     ap.add_argument("--season", default=None)
     ap.add_argument("--windows", default="",
                     help="comma-separated training windows, e.g. 4,8,12,20,38")
+    ap.add_argument("--backtest", action="store_true",
+                    help="rolling-origin backtest, four baselines, ablation (Steps 3-5)")
+    ap.add_argument("--out", help="also write the output to this file")
     args = ap.parse_args()
     E.force_utf8()
     c = canonical_from_vaastav(args.folder, args.season)
@@ -145,6 +235,13 @@ def main():
     for n in c["notes"]:
         print(f"  ! {n}")
     print()
+    if args.backtest:
+        text = backtest_report(c)
+        print(text)
+        if args.out:
+            with open(args.out, "w", encoding="utf-8") as fh:
+                fh.write(text + "\n")
+        return
     if not args.windows:
         print(E.reliability_table(E.measure_reliability(c),
                                   f"RELIABILITY  {c['season']}  (odd vs even gameweeks)"))

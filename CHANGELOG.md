@@ -713,3 +713,124 @@ reproduces the BUILD_SPEC baseline — appeared at least once — the full-seaso
 figure is **0.970 on n=537**. The other six rows are unaffected (they are per-90
 and already gated on minutes in both halves). Both readings are now recorded;
 neither changes the ordering or any conclusion.
+
+---
+
+## 2026-09-14 — `project_reliability()` built (BUILD_SPEC §2); `bottomup` FROZEN for GW5
+
+**Frozen definition — do not edit; amendments go in a new timestamped entry
+committed before Fri 18 Sep 19:30 CEST.** `bottomup` is `project_reliability()`
+as committed in this change, on the canonical slice built from the live export:
+
+- `xP = 2·P(start) + xGI·0.62·GOAL_VALUE[pos]·P(start) + xGI·0.38·3·P(start)
+  + P(cs)·CS_VALUE[pos]·P(start) + 2·P(DEFCON≥thr)·P(start)`
+- P(start): `start_probability()` — the same function `project_xg` and the
+  `minutes` baseline use.
+- xGI and DEFCON per-90 rates from the canonical rows, **shrunk toward the
+  positional median (180+ min) by the measured `r_full`** from
+  `measure_reliability()` on the same slice — computed at recording time, never
+  hardcoded. The GW1–4 export gives weights xgi 0.67, defcon 0.72.
+- Clean sheet: Poisson, `λ = team GC/match × (opponent xG/match ÷ league mean)`,
+  `P = e^−λ`, from measured team rates only. DEFCON: logistic on the threshold
+  (10 DEF, 12 MID; none for GK/FWD), scale 2.
+- No fixture → no row. Double → summed. Population: status `a`, 45+ minutes in
+  the last four, as for every other source.
+- Known limitation, stated up front: the live export carries the last six
+  gameweeks of rows, so live weights and rates come from that window. Harmless
+  through GW6; the export window should widen before GW7.
+
+Verified: 16 tests; 14 behavioural mutations each red (blank forecast, double
+not summed, flat goal value, clean sheet ignoring the opponent, no shrinkage,
+DEFCON threshold ignored, DEFCON for GK/FWD, points leaking into xGI, ablation
+stage 0 carrying xGI, backtest training on the target week, benched players
+dropped, source logging `project_xg`, interval uncapped) plus one two-site
+mutation (position guard *and* `CS_VALUE` removed together → forwards get a
+clean sheet → red; each site alone is a no-op by defence in depth). Recording
+path unchanged: `own`/`xg` regenerated 541/541 identical. Live GW5 forecast:
+259 players, xP 0.63–7.60, mean 3.00. Suite 108 → 122. **Green on 14 Sep, four
+days before Thursday's run; `fpl_run.bat` records all four sources from tonight.**
+
+## 2026-09-14 — HISTORICAL_VALIDATION Steps 3–5 on 2025/26
+
+`python fpl_hist.py historical/2025-26 --backtest`, 3 seconds. Rolling origin
+GW5–38, train on everything before; 11,039 player-gameweeks graded, benched as
+0. Same functions as the live pipeline (`backtest_week` → `reliability_inputs`
+→ `project_reliability`). Full tables in `reports/backtest_2025-26.txt`.
+
+**Verdict 1 — whole population, "who blanks and who scores" — bottomup NEVER
+separably beats minutes, at any window, for any position.** Rho with interval,
+20–37 GWs of training:
+
+| position | n | minutes | bottomup | points | xgi |
+|---|---|---|---|---|---|
+| ALL | 5755 | +0.318 (0.293..0.344) | +0.318 (0.293..0.344) | +0.087 | +0.080 |
+| GK | 425 | +0.416 | +0.393 | +0.164 | +0.155 |
+| DEF | 2137 | +0.312 | +0.334 | +0.094 | +0.086 |
+| MID | 2530 | +0.319 | +0.334 | +0.071 | +0.085 |
+| FWD | 663 | +0.346 | +0.347 | −0.012 | −0.004 |
+
+The pattern holds at 4–7, 8–11 and 12–19 GWs. **There is no crossover** in the
+sense the plan asked for: bottomup's lower bound never clears minutes' point
+estimate. DEF and MID sit ~0.02 above, GK ~0.02 below, FWD level — all inside
+the intervals. On this question the model adds nothing over "will he play?",
+exactly as BUILD_SPEC §3.1 found on one gameweek.
+
+**Verdict 2 — players who featured (60+ min), "how well do the starters do" —
+bottomup beats minutes, modestly, and the effect is real.** 20–37 GWs:
+
+| position | n | minutes | bottomup | xgi |
+|---|---|---|---|---|
+| ALL | 3410 | +0.049 (0.016..0.083) | **+0.106 (0.073..0.140)** | +0.111 |
+| GK | 326 | +0.046 | +0.099 | +0.036 |
+| DEF | 1311 | +0.074 (0.020..0.128) | **+0.154 (0.100..0.209)** | +0.029 |
+| MID | 1414 | +0.051 | +0.095 | +0.097 |
+| FWD | 359 | +0.074 | +0.110 | +0.119 |
+
+Here `minutes` is near zero by construction (everyone featured) and the model
+carries real signal: DEF +0.154 with an interval clear of zero from **8–11 GWs
+onward** (+0.174 there), ALL +0.106 clear of minutes' point from 8–11 on. But
+rho ≈ 0.10–0.15 is far below +0.20. For MID and FWD, bare `xgi` does as well as
+the whole model.
+
+**MAE, 20–37 GWs** (constant predictor in brackets): ALL bottomup 2.16 =
+minutes 2.16 (2.25); GK 2.01 < 2.16; MID 2.03 < 2.13; FWD 2.16 < 2.40; **DEF
+2.34 ≈ constant 2.35, worse than minutes 2.12.** The DEF rank is fine and its
+level is wrong: the projections are too spread — most likely the clean-sheet
+term (up to 4 × P(cs)) over-contributing. Under 2025/26 rules, so this is the
+model's calibration, not the rule change.
+
+**Ablation** — `p_start` alone reproduces the `minutes` column exactly at every
+window and position (an internal consistency check that passed). Whole
+population: no term moves rho beyond ±0.02 — decoration for that question.
+Featured players, 20–37 GWs: the **clean-sheet term** lifts DEF +0.079 →
++0.136 and GK +0.027 → +0.099 and moves FWD by exactly 0.000; the **xGI term**
+lifts FWD +0.074 → +0.110 and MID +0.051 → +0.081 and *hurts* GK (+0.046 →
++0.027, keeper xGI is noise); **DEFCON** adds DEF +0.136 → +0.154 and MID
++0.087 → +0.095. Every term behaves as the theory says it should, and every one
+earns its place on the starters question only.
+
+**Two seasons agree.** 2025/26 GW4–7 whole-population: minutes +0.332,
+bottomup +0.335. This season GW1-3 → GW4 (BUILD_SPEC §3.1): minutes +0.359,
+prototype +0.338. The harness reproduces this season's headline on last
+season's data.
+
+**Reading, per §6:** on the blank question, "never beats minutes at any
+window" — use `minutes` for exclusion and stop expecting a model to do better.
+On the starters question, "mixed by position": a real but small edge, largest
+for DEF via the clean-sheet term, matched by bare xGI for MID/FWD. That is what
+BUILD_SPEC §3.2 anticipated when it asked for the two verdicts separately, and
+they diverge. Whether +0.10–0.15 among starters is worth acting on — for
+captaincy and transfers, where the blank question is already settled — is a
+decision, and it is recorded here before GW5 is graded.
+
+**Interval cap.** `reliability_table` now prints intervals clipped to ±1.0; the
+normal approximation is unbounded, a correlation is not.
+
+**Harness validated on a second season — six of seven, not seven.** This
+season's GW1–4 r_half against 2025/26's GW4 intervals: minutes 0.777 in
+0.663..0.858 ✓, xgi 0.503 in 0.412..0.660 ✓, defcon 0.564 in 0.387..0.635 ✓,
+xg 0.479 in 0.269..0.517 ✓, xa 0.444 in 0.327..0.575 ✓, pts 0.165 in
+−0.083..0.165 ✓ (on the boundary). **bps 0.198 is outside −0.091..0.157.** Six
+inside is what independent seasons should give at 95%; the BPS miss is the one
+to watch, given the 2026/27 BPS rule changes are exactly the thing
+HISTORICAL_VALIDATION says will not transfer.

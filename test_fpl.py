@@ -11,6 +11,7 @@ your real data and needs no network. Run it after editing either script.
 import csv
 import io
 import json
+import math
 import os
 import shutil
 import sys
@@ -1553,6 +1554,191 @@ class MinutesBaseline(unittest.TestCase):
                              {"own", "xg", "minutes"})
         finally:
             shutil.rmtree(tmp)
+
+
+def _model_world(gws=8):
+    """Two clubs, every position, one never-starter, alternating results."""
+    spec = {   # pid: (pos, team, xg/gw, xa/gw, defcon/gw, starts)
+        1: (1, "ALP", 0.0, 0.0, 0, 1), 2: (2, "ALP", 0.10, 0.10, 12, 1),
+        3: (2, "ALP", 0.05, 0.05, 6, 1), 4: (3, "ALP", 0.30, 0.20, 10, 1),
+        5: (3, "ALP", 0.20, 0.30, 14, 1), 6: (4, "ALP", 0.50, 0.10, 3, 1),
+        7: (4, "ALP", 0.40, 0.20, 2, 1), 8: (1, "BET", 0.0, 0.0, 0, 1),
+        9: (2, "BET", 0.15, 0.05, 11, 1), 10: (3, "BET", 0.25, 0.25, 9, 1),
+        11: (4, "BET", 0.45, 0.15, 4, 1), 12: (3, "BET", 0.10, 0.10, 13, 0),
+    }
+    rows, players, matches = [], {}, []
+    for pid, (pos, team, xg, xa, dc, st) in spec.items():
+        players[pid] = {"player_id": pid, "name": f"P{pid}", "pos": pos,
+                        "team": team, "chance_next_round": None}
+        for ev in range(1, gws + 1):
+            jitter = ((pid * 7 + ev * 3) % 5) * 0.02
+            rows.append({"player_id": pid, "event": ev, "minutes": 90 if st else 20,
+                         "starts": st, "pts": 2 + (pid + ev) % 5, "xg": xg + jitter,
+                         "xa": xa, "bps": 10, "defcon": dc + ev % 2,
+                         "n_fixtures": 1, "fixtures": []})
+    for ev in range(1, gws + 1):
+        ga = 0 if ev % 2 else 2
+        matches.append({"event": ev, "team": "ALP", "opponent": "BET", "was_home": True,
+                        "goals_for": 1, "goals_against": ga, "fixture_id": None})
+        matches.append({"event": ev, "team": "BET", "opponent": "ALP", "was_home": False,
+                        "goals_for": ga, "goals_against": 1, "fixture_id": None})
+    return E.check_canonical({"source": "test", "season": "t", "through_gw": gws,
+                              "players": players, "rows": rows,
+                              "team_matches": matches, "notes": []})
+
+
+class ReliabilityModel(unittest.TestCase):
+    """BUILD_SPEC 2. Each test pins one scoring rule or one probability."""
+
+    def setUp(self):
+        self.c = _model_world()
+        self.inp = E.reliability_inputs(self.c)
+        self.fx = [("BET", True)]
+
+    def test_blank_is_none_and_double_is_summed(self):
+        self.assertIsNone(E.project_reliability(4, self.inp, []))
+        one = E.project_reliability(4, self.inp, self.fx)
+        two = E.project_reliability(4, self.inp, self.fx + [("BET", False)])
+        self.assertAlmostEqual(two, 2 * one, places=9)
+
+    def test_never_starter_projects_to_zero(self):
+        self.assertEqual(self.inp["players"][12]["p_start"], 0.0)
+        self.assertEqual(E.project_reliability(12, self.inp, self.fx), 0.0)
+
+    def test_goal_value_depends_on_position(self):
+        """Same xGI: a defender's goal is worth 6, a forward's 4."""
+        inp = dict(self.inp, weights={"xgi": 1.0, "defcon": 1.0})
+        for pid in (2, 6):
+            inp["players"][pid]["xgi90"] = 0.5
+            inp["players"][pid]["p_start"] = 1.0
+        d = E.project_reliability(2, inp, self.fx, terms={"xgi"})
+        f = E.project_reliability(6, inp, self.fx, terms={"xgi"})
+        self.assertAlmostEqual(d - 2.0, 0.5 * (0.62 * 6 + 0.38 * 3), places=9)
+        self.assertAlmostEqual(f - 2.0, 0.5 * (0.62 * 4 + 0.38 * 3), places=9)
+
+    def test_clean_sheet_is_poisson_on_the_opponent_and_zero_for_forwards(self):
+        inp = self.inp
+        self.assertAlmostEqual(E.project_reliability(6, inp, self.fx, terms={"cs"}),
+                               2.0 * inp["players"][6]["p_start"], places=12,
+                               msg="a forward has no clean-sheet term")
+        weak = dict(inp, teams=dict(inp["teams"], BET={"gc_per_match": 1.0,
+                                                       "xg_per_match": 0.5}))
+        strong = dict(inp, teams=dict(inp["teams"], BET={"gc_per_match": 1.0,
+                                                         "xg_per_match": 3.0}))
+        self.assertGreater(E.project_reliability(2, weak, self.fx, terms={"cs"}),
+                           E.project_reliability(2, strong, self.fx, terms={"cs"}),
+                           "clean-sheet probability must fall as opponent xG rises")
+        gc = inp["teams"]["ALP"]["gc_per_match"]
+        lam = gc * (inp["teams"]["BET"]["xg_per_match"] / inp["league_xg"])
+        cs = E.project_reliability(2, inp, self.fx, terms={"cs"}) - 2.0 * inp["players"][2]["p_start"]
+        self.assertAlmostEqual(cs, math.exp(-lam) * 4 * inp["players"][2]["p_start"], places=9)
+
+    def test_shrinkage_uses_the_measured_weight(self):
+        """Weight 0: everyone in the position sits on the prior. Weight 1: raw."""
+        zero = dict(self.inp, weights={"xgi": 0.0, "defcon": 0.0})
+        a = E.project_reliability(2, zero, self.fx, terms={"xgi"})
+        b = E.project_reliability(3, zero, self.fx, terms={"xgi"})
+        self.assertAlmostEqual(a, b, places=12, msg="weight 0 must ignore the observed rate")
+        one = dict(self.inp, weights={"xgi": 1.0, "defcon": 1.0})
+        self.assertNotAlmostEqual(E.project_reliability(2, one, self.fx, terms={"xgi"}),
+                                  E.project_reliability(3, one, self.fx, terms={"xgi"}))
+
+    def test_defcon_is_logistic_on_the_threshold_and_absent_for_gk_and_fwd(self):
+        inp = dict(self.inp, weights={"xgi": 1.0, "defcon": 1.0})
+        inp["players"][2]["defcon90"] = 10.0          # exactly on the DEF threshold
+        ps = inp["players"][2]["p_start"]
+        self.assertAlmostEqual(E.project_reliability(2, inp, self.fx, terms={"defcon"}),
+                               2.0 * ps + 2.0 * 0.5 * ps, places=9)
+        for pid in (1, 6):
+            self.assertAlmostEqual(E.project_reliability(pid, inp, self.fx, terms={"defcon"}),
+                                   2.0 * inp["players"][pid]["p_start"], places=12)
+
+    def test_model_has_no_points_term(self):
+        doubled = dict(self.c, rows=[dict(r, pts=r["pts"] * 2 + 3) for r in self.c["rows"]])
+        inp2 = E.reliability_inputs(doubled)
+        for pid in self.c["players"]:
+            self.assertEqual(E.project_reliability(pid, self.inp, self.fx),
+                             E.project_reliability(pid, inp2, self.fx),
+                             f"player {pid}: points reached the projection")
+
+    def test_ablation_starts_from_p_start_alone(self):
+        ps = self.inp["players"][4]["p_start"]
+        self.assertAlmostEqual(E.project_reliability(4, self.inp, self.fx, terms=frozenset()),
+                               2.0 * ps, places=12)
+
+
+class RollingOrigin(unittest.TestCase):
+    """HISTORICAL_VALIDATION 3: nothing from the target week reaches a prediction."""
+
+    def test_target_week_outcomes_do_not_change_predictions(self):
+        c = _model_world(gws=8)
+        rows_a = {r["pid"]: r for r in E.backtest_week(c, 8)}
+        leaky = dict(c, rows=[dict(r, xg=r["xg"] + 5, defcon=r["defcon"] + 30,
+                                   pts=r["pts"] + 20, starts=0, minutes=0)
+                              if r["event"] == 8 else r for r in c["rows"]])
+        rows_b = {r["pid"]: r for r in E.backtest_week(leaky, 8)}
+        self.assertEqual(set(rows_a), set(rows_b))
+        for pid in rows_a:
+            self.assertEqual(rows_a[pid]["preds"], rows_b[pid]["preds"],
+                             f"player {pid}: the target week leaked into a prediction")
+        self.assertNotEqual(rows_a[4]["actual"], rows_b[4]["actual"])
+
+    def test_benched_is_graded_as_zero_and_a_blank_team_is_dropped(self):
+        c = _model_world(gws=8)
+        c["rows"] = [r for r in c["rows"] if not (r["player_id"] == 4 and r["event"] == 8)]
+        by = {r["pid"]: r for r in E.backtest_week(c, 8)}
+        self.assertIn(4, by)
+        self.assertEqual((by[4]["actual"], by[4]["featured"]), (0.0, False))
+        c["team_matches"] = [m for m in c["team_matches"]
+                             if not (m["event"] == 8 and m["team"] == "BET")]
+        self.assertNotIn(9, {r["pid"] for r in E.backtest_week(c, 8)})
+
+    def test_every_baseline_and_ablation_stage_is_present(self):
+        row = E.backtest_week(_model_world(), 8)[0]
+        for k in E.BASELINES + tuple(lbl for lbl, _ in E.ABLATION):
+            self.assertIn(k, row["preds"])
+        self.assertEqual(row["preds"]["bottomup"], row["preds"]["+defcon"])
+
+
+class BottomupSource(unittest.TestCase):
+
+    def test_logged_value_is_project_reliability(self):
+        d, logged = MinutesBaseline._record("bottomup")
+        inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=d["gameweek"])
+        tick, _ = E.build_ticker(d, 6)
+        checked = 0
+        for p in d["all_players"]:
+            if p["web_name"] not in logged:
+                continue
+            fx = [(f[1].split()[0], f[1].endswith("(H)"))
+                  for f in tick.get(p["team"], []) if f[0] == d["gameweek"] + 1]
+            self.assertAlmostEqual(logged[p["web_name"]],
+                                   round(E.project_reliability(p["id"], inp, fx), 3),
+                                   places=6)
+            checked += 1
+        self.assertGreater(checked, 10)
+
+    def test_blank_and_double_gameweeks(self):
+        d, logged = MinutesBaseline._record("bottomup", gw=17, blank_team="HUL")
+        hull = {p["web_name"] for p in d["all_players"] if p["team"] == "HUL"}
+        self.assertTrue(logged and not (hull & set(logged)))
+        _, one = MinutesBaseline._record("bottomup", gw=17)
+        _, two = MinutesBaseline._record("bottomup", gw=17, double_team=TEAMS[0])
+        on = {p["web_name"] for p in make_export(gw=17)["all_players"] if p["team"] == TEAMS[0]}
+        names = sorted(on & set(one) & set(two))
+        self.assertTrue(names)
+        for nm in names:
+            self.assertGreater(two[nm], one[nm] * 1.5)
+
+
+class ReliabilityTable(unittest.TestCase):
+
+    def test_interval_is_capped_at_one(self):
+        rel = {"minutes": {"n": 5, "r_half": 0.98, "r_full": 0.99, "ci": 0.1,
+                           "weight": 0.99, "undefined": False}}
+        out = E.reliability_table(rel)
+        self.assertIn("1.000", out)
+        self.assertNotIn("1.080", out)
 
 
 class Hygiene(unittest.TestCase):

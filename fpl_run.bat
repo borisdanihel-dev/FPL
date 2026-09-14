@@ -56,6 +56,7 @@ if "%TESTS_OK%"=="1" (
     %PY% fpl_edge.py --record --source own >> "%LOG%" 2>&1
     %PY% fpl_edge.py --record --source xg  >> "%LOG%" 2>&1
     %PY% fpl_edge.py --record --source minutes >> "%LOG%" 2>&1
+    %PY% fpl_edge.py --record --source bottomup >> "%LOG%" 2>&1
 ) else (
     echo SKIPPED --record: test suite is red, no forecasts written >> "%LOG%"
     echo SKIPPED --record: test suite is red, no forecasts written
