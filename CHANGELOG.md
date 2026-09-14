@@ -920,3 +920,44 @@ ordered shortlist.
 GW5 freezes tonight with four sources (`own`, `xg`, `minutes`, `bottomup`). The
 two live rows after GW5 settles are the check on whether the 2025/26 result
 transfers under this season's rules; given BPS did not, that is not a formality.
+
+---
+
+## 2026-09-14 18:20 CEST — schedule decisions to 23 Oct, and the horizon test PRE-REGISTERED
+
+Accepted by Boris; docs only, the GW5 freeze holds.
+
+- **MILP / PuLP removed** from the international-break work. Optimal XI and
+  captain from a fixed 15 is already solved exactly by `_best_xi` (every legal
+  formation enumerated; additive objective). For squad selection, an MILP
+  objective maximises projected points *across* positions — the comparison the
+  16:10 amendment forbids until DEF calibration is fixed — and it breaks the
+  standard-library rule. If an exact 15-picker is ever wanted, calibration
+  comes first and the rule change is recorded deliberately.
+- **GW5 grading and the P1 evaluation run Tuesday 22 Sep**, after Monday's
+  23:55 sync, not Monday morning: last kickoff is Sun 20 Sep 17:30 and this
+  API's `finished` flag lags. `p1_eval`'s dropped count is the tell if it has
+  not flipped.
+- **Log checks Tue 15 Sep morning** (first four-source run) **and Fri 18 Sep
+  morning** (Thursday's 23:55 is the last automated recording before the
+  19:30 deadline; Friday morning is the last chance to record by hand).
+- **`fpl.sqlite` backup** — one copy line in `fpl_run.bat` on Mon 21 Sep.
+- **DEF calibration has no date by design.** The wildcard is built on the quota
+  rule. Revisit around GW10 on 2026/27 data; not tuned on 2025/26.
+
+**Horizon test — definition frozen before it is run** (scheduled Tue 22–Fri
+25 Sep; fallback hard deadline Thu 8 Oct, after which the GW6 draft uses
+single-week projections and the test is logged pending).
+
+For H in {1, 2, 4, 6, 8, 12}, on 2025/26 with the rolling-origin harness:
+train on GW1..t−1; predict the **sum of points over GW t..t+H−1** with the
+**sum of per-fixture `bottomup` projections** over the same gameweeks, fixture
+pairings taken as known in advance and results not; `minutes-H` = P(start)
+times the number of fixtures in the horizon. Whole population with blanks as
+0, per position, tie-corrected Spearman with intervals, pooled by training
+window as in Steps 3–5. A player is in the population if he passes the usual
+gate at t and his team has at least one fixture in the horizon. No fitted
+parameters, so a retrospective run is legitimate given this definition was
+fixed first. The question it answers: whether the wildcard should be drafted on
+a multi-week sum or on single-week projections — and whether that changes the
+answer to "bottomup vs minutes".
