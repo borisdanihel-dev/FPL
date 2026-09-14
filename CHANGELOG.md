@@ -645,3 +645,36 @@ not checking rows, an export without ids accepted, a first/second-half split,
 minutes measured per 90, no constant guard, the population silently widened, no
 Spearman–Brown step — each red. Suite 91 → 103. The GW5 forecast log is
 untouched: regenerated 541/541 identical.
+
+---
+
+## 2026-09-14 — the `minutes` baseline (BUILD_SPEC step 4): P(start) alone, the bar
+
+`--record --source minutes` logs P(start) and nothing else, alongside `own` and
+`xg`. `fpl_run.bat` records all three, so GW5 will carry the baseline the model
+has to beat.
+
+**P(start) extracted, not duplicated.** `start_probability(p, gws_played)` now
+holds the rule that was inline in `project_xg`: `starts_last4` over a window
+capped at 4, `is None` rather than `or`, scaled by `chance_next_round`. Both the
+model and the baseline call it, so the bar cannot drift from the model's own
+notion of starting. The mutation that uncaps the denominator turns the existing
+`project_xg` tests red, which is the evidence that it is genuinely shared rather
+than copied.
+
+Blank gameweek → no row, double gameweek → counted twice, exactly like the other
+sources, so the four columns stay comparable.
+
+**Behaviour on the recording path is unchanged**, which is the thing that
+mattered here: `own` and `xg` regenerated from the GW4 export with the extracted
+function give **541 of 541 rows identical** to what the 13 Sep run logged.
+
+**The baseline on real GW5 data:** 259 players, values 0.25 to 1.0 (a
+four-gameweek window gives quarters), 126 of them nailed at 1.0. That flat top
+is exactly why it is a hard bar to beat on rank correlation and why BUILD_SPEC
+§3.2's second verdict — 60+ minute players only — is reported separately.
+
+**Verified:** 6 new tests; 6 mutations — a baseline carrying more than P(start),
+ignoring a blank, ignoring a double, an uncapped denominator, `or` instead of
+`is None`, and injury doubt dropped — each red. Suite 103 → 108, and the gate
+passes under the batch environment.

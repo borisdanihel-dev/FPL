@@ -1619,6 +1619,29 @@ def history_rates(d):
             for k, v in best.items()}
 
 
+def start_probability(p, gws_played):
+    """P(start) for the coming gameweek, scaled by any injury doubt.
+
+    starts_last4 counts a four-gameweek window, so the denominator must too:
+    uncapped, a nailed starter reads 0.4 by GW10. `is None` rather than `or`,
+    because a genuine zero is information - a player who has stopped starting
+    must not fall back to his season starts and read as half-nailed.
+
+    One implementation: project_xg() and the `minutes` baseline both call this,
+    so the baseline cannot drift from the model's own notion of starting.
+    """
+    starts = p.get("starts_last4")
+    if starts is None:
+        starts, window = p.get("starts") or 0, gws_played
+    else:
+        window = min(4, gws_played)
+    p_start = min(1.0, (starts or 0) / max(1, window))
+    chance = p.get("chance_next_round")
+    if chance is not None:
+        p_start *= float(chance) / 100.0
+    return p_start
+
+
 def project_xg(p, fdr, gws_played, cs_table, cs_default, hist, ict_pct=0.5):
     """Bottom-up expected points. Every term is a scoring rule, not a fitted
     weight, so it can be read and argued with line by line."""
@@ -1629,18 +1652,7 @@ def project_xg(p, fdr, gws_played, cs_table, cs_default, hist, ict_pct=0.5):
     # Before GW5 these are identical; after it they diverge badly.
     mins = p.get("minutes") or p.get("mins_last4", 0)
 
-    # starts_last4 counts a 4-gameweek window, so the denominator must too.
-    # Distinguish "field absent" from "present and zero" - a player who has
-    # stopped starting should read near zero, not fall back to season starts.
-    starts = p.get("starts_last4")
-    if starts is None:
-        starts, window = p.get("starts") or 0, gws_played
-    else:
-        window = min(4, gws_played)
-    p_start = min(1.0, starts / max(1, window))
-    chance = p.get("chance_next_round")
-    if chance is not None:
-        p_start *= float(chance) / 100.0
+    p_start = start_probability(p, gws_played)
     if p_start <= 0:
         return 0.0
     exp_mins = 90.0 * p_start
@@ -1734,6 +1746,20 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
             if v is None:
                 v = next(iter(vals.values()))
             rows.append((p["id"], p["web_name"], v))
+    elif source == "minutes":
+        # The bar: P(start) alone, no model. BUILD_SPEC 3.1 - anything that
+        # cannot beat this is not earning its complexity. Summed over a double
+        # gameweek like every other source, and silent on a blank like them.
+        tick, _ = build_ticker(d, horizon)
+        for p in d["all_players"]:
+            if p["status"] != "a" or p["mins_last4"] < 45:
+                continue
+            fx = [f for f in tick.get(p["team"], []) if f[0] == target]
+            if not fx:
+                continue
+            proj = start_probability(p, d["gameweek"]) * len(fx)
+            if proj > 0:
+                rows.append((p["id"], p["web_name"], round(proj, 3)))
     elif source == "xg":
         tick, _ = build_ticker(d, horizon)
         cs_table, cs_default = cs_rate_by_fdr(d)

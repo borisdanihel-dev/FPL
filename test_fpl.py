@@ -1479,6 +1479,82 @@ class Reliability(unittest.TestCase):
         self.assertAlmostEqual(r["ci"], 1.96 / (r["n"] - 1) ** 0.5, places=12)
 
 
+class MinutesBaseline(unittest.TestCase):
+    """BUILD_SPEC 3.1: P(start) alone is the bar every model must clear."""
+
+    @staticmethod
+    def _record(source, gw=3, **kw):
+        from datetime import datetime, timedelta, timezone
+        tmp = tempfile.mkdtemp()
+        try:
+            path = os.path.join(tmp, "log.csv")
+            d = make_export(gw=gw, **kw)
+            when = datetime.now(timezone.utc) + timedelta(days=3)
+            for f in d["fixtures_next6"]:
+                if f["event"] == d["gameweek"] + 1:
+                    f["kickoff_time"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
+            with redirect_stdout(io.StringIO()):
+                E.record_projections(d, 6, source, None, path)
+            return d, {r["web_name"]: float(r["predicted"]) for r in E.read_log(path)}
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_logged_value_is_start_probability_and_nothing_else(self):
+        d, logged = self._record("minutes")
+        gws = d["gameweek"]
+        for p in d["all_players"]:
+            if p["web_name"] in logged:
+                expected = E.start_probability(p, gws)
+                self.assertAlmostEqual(logged[p["web_name"]], round(expected, 3),
+                                       places=6,
+                                       msg=f"{p['web_name']} carries more than P(start)")
+
+    def test_injury_doubt_scales_it(self):
+        d = make_export()
+        doubtful = [p for p in d["all_players"]
+                    if p.get("chance_next_round") == 50]
+        self.assertTrue(doubtful, "fixture has no doubtful player")
+        for p in doubtful:
+            full = dict(p, chance_next_round=None)
+            self.assertAlmostEqual(E.start_probability(p, d["gameweek"]),
+                                   E.start_probability(full, d["gameweek"]) * 0.5,
+                                   places=12)
+
+    def test_blank_gameweek_gets_no_baseline_forecast(self):
+        d, logged = self._record("minutes", gw=17, blank_team="HUL")
+        hull = {p["web_name"] for p in d["all_players"] if p["team"] == "HUL"}
+        self.assertTrue(logged, "nothing logged at all")
+        self.assertFalse(hull & set(logged), "forecast a team with no fixture")
+
+    def test_double_gameweek_counts_twice(self):
+        _, one = self._record("minutes", gw=17)
+        _, two = self._record("minutes", gw=17, double_team=TEAMS[0])
+        on_team = {p["web_name"] for p in make_export(gw=17)["all_players"]
+                   if p["team"] == TEAMS[0]}
+        names = sorted(on_team & set(one) & set(two))
+        self.assertTrue(names, "no logged player on the doubled team")
+        for nm in names:
+            self.assertGreater(two[nm], one[nm] * 1.5, f"{nm}: double not counted")
+
+    def test_all_four_sources_log_side_by_side(self):
+        from datetime import datetime, timedelta, timezone
+        tmp = tempfile.mkdtemp()
+        try:
+            path = os.path.join(tmp, "log.csv")
+            d = make_export()
+            when = datetime.now(timezone.utc) + timedelta(days=3)
+            for f in d["fixtures_next6"]:
+                if f["event"] == d["gameweek"] + 1:
+                    f["kickoff_time"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
+            with redirect_stdout(io.StringIO()):
+                for s in ("own", "xg", "minutes"):
+                    E.record_projections(d, 6, s, None, path)
+            self.assertEqual({r["source"] for r in E.read_log(path)},
+                             {"own", "xg", "minutes"})
+        finally:
+            shutil.rmtree(tmp)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):
