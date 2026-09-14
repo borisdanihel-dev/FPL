@@ -499,3 +499,61 @@ expression yields UTC (hour 19 at 21:xx CEST); a simulated 01:56 CEST run on
 11 Sep stamps 2026-09-10. The 01:56 catch-up log was copied to
 `reports/run_2026-09-10.log` before the 23:55 run overwrote it under the old
 scheme.
+
+---
+
+## 2026-09-14 — HISTORICAL_VALIDATION Step 1: dataset verified (no model code written)
+
+Source: `github.com/vaastav/Fantasy-Premier-League`, season 2025/26. Downloaded
+to `historical/2025-26/` — kept out of `fpl.sqlite` and out of git (regenerable,
+~6.5 MB): `merged_gw.csv` (5.4 MB), `fixtures.csv`, `teams.csv`,
+`cleaned_players.csv`. 29,757 rows, GW1–38, 841 players.
+
+**Required fields — all present and populated** (share of player-gameweeks with
+minutes that are non-zero, by position):
+
+| field | GK | DEF | MID | FWD |
+|---|---|---|---|---|
+| `expected_goals` | 0% | 35% | 56% | 68% |
+| `expected_assists` | 11% | 69% | 80% | 58% |
+| `defensive_contribution` | 0% | 93% | 92% | 82% |
+| `starts` | 99% | 81% | 67% | 58% |
+
+Zero blanks or unparsable values in any of them. The position pattern is what it
+should be: no xG for keepers, no DEFCON for keepers. The file also carries
+`tackles`, `recoveries` and `clearances_blocks_interceptions` — the DEFCON
+components — which would allow recomputing it under 2026/27 rules later.
+
+Opponent and venue are per player-gameweek (`opponent_team`, `was_home`).
+Fixture difficulty is not in `merged_gw.csv` but joins from `fixtures.csv`
+(`team_h_difficulty` / `team_a_difficulty`, 380 fixtures): **0 of 11,498
+player-gameweeks fail to resolve their fixture id.**
+
+**Reconciliation against an independent source.** Per-gameweek CSV totals summed
+per player and compared with the FPL API's own 2025/26 season totals, held in
+`player_history` in `fpl.sqlite` — data that never passed through this repo.
+432 of 841 CSV players appear there (the rest have left the game; that limits the
+cross-check sample, not the study, which uses CSV ids throughout).
+
+- five highest-minute players (Petrović, Virgil, Leno, Pickford, Verbruggen):
+  exact on minutes, points, goals, assists, starts
+- five highest-scoring attackers (Haaland 239, B.Fernandes 235, Semenyo 202,
+  Gibbs-White 188, Rice 184): exact on all five fields
+- whole overlap: **431 of 432 exact**
+
+**One defect found, quantified, and fixed by rule — not by substitution.**
+`merged_gw.csv` contains **10 surplus rows**: byte-identical duplicates of the
+same (element, fixture), affecting **2 players** across GW1–9 (nine of them
+Junior Kroupi, element 100). They inflated his totals to 1826 min / 140 pts
+against the API's 1663 / 113. De-duplicating on (element, fixture) removes
+exactly those 10 rows and takes reconciliation to **432 of 432 (100%)**.
+
+The de-duplication rule keeps genuine double gameweeks: same round with a
+*different* fixture id is a real second match. The file contains **409 genuine
+multi-fixture player-gameweeks** against those 10 duplicates, so the adapter
+must distinguish them — the same distinction the live export needed when the
+fixtures join fanned one gameweek total into two rows.
+
+**Verdict: the dataset supports the study.** Both halves are possible — the
+attacking half transfers to 2026/27 rules, the DEF half is measurable here but
+validated against superseded BPS rules, exactly as the plan states.

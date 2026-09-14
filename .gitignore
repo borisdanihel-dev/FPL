@@ -5,3 +5,6 @@ fpl_export_gw*.json
 reports/
 # binary, rewritten nightly - holds the only copy of price_history: back it up separately
 fpl.sqlite
+
+# downloaded historical data (regenerable, ~6.5MB)
+historical/
