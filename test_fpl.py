@@ -8,6 +8,7 @@ Stdlib only. Builds synthetic exports in a temp folder, so it never touches
 your real data and needs no network. Run it after editing either script.
 """
 
+import csv
 import io
 import json
 import os
@@ -20,6 +21,7 @@ from contextlib import redirect_stdout
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                            # noqa: E402
 import p1_eval as P1                                            # noqa: E402
+import fpl_hist as H                                            # noqa: E402
 
 TEAMS = ["ARS", "BHA", "CHE", "CRY", "HUL", "LIV", "MCI", "MUN", "NEW", "NFO"]
 ENTRIES = ["My Team", "Rival A", "Rival B", "Rival C"]
@@ -141,7 +143,8 @@ def make_export(gw=3, n_entries=4, with_gw_rows=True, with_all_players=True,
         out["all_players"] = players
     if with_gw_rows:
         out["player_gw_recent"] = [
-            {"event": ev, "web_name": p["web_name"], "team": p["team"],
+            {"event": ev, "player_id": p["id"], "n_fixtures": 1,
+             "web_name": p["web_name"], "team": p["team"],
              "pos": p["pos"], "pts": (p["id"] + ev) % 13, "mins": 90,
              "starts": 1, "g_": 0, "a_": 0, "cs": 0, "gc": 1, "bonus": 0,
              "bps": 10, "defcon": (p["id"] + ev) % 18, "xg": 0.1, "xa": 0.1,
@@ -1255,6 +1258,225 @@ class ExportGrain(unittest.TestCase):
                           "a gameweek total was attributed to one of two matches")
         gw2 = next(r for r in rows if r["event"] == 2)
         self.assertEqual((gw2["fdr"], gw2["player_id"]), (2, 10))
+
+
+def _hist_folder(tmp, extra_rows=()):
+    """A tiny vaastav-shaped season: two teams, one duplicated row, one double
+    gameweek."""
+    os.makedirs(os.path.join(tmp, "gws"), exist_ok=True)
+    def write(name, rows, cols):
+        with open(os.path.join(tmp, name), "w", encoding="utf-8", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=cols)
+            w.writeheader()
+            w.writerows(rows)
+    write("teams.csv",
+          [{"id": "1", "name": "Alpha", "short_name": "ALP"},
+           {"id": "2", "name": "Beta", "short_name": "BET"}],
+          ["id", "name", "short_name"])
+    fixtures = [{"id": "1", "event": "1", "team_h": "1", "team_a": "2",
+                 "team_h_score": "1", "team_a_score": "0"},
+                {"id": "2", "event": "2", "team_h": "2", "team_a": "1",
+                 "team_h_score": "2", "team_a_score": "2"},
+                {"id": "3", "event": "3", "team_h": "1", "team_a": "2",
+                 "team_h_score": "0", "team_a_score": "0"},
+                {"id": "4", "event": "3", "team_h": "2", "team_a": "1",
+                 "team_h_score": "3", "team_a_score": "1"}]
+    write("fixtures.csv", fixtures,
+          ["id", "event", "team_h", "team_a", "team_h_score", "team_a_score"])
+    cols = ["element", "name", "position", "team", "round", "fixture",
+            "opponent_team", "was_home", "minutes", "starts", "total_points",
+            "expected_goals", "expected_assists", "bps", "defensive_contribution"]
+    def row(el, rnd, fixture, opp, home, mins, pts):
+        return {"element": str(el), "name": f"Player {el}", "position": "MID",
+                "team": "Alpha", "round": str(rnd), "fixture": str(fixture),
+                "opponent_team": str(opp), "was_home": str(home), "minutes": str(mins),
+                "starts": "1", "total_points": str(pts), "expected_goals": "0.10",
+                "expected_assists": "0.20", "bps": "20",
+                "defensive_contribution": "8"}
+    rows = [row(10, 1, 1, 2, True, 90, 5),
+            row(10, 1, 1, 2, True, 90, 5),          # verbatim duplicate
+            row(10, 2, 2, 2, False, 80, 2),
+            row(10, 3, 3, 2, True, 90, 6),          # double gameweek, match 1
+            row(10, 3, 4, 2, False, 45, 1),         # double gameweek, match 2
+            row(11, 1, 1, 2, True, 20, 1)]
+    rows.extend(extra_rows)
+    write(os.path.join("gws", "merged_gw.csv"), rows, cols)
+    return tmp
+
+
+def _canon(rows, extra_players=()):
+    """A canonical slice built straight from row dicts, for harness tests."""
+    players = {r["player_id"]: {"player_id": r["player_id"], "name": f"P{r['player_id']}",
+                                "pos": 3, "team": "ALP", "chance_next_round": None}
+               for r in rows}
+    for pid in extra_players:
+        players[pid] = {"player_id": pid, "name": f"P{pid}", "pos": 3,
+                        "team": "ALP", "chance_next_round": None}
+    full = [dict({"starts": 1, "pts": 0, "xg": 0.0, "xa": 0.0, "bps": 0,
+                  "defcon": 0, "n_fixtures": 1, "fixtures": []}, **r) for r in rows]
+    return E.check_canonical({"source": "test", "season": "test", "through_gw":
+                              max(r["event"] for r in full), "players": players,
+                              "rows": full, "team_matches": [], "notes": []})
+
+
+class CanonicalContract(unittest.TestCase):
+    """One shape, two adapters. If they drift apart, the model reads zeros from
+    one source and reports a finding instead of failing."""
+
+    def test_both_adapters_emit_the_same_contract(self):
+        live = E.canonical_from_export(make_export())
+        tmp = tempfile.mkdtemp()
+        try:
+            hist = H.canonical_from_vaastav(_hist_folder(tmp), "2025/26")
+        finally:
+            shutil.rmtree(tmp)
+        self.assertEqual(set(live), set(hist))
+        self.assertEqual(set(live), set(E.CANONICAL_FIELDS))
+        self.assertEqual(set(live["rows"][0]), set(hist["rows"][0]))
+        self.assertEqual(set(live["rows"][0]), set(E.CANONICAL_ROW_FIELDS))
+        self.assertEqual(set(next(iter(live["players"].values()))),
+                         set(next(iter(hist["players"].values()))))
+        self.assertEqual(set(live["team_matches"][0]), set(hist["team_matches"][0]))
+        # a player present in both sources: same structure, both usable
+        pid_live = live["rows"][0]["player_id"]
+        pid_hist = hist["rows"][0]["player_id"]
+        self.assertEqual(set(live["rows"][0]) ^ set(hist["rows"][0]), set())
+        self.assertIsInstance(pid_live, int)
+        self.assertIsInstance(pid_hist, int)
+
+    def test_check_canonical_rejects_a_renamed_field(self):
+        c = E.canonical_from_export(make_export())
+        c["rows"][0]["expected_goals"] = c["rows"][0].pop("xg")
+        with self.assertRaises(ValueError):
+            E.check_canonical(c)
+
+    def test_export_without_ids_is_refused(self):
+        d = make_export()
+        for r in d["player_gw_recent"]:
+            del r["player_id"]
+        with self.assertRaises(ValueError):
+            E.canonical_from_export(d)
+
+
+class HistoricalAdapter(unittest.TestCase):
+
+    def _canon(self, **kw):
+        tmp = tempfile.mkdtemp()
+        try:
+            return H.canonical_from_vaastav(_hist_folder(tmp, **kw), "2025/26")
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_dedup_is_loud_and_names_the_player(self):
+        """A silent de-dup that started dropping real rows after an upstream
+        change would be invisible."""
+        c = self._canon()
+        note = "\n".join(c["notes"])
+        self.assertIn("removed 1 repeated", note)
+        self.assertIn("element 10", note)
+
+    def test_duplicate_row_is_not_counted_twice(self):
+        c = self._canon()
+        gw1 = next(r for r in c["rows"] if r["player_id"] == 10 and r["event"] == 1)
+        self.assertEqual((gw1["minutes"], gw1["pts"], gw1["n_fixtures"]), (90, 5, 1))
+
+    def test_double_gameweek_survives_deduplication(self):
+        """(element, round) would have deleted it; (element, fixture) keeps it."""
+        c = self._canon()
+        gw3 = next(r for r in c["rows"] if r["player_id"] == 10 and r["event"] == 3)
+        self.assertEqual(gw3["n_fixtures"], 2)
+        self.assertEqual((gw3["minutes"], gw3["pts"]), (135, 7))
+        self.assertEqual(sorted(f["fixture_id"] for f in gw3["fixtures"]), ["3", "4"])
+
+    def test_missing_file_stops_rather_than_substituting(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            _hist_folder(tmp)
+            os.remove(os.path.join(tmp, "teams.csv"))
+            with self.assertRaises(FileNotFoundError):
+                H.canonical_from_vaastav(tmp)
+        finally:
+            shutil.rmtree(tmp)
+
+
+class Reliability(unittest.TestCase):
+
+    @staticmethod
+    def _season(rate_of, gws=8, players=10):
+        rows = []
+        for pid in range(1, players + 1):
+            for ev in range(1, gws + 1):
+                rows.append({"player_id": pid, "event": ev, "minutes": 90,
+                             "xg": rate_of(pid, ev), "pts": 2})
+        return _canon(rows)
+
+    def test_split_is_odd_even_not_first_half_second_half(self):
+        """Half the players improve after GW4 and half decline, by the same
+        amount, so each player's odd and even totals agree while his first and
+        second halves disagree. Odd/even measures the player; first/second
+        would measure the trend."""
+        trend = lambda pid: 5 if pid % 2 == 0 else -5
+        c = self._season(lambda pid, ev: 10 * pid + trend(pid) * (1 if ev > 4 else -1))
+        r = E.measure_reliability(c, metrics=("xg",))["xg"]
+        self.assertGreater(r["r_half"], 0.9,
+                           "odd/even halves disagree - wrong split?")
+        # the same data split first-half against second-half does not agree
+        first, second = [], []
+        for pid in range(1, 11):
+            first.append(10 * pid - trend(pid))
+            second.append(10 * pid + trend(pid))
+        self.assertLess(E._spearman(first, second), r["r_half"],
+                        "fixture cannot tell the two splits apart")
+
+    def test_constant_metric_is_undefined_not_zero(self):
+        c = self._season(lambda pid, ev: 0.5)
+        r = E.measure_reliability(c, metrics=("xg",))["xg"]
+        self.assertTrue(r["undefined"])
+        self.assertIsNone(r["r_half"])
+        # the guard, not the correlation, produced that
+        self.assertEqual(E._spearman([1, 1, 1, 1], [2, 3, 4, 5]), 0.0)
+
+    def test_minutes_is_not_measured_per_90(self):
+        """Per 90 it divides minutes by minutes: the same constant for everyone.
+        It is totalled per half over the whole population instead, with players
+        who never featured counted as zero."""
+        rows = [{"player_id": pid, "event": ev, "minutes": 90 if ev <= pid else 0,
+                 "xg": 0.1 * pid, "pts": 2}
+                for pid in range(1, 11) for ev in range(1, 9)]
+        c = _canon(rows, extra_players=(99,))     # 99 never features at all
+        r = E.measure_reliability(c, metrics=("minutes",))["minutes"]
+        self.assertFalse(r["undefined"], "minutes measured per 90 and vanished")
+        self.assertGreater(r["r_half"], 0.5)
+        # a player who features in one half only is counted as zero in the other
+        odd_only = [x for x in rows if x["player_id"] == 1]
+        self.assertTrue(all(x["minutes"] == 0 for x in odd_only if x["event"] > 1))
+        self.assertIn(1, [p for p in c["players"]])
+
+    def test_minutes_population_is_an_explicit_choice(self):
+        """Never-featuring players are a block of identical zeros that agrees
+        with itself; including them lifted GW1-4 from 0.777 to 0.873."""
+        rows = [{"player_id": pid, "event": ev, "minutes": 90 if ev <= pid else 0,
+                 "xg": 0.1 * pid, "pts": 2}
+                for pid in range(1, 11) for ev in range(1, 9)]
+        c = _canon(rows, extra_players=(99,))
+        appeared = E.measure_reliability(c, metrics=("minutes",))["minutes"]
+        everyone = E.measure_reliability(c, metrics=("minutes",),
+                                         population="all")["minutes"]
+        self.assertEqual((appeared["n"], everyone["n"]), (10, 11))
+        with self.assertRaises(ValueError):
+            E.measure_reliability(c, metrics=("minutes",), population="featured")
+
+    def test_spearman_brown_lifts_the_half_correlation(self):
+        import random
+        rng = random.Random(3)          # noisy enough that r_half is not 1.0
+        c = self._season(lambda pid, ev: pid + rng.uniform(0, 60), players=30)
+        r = E.measure_reliability(c, metrics=("xg",))["xg"]
+        self.assertTrue(0.1 < r["r_half"] < 0.95,
+                        f"fixture is degenerate: r_half {r['r_half']}")
+        self.assertAlmostEqual(r["r_full"], 2 * r["r_half"] / (1 + r["r_half"]),
+                               places=12)
+        self.assertGreater(r["r_full"], r["r_half"])
+        self.assertAlmostEqual(r["ci"], 1.96 / (r["n"] - 1) ** 0.5, places=12)
 
 
 class Hygiene(unittest.TestCase):

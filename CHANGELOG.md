@@ -557,3 +557,91 @@ fixtures join fanned one gameweek total into two rows.
 **Verdict: the dataset supports the study.** Both halves are possible — the
 attacking half transfers to 2026/27 rules, the DEF half is measurable here but
 validated against superseded BPS rules, exactly as the plan states.
+
+---
+
+## 2026-09-14 — canonical slice, both adapters, and `measure_reliability()`
+
+One implementation, two callers. `fpl_hist.py` adapts the vaastav CSVs into the
+same canonical slice `fpl_edge.py` builds from the live export, then calls the
+same measurement functions — so a historical result is a statement about our
+code, not about a copy of it. (BUILD_SPEC names these as functions to refactor;
+they did not exist, so they were built against the neutral format from the
+start rather than retrofitted.)
+
+**Contract.** `CANONICAL_FIELDS` / `CANONICAL_ROW_FIELDS` / player / fixture /
+team-match field sets, asserted by `check_canonical()` on every adapter output.
+Field sets are compared, not duck-typed: if one adapter emitted
+`expected_goals` where the other emits `xg`, the model would read zeros from
+that source and report a finding instead of failing.
+
+**Historical adapter owns two source properties**, because they are not
+properties of the model: de-duplication on (element, fixture), and collapsing
+per-match rows into one row per player-gameweek with `n_fixtures`. The de-dup
+is **loud** — it names the count and the players — because a silent de-dup that
+began dropping real rows after an upstream change would be invisible. On the
+real season it reports: *removed 10 repeated row(s) from 2 player(s) - Junior
+Kroupi (element 100) x9, Ben Gannon-Doak (element 391) x1*, and keeps all 409
+genuine multi-fixture gameweeks.
+
+**`measure_reliability()`** — odd vs even gameweeks (not first/second, which
+would measure trend), per-90 rates, tie-corrected Spearman, Spearman–Brown to
+full-sample reliability, interval on every figure. A metric with no variance in
+a half is reported **undefined**, never as a correlation of zero.
+
+**Measured — 2025/26, full season** (`python fpl_hist.py historical/2025-26`,
+0.75s over 29,338 player-gameweeks):
+
+| metric | n | r_half | r_full | weight |
+|---|---|---|---|---|
+| minutes | 841 | 0.978 | 0.989 | 99% |
+| xgi | 454 | 0.795 | 0.886 | 89% |
+| defcon | 454 | 0.787 | 0.881 | 88% |
+| xg | 454 | 0.737 | 0.848 | 85% |
+| xa | 454 | 0.679 | 0.809 | 81% |
+| bps | 454 | 0.319 | 0.484 | 48% |
+| **pts** | 454 | **0.312** | 0.475 | 48% |
+
+Same ordering as BUILD_SPEC §1.2's GW1–4 figures, every value far higher with
+38 gameweeks instead of 4 — as expected, and the reason the reliability-by-
+window curve (Step 2) is worth having. Points remains the least reliable input
+in the game.
+
+**Regression against BUILD_SPEC §1.2**, live GW1–4 export: defcon 0.564 vs
+0.569, xgi 0.503 vs 0.479, xa 0.444 vs 0.435, xg 0.479 vs 0.433, bps 0.198 vs
+0.227, pts 0.165 vs 0.153 (n 250 vs 242). Within the noise of a re-synced
+export and a GW4 that is still partly unplayed.
+
+**One definition is not cosmetic and needs freezing before Friday.** For
+`minutes`, "the whole population" is ambiguous, and the two readings differ:
+
+| population | n | r_half | r_full | weight |
+|---|---|---|---|---|
+| appeared at least once (default) | 405 | 0.777 | 0.874 | 87% |
+| every player in the game | 658 | 0.873 | 0.932 | 93% |
+| BUILD_SPEC §1.2 quoted | 399 | 0.784 | 0.879 | 88% |
+
+The quoted baseline is reproduced by "appeared at least once", so that is the
+default; `population="all"` is available and explicit. Including the ~253
+players who never feature adds a block of identical zeros that agrees perfectly
+with itself. Either way, a player who featured in one half and not the other is
+counted as zero in the half he missed — that part is not in question.
+
+**Noted, not done — recomputing DEFCON under 2026/27 rules.** `merged_gw.csv`
+carries `tackles`, `recoveries` and `clearances_blocks_interceptions`
+separately, so DEFCON could be rebuilt under current rules instead of taken
+from the 2025/26 column. Worth doing *if* the historical run shows DEF failing:
+as it stands we could not tell whether that was the rule change or the model,
+and recomputing would separate them — and might partly rescue the defensive
+half that HISTORICAL_VALIDATION writes off as untransferable.
+
+**Also noted:** the interval `± 1.96 / sqrt(n-1)` is unbounded, so a very high
+correlation prints an upper bound above 1 (minutes, full season: 0.910 .. 1.045).
+The formula is as specified; the artifact is cosmetic.
+
+**Verified:** 12 new tests; 11 mutations — de-dup on the wrong key, silent
+de-dup, an adapter renaming a field, a double gameweek collapsed, the contract
+not checking rows, an export without ids accepted, a first/second-half split,
+minutes measured per 90, no constant guard, the population silently widened, no
+Spearman–Brown step — each red. Suite 91 → 103. The GW5 forecast log is
+untouched: regenerated 541/541 identical.

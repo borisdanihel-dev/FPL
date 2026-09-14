@@ -590,6 +590,174 @@ def _diff_chips(d, prev):
     print()
 
 
+# ---------------------------------------------------------------------------
+# canonical season slice - one shape, several sources
+# ---------------------------------------------------------------------------
+
+CANONICAL_FIELDS = frozenset({"source", "season", "through_gw", "players",
+                              "rows", "team_matches", "notes"})
+CANONICAL_PLAYER_FIELDS = frozenset({"player_id", "name", "pos", "team",
+                                     "chance_next_round"})
+CANONICAL_ROW_FIELDS = frozenset({"player_id", "event", "minutes", "starts",
+                                  "pts", "xg", "xa", "bps", "defcon",
+                                  "n_fixtures", "fixtures"})
+CANONICAL_FIXTURE_FIELDS = frozenset({"opponent", "was_home", "fixture_id"})
+CANONICAL_MATCH_FIELDS = frozenset({"event", "team", "opponent", "was_home",
+                                    "goals_for", "goals_against", "fixture_id"})
+
+
+def check_canonical(c):
+    """Raise unless `c` matches the canonical contract exactly.
+
+    The harness reads one shape; the live export and the historical CSVs are
+    adapted into it. If one adapter emitted `expected_goals` where the other
+    emits `xg`, the model would read zeros from that source and report a
+    finding rather than fail, so the field sets are asserted, not duck-typed.
+    """
+    def same(got, want, what):
+        got = set(got)
+        if got != set(want):
+            raise ValueError(f"canonical {what}: missing {sorted(set(want) - got)}, "
+                             f"unexpected {sorted(got - set(want))}")
+    same(c, CANONICAL_FIELDS, "keys")
+    for p in c["players"].values():
+        same(p, CANONICAL_PLAYER_FIELDS, "player")
+    for r in c["rows"]:
+        same(r, CANONICAL_ROW_FIELDS, "row")
+        for f in r["fixtures"]:
+            same(f, CANONICAL_FIXTURE_FIELDS, "row fixture")
+    for m in c["team_matches"]:
+        same(m, CANONICAL_MATCH_FIELDS, "team match")
+    return c
+
+
+def canonical_through(c, gw):
+    """The same slice truncated at gameweek `gw` - training windows for the
+    rolling-origin backtest, so nothing after `gw` can reach a prediction."""
+    return check_canonical(dict(
+        c, through_gw=gw,
+        rows=[r for r in c["rows"] if r["event"] <= gw],
+        team_matches=[m for m in c["team_matches"] if m["event"] <= gw]))
+
+
+def canonical_from_export(d, season="2026/27"):
+    """Adapter: the live fpl_export_gwN.json bundle -> canonical."""
+    rows_in = d.get("player_gw_recent") or []
+    if rows_in and "player_id" not in rows_in[0]:
+        raise ValueError("export has no player_id in player_gw_recent - web_names "
+                         "are not unique. Re-export with the current fpl_sync.py.")
+    players = {int(p["id"]): {"player_id": int(p["id"]), "name": p["web_name"],
+                              "pos": p["pos"], "team": p["team"],
+                              "chance_next_round": p.get("chance_next_round")}
+               for p in d.get("all_players", [])}
+    rows = []
+    for r in rows_in:
+        fx = []
+        if r.get("opp") is not None:          # NULL for a double: not attributable
+            fx = [{"opponent": r["opp"], "was_home": r.get("venue") == "H",
+                   "fixture_id": None}]
+        rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+                     "minutes": r.get("mins") or 0, "starts": r.get("starts") or 0,
+                     "pts": r.get("pts") or 0, "xg": float(r.get("xg") or 0),
+                     "xa": float(r.get("xa") or 0), "bps": r.get("bps") or 0,
+                     "defcon": r.get("defcon") or 0,
+                     "n_fixtures": r.get("n_fixtures") or 1, "fixtures": fx})
+    matches = []
+    for f in d.get("fixtures_played") or []:
+        matches.append({"event": f["event"], "team": f["home"], "opponent": f["away"],
+                        "was_home": True, "goals_for": f["h_goals"],
+                        "goals_against": f["a_goals"], "fixture_id": None})
+        matches.append({"event": f["event"], "team": f["away"], "opponent": f["home"],
+                        "was_home": False, "goals_for": f["a_goals"],
+                        "goals_against": f["h_goals"], "fixture_id": None})
+    return check_canonical({"source": "export", "season": season,
+                            "through_gw": d.get("gameweek", 0), "players": players,
+                            "rows": rows, "team_matches": matches, "notes": []})
+
+
+# ---------------------------------------------------------------------------
+# reliability - does a metric agree with itself?
+# ---------------------------------------------------------------------------
+
+RELIABILITY_METRICS = ("pts", "xg", "xa", "xgi", "bps", "defcon", "minutes")
+
+
+def measure_reliability(c, metrics=RELIABILITY_METRICS, min_mins=45,
+                        population="appeared"):
+    """Split-half reliability per metric, on a canonical slice.
+
+    Odd gameweeks against even, not first half against second: that removes
+    trend, form drift and fixture runs, which would otherwise be measured as
+    reliability. Per-90 rates, tie-corrected Spearman across players, then
+    Spearman-Brown up to the full sample, r_full = 2r / (1 + r).
+
+    `minutes` must be handled separately and is: per 90 it divides minutes by
+    minutes, which is the same constant for everyone and measures nothing. It
+    is totalled per half across the whole population, with players who did not
+    feature counted as zero.
+
+    A metric with no variance in either half is reported `undefined`, never as
+    a correlation of zero - that would read as a finding.
+
+    `population` decides who counts for `minutes`: "appeared" (default) is
+    everyone with at least one appearance in the window; "all" is every player
+    in the game. The choice is not cosmetic - on GW1-4 it moves r_half from
+    0.777 to 0.873, because a few hundred players who never feature are a block
+    of identical zeros that agrees perfectly with itself. Players who appeared
+    in one half and not the other are counted as zero in that half either way,
+    which is the part that matters.
+    """
+    if population not in ("appeared", "all"):
+        raise ValueError(f"population must be 'appeared' or 'all', got {population!r}")
+    half = defaultdict(lambda: {0: defaultdict(float), 1: defaultdict(float)})
+    for r in c["rows"]:
+        h = half[r["player_id"]][r["event"] % 2]
+        h["minutes"] += r["minutes"] or 0
+        for k in ("pts", "xg", "xa", "bps", "defcon"):
+            h[k] += r[k] or 0
+        h["xgi"] += (r["xg"] or 0) + (r["xa"] or 0)
+    out = {}
+    for m in metrics:
+        a, b = [], []
+        if m == "minutes":
+            appeared = {r["player_id"] for r in c["rows"] if (r["minutes"] or 0) > 0}
+            pool = sorted(c["players"] if population == "all" else appeared)
+            for pid in pool:
+                h = half.get(pid)
+                a.append(h[1]["minutes"] if h else 0.0)
+                b.append(h[0]["minutes"] if h else 0.0)
+        else:
+            for h in half.values():
+                if h[1]["minutes"] >= min_mins and h[0]["minutes"] >= min_mins:
+                    a.append(h[1][m] / h[1]["minutes"] * 90)
+                    b.append(h[0][m] / h[0]["minutes"] * 90)
+        n = len(a)
+        if n < 3 or len(set(a)) < 2 or len(set(b)) < 2:
+            out[m] = {"n": n, "r_half": None, "r_full": None, "ci": None,
+                      "weight": None, "undefined": True}
+            continue
+        r_half = _spearman(a, b)
+        r_full = 2 * r_half / (1 + r_half) if r_half > -1 else None
+        out[m] = {"n": n, "r_half": r_half, "r_full": r_full,
+                  "ci": 1.96 / (n - 1) ** 0.5,
+                  "weight": min(1.0, max(0.0, r_full)) if r_full is not None else 0.0,
+                  "undefined": False}
+    return out
+
+
+def reliability_table(rel, title="RELIABILITY  (split-half, odd vs even gameweeks)"):
+    lines = ["=" * 78, title, "=" * 78,
+             f"  {'metric':10s}{'n':>6}{'r_half':>9}{'r_full':>9}{'95% CI':>18}{'weight':>9}"]
+    for m, v in rel.items():
+        if v["undefined"]:
+            lines.append(f"  {m:10s}{v['n']:>6}{'undefined - no variance in a half':>45}")
+            continue
+        lines.append(f"  {m:10s}{v['n']:>6}{v['r_half']:>9.3f}{v['r_full']:>9.3f}"
+                     f"{v['r_half'] - v['ci']:>10.3f} ..{v['r_half'] + v['ci']:>6.3f}"
+                     f"{v['weight']:>9.0%}")
+    return "\n".join(lines)
+
+
 SHRINK = 4.0        # prior weight, in matches
 
 
