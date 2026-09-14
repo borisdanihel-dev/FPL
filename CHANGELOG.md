@@ -872,3 +872,51 @@ in the strategy chat (2019/20: ghost ship 2,446, lineup-only 3,236, free
 transfers 3,945, unlimited 4,984 with 145 hits; ghost ship rank 386; De Bruyne
 captained every week 502; Bull 2,557) all match the source,
 alpscode.com/blog/hindsight-optimization.
+
+---
+
+## 2026-09-14 16:10 CEST — wildcard decision rule FROZEN (as amended), before GW5 is graded
+
+Approved by Boris with one amendment (the last clause). Do not edit; changes go
+in a new timestamped entry.
+
+**Three layers, in order. A later layer never overrides an earlier one.**
+
+1. **Exclude on P(start).** The frozen threshold: minutes share ≤ 0.667 over the
+   last `min(4, gws_played)` gameweeks is out. Fully validated — 0.76–0.86
+   reliability at four gameweeks, and no model beats it on the blank question at
+   any window. The hard filter; nobody below it is considered.
+2. **Shortlist by role.** Set-piece order (`pens_order`, `corners_order`,
+   `fk_order`), position arbitrage, DEFCON hit rate. Rules-level edges that need
+   no model. Where Groß and De Cuyper come from.
+3. **Order within position** — `bottomup` for DEF (the clean-sheet term is what
+   carries it, +0.154 among starters), **bare xGI for MID and FWD** (the
+   ablation shows the rest of the model adds nothing there). A +0.10–0.15 edge,
+   at the measured ceiling of ~0.15, is a tiebreaker between players who pass
+   layers 1 and 2. It is not a reason to override a role-based one.
+
+**Amendment — cross-position budget by quota, not by global value-per-million,
+until DEF calibration is fixed.** `_build_squad` today ranks by `proj / price`
+and hill-climbs on `proj` across the whole squad, trading a defender against a
+midfielder for the same money. DEF projections are correctly ordered but
+over-spread (MAE 2.34 vs `minutes` 2.12, ≈ the constant predictor), so a
+global comparison would over-buy defenders. Until P(clean sheet) is shrunk
+toward the league base rate — not before GW5, and not tuned on 2025/26 —
+allocate the 2-5-5-3 quota per position and fill each position from its own
+ordered shortlist.
+
+**GW6 work, in this order. None of it before Friday 18 Sep 19:30 CEST.**
+
+1. Rewire `sec_wildcard` to the three layers as above.
+2. Horizon projection over GW7–12: `project_reliability()` already takes a
+   fixture list, so the six-week sum with per-opponent clean sheets is a call
+   with the right list — no model change.
+3. Bench Boost screen for GW8: nailed starters with high floors, P(start)-driven.
+4. Widen the export's per-gameweek window past six gameweeks (one SQL line in
+   `fpl_sync.py`) so live weights and rates use the whole season by GW7+.
+5. Effective ownership with captaincy in the mini-league layer — the part that
+   decides a seven-man league and the part no public tool does.
+
+GW5 freezes tonight with four sources (`own`, `xg`, `minutes`, `bottomup`). The
+two live rows after GW5 settles are the check on whether the 2025/26 result
+transfers under this season's rules; given BPS did not, that is not a formality.
