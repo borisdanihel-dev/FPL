@@ -834,3 +834,41 @@ xg 0.479 in 0.269..0.517 ✓, xa 0.444 in 0.327..0.575 ✓, pts 0.165 in
 inside is what independent seasons should give at 95%; the BPS miss is the one
 to watch, given the 2026/27 BPS rule changes are exactly the thing
 HISTORICAL_VALIDATION says will not transfer.
+
+---
+
+## 2026-09-14 — the ceiling on the starters question, measured (before GW5 is graded)
+
+The "+0.20 may be the wrong bar for the starters question" idea can be a
+number. How well does one week's points predict the next week's, among players
+who featured (60+ min) in both? That is the test-retest reliability of the
+outcome itself, and no predictor can correlate with an outcome better than the
+square root of its reliability.
+
+- **Direct:** adjacent-week Spearman of points among starters, 2025/26, pooled
+  over 37 week-pairs, n=5,839: **+0.023** (95% CI ±0.026 — spans zero).
+  Weekly values −0.19 .. +0.26, median +0.02. **Ceiling ≈ √0.023 = 0.15.**
+- **Independent cross-check:** the recorded full-season `r_half(pts)` = 0.312 is
+  the reliability of a ~19-gameweek aggregate; Spearman–Brown reversed to one
+  gameweek gives **0.023 — ceiling 0.153.** Two methods, same answer.
+- For contrast, whole population (blanks as 0): adjacent-week rho +0.206,
+  ceiling ≈ 0.45. `minutes` reaches +0.33 of that.
+
+**Reading.** Among starters, bottomup at +0.106 (ALL) and +0.154 (DEF) is at
+the ceiling, not short of it. +0.20 was unattainable for single-week points
+from stable player quality, and was set with the whole-population test in
+mind, where P(start) supplies most of the correlation for free. Caveat: the
+adjacent-week ceiling bounds predictors of *stable* quality; week-specific
+information (fixture, team news) could in principle exceed it. bottomup is
+fixture-aware and still lands at the ceiling, and the ablation shows the
+fixture-dependent term adds ~0.02–0.06 — so whatever headroom exists above
+0.15 is small and lives in information the export does not carry.
+
+This is recorded as a measured bound, not as a revision of the bar after
+seeing the result. Whether it becomes the bar is a decision for after GW5.
+
+**Verified today, for the record:** the hindsight-optimisation figures quoted
+in the strategy chat (2019/20: ghost ship 2,446, lineup-only 3,236, free
+transfers 3,945, unlimited 4,984 with 145 hits; ghost ship rank 386; De Bruyne
+captained every week 502; Bull 2,557) all match the source,
+alpscode.com/blog/hindsight-optimization.
