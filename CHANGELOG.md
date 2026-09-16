@@ -1072,3 +1072,12 @@ Order: 1–4 (grading correctness), then 5, 6. All before the Tuesday 22 Sep gra
    computation against `sec_calibration` player by player on the same export.
    Until then the repo's row stands. Likely cause: actuals snapshot or a
    boundary player, not the ranker — bias moved, n did not.
+
+**Addendum to item 5 (Boris, 16 Sep):** the same reasoning as item 3 applies
+to the Drive sync — the synced folder must be **outside the working
+directory**, or `newest_export()` / `previous_export()` glob
+`fpl_export_gw*.json` and pick up the synced copy. Copy *to* the Drive folder;
+never point the sync client at `Documents\FPL`. Google Drive for desktop was
+installed on 16 Sep but had not mounted yet at 14:20 (no process, no DriveFS
+config, no `My Drive` on any letter) — it needs sign-in; the mounted path is
+recorded here once it appears, and item 5 uses `<that path>\FPL\`.
