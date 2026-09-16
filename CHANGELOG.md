@@ -1081,3 +1081,10 @@ never point the sync client at `Documents\FPL`. Google Drive for desktop was
 installed on 16 Sep but had not mounted yet at 14:20 (no process, no DriveFS
 config, no `My Drive` on any letter) — it needs sign-in; the mounted path is
 recorded here once it appears, and item 5 uses `<that path>\FPL\`.
+
+**Item 5 target, recorded 16 Sep 14:30:** Google Drive for desktop 130.0.2.0,
+signed in, streaming mount **`G:\My Drive`**, no folders synced *from* the
+machine (setup step skipped, per the addendum). Target folder created and
+proven writable: **`G:\My Drive\FPL\`**. The batch copies the current export,
+`projection_log.csv` and the night's run log there after the report step;
+`fpl.sqlite` never.
