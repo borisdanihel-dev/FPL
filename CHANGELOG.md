@@ -1028,3 +1028,47 @@ final" flag. Not before Friday: `fpl_edge.py` is imported by the recording path,
 and a broken edit trips the test gate and skips Thursday's last pre-deadline
 recording. Turning the timing rule into code has to wait for the freeze to
 lift; it must be in place before Tuesday's grading, and Monday is in time.
+
+---
+
+## 2026-09-16 — Monday 21 Sep work, pre-specified (nothing touches `fpl_edge.py` or `fpl_run.bat` before Fri 18 Sep 19:30)
+
+Order: 1–4 (grading correctness), then 5, 6. All before the Tuesday 22 Sep grading.
+
+1. **Calibration guard.** `fpl_sync.py`: migrate `events` to carry
+   `data_checked` (from bootstrap `events[].data_checked`), and export an
+   `events` section — `id`, `finished`, `data_checked` per gameweek.
+   `sec_calibration` and `p1_eval` refuse to grade any gameweek whose events
+   row lacks `data_checked = 1`, and print why. Keyed on `data_checked`, not
+   `finished`: the first means points and bonus are final, the second only
+   that the match ended. Tests: a gameweek with `data_checked = 0` is refused
+   with the reason printed; mutation (guard keyed on `finished`) red.
+2. **Print the definitions.** Calibration output states on the page: starters
+   threshold (60+ minutes); blank rule (logged player whose team played and has
+   no row = 0; team did not play = excluded); population count per source.
+   Two computations disagreed on GW4 and neither had its rules written down.
+3. **Dated exports.** The nightly run keeps each export as
+   `archive/fpl_export_gwN_YYYY-MM-DD.json` (UTC date, same `%STAMP%` as the
+   log) instead of only overwriting in place. Point-in-time inputs, same reason
+   as point-in-time forecasts. `archive/` gitignored. The working-folder
+   `fpl_export_gwN.json` stays as is, so `newest_export()` / `previous_export()`
+   are unaffected — they glob the working folder only.
+4. **Backup.** `copy fpl.sqlite archive\fpl_YYYY-MM-DD.sqlite` each night, after
+   the sync. Price history cannot be regenerated; three unattended weeks follow.
+5. **Drive sync.** After the report step, copy the current export,
+   `projection_log.csv` and the night's run log to `<Drive>\FPL\`. Log the copy
+   result; a failed copy is not fatal but must be visible. Never sync
+   `fpl.sqlite`. Copying keeps the working files out of the sync client's
+   reach — `record_projections` rewrites `projection_log.csv` whole, and a
+   client touching the working file mid-write is the risk being avoided.
+   **Blocker found 16 Sep: Google Drive for desktop is not installed on this
+   machine** — no `%LOCALAPPDATA%\Google\DriveFS`, no `Google Drive` / `My
+   Drive` folder on any letter, no `GoogleDriveFS.exe`. Install it (or name
+   another sync folder) before Monday, or item 5 slips.
+6. **Pin the lockdown.** Two direct API reads Mon 21 Sep, before and after
+   09:00 UK; record `finished` and `data_checked` from each. Turns the stated
+   rule into a measured one.
+7. **GW4 discrepancy** — once Drive sync is live, Boris diffs his GW4
+   computation against `sec_calibration` player by player on the same export.
+   Until then the repo's row stands. Likely cause: actuals snapshot or a
+   boundary player, not the ranker — bias moved, n did not.
