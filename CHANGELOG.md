@@ -961,3 +961,70 @@ parameters, so a retrospective run is legitimate given this definition was
 fixed first. The question it answers: whether the wildcard should be drafted on
 a multi-week sum or on single-week projections — and whether that changes the
 answer to "bottomup vs minutes".
+
+---
+
+## 2026-09-16 — GW4 graded on the SETTLED export: the first live calibration row
+
+Graded from `fpl_export_gw4.json` as written by the 15 Sep 23:55 CEST sync
+(21:55 UTC), after GW4 lockdown — the DB shows the event `finished = 1` and
+10/10 fixtures finished. Against the frozen GW4 rows of `projection_log.csv`
+(272 `own`, 255 `xg`, recorded 11 Sep 23:55). Benched-but-team-played graded
+as 0; no GW4 blanks. Starters = 60+ minutes in GW4. Reproducible with the
+repo's own `grade_forecasts` / `_spearman`.
+
+| source | n | whole rho (95%) | starters rho (n) | MAE vs const | bias |
+|---|---|---|---|---|---|
+| own | 272 | **+0.342** (+0.223..+0.461) | +0.219 (187) | 2.40 vs 2.54 **PASS** | +0.07 |
+| xg | 255 | +0.254 (+0.131..+0.377) | +0.108 (185) | 2.74 vs 2.62 **FAIL** | +0.57 |
+| minutes* | 272 | +0.282 (+0.163..+0.401) | +0.016 (187) | 2.51 vs 2.54 PASS | −2.20 |
+
+\* retrospective — P(start) from the GW3 export, as `--source minutes` would
+have written it. Not in the point-in-time log (the source did not exist on 11
+Sep); its bias is meaningless because it is a probability, not points.
+
+**Reading.** One week; the 2025/26 backtest shows single-week rho swinging
+±0.1 around its mean, so nothing here is a verdict. `own` passes the constant
+bar this week and out-ranks `xg` on both questions; `xg` fails, over-forecasting
+by half a point per player. The retrospective `minutes` reproduces last
+season's pattern exactly — +0.28 on the whole population, nothing among
+starters — and `own` sits above it this week, inside the interval.
+
+**Figures supplied from the strategy chat differ and are not recorded.** They
+gave own +0.341 / +0.206, MAE 2.39 vs 2.53, bias +0.03; xg +0.265 / +0.099,
+2.72 vs 2.62, +0.52; minutes +0.295 — same n, same verdicts, every value off at
+the second decimal. That computation ran outside this repo on an uploaded file
+and cannot be reproduced here; a different snapshot of GW4 actuals or a
+different starters/blank rule would do it. The claim that the provisional
+(14 Sep) and settled grades were identical to three decimals **cannot be
+checked**: the 14 Sep export was overwritten by the nightly sync. Exports are
+regenerated in place and gitignored — from Mon 21 Sep, keep a dated copy of
+each night's export alongside the `fpl.sqlite` backup (≈1.3 MB/day).
+
+**Rule, as stated and now applied:** provisional grades are never recorded.
+This entry exists because lockdown had passed.
+
+## 2026-09-16 — the `finished` flag: measured bracket, stated rule, grading rule
+
+**Stated (Boris):** a 2026/27 rule change — `finished` flips at gameweek
+lockdown, 09:00 UK the day after the last kickoff.
+
+**Measured on GW4:** last final whistle ≈ Mon 14 Sep 21:00 UTC. `finished = 0`
+on all 10 fixtures and the event at the Mon 21:55 UTC sync. `finished = 1`,
+`data_checked = 1`, 10/10 fixtures at a direct API read Tue 15 Sep 18:40 UTC.
+So the flip is bracketed **Mon 21:55 – Tue 18:40 UTC** — consistent with 09:00
+UK, not pinned to it. Pin it on GW5 with two API reads on Mon 21 Sep, before
+and after 09:00 UK.
+
+**Grading rule:** grade after the sync that follows lockdown, never before.
+GW5: last kickoff Sun 20 Sep 17:30 CEST → lockdown Mon 21 Sep 09:00 UK →
+Monday's 23:55 sync carries it → **grade Tuesday 22 Sep.**
+
+**Guard — scheduled Mon 21 Sep, with the post-freeze grading changes.** The
+export gains an `events` section (id, finished, data_checked); `sec_calibration`
+and `p1_eval` refuse to grade an event that is not `data_checked` and say why.
+`data_checked` rather than `finished`: it is the API's "points and bonus are
+final" flag. Not before Friday: `fpl_edge.py` is imported by the recording path,
+and a broken edit trips the test gate and skips Thursday's last pre-deadline
+recording. Turning the timing rule into code has to wait for the freeze to
+lift; it must be in place before Tuesday's grading, and Monday is in time.
