@@ -14,6 +14,7 @@ import json
 import math
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -2009,6 +2010,204 @@ class Shipping(unittest.TestCase):
         con = sqlite3.connect(os.path.join(bdir, kept[-1]))
         self.assertEqual(con.execute("select x from t").fetchone()[0], 42)
         con.close()
+
+
+def _recordable_export(**kw):
+    """make_export with next gameweek's kickoffs three days ahead."""
+    from datetime import datetime, timedelta, timezone
+    d = make_export(**kw)
+    when = datetime.now(timezone.utc) + timedelta(days=3)
+    for f in d["fixtures_next6"]:
+        if f["event"] == d["gameweek"] + 1:
+            f["kickoff_time"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return d
+
+
+@unittest.skipUnless(os.name == "nt", "reproduces a Windows file lock")
+class RecordResilience(unittest.TestCase):
+    """19 Sep: Excel held projection_log.csv, four records died, exit code 0."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.log = os.path.join(self.tmp, "projection_log.csv")
+        with redirect_stdout(io.StringIO()):
+            E.record_projections(_recordable_export(), 6, "own", None, self.log)
+        self.before = open(self.log, encoding="utf-8").read()
+        self.waits, self.held, self.real_sleep = [], None, E._sleep
+        E._sleep = self.waits.append
+
+    def tearDown(self):
+        E._sleep = self.real_sleep
+        if self.held and not self.held.closed:
+            self.held.close()
+        shutil.rmtree(self.tmp)
+
+    def _record(self, source="minutes"):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            result = E.record_status(_recordable_export(), 6, source, None, self.log)
+        return result, buf.getvalue()
+
+    def test_locked_log_is_retried_three_times_then_fails_visibly(self):
+        self.held = open(self.log, "r")                   # what Excel did
+        (ok, n, reason), out = self._record()
+        self.assertFalse(ok)
+        self.assertEqual(self.waits, [5.0, 5.0, 5.0], "not retried 3 times, 5 s apart")
+        self.assertIn("locked", reason)
+        self.assertIn("retry 3/3", out)
+        self.held.close()
+        self.assertEqual(open(self.log, encoding="utf-8").read(), self.before,
+                         "a failed write changed the log")
+        kept = E.read_log(self.log + ".tmp")
+        self.assertTrue(any(r["source"] == "minutes" for r in kept),
+                        "the forecasts that could not be written were thrown away")
+
+    def test_lock_released_during_a_wait_is_recovered(self):
+        self.held = open(self.log, "r")
+        E._sleep = lambda s: (self.waits.append(s), self.held.close())
+        (ok, n, reason), _ = self._record()
+        self.assertTrue(ok, reason)
+        self.assertGreater(n, 0)
+        self.assertEqual(self.waits, [5.0])
+        self.assertIn("minutes", {r["source"] for r in E.read_log(self.log)})
+        self.assertFalse(os.path.exists(self.log + ".tmp"))
+
+    def test_a_write_that_dies_halfway_leaves_the_old_log_intact(self):
+        real = E.csv.DictWriter.writerows
+        def boom(writer, rows):
+            real(writer, list(rows)[:3])
+            raise RuntimeError("power cut")
+        E.csv.DictWriter.writerows = boom
+        try:
+            with self.assertRaises(RuntimeError), redirect_stdout(io.StringIO()):
+                E.record_status(_recordable_export(), 6, "minutes", None, self.log)
+        finally:
+            E.csv.DictWriter.writerows = real
+        self.assertEqual(open(self.log, encoding="utf-8").read(), self.before,
+                         "the log was opened for writing and left half-written")
+
+    def test_deadline_passed_is_ok_not_a_failure(self):
+        """It happens after every deadline; crying wolf nightly teaches you to
+        ignore the line."""
+        with redirect_stdout(io.StringIO()):
+            ok, n, reason = E.record_status(make_export(), 6, "minutes", None, self.log)
+        self.assertEqual((ok, n), (True, 0))
+        self.assertIn("deadline passed", reason)
+
+    def test_zero_rows_with_the_deadline_open_is_a_failure(self):
+        d = _recordable_export()
+        for p in d["all_players"]:
+            p["status"] = "i"
+        with redirect_stdout(io.StringIO()):
+            ok, n, reason = E.record_status(d, 6, "minutes", None, self.log)
+        self.assertEqual((ok, n), (False, 0))
+        self.assertIn("deadline has not passed", reason)
+
+    def _cli(self, source):
+        cwd, argv = os.getcwd(), sys.argv
+        export = os.path.join(self.tmp, "fpl_export_gw3.json")
+        with open(export, "w", encoding="utf-8") as fh:
+            json.dump(_recordable_export(), fh)
+        status = os.path.join(self.tmp, "status.tmp")
+        buf, code = io.StringIO(), 0
+        try:
+            os.chdir(self.tmp)
+            sys.argv = ["fpl_edge.py", export, "--record", "--source", source,
+                        "--status", status]
+            with redirect_stdout(buf):
+                try:
+                    E.main()
+                except SystemExit as e:
+                    code = e.code or 0
+        finally:
+            os.chdir(cwd)
+            sys.argv = argv
+        lines = open(status, encoding="utf-8").read().splitlines()
+        return code, buf.getvalue(), lines
+
+    def test_cli_failure_is_one_visible_line_and_a_nonzero_exit(self):
+        self.held = open(self.log, "r")
+        code, out, lines = self._cli("minutes")
+        self.assertEqual(code, 1)
+        self.assertEqual(len(lines), 1)
+        self.assertTrue(lines[0].startswith("RECORD FAIL minutes "), lines)
+        self.assertIn(lines[0], out)
+
+    def test_cli_success_line_carries_the_count(self):
+        code, out, lines = self._cli("minutes")
+        self.assertEqual(code, 0)
+        self.assertRegex(lines[0], r"^RECORD OK minutes [1-9]\d*$")
+
+
+EDGE_STUB = '''import sys
+a = sys.argv[1:]
+if "--record" in a:
+    src, status = a[a.index("--source") + 1], a[a.index("--status") + 1]
+    mode = open("MODE").read().strip()
+    if mode == "broken" and src == "xg":
+        sys.exit(1)                                   # crashed: no status line
+    if mode == "broken" and src == "minutes":
+        open(status, "a").write("RECORD FAIL minutes locked\\n")
+        sys.exit(1)
+    open(status, "a").write("RECORD OK " + src + " 5\\n")
+    sys.exit(0)
+print("EDGE", " ".join(a))
+'''
+
+
+@unittest.skipUnless(os.name == "nt", "runs fpl_run.bat under cmd.exe")
+class BatchRecordCheck(unittest.TestCase):
+    """The real fpl_run.bat, with stub scripts around it."""
+
+    def _run(self, mode):
+        tmp = tempfile.mkdtemp()
+        try:
+            here = os.path.dirname(os.path.abspath(__file__))
+            shutil.copy(os.path.join(here, "fpl_run.bat"), tmp)
+            stubs = {"test_fpl.py": "import sys\nsys.exit(0)\n",
+                     "fpl_sync.py": "print('sync ran')\n",
+                     "fpl_ship.py": "print('SHIP STUB')\n",
+                     "fpl_edge.py": EDGE_STUB, "MODE": mode}
+            for name, body in stubs.items():
+                with open(os.path.join(tmp, name), "w", encoding="utf-8") as fh:
+                    fh.write(body)
+            # absolute path: cmd does not always search the current directory
+            r = subprocess.run(["cmd", "/c", os.path.join(tmp, "fpl_run.bat")],
+                               cwd=tmp, timeout=180,
+                               capture_output=True, text=True, errors="replace")
+            logs = [f for f in os.listdir(os.path.join(tmp, "reports"))
+                    if f.startswith("run_")]
+            log = open(os.path.join(tmp, "reports", logs[0]), errors="replace").read()
+            return r.returncode, [l.strip() for l in log.splitlines()], r.stdout
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_every_source_gets_one_line_and_a_silent_crash_is_caught(self):
+        code, log, console = self._run("broken")
+        summary = log[log.index("record summary:") + 1:]
+        per_source = {s: [l for l in summary if l.startswith(f"RECORD ") and
+                          l.split()[2] == s] for s in ("own", "xg", "minutes", "bottomup")}
+        self.assertEqual({s: len(v) for s, v in per_source.items()},
+                         {"own": 1, "xg": 1, "minutes": 1, "bottomup": 1})
+        self.assertEqual(per_source["own"][0], "RECORD OK own 5")
+        self.assertEqual(per_source["minutes"][0], "RECORD FAIL minutes locked")
+        self.assertTrue(per_source["xg"][0].startswith("RECORD FAIL xg "),
+                        "a crash with no status line went unreported")
+        self.assertTrue(any(l.startswith("EDGE --diff") for l in log),
+                        "a failed record stopped the report")
+        self.assertIn("SHIP STUB", log)
+        self.assertIn("FINISHED WITH ERRORS", log)
+        self.assertNotIn("Done", log)
+        self.assertEqual(code, 1, "four failures must not exit 0 again")
+        self.assertIn("RECORD FAIL xg", console)
+
+    def test_clean_run_says_done_and_exits_zero(self):
+        code, log, _ = self._run("clean")
+        self.assertEqual(code, 0)
+        self.assertEqual([l for l in log if l.startswith("RECORD ")][-4:],
+                         [f"RECORD OK {s} 5" for s in ("own", "xg", "minutes", "bottomup")])
+        self.assertIn("Done", log)
+        self.assertNotIn("FINISHED WITH ERRORS", log)
 
 
 class Hygiene(unittest.TestCase):

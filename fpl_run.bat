@@ -51,15 +51,25 @@ REM A red suite must not write point-in-time forecasts. Those rows freeze at
 REM the deadline and cannot be regenerated, so one bad set permanently
 REM contaminates the calibration table that the wildcard decision rests on.
 REM Sync and the report still run - their output is regenerable, this is not.
+REM One status line per source - RECORD OK <source> <n> or RECORD FAIL <source>
+REM <reason> - written by python and summarised below. The errorlevel check after
+REM every --record (in :record) catches a crash that never wrote its own line:
+REM on 19 Sep four tracebacks ended in "Done", exit 0. A failed record never
+REM stops the report or the shipping; it does make the run exit non-zero.
+set RECORD_BAD=0
+set STATUS=reports\record_status.tmp
+if exist "%STATUS%" del "%STATUS%"
 if "%TESTS_OK%"=="1" (
     echo recording forecasts for next GW ...
-    %PY% fpl_edge.py --record --source own >> "%LOG%" 2>&1
-    %PY% fpl_edge.py --record --source xg  >> "%LOG%" 2>&1
-    %PY% fpl_edge.py --record --source minutes >> "%LOG%" 2>&1
-    %PY% fpl_edge.py --record --source bottomup >> "%LOG%" 2>&1
+    call :record own
+    call :record xg
+    call :record minutes
+    call :record bottomup
 ) else (
+    set RECORD_BAD=1
     echo SKIPPED --record: test suite is red, no forecasts written >> "%LOG%"
     echo SKIPPED --record: test suite is red, no forecasts written
+    for %%s in (own xg minutes bottomup) do echo RECORD FAIL %%s skipped - test suite is red>> "%STATUS%"
 )
 
 echo building report ...
@@ -69,6 +79,16 @@ if errorlevel 1 (
     set EDGE_OK=0
     echo EDGE FAILED >> "%LOG%"
     echo EDGE FAILED - see %LOG%
+)
+
+echo record summary: >> "%LOG%"
+if exist "%STATUS%" (
+    type "%STATUS%" >> "%LOG%"
+    type "%STATUS%"
+) else (
+    set RECORD_BAD=1
+    echo RECORD FAIL all no status was written >> "%LOG%"
+    echo RECORD FAIL all no status was written
 )
 
 REM Archive the dated export, back up fpl.sqlite (last 7), ship the export,
@@ -83,6 +103,22 @@ if errorlevel 1 (
     echo SHIP FAILED - see %LOG%
 )
 
-if "%EDGE_OK%"=="0" exit /b 1
+REM "10" = report built and every record fine
+if "%EDGE_OK%%RECORD_BAD%"=="10" goto :clean
+echo FINISHED WITH ERRORS >> "%LOG%"
+echo FINISHED WITH ERRORS - see %LOG%
+exit /b 1
+
+:clean
 echo Done. Report: reports\fpl_%STAMP%.txt
 echo Done >> "%LOG%"
+exit /b 0
+
+:record
+%PY% fpl_edge.py --record --source %1 --status "%STATUS%" >> "%LOG%" 2>&1
+if errorlevel 1 (
+    set RECORD_BAD=1
+    findstr /b /c:"RECORD FAIL %1 " "%STATUS%" >nul 2>&1
+    if errorlevel 1 echo RECORD FAIL %1 python exited with an error before reporting - see %LOG%>> "%STATUS%"
+)
+exit /b 0

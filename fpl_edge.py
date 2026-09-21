@@ -17,12 +17,14 @@ Usage:
 """
 
 import argparse
+import csv
 import glob
 import math
 import json
 import os
 import re
 import sys
+import time
 from collections import defaultdict
 
 POS = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
@@ -1912,8 +1914,45 @@ def read_log(path=None):
         return [r for r in csv.DictReader(fh)]
 
 
-def record_projections(d, horizon, source="own", proj_path=None, path=None):
+WRITE_RETRIES = 3           # after the first attempt
+WRITE_WAIT = 5.0            # seconds between attempts
+_sleep = time.sleep         # tests replace this so they do not really wait
+
+
+def write_log_atomic(path, rows, retries=WRITE_RETRIES, wait=WRITE_WAIT):
+    """Write the whole log to <path>.tmp, then os.replace() it over <path>.
+
+    The log is never opened for writing, so a crash or a lock cannot leave it
+    truncated or half-written: it is either the old file or the new one. If the
+    target is locked (Excel takes an exclusive lock on an open CSV - 19 Sep,
+    four sources lost to it), retry `retries` times, `wait` seconds apart, then
+    raise. The .tmp is left in place on failure: it holds that run's forecasts
+    with their pre-deadline timestamps.
+    """
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=LOG_FIELDS)
+        w.writeheader()
+        w.writerows(rows)
+    for attempt in range(retries + 1):
+        try:
+            os.replace(tmp, path)
+            return attempt
+        except OSError as e:
+            if attempt == retries:
+                raise
+            print(f"  {os.path.basename(path)} is locked ({e.strerror or e}) - "
+                  f"retry {attempt + 1}/{retries} in {wait:.0f}s")
+            _sleep(wait)
+
+
+def record_status(d, horizon, source="own", proj_path=None, path=None):
     """Store this model's forecast for the NEXT gameweek, before it is played.
+
+    Returns (ok, n, reason). ok is False only when a forecast SHOULD have been
+    written and was not: the deadline is still open and nothing was produced,
+    or the log could not be written. A passed deadline is ok with n = 0 -
+    that is the guard working, and it happens after every deadline.
 
     Point-in-time discipline: refuses to write once the deadline has passed, so
     the log can never contain a forecast made with knowledge of the result.
@@ -1927,18 +1966,18 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
     now = datetime.now(timezone.utc)
     if dl is None:
         print(f"  no fixtures for GW{target} in this export - nothing recorded")
-        return 0
+        return True, 0, f"no fixtures for GW{target} in this export"
     if now > dl:
         print(f"  GW{target} deadline passed ({dl:%Y-%m-%d %H:%M} UTC). "
               f"Refusing to record - it would not be a genuine forecast.")
-        return 0
+        return True, 0, f"GW{target} deadline passed - nothing to record"
 
     rows = []
     if proj_path:
         ext, err = load_projections(proj_path)
         if err:
             print(f"  could not read {proj_path}: {err}")
-            return 0
+            return False, 0, f"could not read {proj_path}: {err}"
         by_id = {p["id"]: p for p in d["all_players"]}
         by_nm = {p["web_name"]: p for p in d["all_players"]}
         for key, vals in ext.items():
@@ -2017,7 +2056,8 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
 
     if not rows:
         print("  nothing to record")
-        return 0
+        return False, 0, (f"no forecasts produced for GW{target} although its "
+                          f"deadline has not passed")
 
     existing = read_log(path)
     keep = [r for r in existing
@@ -2027,13 +2067,21 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
         keep.append({"made_at": stamp, "source": source, "event": str(target),
                      "player_id": str(pid), "web_name": nm,
                      "predicted": str(val)})
-    with open(path, "w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=LOG_FIELDS)
-        w.writeheader()
-        w.writerows(keep)
+    try:
+        write_log_atomic(path, keep)
+    except OSError as e:
+        name = os.path.basename(path)
+        return False, 0, (f"{name} still locked after {WRITE_RETRIES + 1} attempts "
+                          f"({e.strerror or e}) - close it; this run's forecasts "
+                          f"are kept in {name}.tmp")
     print(f"  recorded {len(rows)} forecasts for GW{target} as '{source}' "
           f"({dl - now} before deadline)")
-    return len(rows)
+    return True, len(rows), ""
+
+
+def record_projections(d, horizon, source="own", proj_path=None, path=None):
+    """record_status() for callers that only want the row count."""
+    return record_status(d, horizon, source, proj_path, path)[1]
 
 
 STARTER_MINUTES = 60
@@ -2259,6 +2307,8 @@ def main():
                          "(refuses once the deadline has passed)")
     ap.add_argument("--source", default="own",
                     help="label for --record, e.g. openfpl")
+    ap.add_argument("--status",
+                    help="with --record: append the RECORD OK/FAIL line to this file")
     ap.add_argument("--projections",
                     help="external projections CSV to score (use with "
                          "--section compare)")
@@ -2284,7 +2334,21 @@ def main():
 
     d = load(path)
     if args.record:
-        record_projections(d, args.horizon, args.source, args.projections)
+        try:
+            ok, n, reason = record_status(d, args.horizon, args.source,
+                                          args.projections)
+        except Exception as e:                                  # noqa: BLE001
+            import traceback
+            traceback.print_exc()
+            ok, n, reason = False, 0, f"{type(e).__name__}: {e}"
+        line = (f"RECORD OK {args.source} {n}" + (f" ({reason})" if reason else "")
+                if ok else f"RECORD FAIL {args.source} {reason}")
+        print(line)
+        if args.status:
+            with open(args.status, "a", encoding="utf-8") as fh:
+                fh.write(line + "\n")
+        if not ok:
+            sys.exit(1)
         if args.section == "all":
             return
     if args.brief:

@@ -13,3 +13,6 @@ historical/
 archive/
 backup/
 outbox/
+
+# a locked log leaves that run's forecasts here
+projection_log.csv.tmp
