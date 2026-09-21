@@ -1188,3 +1188,62 @@ true of fixtures only. The flag that matters for grading is the event's
 `data_checked`, and it is not tied to 09:00 UK by anything observed. Tuesday's
 grading goes ahead only if Monday's 23:55 sync carries `data_checked = 1` for
 GW5; the guard decides, not the calendar.
+
+---
+
+## 2026-09-21 — item 7: the forecast-log write is atomic and retried; a failed record is visible (`4ac8af3`)
+
+**The incident.** Sat 19 Sep 23:55: Excel held `projection_log.csv`; all four
+`--record` calls died with `PermissionError`; the batch printed `Done`, exit 0.
+
+**Write.** `write_log_atomic()` writes `projection_log.csv.tmp`, then
+`os.replace()`s it over the log. The log is never opened for writing, so it is
+always either the old file or the new one. A locked target is retried 3 times,
+5 s apart (4 attempts, 15 s). On final failure the `.tmp` is kept — it holds
+that run's forecasts with their pre-deadline timestamps — and is gitignored.
+
+**Status.** `record_status()` returns `(ok, n, reason)`. FAIL only when a
+forecast should have been written and was not: the deadline is open and no rows
+were produced, the projections file is unreadable, or the log stayed locked. A
+passed deadline (and an export with no fixtures for the target) is **OK with
+n = 0** — it happens after every deadline, and a line that cries wolf nightly
+gets ignored. The CLI prints `RECORD OK <source> <n>` / `RECORD FAIL <source>
+<reason>`, appends it to `--status`, and exits 1 on failure; an unexpected
+exception is caught, its traceback printed, and reported the same way.
+
+**Batch.** Each source goes through `:record`; `errorlevel` is checked after
+every call, and a crash that wrote no status line gets one from the batch.
+One line per source is summarised after the report and **before shipping**, so
+the Drive copy of the run log carries it. A failed record never stops the
+report or the shipping. The run then ends `FINISHED WITH ERRORS`, exit 1 —
+Task Scheduler's `Last Result` is now a real signal — instead of `Done`, exit 0.
+A red test suite writes `RECORD FAIL <source> skipped - test suite is red` for
+all four.
+
+**Verified.** 9 new tests, suite **138 → 147**, two of which run the real
+`fpl_run.bat` under `cmd.exe` with stub scripts (they add ~3–5 s). The lock
+tests hold the file open with a plain handle: on Windows `os.replace()` then
+fails with `PermissionError` (winerror 5), which is what Excel produced. 10
+mutations, each red — **retry removed** (2 tests), **errorlevel check removed**
+(1), non-atomic write, failure exiting 0, no status line, zero rows counted as
+OK, passed deadline reported as FAIL, a failed record stopping the run, run
+exiting 0 after a failed record, no end-of-run summary. Recording output
+unchanged: GW6 regenerated with the new code, 1,074 of 1,074 rows identical.
+Saturday reproduced through the real CLI with real waits: three `retry n/3`
+lines, 15.1 s, `RECORD FAIL minutes … still locked after 4 attempts`, exit 1,
+log hash unchanged, 264 forecasts kept in the `.tmp`. Then the real batch end
+to end (12:08 CEST): four `RECORD OK`, `ARCHIVE OK`, `BACKUP OK`, four
+`SHIP OK`, `Done`, exit 0.
+
+One environment note: `cmd /c fpl_run.bat` with only a working directory fails
+here ("not recognized") — this machine's `cmd` does not search the current
+directory — so the batch tests call it by absolute path. Task Scheduler already
+does.
+
+## 2026-09-21 — item 8: `CLAUDE.md` (`ff85bc3`); item 9: `p1_eval.py` stays frozen
+
+`CLAUDE.md` is a 38-line index: what the project is, the standing rules
+(stdlib only, never fabricate, point-in-time, lockdown guard, model-change
+protocol, change protocol) and one line per context file. The other files are
+unchanged. `p1_eval.py` is untouched — no settled guard added; it is run only
+after `--section calibration` accepts GW5, and `CLAUDE.md` says so.
