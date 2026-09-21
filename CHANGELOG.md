@@ -1088,3 +1088,103 @@ machine (setup step skipped, per the addendum). Target folder created and
 proven writable: **`G:\My Drive\FPL\`**. The batch copies the current export,
 `projection_log.csv` and the night's run log there after the report step;
 `fpl.sqlite` never.
+
+---
+
+## 2026-09-21 — run audit 17–20 Sep; the Excel lock; there was no copy step
+
+Quoted from `reports\run_2026-09-1[7-9].log` and `run_2026-09-20.log`:
+
+| run (23:55 CEST) | tests | record step | export |
+|---|---|---|---|
+| Thu 17 Sep | `Ran 122 tests` / `OK` | `recorded 278 … 'own'`, `256 … 'xg'`, `256 … 'minutes'`, `256 … 'bottomup'` for **GW5**, `19:34:41 before deadline` | gw4 |
+| Fri 18 Sep | 122 / OK | 264 / 246 / 246 / 246 for GW6, `21 days, 12:04` before | gw5 |
+| Sat 19 Sep | 122 / OK | **4 × `PermissionError: [Errno 13] Permission denied: 'projection_log.csv'`** — then `Done`, task `Last Result: 0` | gw5 |
+| Sun 20 Sep | 122 / OK | 282 / 264 / 264 / 264 for GW6, `19 days, 12:04` before | gw5 |
+
+All four ran; GW5 was frozen correctly on Thursday with four sources.
+
+**The Drive folder was never stale because nothing had ever copied to it.**
+`fpl_run.bat` contained no copy line on any of those nights (`grep -i copy`:
+none; its git history has four commits, none adding one). The four files dated
+17 Sep 00:09 in `G:\My Drive\FPL` were a one-off manual copy. The copy step
+was item 5 of the Monday plan and is built today.
+
+**Saturday's failure:** Excel (PID 37028) had `projection_log.csv` open from
+19 Sep 13:39, which takes an exclusive lock. `open(path, "w")` failed before
+truncation, so the log was untouched: 1,573 GW4+GW5 rows byte-identical to the
+commit made while the lock was held (`3249c65`). Closed without saving; Sunday's
+run was normal. The failure was silent — four tracebacks, exit code 0 — because
+the batch does not check `errorlevel` after `--record`. Still open.
+
+## 2026-09-21 — settled-gameweek guard, definitions, archive, backup, shipping (`d5a5edb`)
+
+**Guard.** `gameweek_settled(d, ev)`: gradable only when the event has
+`data_checked = 1` **and** every one of its fixtures has `finished = 1`;
+`sec_calibration` refuses otherwise and names each blocker. The instruction
+asked for per-fixture `data_checked`; the API has no such field — a fixture
+carries `finished` / `finished_provisional`, `data_checked` exists on events
+only (verified on a live read) — so the rule is event-level points-final plus
+fixture-level finished, and nothing was substituted. An export with no flag
+sections is refused, not trusted. Live, 09:41 UTC:
+
+    REFUSED GW5 - not settled; grading it now would record provisional points:
+      - event data_checked = 0 (points and bonus not final; event finished = 0)
+
+while GW4 grades and reproduces the 16 Sep row exactly (own n=272, 2.40 vs
+2.54, +0.342, starters +0.219 n_st 187, bias +0.07; xg n=255, 2.74 vs 2.62,
++0.254, starters +0.108 n_st 185, bias +0.57).
+
+**Definitions printed in the output itself:** n and population, tie-corrected
+Spearman, whole vs starters (60+ minutes, with `n_st`), MAE, const, bias, the
+blank rule, the settled rule. Calibration gains the starters column, so the
+second verdict is no longer computed ad hoc.
+
+**Sync:** `events.data_checked` (migration + bootstrap), export sections
+`events` and `fixtures_status` (unfinished fixtures included).
+
+**`fpl_ship.py`**, called by `fpl_run.bat` after the report:
+`archive\fpl_export_gwN_<UTC date>.json`, never overwritten by a later day;
+`backup\fpl_<date>.sqlite` via the sqlite backup API, last 7 kept; then the
+dated export, `projection_log.csv`, the run log and the report to
+`G:\My Drive\FPL`. Every copy prints a result line (`SHIP OK` / `HELD` /
+`FAILED` / `REFUSED`). Drive unmounted → `outbox\`, delivered at the start of
+the next run. The database is refused. A ship failure is logged and non-fatal;
+a report failure no longer skips shipping. All three folders sit outside the
+`newest_export()` glob.
+
+**Verified:** 16 new tests, suite **122 → 138**; 16 mutations each red (guard
+always-true, keyed on `finished`, ignoring fixtures, trusting a flagless
+export, definitions removed, starters threshold; sync exporting `finished` as
+`data_checked`, hiding unfinished fixtures, bootstrap storing the wrong flag,
+missing migration; ship without fallback, without flush, shipping the
+database, silent missing file, no pruning, undated archive). Batch wiring run
+with stubs in three scenarios. Then the real batch end to end, 09:40:52–
+09:41:07 UTC, exit 0: `ARCHIVE OK`, `BACKUP OK`, four `SHIP OK`; files
+confirmed in `G:\My Drive\FPL`. Sunday's untouched export and database were
+filed first as `archive\fpl_export_gw5_2026-09-20.json` and
+`backup\fpl_2026-09-20.sqlite`.
+
+## 2026-09-21 — lockdown: three observations of GW5's flags (no flip time stated)
+
+GW5's last kickoff: Sun 20 Sep 15:30 UTC (FUL v MUN). 09:00 UK = 08:00 UTC.
+
+| | when (UTC) | source | fixtures `finished` | event `finished` | event `data_checked` |
+|---|---|---|---|---|---|
+| A | Sun 20 Sep 21:55:09 | nightly sync (DB + export, archived) | **0 / 10** — including BRE v CHE, 50 h after full time | 0 | not stored then — **not observed** |
+| B | Mon 21 Sep 09:34:22 | direct API read | **10 / 10** (`finished_provisional` 10/10) | False | **False** |
+| C | Mon 21 Sep 09:40:54 | fresh sync, new code | 10 / 10 | 0 | **0** |
+
+**What this bounds.** Fixture-level `finished` flipped for all ten matches
+somewhere in the 11 h 39 min between A and B. That window contains 09:00 UK
+and is consistent with a lockdown then; it does not pin it, and no read was
+taken before 09:00 UK today (the session began at 10:32 UK). Event-level
+`finished` and `data_checked` had **not** flipped by 09:41 UTC, 1 h 41 min
+after 09:00 UK — so they are a later, separate step. For GW4 the event-level
+flip lies between Mon 14 Sep 21:55 UTC (0) and Tue 15 Sep 18:40 UTC (1).
+
+**Correction to the 16 Sep entry:** "the `finished` flag flips at lockdown" is
+true of fixtures only. The flag that matters for grading is the event's
+`data_checked`, and it is not tied to 09:00 UK by anything observed. Tuesday's
+grading goes ahead only if Monday's 23:55 sync carries `data_checked = 1` for
+GW5; the guard decides, not the calendar.
