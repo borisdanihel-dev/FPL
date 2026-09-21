@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                            # noqa: E402
 import p1_eval as P1                                            # noqa: E402
 import fpl_hist as H                                            # noqa: E402
+import fpl_ship as SHIP                                         # noqa: E402
 
 TEAMS = ["ARS", "BHA", "CHE", "CRY", "HUL", "LIV", "MCI", "MUN", "NEW", "NFO"]
 ENTRIES = ["My Team", "Rival A", "Rival B", "Rival C"]
@@ -131,6 +132,11 @@ def make_export(gw=3, n_entries=4, with_gw_rows=True, with_all_players=True,
         "fixtures_next6": fixtures,
         "price_changes_7d": [],
         "fixtures_played": played,
+        "events": [{"event": ev, "finished": 1, "data_checked": 1}
+                   for ev in range(1, gw + 1)],
+        "fixtures_status": [{"event": f["event"], "home": f["home"],
+                             "away": f["away"], "kickoff_time": f["kickoff_time"],
+                             "finished": 1} for f in played],
         "player_history": [
             {"web_name": p["web_name"], "team": p["team"], "pos": p["pos"],
              "season": "2025/26", "minutes": 2500, "pts": 90 + (p["id"] % 60),
@@ -626,6 +632,17 @@ class ProjectionLog(unittest.TestCase):
                 rows.append(dict(r, event=target))
         played["player_gw_recent"] = rows
         played["gameweek"] = target
+        played["events"] = d["events"] + [{"event": target, "finished": 1,
+                                           "data_checked": 1}]
+        played["fixtures_status"] = d["fixtures_status"] + [
+            {"event": target, "home": f["home"], "away": f["away"],
+             "kickoff_time": f["kickoff_time"], "finished": 1}
+            for f in d["fixtures_next6"] if f["event"] == target]
+        played["fixtures_played"] = d["fixtures_played"] + [
+            {"event": target, "home": f["home"], "away": f["away"], "h_goals": 1,
+             "a_goals": 0, "h_fdr": f["h_fdr"], "a_fdr": f["a_fdr"],
+             "kickoff_time": f["kickoff_time"]}
+            for f in d["fixtures_next6"] if f["event"] == target]
         with redirect_stdout(buf):
             E.sec_calibration(played, 6, self.log)
         out = buf.getvalue()
@@ -1739,6 +1756,259 @@ class ReliabilityTable(unittest.TestCase):
         out = E.reliability_table(rel)
         self.assertIn("1.000", out)
         self.assertNotIn("1.080", out)
+
+
+def _graded_world():
+    """An export plus a log with one graded gameweek, for calibration tests."""
+    d = make_export()
+    gw = d["gameweek"]
+    log = [{"made_at": "x", "source": "xg", "event": str(gw),
+            "player_id": str(p["id"]), "web_name": p["web_name"],
+            "predicted": str(2.0 + p["id"] % 5)} for p in d["all_players"][:40]]
+    return d, gw, log
+
+
+def _calibration(d, log):
+    tmp = tempfile.mkdtemp()
+    try:
+        path = os.path.join(tmp, "log.csv")
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=E.LOG_FIELDS)
+            w.writeheader()
+            w.writerows(log)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            E.sec_calibration(d, 6, path)
+        return buf.getvalue()
+    finally:
+        shutil.rmtree(tmp)
+
+
+class SettledGuard(unittest.TestCase):
+    """Provisional grades are never recorded: the code refuses, and says why."""
+
+    def test_settled_gameweek_is_graded(self):
+        d, gw, log = _graded_world()
+        out = _calibration(d, log)
+        self.assertNotIn("REFUSED", out)
+        self.assertTrue("beats const" in out or "loses" in out, "no verdict printed")
+        self.assertRegex(out, r"xg\s+%d\s+40" % gw)
+
+    def test_unfinished_fixture_blocks_grading_and_is_named(self):
+        d, gw, log = _graded_world()
+        f = next(x for x in d["fixtures_status"] if x["event"] == gw)
+        f["finished"] = 0
+        out = _calibration(d, log)
+        self.assertIn(f"REFUSED GW{gw}", out)
+        self.assertIn(f"{f['home']} v {f['away']}", out)
+        self.assertNotRegex(out, r"xg\s+%d\s+40" % gw, "graded a provisional gameweek")
+
+    def test_data_checked_zero_blocks_even_when_every_match_is_finished(self):
+        """Observed on GW5: fixtures 10/10 finished, event finished = 0 and
+        data_checked = 0. `finished` is not the settled signal."""
+        d, gw, log = _graded_world()
+        next(e for e in d["events"] if e["event"] == gw)["data_checked"] = 0
+        out = _calibration(d, log)
+        self.assertIn(f"REFUSED GW{gw}", out)
+        self.assertIn("data_checked = 0", out)
+        self.assertNotRegex(out, r"xg\s+%d\s+40" % gw)
+
+    def test_export_without_flags_is_refused_not_trusted(self):
+        d, gw, log = _graded_world()
+        del d["events"]
+        out = _calibration(d, log)
+        self.assertIn("REFUSED", out)
+        self.assertIn("re-run fpl_sync.py", out)
+
+    def test_other_gameweeks_are_still_graded(self):
+        d, gw, log = _graded_world()
+        log += [dict(r, event=str(gw - 1)) for r in log]
+        next(e for e in d["events"] if e["event"] == gw)["data_checked"] = 0
+        out = _calibration(d, log)
+        self.assertIn(f"REFUSED GW{gw}", out)
+        self.assertRegex(out, r"xg\s+%d\s+40" % (gw - 1))
+
+    def test_definitions_are_printed_with_the_numbers(self):
+        out = _calibration(*[_graded_world()[i] for i in (0, 2)])
+        for phrase in ("DEFINITIONS", "tie-corrected", "60+ minutes",
+                       "graded as 0 points", "data_checked = 1", "const", "n_st"):
+            self.assertIn(phrase, out)
+
+    def test_starters_column_counts_only_sixty_minute_players(self):
+        d, gw, log = _graded_world()
+        benched = d["all_players"][3]
+        for r in d["player_gw_recent"]:
+            if r["player_id"] == benched["id"] and r["event"] == gw:
+                r["mins"] = 20
+        graded, _ = E.grade_forecasts(d, log, detail=True)
+        rows = graded[("xg", gw)]
+        self.assertEqual(sum(1 for _, _, f in rows if not f), 1)
+        self.assertEqual(len(rows), 40)
+
+
+class SyncExportsSettledFlags(unittest.TestCase):
+
+    def test_export_carries_data_checked_and_unfinished_fixtures(self):
+        import sqlite3
+        ns = {}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        ns["migrate"](db)
+        db.executemany("INSERT INTO teams (id,name,short_name,strength) VALUES (?,?,?,3)",
+                       [(1, "A", "AAA"), (2, "B", "BBB")])
+        db.executemany("INSERT INTO events (id,name,finished,data_checked) VALUES (?,?,?,?)",
+                       [(1, "GW1", 1, 1), (2, "GW2", 1, 0)])   # finished != checked
+        db.executemany("INSERT INTO fixtures (id,event,team_h,team_a,team_h_difficulty,"
+                       "team_a_difficulty,team_h_score,team_a_score,finished) "
+                       "VALUES (?,?,?,?,2,2,?,?,?)",
+                       [(1, 1, 1, 2, 1, 0, 1), (2, 2, 2, 1, 2, 2, 0)])
+        tmp, cwd = tempfile.mkdtemp(), os.getcwd()
+        try:
+            os.chdir(tmp)
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, 2)
+            d = E.load("fpl_export_gw2.json")
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmp)
+        self.assertEqual({e["event"]: e["data_checked"] for e in d["events"]}, {1: 1, 2: 0})
+        self.assertEqual([(f["event"], f["finished"]) for f in d["fixtures_status"]],
+                         [(1, 1), (2, 0)], "an unfinished fixture must be visible")
+        self.assertEqual(E.gameweek_settled(d, 1), (True, []))
+        self.assertFalse(E.gameweek_settled(d, 2)[0])
+
+
+    def test_bootstrap_stores_data_checked_separately_from_finished(self):
+        import sqlite3
+        ns = {}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        ev = lambda i, fin, chk, cur=False: {
+            "id": i, "name": f"GW{i}", "deadline_time": "2026-09-01T00:00:00Z",
+            "finished": fin, "data_checked": chk, "is_current": cur}
+        ns["get"] = lambda path: {"teams": [], "elements": [],
+                                  "events": [ev(4, True, True), ev(5, True, False, True)]}
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        ns["migrate"](db)
+        with redirect_stdout(io.StringIO()):
+            ns["sync_bootstrap"](db)
+        self.assertEqual(db.execute("SELECT id, finished, data_checked FROM events "
+                                    "ORDER BY id").fetchall(), [(4, 1, 1), (5, 1, 0)])
+
+    def test_migration_adds_data_checked_to_an_old_database(self):
+        import sqlite3
+        ns = {}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        db = sqlite3.connect(":memory:")
+        db.execute("CREATE TABLE events (id INTEGER PRIMARY KEY, name TEXT, "
+                   "deadline_time TEXT, finished INTEGER, average_score INTEGER, "
+                   "highest_score INTEGER, most_captained INTEGER)")
+        db.executescript(ns["SCHEMA"])
+        with redirect_stdout(io.StringIO()):
+            ns["migrate"](db)
+            ns["migrate"](db)                                  # idempotent
+        cols = [r[1] for r in db.execute("PRAGMA table_info(events)")]
+        self.assertEqual(cols[-1], "data_checked")
+        self.assertEqual(len(cols), 8)
+
+
+class Shipping(unittest.TestCase):
+    """Archive, backup and the Drive copy. Loud, recoverable, never the database."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.src = os.path.join(self.tmp, "work")
+        os.makedirs(self.src)
+        self.files = []
+        for name in ("projection_log.csv", "run_2026-09-21.log"):
+            p = os.path.join(self.src, name)
+            open(p, "w").write(name)
+            self.files.append(p)
+        self.drive = os.path.join(self.tmp, "drive", "FPL")
+        self.outbox = os.path.join(self.tmp, "outbox")
+        self.lines = []
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def _ship(self, files=None):
+        return SHIP.ship(files or self.files, self.drive, self.outbox, self.lines.append)
+
+    def test_every_file_lands_on_drive_and_gets_a_result_line(self):
+        os.makedirs(os.path.dirname(self.drive))            # Drive is mounted
+        self.assertEqual(self._ship(), 0)
+        self.assertEqual(sorted(os.listdir(self.drive)),
+                         ["projection_log.csv", "run_2026-09-21.log"])
+        self.assertEqual(sum(1 for l in self.lines if l.startswith("SHIP OK")), 2)
+
+    def test_unmounted_drive_holds_in_outbox_and_the_next_run_delivers(self):
+        self.assertEqual(self._ship(), 0)                    # Drive root missing
+        self.assertEqual(len(os.listdir(self.outbox)), 2)
+        self.assertTrue(any("not mounted" in l for l in self.lines))
+        self.assertEqual(sum(1 for l in self.lines if l.startswith("SHIP HELD")), 2)
+        os.makedirs(os.path.dirname(self.drive))            # Drive comes back
+        late = os.path.join(self.src, "fpl_2026-09-22.txt")
+        open(late, "w").write("report")
+        self.lines.clear()
+        self.assertEqual(self._ship([late]), 0)
+        self.assertEqual(sorted(os.listdir(self.drive)),
+                         ["fpl_2026-09-22.txt", "projection_log.csv", "run_2026-09-21.log"])
+        self.assertEqual(os.listdir(self.outbox), [], "outbox not emptied")
+        self.assertEqual(sum(1 for l in self.lines if "held in outbox" in l), 2)
+
+    def test_the_database_is_never_shipped(self):
+        os.makedirs(os.path.dirname(self.drive))
+        db = os.path.join(self.src, "fpl.sqlite")
+        open(db, "w").write("x")
+        self.assertEqual(self._ship([db]), 1)
+        self.assertFalse(os.path.exists(os.path.join(self.drive, "fpl.sqlite")))
+        self.assertTrue(any(l.startswith("SHIP REFUSED") for l in self.lines))
+
+    def test_a_missing_file_is_a_visible_failure(self):
+        os.makedirs(os.path.dirname(self.drive))
+        self.assertEqual(self._ship([os.path.join(self.src, "nope.txt")]), 1)
+        self.assertTrue(any(l.startswith("SHIP FAILED") and "nope.txt" in l
+                            for l in self.lines))
+
+    def test_archive_keeps_every_day_and_leaves_the_live_export(self):
+        live = os.path.join(self.src, "fpl_export_gw5.json")
+        arch = os.path.join(self.tmp, "archive")
+        for stamp, body in (("2026-09-20", "sunday"), ("2026-09-21", "monday")):
+            open(live, "w").write(body)
+            SHIP.archive_export(live, arch, stamp)
+        self.assertEqual(sorted(os.listdir(arch)),
+                         ["fpl_export_gw5_2026-09-20.json", "fpl_export_gw5_2026-09-21.json"])
+        self.assertEqual(open(os.path.join(arch, "fpl_export_gw5_2026-09-20.json")).read(),
+                         "sunday", "a later run overwrote an earlier day's inputs")
+        self.assertEqual(open(live).read(), "monday")
+        self.assertEqual(os.path.basename(SHIP.newest_export(self.src)),
+                         "fpl_export_gw5.json")
+
+    def test_backup_keeps_the_last_seven(self):
+        import sqlite3
+        db = os.path.join(self.src, "fpl.sqlite")
+        con = sqlite3.connect(db)
+        con.execute("create table t (x)")
+        con.execute("insert into t values (42)")
+        con.commit()
+        con.close()
+        bdir = os.path.join(self.tmp, "backup")
+        for day in range(10, 20):
+            SHIP.backup_db(db, bdir, f"2026-09-{day}")
+        kept = sorted(os.listdir(bdir))
+        self.assertEqual(len(kept), 7)
+        self.assertEqual((kept[0], kept[-1]),
+                         ("fpl_2026-09-13.sqlite", "fpl_2026-09-19.sqlite"))
+        con = sqlite3.connect(os.path.join(bdir, kept[-1]))
+        self.assertEqual(con.execute("select x from t").fetchone()[0], 42)
+        con.close()
 
 
 class Hygiene(unittest.TestCase):

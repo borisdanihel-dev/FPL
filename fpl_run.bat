@@ -63,11 +63,26 @@ if "%TESTS_OK%"=="1" (
 )
 
 echo building report ...
+set EDGE_OK=1
 %PY% fpl_edge.py --diff --out "reports\fpl_%STAMP%.txt" >> "%LOG%" 2>&1
 if errorlevel 1 (
+    set EDGE_OK=0
     echo EDGE FAILED >> "%LOG%"
-    exit /b 1
+    echo EDGE FAILED - see %LOG%
 )
 
+REM Archive the dated export, back up fpl.sqlite (last 7), ship the export,
+REM projection_log.csv, this run log and the report to G:\My Drive\FPL.
+REM Every copy logs its own result line. A failed copy is not fatal but must be
+REM visible; with G: unmounted the files wait in outbox\ and go up next run.
+REM fpl.sqlite is never shipped.
+echo archiving, backing up, shipping ...
+%PY% fpl_ship.py --stamp %STAMP% >> "%LOG%" 2>&1
+if errorlevel 1 (
+    echo SHIP FAILED - see %LOG% >> "%LOG%"
+    echo SHIP FAILED - see %LOG%
+)
+
+if "%EDGE_OK%"=="0" exit /b 1
 echo Done. Report: reports\fpl_%STAMP%.txt
 echo Done >> "%LOG%"

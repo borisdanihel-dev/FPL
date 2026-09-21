@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS price_history (
 
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY, name TEXT, deadline_time TEXT, finished INTEGER,
-    average_score INTEGER, highest_score INTEGER, most_captained INTEGER);
+    average_score INTEGER, highest_score INTEGER, most_captained INTEGER,
+    data_checked INTEGER);
 
 CREATE TABLE IF NOT EXISTS fixtures (
     id INTEGER PRIMARY KEY, event INTEGER, kickoff_time TEXT,
@@ -127,6 +128,7 @@ MIGRATIONS = {
                 "influence REAL", "creativity REAL", "threat REAL"],
     "teams": ["att_h INTEGER", "att_a INTEGER", "def_h INTEGER", "def_a INTEGER"],
     "player_gw": ["starts INTEGER"],
+    "events": ["data_checked INTEGER"],
 }
 
 
@@ -185,10 +187,13 @@ def sync_bootstrap(db):
                    (p["id"], today, p["now_cost"]))
     db.executemany("INSERT OR REPLACE INTO players VALUES (%s)" % ",".join("?" * 34), rows)
 
-    db.executemany("INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?)",
+    # data_checked = points and bonus are final. `finished` only means the
+    # matches ended; grading keys on data_checked.
+    db.executemany("INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
                    [(e["id"], e["name"], e["deadline_time"], int(e["finished"]),
                      e.get("average_entry_score"), e.get("highest_score"),
-                     e.get("most_captained")) for e in bs["events"]])
+                     e.get("most_captained"), int(bool(e.get("data_checked"))))
+                    for e in bs["events"]])
     db.commit()
     # latest gameweek that has started (finished OR currently in progress)
     started = [e["id"] for e in bs["events"] if e["finished"] or e.get("is_current")]
@@ -452,6 +457,17 @@ def export(db, gw):
                f.team_h_difficulty AS h_fdr, f.team_a_difficulty AS a_fdr, f.kickoff_time
         FROM fixtures f JOIN teams th ON th.id=f.team_h JOIN teams ta ON ta.id=f.team_a
         WHERE f.event BETWEEN ?+1 AND ?+6 ORDER BY f.event, f.kickoff_time""", (gw, gw))
+
+    # what grading needs to know before it trusts a gameweek's points
+    out["events"] = q(db, """
+        SELECT id AS event, finished, data_checked FROM events
+        WHERE id<=? ORDER BY id""", (gw,))
+
+    out["fixtures_status"] = q(db, """
+        SELECT f.event, th.short_name AS home, ta.short_name AS away,
+               f.kickoff_time, f.finished
+        FROM fixtures f JOIN teams th ON th.id=f.team_h JOIN teams ta ON ta.id=f.team_a
+        WHERE f.event BETWEEN ?-5 AND ? ORDER BY f.event, f.kickoff_time""", (gw, gw))
 
     out["price_changes_7d"] = q(db, """
         SELECT pl.web_name, t.short_name AS team, a.now_cost/10.0 AS price_now,

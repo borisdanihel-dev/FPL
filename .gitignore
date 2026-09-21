@@ -8,3 +8,8 @@ fpl.sqlite
 
 # downloaded historical data (regenerable, ~6.5MB)
 historical/
+
+# point-in-time inputs, database backups, files waiting for Drive
+archive/
+backup/
+outbox/

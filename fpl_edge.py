@@ -2036,19 +2036,53 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
     return len(rows)
 
 
-def grade_forecasts(d, log):
+STARTER_MINUTES = 60
+
+
+def gameweek_settled(d, event):
+    """(ok, blockers). A gameweek may be graded only when its points are final:
+    the event has data_checked = 1 AND every one of its fixtures has
+    finished = 1. `data_checked` is the API's "points and bonus are final"
+    flag and exists on events only; a fixture carries `finished`, which flips
+    earlier (observed GW5: fixtures 10/10 finished while the event was still
+    data_checked = 0). Grading before both hold records provisional points.
+    """
+    if "events" not in d or "fixtures_status" not in d:
+        return False, ["export has no events / fixtures_status section - "
+                       "re-run fpl_sync.py to write one"]
+    blockers = []
+    ev = next((e for e in d["events"] if e["event"] == event), None)
+    if ev is None:
+        blockers.append(f"GW{event} is not in the export's events section")
+    elif not ev.get("data_checked"):
+        blockers.append(f"event data_checked = 0 (points and bonus not final; "
+                        f"event finished = {int(bool(ev.get('finished')))})")
+    fixtures = [f for f in d["fixtures_status"] if f["event"] == event]
+    if not fixtures:
+        blockers.append(f"no fixtures listed for GW{event}")
+    for f in fixtures:
+        if not f.get("finished"):
+            blockers.append(f"{f['home']} v {f['away']} ({f.get('kickoff_time')}) "
+                            f"finished = 0")
+    return not blockers, blockers
+
+
+def grade_forecasts(d, log, detail=False):
     """Pair every logged forecast with what the player actually scored.
 
     Returns ({(source, event): [(predicted, actual), ...]},
              {(source, event): count still pending}).
     A player whose team played but who has no row got no minutes and is graded
-    against 0. Only a blank or postponed fixture goes ungraded.
+    against 0. Only a blank or postponed fixture goes ungraded. With
+    `detail`, each pair gains a third item: did he play STARTER_MINUTES or more.
     """
     key = _player_key(d)
     actual = defaultdict(dict)
+    minutes = defaultdict(dict)
     for r in d.get("player_gw_recent", []):
         k = key(r)
         actual[r["event"]][k] = actual[r["event"]].get(k, 0) + r["pts"]
+        minutes[r["event"]][k] = minutes[r["event"]].get(k, 0) + (r.get("mins") or 0)
     fx = fixtures_by_team_event(d)
     team_of = {key(p): p["team"] for p in d.get("all_players", [])}
 
@@ -2065,7 +2099,10 @@ def grade_forecasts(d, log):
             if (team_of.get(k), ev) not in fx:
                 continue                  # blank or postponed: nothing to grade
             a = 0                         # team played, he did not: scored 0
-        graded[(r["source"], ev)].append((float(r["predicted"]), a))
+        row = (float(r["predicted"]), a)
+        if detail:
+            row += (minutes[ev].get(k, 0) >= STARTER_MINUTES,)
+        graded[(r["source"], ev)].append(row)
     return graded, pending
 
 
@@ -2080,27 +2117,58 @@ def sec_calibration(d, horizon, path=None):
         print("    python fpl_edge.py --record\n")
         return
 
-    graded, pending = grade_forecasts(d, log)
+    graded, pending = grade_forecasts(d, log, detail=True)
+
+    print("""
+  DEFINITIONS
+    n        forecasts graded for that source and gameweek. Population = every
+             logged forecast whose team played; counts are per source below.
+    rho      Spearman rank correlation, tie-corrected (tied values share their
+             average rank). whole = everyone graded; starters = players with
+             %d+ minutes that gameweek (n_st of them).
+    MAE      mean |predicted - actual|. const = MAE of predicting the mean
+             actual for everyone: the bar. bias = mean(predicted - actual).
+    blanks   logged player, team played, no row -> graded as 0 points.
+             Team had no finished fixture -> excluded, not graded.
+    settled  a gameweek is graded only when its event has data_checked = 1
+             and every one of its fixtures has finished = 1.""" % STARTER_MINUTES)
+
+    refused = {}
+    for ev in sorted({e for _, e in graded}):
+        ok, blockers = gameweek_settled(d, ev)
+        if not ok:
+            refused[ev] = blockers
+    for ev, blockers in refused.items():
+        print(f"\n  REFUSED GW{ev} - not settled; grading it now would record "
+              f"provisional points:")
+        for b in blockers:
+            print(f"    - {b}")
+    graded = {k: v for k, v in graded.items() if k[1] not in refused}
 
     if not graded:
         weeks = sorted({e for _, e in pending})
-        print(f"\n  {len(log)} forecasts recorded for GW{weeks} - "
-              f"not played yet.\n")
+        if weeks:
+            print(f"\n  {len(log)} forecasts recorded for GW{weeks} - "
+                  f"not played yet.")
+        print()
         return
 
     print(f"\n  {'source':10s}{'GW':>4}{'n':>6}{'MAE':>7}{'const':>7}"
-          f"{'rho':>8}{'bias':>7}   verdict")
+          f"{'rho':>8}{'starters':>10}{'n_st':>6}{'bias':>7}   verdict")
     by_source = defaultdict(list)
-    for (src, ev), pairs in sorted(graded.items()):
+    for (src, ev), rows in sorted(graded.items()):
+        pairs = [(p, a) for p, a, _ in rows]
+        st = [(p, a) for p, a, f in rows if f]
         n = len(pairs)
         mean = sum(a for _, a in pairs) / n
         mae = sum(abs(p - a) for p, a in pairs) / n
         const = sum(abs(mean - a) for _, a in pairs) / n
         rho = _spearman([p for p, _ in pairs], [a for _, a in pairs])
+        rho_st = _spearman([p for p, _ in st], [a for _, a in st])
         bias = sum(p - a for p, a in pairs) / n
         by_source[src].extend(pairs)
         print(f"  {src[:10]:10s}{ev:>4}{n:>6}{mae:>7.2f}{const:>7.2f}"
-              f"{rho:>8.3f}{bias:>+7.2f}   "
+              f"{rho:>8.3f}{rho_st:>10.3f}{len(st):>6}{bias:>+7.2f}   "
               f"{'beats const' if mae < const else 'loses'}")
 
     print()
