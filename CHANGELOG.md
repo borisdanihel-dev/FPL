@@ -1247,3 +1247,68 @@ does.
 protocol, change protocol) and one line per context file. The other files are
 unchanged. `p1_eval.py` is untouched — no settled guard added; it is run only
 after `--section calibration` accepts GW5, and `CLAUDE.md` says so.
+
+---
+
+## 2026-09-23 — GW5 graded on the settled export; P1 evaluation run (recorded as printed, no interpretation)
+
+GW5 settled: `data_checked = 1` since the night of Mon 21 Sep. Both commands run by Boris (20:01 / 20:04 CEST) and re-run here (20:15 / 20:16); outputs identical. Export as written by the 22 Sep 23:55 sync.
+
+`python fpl_edge.py --section calibration`:
+
+```
+  source      GW     n    MAE  const     rho  starters  n_st   bias   verdict
+  bottomup     5   256   2.38   2.49   0.260     0.001   190  -0.22   beats const
+  minutes      5   256   2.72   2.49   0.265     0.030   190  -2.50   loses
+  own          4   272   2.40   2.54   0.342     0.219   187  +0.07   beats const
+  own          5   278   2.22   2.42   0.383     0.101   194  -0.27   beats const
+  xg           4   255   2.74   2.62   0.254     0.108   185  +0.57   loses
+  xg           5   256   2.45   2.49   0.305     0.086   190  +0.24   beats const
+
+  BOTTOMUP over 1 gameweek(s), 256 forecasts
+    MAE 2.377 vs constant 2.492   rho +0.260 +-0.123
+    real signal
+    2 more gameweek(s) before this is worth acting on.
+
+  MINUTES over 1 gameweek(s), 256 forecasts
+    MAE 2.725 vs constant 2.492   rho +0.265 +-0.123
+    real signal
+    2 more gameweek(s) before this is worth acting on.
+
+  OWN over 2 gameweek(s), 550 forecasts
+    MAE 2.308 vs constant 2.483   rho +0.358 +-0.084
+    real signal
+    1 more gameweek(s) before this is worth acting on.
+
+  XG over 2 gameweek(s), 511 forecasts
+    MAE 2.598 vs constant 2.562   rho +0.277 +-0.087
+    real signal
+    1 more gameweek(s) before this is worth acting on.
+
+  257 forecasts pending for bottomup GW6
+  257 forecasts pending for minutes GW6
+  275 forecasts pending for own GW6
+  257 forecasts pending for xg GW6
+```
+
+`python p1_eval.py fpl_export_gw3.json fpl_export_gw5.json` (predictor export generated 2026-09-11T21:55:16Z, the GW3 export the GW4 forecasts were made from):
+
+```
+  graded 255 players, dropped 0
+
+  PRIMARY: blanked in at least one of GW4, GW5 - one row per player
+                  blanked  did not  total    rate
+    flagged            24       60     84     29%
+    unflagged          30      141    171     18%
+    gap +0.110   95% interval +0.003 .. +0.226  (Newcombe)
+
+  SECONDARY, OPTIMISTIC - pooled player-gameweeks, each player twice:
+    gap +0.106   95% interval +0.040 .. +0.179  (too narrow: blanking is correlated within a player)
+
+  COST OF EXCLUDING ON THE FLAG
+    flagged who did not blank (featured both weeks)    71%
+    flagged who played every available minute           20%
+    of all players who did not blank, share flagged     30%
+
+  VERDICT: PASS
+```
