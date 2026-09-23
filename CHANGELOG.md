@@ -1576,3 +1576,81 @@ one club rigged to top every list), the split made quota-proportional, the
 captain not marked, bench fixtures dropped, and the per-position fill
 replaced by the global value-per-million builder. Nothing here changes a
 projection: `bench_boost` and the four recorded sources are untouched.
+
+---
+
+## 2026-09-23 — item 4b (review D): no cross-position choice in `sec_wildcard` on the mixed-unit sums (`cc50441`)
+
+The item 4 draft chose its XI and captain by comparing GK/DEF bottomup sums
+with MID/FWD xGI-term points — two units — and came out 5-2-3 with a DEF
+captain. Until the DEF calibration is addressed (~GW10), nothing across
+positions is decided on the sums:
+
+1. **Formation is a parameter.** `--formation DEF-MID-FWD`, default 4-3-3
+   (legal: DEF 3–5, MID 2–5, FWD 1–3, ten outfield). The XI is the top of
+   each position's ordered list up to that shape, taken within the position's
+   money; `_best_xi` is no longer called here.
+2. **Captain and vice** are the highest and next six-week full sums **among
+   the MID/FWD in the XI**, marked `(C)` and `(V)`, with the reason line
+   `captain restricted to MID/FWD: DEF over-spread` printed under the XI.
+3. **One unit.** Every printed six-week sum — shortlists, XI, bench, totals —
+   is `project_reliability` with **all terms**, for every position, so the
+   fifteen add up (`fifteen` total printed). It sits next to the ordering
+   metric (`by bottomup …` for GK/DEF, `by P(st)xfix … xGI/90 …` for MID/FWD).
+   The ordering within position is exactly as frozen: for GK/DEF the full
+   sum *is* the bottomup sum, so their order is unchanged; MID/FWD are still
+   ordered by P(start) × fixtures then xGI/90, never by the sum.
+   `project_week` gained a `terms` parameter (default: the frozen three-layer
+   terms), so `bench_boost` is untouched.
+4. **`--split GK,DEF,MID,FWD`** — any four positive numbers, scaled to the
+   budget; default the current squad's shape. If a share cannot buy its
+   position's cheapest legal fill it is raised to that fill and the others
+   give up the difference in proportion to their slack (`repair_split`, the
+   repaired split printed). A budget below the cheapest legal 15 is refused
+   (`Could not assemble a legal 15 within £…`), never printed as a draft.
+5. **Bench** = the cheapest candidates who pass layer 1 in each remaining
+   slot (1 GK, and the outfield slots the formation leaves: 1 DEF + 2 MID for
+   4-3-3). GK/DEF ties are broken by the fixture count in the horizon's later
+   weeks (GW8–11 from a GW5 export — the Bench Boost window), then the
+   frozen order. The bench is re-drawn after every upgrade round, so an
+   upgrade that frees a cheaper body is used; it is never the leftovers of
+   the XI walk.
+
+**Live, GW5 export, budget £100.3m, 4-3-3, squad-shape split**
+(`reports/wildcard_gw5.txt`):
+
+```
+  SQUAD  £97.8m of £100.3m   keeps from your current 15 (7): B.Fernandes, Barry, Groß, Haaland, Slater, Szoboszlai, Verbruggen
+    XI (4-3-3, --formation)   sums = full model, all terms   by = the frozen ordering metric
+      GK  Pickford       EVE    5.5  6wk  26.2  by bottomup 26.2                  
+      DEF Hall           NEW    5.3  6wk  26.9  by bottomup 26.9                  corners,defcon,fk
+      DEF Mukiele        SUN    5.4  6wk  29.8  by bottomup 29.8                  arb,defcon
+      DEF Khalaili       CRY    5.0  6wk  28.6  by bottomup 28.6                  arb,defcon
+      DEF Muharemović    LEE    5.0  6wk  34.8  by bottomup 34.8                  defcon
+      MID B.Fernandes    MUN   11.9  6wk  30.5  by P(st)xfix 6.00 xGI/90 0.78     corners,fk,pens  (V)
+      MID Groß           BHA    5.8  6wk  26.2  by P(st)xfix 6.00 xGI/90 0.53     corners,fk,pens
+      MID Szoboszlai     LIV    7.0  6wk  26.1  by P(st)xfix 6.00 xGI/90 0.46     corners,fk,pens
+      FWD Haaland        MCI   15.6  6wk  30.7  by P(st)xfix 6.00 xGI/90 0.99     pens  (C)
+      FWD Barry          EVE    5.6  6wk  27.4  by P(st)xfix 6.00 xGI/90 0.79     pens
+      FWD Thiago         BRE    7.8  6wk  25.5  by P(st)xfix 6.00 xGI/90 0.67     pens
+    captain restricted to MID/FWD: DEF over-spread
+    BENCH  cheapest who pass layer 1 per remaining slot (GK/DEF ties: GW8-11 fixture count)      fixtures GW8-11
+      GK  Verbruggen     BHA    4.5  6wk  21.1   LIV (A) 4 | MCI (A) 5 | BRE (H) 3 | HUL (A) 2
+      DEF Thomas         COV    4.0  6wk  26.4   FUL (H) 2 | SUN (H) 2 | EVE (A) 3 | CRY (H) 3
+      MID Slater         HUL    4.5  6wk  20.1   BRE (H) 3 | IPS (H) 2 | ARS (A) 5 | BHA (H) 2
+      MID Rudoni         COV    4.9  6wk  29.2   FUL (H) 2 | SUN (H) 2 | EVE (A) 3 | CRY (H) 3
+    XI six-week sum 312.7   bench six-week sum 96.8   fifteen 409.5   (one unit: full model, all terms)
+```
+
+Read against item 4: the same top of every list; Haaland captain, Fernandes
+vice; GK Pickford replaces Tzolakis (the top of the GK list is now
+affordable once the bench is fodder); Groß enters the XI, Bogle and
+Tavernier drop to make the 4-3-3; £2.5m unspent
+because nothing higher-ranked is left to buy in any position. One thing the
+one-unit column makes visible: bench MID Rudoni's full sum (29.2) exceeds
+two XI midfielders' (26.2, 26.1) — the frozen ordering puts three role edges
+above the model, as decided at 16:10 on 14 Sep. Observation, not a change.
+
+**Verified:** 6 tests, suite **180 → 186**; 14 mutations each red — the section ignoring `--formation`, the builder ignoring the formation, captain from the whole XI, vice from the whole XI, the reason line dropped, the sums in the mixed units, the bench as the leftovers of the XI list, the bench tie-break dropped, the tie-break counting every week, `--split` ignored, the split repair dropped, the over-budget guard dropped, the bench not re-drawn after upgrades, the CLI parameters never reaching the section. `bench_boost`
+output and the four recorded GW6 sources regenerate identically
+(GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted). Nothing here changes a projection.
