@@ -159,8 +159,107 @@ def sec_league(d):
     print()
 
 
+def effective_ownership(d):
+    """The mini-league layer, forward-looking: effective ownership with
+    captaincy from the latest picks (GW gw - the next gameweek's picks are not
+    visible before the deadline). A captain counts 2, a bench player 0, a
+    Triple Captain 2 (spent, cannot recur). Returns (players, rivals):
+    players = [{name, team, pos, price, my_mult, eo, start, capt, net}] with
+    net = my_mult - eo, the points gained on the average rival per point the
+    player scores; rivals = [{entry, captain, mult: key -> multiplier}]."""
+    me = my_name(d)
+    entries = sorted({r["entry_name"] for r in d["squads"]})
+    rivals = [e for e in entries if e != me]
+    if not rivals:
+        return [], []
+    mult = defaultdict(dict)
+    meta = {}
+    for r in d["squads"]:
+        key = (r["web_name"], r["team"])
+        mult[key][r["entry_name"]] = min(2, r["multiplier"] or 0)
+        meta[key] = r
+    players = []
+    for key, by_entry in mult.items():
+        rm = [by_entry.get(e, 0) for e in rivals]
+        eo = sum(rm) / len(rivals)
+        players.append({"name": key[0], "team": key[1], "pos": meta[key]["pos"],
+                        "price": meta[key]["price"], "my_mult": by_entry.get(me, 0),
+                        "eo": eo, "start": sum(1 for m in rm if m >= 1),
+                        "capt": sum(1 for m in rm if m >= 2),
+                        "net": by_entry.get(me, 0) - eo})
+    rows = []
+    for e in rivals:
+        cap = next((r["web_name"] for r in d["squads"]
+                    if r["entry_name"] == e and r["is_captain"]), "-")
+        rows.append({"entry": e, "captain": cap, "mult": {k: v.get(e, 0) for k, v in mult.items()}})
+    return players, rows
+
+
+def next_gw_projections(d):
+    """(week, {(web_name, team): projection}) for every player in any squad -
+    the full model, all terms, one unit - for the first upcoming gameweek.
+    None on a blank or an unmapped name; (None, {}) without upcoming fixtures."""
+    weeks = sorted({f["event"] for f in d.get("fixtures_next6") or []})
+    if not weeks:
+        return None, {}
+    week = weeks[0]
+    by_key = {}
+    for p in d["all_players"]:
+        by_key.setdefault((p["web_name"], p["team"]), p)
+    inp = reliability_inputs(canonical_from_export(d), gws_played=d["gameweek"])
+    fx = week_fixtures(d)
+    out = {}
+    for key in {(r["web_name"], r["team"]) for r in d["squads"]}:
+        p = by_key.get(key)
+        out[key] = project_week(p["id"], p, inp, fx, week, ALL_TERMS) if p else None
+    return week, out
+
+
+def rival_swings(me_mult, rivals, proj):
+    """Per rival, the projected next-gameweek swing under the latest picks:
+    swing = sum over players of (my multiplier - theirs) x projection; shared
+    = sum of min(mine, theirs) x projection; yours / theirs = what only one
+    side holds. Blanks and unmapped names count 0."""
+    rows = []
+    for r in rivals:
+        swing = shared = yours = theirs = 0.0
+        for k in set(me_mult) | set(r["mult"]):
+            pr = proj.get(k) or 0.0
+            a, b = me_mult.get(k, 0), r["mult"].get(k, 0)
+            swing += (a - b) * pr
+            shared += min(a, b) * pr
+            yours += max(0, a - b) * pr
+            theirs += max(0, b - a) * pr
+        rows.append({"entry": r["entry"], "captain": r["captain"], "swing": swing,
+                     "shared": shared, "yours": yours, "theirs": theirs})
+    return rows
+
+
+def captain_cover(d, players, proj):
+    """My captain candidates for the next gameweek: the MID/FWD in my XI
+    (slots 1-11) by projection - never a DEF (review D). Each with the rivals'
+    effective ownership of him, how many rivals captain him, and the net stake
+    per point if I captain him (2 - EO)."""
+    me = my_name(d)
+    by_key = {(p["name"], p["team"]): p for p in players}
+    rows = []
+    for r in d["squads"]:
+        if r["entry_name"] != me or r["slot"] > 11 or r["pos"] not in (3, 4):
+            continue
+        key = (r["web_name"], r["team"])
+        p = by_key.get(key)
+        if p is None:
+            continue
+        rows.append({"name": r["web_name"], "team": r["team"], "pos": r["pos"],
+                     "proj": proj.get(key), "eo": p["eo"], "capt": p["capt"],
+                     "stake": 2 - p["eo"]})
+    rows.sort(key=lambda x: -(-1.0 if x["proj"] is None else x["proj"]))
+    return rows
+
+
 def sec_eo(d, top=12):
-    """Ownership gap (forward-looking) + last GW's captaincy effect (historical)."""
+    """Ownership gap (forward-looking) + last GW's captaincy effect (historical)
+    + effective ownership with captaincy, per-rival swings and captain cover."""
     print("=" * 78)
     print("MINI-LEAGUE OWNERSHIP")
     print("=" * 78)
@@ -223,9 +322,56 @@ def sec_eo(d, top=12):
                         f"spent, cannot recur")
             print(f"  {r['name'][:15]:15s}{r['team']:5s}{r['mult_gap']:>+10.2f}  {note}")
 
+    players, rivals = effective_ownership(d)
+    n = len(rivals)
+    print()
+    print(f"  EFFECTIVE OWNERSHIP WITH CAPTAINCY   (rival picks as of GW{gw}; captain = 2, "
+          "bench = 0, TC = 2)")
+    hdr = (f"  {'player':15s}{'team':5s}{'pos':4s}{'mine':>5}{'EO':>6}{'start':>7}"
+           f"{'capt':>6}{'net/pt':>8}")
+
+    def eo_line(r):
+        return (f"  {r['name'][:15]:15s}{r['team']:5s}{POS[r['pos']]:4s}{r['my_mult']:>5}"
+                f"{r['eo']:>6.2f}{r['start']:>4}/{n:<2}{r['capt']:>4}/{n:<2}{r['net']:>+8.2f}")
+
+    print("  THEIR STAKES YOU DON'T MATCH   (net/pt < 0: every point he scores costs you)")
+    print(hdr)
+    for r in sorted(players, key=lambda x: (x["net"], -x["eo"]))[:top]:
+        if r["net"] >= -0.005:
+            break
+        print(eo_line(r))
+    print("  YOUR STAKES THEY DON'T MATCH   (net/pt > 0: every point gains on the average rival)")
+    print(hdr)
+    for r in sorted(players, key=lambda x: (-x["net"], -x["my_mult"]))[:top]:
+        if r["net"] <= 0.005:
+            break
+        print(eo_line(r))
+
+    week, proj = next_gw_projections(d)
+    if week is not None:
+        me_mult = {(r["web_name"], r["team"]): min(2, r["multiplier"] or 0)
+                   for r in d["squads"] if r["entry_name"] == me}
+        print()
+        print(f"  PER RIVAL, GW{week}   (projected: full model, all terms, one unit; picks as of "
+              f"GW{gw}; blanks 0)")
+        print(f"  {'rival':22s}{'their captain':15s}{'swing':>7}{'shared':>8}{'yours':>7}{'theirs':>8}")
+        for r in sorted(rival_swings(me_mult, rivals, proj), key=lambda x: x["swing"]):
+            print(f"  {r['entry'][:22]:22s}{r['captain'][:14]:15s}{r['swing']:>+7.1f}"
+                  f"{r['shared']:>8.1f}{r['yours']:>7.1f}{r['theirs']:>8.1f}")
+        print()
+        print(f"  CAPTAIN COVER, GW{week}   (MID/FWD in your XI by projection; stake/pt = 2 - EO "
+              "if captained)")
+        print(f"  {'candidate':15s}{'team':5s}{'proj':>6}{'EO':>6}{'capt':>6}{'stake/pt':>10}")
+        for c in captain_cover(d, players, proj):
+            pr = f"{'BLANK':>6}" if c["proj"] is None else f"{c['proj']:>6.2f}"
+            print(f"  {c['name'][:15]:15s}{c['team']:5s}{pr}{c['eo']:>6.2f}{c['capt']:>4}/{n:<2}"
+                  f"{c['stake']:>+10.2f}")
+        print("  the expected value of a captaincy is its projection alone; EO changes the variance")
+        print("  of your rank, not the expectation: the field's captain covers, a differential swings.")
+
     print("\n  gap/pt = net points gained on the average rival per point that player")
     print("  scores. Ownership gap is what transfers change. The captaincy block")
-    print("  reflects one past gameweek only.\n")
+    print("  reflects one past gameweek only; the EO blocks carry it forward.\n")
 
 
 def bench_vs_xi(d):

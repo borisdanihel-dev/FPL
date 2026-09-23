@@ -3119,6 +3119,119 @@ class BenchVsXI(unittest.TestCase):
         self.assertNotIn(slots[13]["web_name"], line)
 
 
+class EffectiveOwnership(unittest.TestCase):
+    """sec_eo: effective ownership with captaincy from the latest picks; per-rival
+    projected swings; captain cover restricted to MID/FWD in my XI."""
+
+    @staticmethod
+    def _row(d, entry, pid):
+        p = next(p for p in d["all_players"] if p["id"] == pid)
+        return next(r for r in d["squads"] if r["entry_name"] == entry
+                    and (r["web_name"], r["team"]) == (p["web_name"], p["team"]))
+
+    @staticmethod
+    def _player(players, d, pid):
+        p = next(p for p in d["all_players"] if p["id"] == pid)
+        return next(x for x in players if (x["name"], x["team"]) == (p["web_name"], p["team"]))
+
+    def test_captain_counts_two_bench_zero_triple_captain_two(self):
+        d = make_export(n_entries=4)
+        me = E.my_name(d)
+        rivals = sorted({r["entry_name"] for r in d["squads"]} - {me})
+        cap = self._row(d, me, 31)                         # slot 10: everyone's captain
+        self.assertEqual(cap["multiplier"], 2)
+        self._row(d, rivals[0], 31)["multiplier"] = 3     # Triple Captain: spent, counts 2
+        self._row(d, rivals[1], 31)["multiplier"] = 0     # benched him
+        self._row(d, rivals[2], 31)["multiplier"] = 1     # starts him, no armband
+        players, rows = E.effective_ownership(d)
+        p = self._player(players, d, 31)
+        self.assertAlmostEqual(p["eo"], (2 + 0 + 1) / 3, 9)
+        self.assertEqual((p["start"], p["capt"], p["my_mult"]), (2, 1, 2))
+        self.assertAlmostEqual(p["net"], 2 - 1.0, 9)
+        b = self._player(players, d, 33)                  # slot 12: everyone's bench
+        self.assertEqual((b["eo"], b["start"], b["my_mult"], b["net"]), (0.0, 0, 0, 0.0))
+        self.assertEqual([r["captain"] for r in rows], [cap["web_name"]] * 3)
+
+    def test_net_is_mine_minus_theirs_per_point(self):
+        d = make_export(n_entries=4)
+        me = E.my_name(d)
+        mine = self._row(d, me, 49)                        # a FWD on everyone's bench
+        mine["multiplier"] = 1
+        players, _ = E.effective_ownership(d)
+        self.assertAlmostEqual(self._player(players, d, 49)["net"], 1.0, 9)
+        mine["multiplier"] = 2
+        players, _ = E.effective_ownership(d)
+        self.assertAlmostEqual(self._player(players, d, 49)["net"], 2.0, 9)
+        out = run("eo", d)
+        block = out.split("YOUR STAKES THEY DON'T MATCH")[1].split("PER RIVAL")[0]
+        self.assertIn(mine["web_name"][:15], block)
+        self.assertIn("+2.00", block)
+
+    def test_per_rival_swing_is_multiplier_gap_times_the_full_projection(self):
+        d = make_export(n_entries=4)
+        me = E.my_name(d)
+        self._row(d, me, 33)["multiplier"] = 1             # a MID only I start
+        self._row(d, me, 30)["multiplier"] = 2             # my armband moves
+        self._row(d, me, 31)["multiplier"] = 1             # off the field's captain
+        week, proj = E.next_gw_projections(d)
+        self.assertEqual(week, d["gameweek"] + 1)
+        players, rivals = E.effective_ownership(d)
+        me_mult = {(r["web_name"], r["team"]): min(2, r["multiplier"] or 0)
+                   for r in d["squads"] if r["entry_name"] == me}
+        rows = E.rival_swings(me_mult, rivals, proj)
+        inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=d["gameweek"])
+        fx = E.week_fixtures(d)
+        by_key = {(p["web_name"], p["team"]): p for p in d["all_players"]}
+        for r, riv in zip(rows, rivals):
+            want = 0.0
+            for k in set(me_mult) | set(riv["mult"]):
+                p = by_key[k]
+                pr = E.project_week(p["id"], p, inp, fx, week, E.ALL_TERMS) or 0.0
+                want += (me_mult.get(k, 0) - riv["mult"].get(k, 0)) * pr
+            self.assertAlmostEqual(r["swing"], want, 6, r["entry"])
+            self.assertAlmostEqual(r["swing"], r["yours"] - r["theirs"], 6)
+            self.assertNotEqual(riv["mult"][(self._row(d, me, 31)["web_name"],
+                                             self._row(d, me, 31)["team"])], 1)
+        row33 = self._row(d, me, 33)
+        p33 = by_key[(row33["web_name"], row33["team"])]
+        bare = E.project_week(p33["id"], p33, inp, fx, week)
+        self.assertGreater(proj[(p33["web_name"], p33["team"])], bare + 1e-6,
+                           "fixture cannot tell the full model from the bare xGI term")
+        out = run("eo", d)
+        self.assertIn(f"PER RIVAL, GW{week}", out)
+        self.assertEqual(out.count("their captain"), 1)
+
+    def test_captain_cover_is_mid_fwd_in_my_xi_by_projection(self):
+        d = make_export(n_entries=4)
+        slots = _legal_lineup(d)
+        for r in d["player_gw_recent"]:
+            if r["player_id"] in (9, 30, 33):             # XI DEF, XI MID, bench MID: all huge
+                r["xg"], r["xa"] = 1.5, 0.8
+        week, proj = E.next_gw_projections(d)
+        players, _ = E.effective_ownership(d)
+        rows = E.captain_cover(d, players, proj)
+        names = [c["name"] for c in rows]
+        xi_att = [slots[s]["web_name"] for s in range(6, 12)]   # 4 MID + 2 FWD
+        self.assertEqual(sorted(names), sorted(xi_att))
+        self.assertEqual(names[0], slots[7]["web_name"])         # pid 30 tops the list
+        self.assertEqual([c["proj"] for c in rows], sorted((c["proj"] for c in rows), reverse=True))
+        d9 = self._row(d, E.my_name(d), 9)
+        self.assertGreater(proj[(d9["web_name"], d9["team"])], rows[0]["proj"],
+                           "the rig did not put the DEF on top")
+        self.assertNotIn(d9["web_name"], names, "a DEF was offered as captain")
+        self.assertNotIn(slots[14]["web_name"], names, "a bench player was offered as captain")
+        for c in rows:
+            self.assertAlmostEqual(c["stake"], 2 - c["eo"], 9)
+        capt31 = next(c for c in rows if c["name"] == slots[8]["web_name"])   # the field's captain
+        self.assertEqual(capt31["capt"], 3)
+        self.assertAlmostEqual(capt31["stake"], 0.0, 9)
+        out = run("eo", d)
+        block = out.split("CAPTAIN COVER")[1]
+        first = next(l for l in block.splitlines()[2:] if l.strip())
+        self.assertTrue(first.strip().startswith(names[0][:15]), first)
+        self.assertIn("EO changes the variance", out)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):
