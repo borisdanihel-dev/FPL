@@ -1696,3 +1696,32 @@ stated here and can be argued with:
 ```
 
 **Verified:** 5 tests, suite **186 → 191**; 8 mutations each red — compared against the highest XI player, compared across positions, mixed units, a blank XI player not the lowest, swap verdict reversed, flag line dropped, flag reversed, bench including slot 11. GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
+
+---
+
+## 2026-09-24 — item 6 (task-list 5): the export window is the whole season (`624241a`)
+
+`fpl_sync.py` exported `player_gw_recent` and `fixtures_status` for the last
+six gameweeks (`event BETWEEN gw-5 AND gw`). From GW7 that would have dropped
+GW1 from the canonical slice, so the live weights, priors and team rates
+(`reliability_inputs`) would have come from a sliding window while the
+historical run uses full seasons — the limitation stated up front on
+2026-09-14. Both queries now take every gameweek through the export's
+(`event <= gw`); `fixtures_played` already did. The last-4 form columns
+(`pts_last4`, `mins_last4`, `defcon_last4`, `starts_last4`, and
+`top_players_recent`) keep their four-gameweek window: they are definitions,
+not a slice, and the frozen P1 predictor reads them.
+
+- **Changes nothing before GW7.** At GW5 the old window (`0..5`) already held
+  the whole season: the export regenerated from a read-only connection to the
+  real database with the new query is identical to today's export: 1,538 player_gw_recent rows (GW1–5), 50 fixture flags, 667 all_players rows.
+- **From GW7** the export grows by one gameweek of rows per week (~275 × N
+  rows; ~10k by GW38) and `--section backtest`, `consistency` and the
+  calibration guard see every gameweek instead of six.
+- No projection changes today; the recording path is untouched
+  (`fpl_edge.py` only gains a corrected comment in the `bottomup` source).
+
+**Verified:** 2 tests, suite **191 → 193** — the export at simulated GW8, 10,
+20 and 38 carries per-gameweek rows and fixture flags for every gameweek and
+the canonical slice sees them all; the last-4 columns at GW10 still sum four
+gameweeks. 3 mutations each red — the player_gw_recent window restored to six gameweeks, the fixtures_status window restored, the last-4 columns widened to the season.
