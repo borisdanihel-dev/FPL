@@ -2940,6 +2940,126 @@ class WildcardCrossPosition(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+def _legal_lineup(d):
+    """Re-slot My Team into a legal XI (GK, 4 DEF, 4 MID, 2 FWD) with a bench
+    of GK, DEF, MID, FWD. Returns slot -> squad row."""
+    me = E.my_name(d)
+    mine = [r for r in d["squads"] if r["entry_name"] == me]
+    by_pos = {k: [r for r in mine if r["pos"] == k] for k in (1, 2, 3, 4)}
+    order = (by_pos[1][:1] + by_pos[2][:4] + by_pos[3][:4] + by_pos[4][:2]
+             + by_pos[1][1:] + by_pos[2][4:] + by_pos[3][4:] + by_pos[4][2:])
+    for slot, r in enumerate(order, 1):
+        r["slot"], r["multiplier"] = slot, (1 if slot <= 11 else 0)
+        r["is_captain"] = r["is_vice"] = 0
+    return {r["slot"]: r for r in order}
+
+
+class BenchVsXI(unittest.TestCase):
+    """sec_squad: each bench player against the lowest XI player of his own
+    position for the next gameweek, in one unit; same-position swaps only."""
+
+    @staticmethod
+    def _pid(d, row):
+        return next(p["id"] for p in d["all_players"]
+                    if (p["web_name"], p["team"]) == (row["web_name"], row["team"]))
+
+    def _rig_rows(self, d, pid, **fields):
+        for r in d["player_gw_recent"]:
+            if r["player_id"] == pid:
+                r.update(fields)
+
+    def test_bench_player_above_the_lowest_xi_of_his_position_is_a_swap(self):
+        d = make_export()
+        slots = _legal_lineup(d)
+        self._rig_rows(d, self._pid(d, slots[14]), xg=1.2, xa=0.6)   # bench MID
+        week, rows, _ = E.bench_vs_xi(d)
+        self.assertEqual(week, d["gameweek"] + 1)
+        self.assertEqual([r["bench"]["slot"] for r in rows], [12, 13, 14, 15])
+        r = next(r for r in rows if r["bench"]["slot"] == 14)
+        self.assertEqual(r["verdict"], "SWAP")
+        xi_mids = [slots[s] for s in (6, 7, 8, 9)]
+        inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=d["gameweek"])
+        fx = E.week_fixtures(d)
+        by_id = {p["id"]: p for p in d["all_players"]}
+        proj = {row["web_name"]: E.project_week(self._pid(d, row), by_id[self._pid(d, row)],
+                                                inp, fx, week, E.ALL_TERMS) for row in xi_mids}
+        lowest = min(proj, key=proj.get)
+        self.assertEqual(r["xi"]["name"], lowest, "not compared against the lowest XI MID")
+        self.assertAlmostEqual(r["delta"], r["bench"]["proj"] - proj[lowest], 6)
+        self.assertGreater(r["delta"], 0)
+        out = run("squad", d)
+        line = next(l for l in out.splitlines() if l.strip().startswith("MID " + slots[14]["web_name"][:14]))
+        self.assertIn(lowest[:14], line)
+        self.assertTrue(line.rstrip().endswith("SWAP"), line)
+        self.assertIn(f"BENCH vs XI  GW{week}", out)
+
+    def test_a_bench_player_is_never_compared_across_positions(self):
+        d = make_export()
+        slots = _legal_lineup(d)
+        self._rig_rows(d, self._pid(d, slots[13]), xg=1.5, xa=0.8, defcon=15)   # bench DEF
+        _, rows, _ = E.bench_vs_xi(d)
+        r = next(r for r in rows if r["bench"]["slot"] == 13)
+        everyone = [x["proj"] for x in (row["xi"] for row in rows) if x] + [row["bench"]["proj"] for row in rows]
+        self.assertEqual(r["bench"]["proj"], max(everyone), "the rig is not the top projection")
+        self.assertEqual(r["xi"]["pos"], 2, "a DEF was compared with another position")
+        for row in rows:
+            if row["xi"]:
+                self.assertEqual(row["xi"]["pos"], row["bench"]["pos"])
+        self.assertEqual(r["verdict"], "SWAP")
+
+    def test_projections_are_one_unit_the_full_model(self):
+        d = make_export()
+        slots = _legal_lineup(d)
+        week, rows, _ = E.bench_vs_xi(d)
+        inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=d["gameweek"])
+        fx = E.week_fixtures(d)
+        by_id = {p["id"]: p for p in d["all_players"]}
+        for r in rows:
+            for v in (r["bench"], r["xi"]):
+                pid = self._pid(d, {"web_name": v["name"], "team": v["team"]})
+                self.assertAlmostEqual(v["proj"], E.project_week(pid, by_id[pid], inp, fx, week, E.ALL_TERMS), 6)
+        mid = next(r["bench"] for r in rows if r["bench"]["pos"] == 3)
+        pid = self._pid(d, {"web_name": mid["name"], "team": mid["team"]})
+        self.assertGreater(mid["proj"], E.project_week(pid, by_id[pid], inp, fx, week) + 1e-6,
+                           "fixture cannot tell the full model from the bare xGI term")
+
+    def test_a_blank_xi_player_is_the_one_to_swap(self):
+        d0 = make_export()
+        slots = _legal_lineup(d0)
+        team = slots[3]["team"]                                   # an XI DEF's club
+        d = make_export(blank_team=team)
+        _legal_lineup(d)
+        week, rows, _ = E.bench_vs_xi(d)
+        playing = {f[k] for f in d["fixtures_next6"] if f["event"] == week for k in ("home", "away")}
+        blank = set(TEAMS) - playing                              # an odd pool blanks two clubs
+        self.assertIn(team, blank)
+        r = next(r for r in rows if r["bench"]["slot"] == 13)     # bench DEF
+        if r["bench"]["team"] in blank:
+            self.skipTest("bench DEF shares a blanked club")
+        self.assertIsNone(r["xi"]["proj"])
+        self.assertIn(r["xi"]["team"], blank)
+        self.assertEqual(r["verdict"], "SWAP (XI blank)")
+        out = run("squad", d)
+        line = next(l for l in out.splitlines() if l.strip().startswith("DEF " + r["bench"]["name"][:14]))
+        self.assertIn("BLANK", line)
+        self.assertIn("SWAP (XI blank)", line)
+
+    def test_flag_line_names_xi_players_under_the_frozen_flag(self):
+        d = make_export(gw=3)                                      # 270 minutes possible
+        slots = _legal_lineup(d)
+        by_key = {(p["web_name"], p["team"]): p for p in d["all_players"]}
+        by_key[(slots[4]["web_name"], slots[4]["team"])]["mins_last4"] = 180    # 0.667: flagged
+        by_key[(slots[5]["web_name"], slots[5]["team"])]["mins_last4"] = 181    # not
+        by_key[(slots[13]["web_name"], slots[13]["team"])]["mins_last4"] = 100  # bench: not an XI flag
+        _, _, flagged = E.bench_vs_xi(d)
+        self.assertEqual([x["name"] for x in flagged], [slots[4]["web_name"]])
+        out = run("squad", d)
+        line = next(l for l in out.splitlines() if "XI under the frozen flag" in l)
+        self.assertIn(slots[4]["web_name"], line)
+        self.assertNotIn(slots[5]["web_name"], line)
+        self.assertNotIn(slots[13]["web_name"], line)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):

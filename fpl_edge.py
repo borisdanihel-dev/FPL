@@ -228,6 +228,68 @@ def sec_eo(d, top=12):
     print("  reflects one past gameweek only.\n")
 
 
+def bench_vs_xi(d):
+    """The bench-vs-XI check for the next gameweek. Each bench player of my
+    current 15 (slots 12-15) against the lowest-projecting XI player of his
+    own position, both in one unit - project_reliability with all terms - with
+    P(start) and the frozen minutes-share flag beside them. Same-position
+    swaps only: the formation is never chosen on the sums (review D), and a
+    second swap in the same position is not chained. A blank XI player is the
+    lowest by construction. Returns (week, rows, flagged_xi); week is None
+    when the export has no upcoming fixtures."""
+    me = my_name(d)
+    gw = d["gameweek"]
+    weeks = sorted({f["event"] for f in d.get("fixtures_next6") or []})
+    if not weeks:
+        return None, [], []
+    week = weeks[0]
+    by_key = {}
+    for p in d["all_players"]:
+        by_key.setdefault((p["web_name"], p["team"]), p)
+    inp = reliability_inputs(canonical_from_export(d), gws_played=gw)
+    fx = week_fixtures(d)
+    window = range(gw - min(4, gw) + 1, gw + 1)
+    played = defaultdict(int)
+    for f in d.get("fixtures_played") or []:
+        if f["event"] in window:
+            played[f["home"]] += 1
+            played[f["away"]] += 1
+
+    def view(r):
+        p = by_key.get((r["web_name"], r["team"]))
+        if p is None:
+            return None
+        share = minutes_share(p, played)
+        return {"name": r["web_name"], "team": r["team"], "pos": r["pos"], "slot": r["slot"],
+                "proj": project_week(p["id"], p, inp, fx, week, ALL_TERMS),
+                "p_start": inp["players"].get(p["id"], {}).get("p_start", 0.0),
+                "share": share, "flag": share is not None and share <= FLAG_SHARE_MAX,
+                "fixtures": fx[p["team"]].get(week, [])}
+
+    mine = sorted((r for r in d["squads"] if r["entry_name"] == me), key=lambda r: r["slot"])
+    mine = [v for v in (view(r) for r in mine) if v]
+    xi = [v for v in mine if v["slot"] <= 11]
+    bench = [v for v in mine if v["slot"] > 11]
+    rows = []
+    for b in bench:
+        same = [x for x in xi if x["pos"] == b["pos"]]
+        if not same:
+            rows.append({"bench": b, "xi": None, "delta": None,
+                         "verdict": "hold (no XI player of this position)"})
+            continue
+        low = min(same, key=lambda x: -1.0 if x["proj"] is None else x["proj"])
+        bp = 0.0 if b["proj"] is None else b["proj"]
+        xp = 0.0 if low["proj"] is None else low["proj"]
+        if b["proj"] is None:
+            verdict = "hold (bench blank)"
+        elif low["proj"] is None:
+            verdict = "SWAP (XI blank)"
+        else:
+            verdict = "SWAP" if bp > xp else "hold"
+        rows.append({"bench": b, "xi": low, "delta": bp - xp, "verdict": verdict})
+    return week, rows, [x for x in xi if x["flag"]]
+
+
 def sec_squad(d, horizon):
     print("=" * 78)
     print(f"YOUR SQUAD  (form, flags, next {horizon} fixtures)")
@@ -249,6 +311,31 @@ def sec_squad(d, horizon):
         print(f"{loc} {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{r['team']:5s}{r['price']:>5.1f} "
               f"pts{p.get('total_points',0):>3} L4:{p.get('pts_last4',0):>3} "
               f"m{p.get('mins_last4',0):>4} fdr{fdr_avg(tick, r['team']):>4.1f}  {run}{flag}")
+    print()
+
+    week, rows, flagged = bench_vs_xi(d)
+    if week is None:
+        print("  BENCH vs XI: no upcoming fixtures in the export\n")
+        return
+    print(f"  BENCH vs XI  GW{week}   proj = full model, all terms (one unit); each bench player")
+    print("  against the lowest-projecting XI player of his own position. Same-position swaps")
+    print("  only - the formation is not chosen on the sums. Picks as of the last deadline.")
+    print(f"    {'bench':19s}{'proj':>6}{'P(st)':>6}{'share':>6}   {'lowest XI':19s}"
+          f"{'proj':>6}{'P(st)':>6}{'share':>6}{'delta':>7}  verdict")
+
+    def cells(v):
+        proj = f"{'BLANK':>6}" if v["proj"] is None else f"{v['proj']:>6.2f}"
+        share = f"{'-':>6}" if v["share"] is None else f"{v['share']:>6.2f}"
+        return f"{POS[v['pos']]:4s}{v['name'][:14]:15s}{proj}{v['p_start']:>6.2f}{share}"
+
+    for r in rows:
+        b, x = r["bench"], r["xi"]
+        if x is None:
+            print(f"    {cells(b)}   {'-':19s}{'':25s}  {r['verdict']}")
+            continue
+        print(f"    {cells(b)}   {cells(x)}{r['delta']:>+7.2f}  {r['verdict']}")
+    print(f"    XI under the frozen flag (minutes share <= {FLAG_SHARE_MAX}): "
+          + (", ".join(f"{x['name']} ({x['share']:.2f})" for x in flagged) or "none"))
     print()
 
 
