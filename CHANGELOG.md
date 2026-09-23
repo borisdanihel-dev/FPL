@@ -1499,3 +1499,80 @@ only for minutes. Mutations (MAE printed for minutes, note dropped, summary
 prints MAE): red.
 
 Suite 168 → 172; 5 mutations each red.
+
+---
+
+## 2026-09-23 — item 4 (break-list 3): `sec_wildcard` rewired to the frozen three-layer rule, scored on the six-week sum (`1c71235`)
+
+The old section — shortlists and a squad from `project()`, the points model
+that failed three times — is gone. The new one applies the rule frozen at
+16:10 on 14 Sep, as amended, scored on H = 6 per the horizon test:
+
+- **Layer 1, exclude:** status not `a`; under 45 minutes in the last four;
+  **minutes share ≤ 0.667** (the frozen P1 flag); no fixture in the horizon.
+  Counts printed per reason.
+- **Layer 2, shortlist by role** (rules only, no model): `pens`, `corners`,
+  `fk` = first choice; `defcon` = hit rate ≥ 50% over 2+ starts of 60 minutes;
+  `arb` = a DEF whose xGI/90 reaches the MID median. A player's tier is his
+  number of edges, and **a role edge outranks the model** — the ordering key
+  is (tier, model), so layer 3 is a tiebreaker among equals, never an override.
+- **Layer 3, order within position:** GK/DEF by the six-week bottomup sum;
+  MID/FWD by P(start) × fixtures, then xGI/90 — the minutes baseline with bare
+  xGI as the tiebreak, which is what the horizon test and ablation support.
+- **Money: per-position quota, never global value-per-million.** The budget
+  (team value alone, after review item A) is split across positions in the
+  **current squad's shape** (each position's share of my fifteen's prices,
+  scaled to the budget; quota-proportional if no squad is known). Each
+  position is filled from its own ordered list — take the next candidate when
+  he fits the position's share with enough left for the cheapest fill of the
+  remaining slots — then leftover money upgrades the lowest-ranked pick of a
+  position to a higher-ranked affordable one, position by position, until
+  nothing moves. 3-per-club throughout. No MILP.
+- **Output:** the per-position shortlists (top 8, with roles, six-week points,
+  P(start) × fixtures, xGI/90); the squad's cost; the XI with the six-week sum
+  per player and the captain (top six-week sum in the XI) marked `(C)`; the
+  four bench players with their six-week sums and their fixtures for the
+  horizon's weeks 3–6 (GW8–11 from a GW5 export); the XI and bench six-week
+  totals; keeps from the current 15.
+
+**Judgment calls, stated:** the six-week points sum used for XI selection,
+captain and the printed `6wk` is the item 3 projection (bottomup for GK/DEF,
+the xGI term for MID/FWD), so the XI is chosen in one unit; the MID/FWD
+*ordering* is exactly as specified (P(start) × fixtures, then xGI/90) and is
+separate from that sum. The split rule (current squad shape) is my choice
+where the instruction only said "per-position quota"; it is printed so it can
+be argued with.
+
+**Live, GW5 export, budget £100.3m** (`reports/wildcard_gw5.txt`):
+
+```
+  budget £100.3m = team value (bank £2.6m included)
+  split by position, current squad shape: GK £9.3m  DEF £26.8m  MID £36.0m  FWD £28.2m
+  SQUAD  £100.2m of £100.3m   keeps from your current 15 (6): B.Fernandes, Barry, Groß, Haaland, Szoboszlai, Verbruggen
+    XI (5-2-3)
+      GK  Tzolakis       HUL    4.6  6wk  21.7  
+      DEF Muharemović    LEE    5.0  6wk  34.8  defcon  (C)
+      DEF Bogle          LEE    4.6  6wk  34.2  arb
+      DEF Mukiele        SUN    5.4  6wk  29.8  arb,defcon
+      DEF Khalaili       CRY    5.0  6wk  28.6  arb,defcon
+      DEF Hall           NEW    5.3  6wk  26.9  corners,defcon,fk
+      MID B.Fernandes    MUN   11.9  6wk  28.3  corners,fk,pens
+      MID Tavernier      BOU    6.1  6wk  24.2  corners,fk
+      FWD Haaland        MCI   15.6  6wk  30.7  pens
+      FWD Barry          EVE    5.6  6wk  27.4  pens
+      FWD Thiago         BRE    7.8  6wk  25.5  pens
+    BENCH                            6wk   fixtures GW8-11
+      GK  Verbruggen     BHA    4.5   21.1   LIV (A) 4 | MCI (A) 5 | BRE (H) 3 | HUL (A) 2
+      MID Groß           BHA    5.8   23.6   LIV (A) 4 | MCI (A) 5 | BRE (H) 3 | HUL (A) 2
+      MID Szoboszlai     LIV    7.0   22.3   BHA (H) 2 | ARS (H) 4 | CRY (A) 3 | MUN (H) 4
+      MID Stach          LEE    6.0   18.6   SUN (A) 3 | BOU (A) 3 | TOT (H) 3 | CHE (A) 4
+    XI six-week sum 312.1   bench six-week sum 85.6
+```
+
+**Verified:** 7 tests, suite **172 → 179**; 9 mutations each red — layer 1 no
+longer excluding the flag, role edges dropped from the ordering, MID/FWD
+ordered by points, the xGI/90 tiebreak dropped, the club limit removed (with
+one club rigged to top every list), the split made quota-proportional, the
+captain not marked, bench fixtures dropped, and the per-position fill
+replaced by the global value-per-million builder. Nothing here changes a
+projection: `bench_boost` and the four recorded sources are untouched.
