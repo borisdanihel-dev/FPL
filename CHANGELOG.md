@@ -1654,3 +1654,45 @@ above the model, as decided at 16:10 on 14 Sep. Observation, not a change.
 **Verified:** 6 tests, suite **180 → 186**; 14 mutations each red — the section ignoring `--formation`, the builder ignoring the formation, captain from the whole XI, vice from the whole XI, the reason line dropped, the sums in the mixed units, the bench as the leftovers of the XI list, the bench tie-break dropped, the tie-break counting every week, `--split` ignored, the split repair dropped, the over-budget guard dropped, the bench not re-drawn after upgrades, the CLI parameters never reaching the section. `bench_boost`
 output and the four recorded GW6 sources regenerate identically
 (GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted). Nothing here changes a projection.
+
+---
+
+## 2026-09-24 — item 5 (task-list 4): bench-vs-XI check in the squad section (`b10f5ae`)
+
+`--section squad` now ends with a **BENCH vs XI** block for the next gameweek.
+No detailed specification reached me beyond the title, so the definition is
+stated here and can be argued with:
+
+- **Population:** my current 15 as picked at the last deadline — slots 1–11
+  are the XI, 12–15 the bench (`squads` rows; GW+1 picks are not visible
+  before the deadline).
+- **Unit:** every projection is `project_reliability` with **all terms**, for
+  every position — the same one unit as the wildcard draft after review D —
+  for the first gameweek in `fixtures_next6`. P(start) and the frozen
+  minutes-share flag (≤ 0.667) are printed beside each player.
+- **Comparison:** each bench player against the **lowest-projecting XI player
+  of his own position**. Same-position swaps only: the formation is not chosen
+  on the sums (review D). A second swap in the same position is not chained.
+- **Verdict:** `SWAP` when the bench projection exceeds that XI player's
+  (delta printed), `hold` otherwise; a blank XI player is the lowest by
+  construction and reads `SWAP (XI blank)`; a blank bench player is
+  `hold (bench blank)`.
+- **Flag line:** XI players under the frozen flag, with their share, or `none`.
+- Nothing here changes a projection or a recording: `bench_boost`,
+  `wildcard` and the four recorded sources are byte-identical before and after.
+
+**Live, GW5 export, GW6** (`reports/squad_gw5.txt`):
+
+```
+  BENCH vs XI  GW6   proj = full model, all terms (one unit); each bench player
+  against the lowest-projecting XI player of his own position. Same-position swaps
+  only - the formation is not chosen on the sums. Picks as of the last deadline.
+    bench                proj P(st) share   lowest XI            proj P(st) share  delta  verdict
+    GK  Kinsky           2.47  1.00  1.00   GK  Verbruggen       3.25  1.00  1.00  -0.78  hold
+    MID Ndiaye           2.84  0.75  0.82   MID Groß             4.29  1.00  1.00  -1.45  hold
+    MID Slater           3.42  1.00  0.96   MID Groß             4.29  1.00  1.00  -0.87  hold
+    DEF Shaw             3.29  0.75  0.68   DEF Mitchell         3.59  1.00  0.91  -0.30  hold
+    XI under the frozen flag (minutes share <= 0.667): none
+```
+
+**Verified:** 5 tests, suite **186 → 191**; 8 mutations each red — compared against the highest XI player, compared across positions, mixed units, a blank XI player not the lowest, swap verdict reversed, flag line dropped, flag reversed, bench including slot 11. GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
