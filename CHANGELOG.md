@@ -1438,3 +1438,64 @@ ceiling; at £77m it does), the second labelled number dropped. One equivalent
 mutant recorded rather than "caught": `<` vs `<=` at 0.667 is unobservable,
 because no minutes total over 270 or 360 lands on 0.667 exactly; the boundary
 that matters is 2/3, and that mutation is red.
+
+---
+
+## 2026-09-23 — review of items 1–3: A. budget = team value alone; B. `minutes` shows rho only (`448fec4`)
+
+**A — the API's `value` already includes the bank.** Measured from the DB
+rather than assumed: on the deadline days, `entry_gw.value` equals my fifteen's
+`price_history` prices on that day plus the bank **to the tenth** — GW4:
+value 100.4, bank 0.2, prices 100.2 (gap +0.0); GW5: value 100.3, bank 2.6,
+prices 97.7 (gap +0.0). Today's export shows prices 97.5 against value 100.3
+and bank 2.6 — a +0.2 gap that is five days of price drift since the GW5
+deadline, not the bank. `bench_boost` and the wildcard builder used
+`(value + bank) / 10` and so counted the bank twice (£102.9m instead of
+£100.3m). Both now use `value / 10`; the printed line says "team value (bank
+included)". Tests: the synthetic export pins budget = value/10 (100.3, not
+100.5); on the real export, |value − (sum of my 15's prices + bank)| must be
+within a tick per player and, when the bank is £0.5m or more, smaller than
+the bank — the reading that would double-count it fails that. Mutations
+(value + bank restored, in each builder): red.
+
+**The item 3 table above was computed at £102.9m and is superseded.**
+Re-run at £100.3m (`reports/bench_boost_gw5.txt`, and the corrected live
+output in the item 3 report on Drive):
+
+```
+  squad: 15 players (my current 15)   budget £100.3m = team value (bank included)
+  GW6
+    all 15 projected: 57.8 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.0 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.0 pts
+  GW7
+    all 15 projected: 58.3 pts   GK/DEF at FDR 4+: 1   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.0 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   54.8 pts
+  GW8
+    all 15 projected: 58.2 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.3 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   54.7 pts
+  GW9
+    all 15 projected: 57.9 pts   GK/DEF at FDR 4+: 4   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               46.8 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.6 pts
+  GW10
+    all 15 projected: 58.6 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.3 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   57.7 pts
+  GW11
+    all 15 projected: 59.4 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               48.8 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.0 pts
+```
+
+**B — `minutes` is a start probability, not a points forecast.** Its MAE,
+const and bias are undefined; `sec_calibration` now prints only its rho columns
+(whole, starters, n_st), the verdict reads `rho only`, and one note says why.
+Other sources are unchanged. Tests: the minutes row carries `-` in the three
+columns and the note; `xg` still prints MAE; the per-source summary prints rho
+only for minutes. Mutations (MAE printed for minutes, note dropped, summary
+prints MAE): red.
+
+Suite 168 → 172; 5 mutations each red.
