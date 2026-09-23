@@ -2577,6 +2577,147 @@ class MinutesIsAProbability(unittest.TestCase):
         self.assertRegex(out, r"XG over 1 gameweek\(s\), \d+ forecasts\n    MAE ")
 
 
+class WildcardThreeLayer(unittest.TestCase):
+    """sec_wildcard: layer 1 excludes, layer 2 shortlists, layer 3 orders;
+    money split per position; XI + captain + bench with six-week sums."""
+
+    @staticmethod
+    def _by_id(cands):
+        return {c["id"]: c for pos in cands for c in cands[pos]}
+
+    def test_layer_one_excludes_the_frozen_flag_and_the_unavailable(self):
+        d = make_export(gw=3)                           # window 3, 270 minutes
+        ids = _fifteen(d)
+        by_id = {p["id"]: p for p in d["all_players"]}
+        by_id[ids[5]]["mins_last4"] = 180               # share 0.6667 -> out
+        by_id[ids[6]]["mins_last4"] = 181               # 0.6704 -> in
+        by_id[ids[7]]["status"] = "i"
+        cands, _, excluded = E.wildcard_candidates(d)
+        seen = self._by_id(cands)
+        self.assertNotIn(ids[5], seen)
+        self.assertIn(ids[6], seen)
+        self.assertNotIn(ids[7], seen)
+        self.assertGreaterEqual(excluded[f"minutes share <= {E.FLAG_SHARE_MAX}"], 1)
+
+    def test_a_role_edge_outranks_the_model_within_a_position(self):
+        d = make_export()
+        defs = [p for p in d["all_players"] if p["pos"] == 2][:2]
+        weak, strong = defs
+        for r in d["player_gw_recent"]:              # strong: far better xG
+            if r["player_id"] == strong["id"]:
+                r["xg"] = 1.5
+        weak["pens_order"] = 1                       # weak: a role edge
+        cands, _, _ = E.wildcard_candidates(d)
+        order = [c["id"] for c in cands[2]]
+        seen = self._by_id(cands)
+        self.assertGreater(seen[strong["id"]]["sum6"], seen[weak["id"]]["sum6"],
+                           "fixture cannot tell the layers apart")
+        self.assertLess(order.index(weak["id"]), order.index(strong["id"]),
+                        "the model overrode a role edge")
+
+    def test_mid_ordering_is_expected_appearances_then_xgi_not_points(self):
+        d = make_export()
+        mids = [p for p in d["all_players"] if p["pos"] == 3 and p["status"] == "a"][:2]
+        a, b = mids
+        for r in d["player_gw_recent"]:               # P(start) comes from the rows
+            if r["player_id"] == b["id"]:
+                r["xg"] = 1.2                         # far more xGI ...
+                if r["event"] == 3:
+                    r["starts"] = 0                   # ... but started two of three
+        cands, _, _ = E.wildcard_candidates(d)
+        seen = self._by_id(cands)
+        self.assertGreater(seen[b["id"]]["sum6"], seen[a["id"]]["sum6"],
+                           "fixture cannot tell points from appearances")
+        order = [c["id"] for c in cands[3]]
+        self.assertLess(order.index(a["id"]), order.index(b["id"]),
+                        "a MID was ordered by points, not by P(start) x fixtures")
+
+    def test_mid_ties_on_appearances_break_on_xgi(self):
+        d = make_export()
+        mids = [p for p in d["all_players"] if p["pos"] == 3 and p["status"] == "a"]
+        a, b = mids[2], mids[3]
+        for p in (a, b):
+            p["pens_order"] = p["corners_order"] = p["fk_order"] = None
+        for r in d["player_gw_recent"]:
+            if r["player_id"] == b["id"]:
+                r["xg"] = 0.9
+        cands, _, _ = E.wildcard_candidates(d)
+        seen = self._by_id(cands)
+        self.assertAlmostEqual(seen[a["id"]]["p_start"], seen[b["id"]]["p_start"], 9)
+        order = [c["id"] for c in cands[3]]
+        self.assertLess(order.index(b["id"]), order.index(a["id"]))
+
+    def test_squad_is_legal_within_budget_and_clubs(self):
+        d = make_export()
+        for p in d["all_players"]:                    # rig BHA to top every list
+            p["pens_order"] = 1 if p["team"] == "BHA" else None
+        cands, _, _ = E.wildcard_candidates(d)
+        budget = d["standings"][0]["value"] / 10
+        squad, spent, split = E.build_three_layer_squad(cands, budget, E.budget_split(d, budget))
+        self.assertEqual({k: sum(1 for c in squad if c["pos"] == k) for k in (1, 2, 3, 4)},
+                         {1: 2, 2: 5, 3: 5, 4: 3})
+        self.assertLessEqual(spent, budget + 1e-9)
+        self.assertAlmostEqual(sum(split.values()), budget, 9)
+        clubs = {}
+        for c in squad:
+            clubs[c["team"]] = clubs.get(c["team"], 0) + 1
+        self.assertLessEqual(max(clubs.values()), 3, clubs)
+        self.assertGreaterEqual(clubs.get("BHA", 0), 3, "the rig did not bite")
+
+    def test_the_build_keeps_a_role_pick_a_value_per_million_climb_would_drop(self):
+        """The cheapest defender, given every set-piece role and the worst
+        projection in his position, tops the DEF list by layer 2 and must be in
+        the squad. A global value-per-million build with a projection
+        hill-climb swaps him out for a better-projecting body."""
+        d = make_export()
+        defs = [p for p in d["all_players"] if p["pos"] == 2 and p["status"] == "a"]
+        cheap = min(defs, key=lambda p: (p["price"], p["id"]))
+        for p in d["all_players"]:
+            p["pens_order"] = p["corners_order"] = p["fk_order"] = None
+        cheap["pens_order"] = cheap["corners_order"] = cheap["fk_order"] = 1
+        for r in d["player_gw_recent"]:
+            if r["player_id"] == cheap["id"]:
+                r["xg"], r["xa"], r["defcon"] = 0.0, 0.0, 0
+        cands, _, _ = E.wildcard_candidates(d)
+        self.assertEqual(cands[2][0]["id"], cheap["id"], "the rig did not top the list")
+        self.assertEqual(min(cands[2], key=lambda c: c["sum6"])["id"], cheap["id"],
+                         "the rig is not the worst projection")
+        budget = d["standings"][0]["value"] / 10
+        squad, _, _ = E.build_three_layer_squad(cands, budget, E.budget_split(d, budget))
+        self.assertIn(cheap["id"], {c["id"] for c in squad}, "the model overrode layer 2 in the build")
+        self.assertIn(cheap["web_name"], run("wildcard", d).split("SQUAD")[1])
+
+    def test_split_is_the_current_squad_shape_not_a_global_vpm(self):
+        d = make_export()
+        split = E.budget_split(d, 100.0)
+        me = E.my_name(d)
+        spend = {}
+        for r in d["squads"]:
+            if r["entry_name"] == me:
+                spend[r["pos"]] = spend.get(r["pos"], 0) + r["price"]
+        total = sum(spend.values())
+        for k in (1, 2, 3, 4):
+            self.assertAlmostEqual(split[k], 100.0 * spend[k] / total, 9)
+
+    def test_output_has_xi_captain_bench_sums_and_bench_fixtures(self):
+        d = make_export()
+        out = run("wildcard", d)
+        body = out.split("SQUAD")[1]
+        xi_block, bench_block = body.split("BENCH")
+        self.assertEqual(sum(1 for l in xi_block.splitlines() if "6wk " in l), 11)
+        self.assertEqual(xi_block.count("(C)"), 1)
+        bench_lines = [l for l in bench_block.splitlines()
+                       if l.strip()[:3] in ("GK", "DEF", "MID", "FWD") or l.strip()[:2] == "GK"]
+        self.assertEqual(len(bench_lines), 4, bench_lines)
+        later = sorted({f["event"] for f in d["fixtures_next6"]})[2:]
+        self.assertIn(f"fixtures GW{later[0]}-{later[-1]}", bench_block)
+        for l in bench_lines:                      # one real fixture per later week
+            self.assertEqual(l.count(" (H) ") + l.count(" (A) "), len(later), l)
+        self.assertIn("XI six-week sum", out)
+        self.assertIn("layer 1", out)
+        self.assertIn("budget £100.3m", out)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):

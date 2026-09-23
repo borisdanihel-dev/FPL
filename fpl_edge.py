@@ -1011,89 +1011,249 @@ def project(p, tick, horizon, gws_played, priors, personal=None):
     return per90 * reliability * fdr_adj, per90, fdr
 
 
-def sec_wildcard(d, horizon):
-    """Shortlists by position, then one budget-valid squad built from them."""
-    print("=" * 78)
-    print(f"WILDCARD DRAFT  (next {horizon} gameweeks)")
-    print("=" * 78)
-    me = my_name(d)
-    tick, gws = build_ticker(d, horizon)
-    gws_played = d["gameweek"]
-    stand = next(s for s in d["standings"] if s["entry_name"] == me)
-    budget = stand["value"] / 10.0      # the API's value already includes the bank
+# ---------------------------------------------------------------------------
+# wildcard draft - the frozen three-layer rule (CHANGELOG 2026-09-14 16:10),
+# scored on the six-week sum (horizon test, 9b43a78)
+# ---------------------------------------------------------------------------
 
-    priors = positional_priors(d["all_players"])
-    personal = personal_priors(d)
-    pool = []
+ROLE_DEFCON_RATE = 0.5      # DEFCON hit rate that counts as a role edge (2+ starts)
+CLUB_MAX = 3
+
+
+def role_edges(d):
+    """pid -> set of rules-level edges: layer 2 of the frozen rule, no model.
+    pens / corners / fk: first choice. defcon: hit rate >= ROLE_DEFCON_RATE over
+    2+ starts of 60 minutes. arb: a DEF whose xGI/90 reaches the MID median
+    (position arbitrage - paid as a defender, plays like a midfielder)."""
+    rows = defaultdict(list)
+    for r in d.get("player_gw_recent") or []:
+        if "player_id" in r:
+            rows[int(r["player_id"])].append(r)
+    xgi90 = lambda p: ((p.get("xg") or 0) + (p.get("xa") or 0)) / p["minutes"] * 90
+    mids = sorted(xgi90(p) for p in d["all_players"]
+                  if p["pos"] == 3 and (p.get("minutes") or 0) >= 180)
+    mid_median = mids[len(mids) // 2] if mids else float("inf")
+    edges = {}
     for p in d["all_players"]:
-        if p["status"] != "a" or p["mins_last4"] < 45:
-            continue
-        if not fdr_avg(tick, p["team"]):
-            continue
-        proj, per90, fdr = project(p, tick, horizon, gws_played, priors, personal)
-        if proj <= 0:
-            continue
-        q = dict(p)
-        q["proj"] = proj
-        q["per90"] = per90
-        q["fdr"] = fdr
-        q["vpm"] = proj / p["price"]
-        pool.append(q)
+        tags = set()
+        if p.get("pens_order") == 1:
+            tags.add("pens")
+        if p.get("corners_order") == 1:
+            tags.add("corners")
+        if p.get("fk_order") == 1:
+            tags.add("fk")
+        thr = DEFCON_THRESHOLD.get(p["pos"])
+        if thr:
+            starts = [r for r in rows.get(p["id"], []) if (r.get("mins") or 0) >= 60]
+            if len(starts) >= 2 and (sum(1 for r in starts if (r.get("defcon") or 0) >= thr)
+                                     / len(starts) >= ROLE_DEFCON_RATE):
+                tags.add("defcon")
+        if p["pos"] == 2 and (p.get("minutes") or 0) >= 180 and xgi90(p) >= mid_median:
+            tags.add("arb")
+        edges[p["id"]] = tags
+    return edges
 
-    print(f"\n  budget £{budget:.1f}m = team value (bank £{stand['bank']/10:.1f}m "
-          f"included; squad prices £{budget - stand['bank']/10:.1f}m)")
-    print(f"  {len(pool)} players pass the availability and minutes filter")
-    print("  priors (median pts/90 of established starters): "
-          + ", ".join(f"{POS[k]} {v:.1f}" for k, v in sorted(priors.items())) + "\n")
 
+def wildcard_candidates(d, horizon=6):
+    """Layers 1-3, per position. Returns ({pos: [cand, ...] ordered}, weeks,
+    {reason: excluded count}). Each cand carries the six-week points sum
+    (bottomup for GK/DEF, the xGI term for MID/FWD - as in bench_boost), the
+    role edges, P(start) x fixtures and xGI/90, and its ordering key."""
+    gw = d["gameweek"]
+    inp = reliability_inputs(canonical_from_export(d), gws_played=gw)
+    fx = week_fixtures(d)
+    weeks = sorted({f["event"] for f in d.get("fixtures_next6") or []})[:horizon]
+    window = range(gw - min(4, gw) + 1, gw + 1)
+    played = defaultdict(int)
+    for f in d.get("fixtures_played") or []:
+        if f["event"] in window:
+            played[f["home"]] += 1
+            played[f["away"]] += 1
+    roles = role_edges(d)
+    cands = {1: [], 2: [], 3: [], 4: []}
+    excluded = defaultdict(int)
+    for p in d["all_players"]:
+        if p["status"] != "a":
+            excluded["status not 'a'"] += 1
+            continue
+        if (p.get("mins_last4") or 0) < 45:
+            excluded["under 45 min in the last four"] += 1
+            continue
+        share = minutes_share(p, played)
+        if share is None or share <= FLAG_SHARE_MAX:            # layer 1
+            excluded[f"minutes share <= {FLAG_SHARE_MAX}"] += 1
+            continue
+        pid = p["id"]
+        nfix = sum(len(fx[p["team"]].get(w, ())) for w in weeks)
+        if nfix == 0:
+            excluded["no fixture in the horizon"] += 1
+            continue
+        sum6 = sum(x for x in (project_week(pid, p, inp, fx, w) for w in weeks) if x is not None)
+        ip = inp["players"].get(pid, {})
+        p_start, xgi90 = ip.get("p_start", 0.0), ip.get("xgi90") or 0.0
+        tier = len(roles.get(pid, ()))                              # layer 2
+        key = ((tier, sum6) if p["pos"] in (1, 2)                   # layer 3
+               else (tier, p_start * nfix, xgi90))
+        cands[p["pos"]].append({
+            "id": pid, "name": p["web_name"], "team": p["team"], "pos": p["pos"],
+            "price": p["price"], "roles": sorted(roles.get(pid, ())), "sum6": sum6,
+            "nfix": nfix, "p_start": p_start, "xgi90": xgi90, "share": share, "key": key})
+    for pos in cands:
+        cands[pos].sort(key=lambda c: c["key"], reverse=True)
+    return cands, weeks, dict(excluded)
+
+
+def budget_split(d, budget, quota=None):
+    """Money per position. The current squad's shape scaled to the budget when
+    it is known, else proportional to the quota. Never a value-per-million
+    comparison across positions (the 16:10 amendment)."""
+    quota = quota or FULL_QUOTA
+    me = my_name(d)
+    spend = defaultdict(float)
+    for r in d.get("squads", []):
+        if r["entry_name"] == me:
+            spend[r["pos"]] += r["price"]
+    if sum(spend.values()) <= 0:
+        total = sum(quota.values())
+        return {k: budget * n / total for k, n in quota.items()}
+    total = sum(spend.values())
+    return {k: budget * spend[k] / total for k in quota}
+
+
+def fill_position(cands, n, share, club, club_max=CLUB_MAX):
+    """Walk the ordered list, taking a candidate when he fits the position's
+    money with enough left for the cheapest fill of the remaining slots. The
+    order is the whole ranking: a role edge outranks the model."""
+    picked, spent = [], 0.0
+    ids = set()
+
+    def cheapest(k):
+        prices = sorted(c["price"] for c in cands if c["id"] not in ids)
+        return sum(prices[:k]) if len(prices) >= k else float("inf")
+
+    for c in cands:
+        if len(picked) == n:
+            break
+        if club[c["team"]] >= club_max or c["id"] in ids:
+            continue
+        ids.add(c["id"])
+        if spent + c["price"] + cheapest(n - len(picked) - 1) <= share + 1e-9:
+            picked.append(c)
+            spent += c["price"]
+            club[c["team"]] += 1
+        else:
+            ids.discard(c["id"])
+    return picked, spent
+
+
+def build_three_layer_squad(cands, budget, split, quota=None):
+    """Fill each position from its own ordered shortlist within its share, then
+    spend what is left by upgrading the lowest-ranked pick of a position to a
+    higher-ranked affordable candidate. Returns (squad, spent, split_used)."""
+    quota = quota or FULL_QUOTA
+    club = defaultdict(int)
+    picks, spent = {}, 0.0
     for pos in (1, 2, 3, 4):
-        cands = sorted([p for p in pool if p["pos"] == pos],
-                       key=lambda x: -x["proj"])[:8]
-        print(f"  {POS[pos]} - highest projected per gameweek")
-        print(f"    {'player':15s}{'team':5s}{'£':>6}{'proj':>7}{'/90':>7}"
-              f"{'fdr':>6}{'own%':>7}{'pts/£m':>8}")
-        for p in cands:
-            print(f"    {p['web_name'][:15]:15s}{p['team']:5s}{p['price']:>6.1f}"
-                  f"{p['proj']:>7.2f}{p['per90']:>7.2f}{p['fdr']:>6.2f}"
-                  f"{p['owned_pct']:>7.1f}{p['vpm']:>8.2f}")
-        print()
+        got, cost = fill_position(cands[pos], quota[pos], split[pos], club)
+        if len(got) < quota[pos]:                        # share too small: cheapest fill
+            have = {c["id"] for c in got}
+            for c in sorted(cands[pos], key=lambda c: c["price"]):
+                if len(got) == quota[pos]:
+                    break
+                if c["id"] not in have and club[c["team"]] < CLUB_MAX:
+                    got.append(c)
+                    cost += c["price"]
+                    club[c["team"]] += 1
+        picks[pos], spent = got, spent + cost
+    rank = {pos: {c["id"]: i for i, c in enumerate(cands[pos])} for pos in cands}
+    improved = True
+    while improved:
+        improved = False
+        for pos in (4, 3, 2, 1):
+            worst = max(picks[pos], key=lambda c: rank[pos][c["id"]], default=None)
+            if worst is None:
+                continue
+            have = {c["id"] for c in picks[pos]}
+            for c in cands[pos]:
+                if rank[pos][c["id"]] >= rank[pos][worst["id"]]:
+                    break
+                if c["id"] in have or (c["team"] != worst["team"] and club[c["team"]] >= CLUB_MAX):
+                    continue
+                if spent - worst["price"] + c["price"] <= budget + 1e-9:
+                    picks[pos].remove(worst)
+                    picks[pos].append(c)
+                    spent += c["price"] - worst["price"]
+                    club[worst["team"]] -= 1
+                    club[c["team"]] += 1
+                    improved = True
+                    break
+    squad = [c for pos in (1, 2, 3, 4) for c in picks[pos]]
+    return squad, spent, split
 
-    squad = _build_squad(pool, budget)
-    if not squad:
-        print("  Could not assemble a valid squad inside the budget.\n")
+
+def sec_wildcard(d, horizon):
+    """The frozen three-layer rule, scored on the six-week sum."""
+    cands, weeks, excluded = wildcard_candidates(d, horizon)
+    me = my_name(d)
+    stand = next((s for s in d["standings"] if s["entry_name"] == me), None)
+    budget = stand["value"] / 10.0 if stand else 100.0   # value includes the bank
+    split = budget_split(d, budget)
+    print("=" * 78)
+    print(f"WILDCARD DRAFT  (frozen three-layer rule, six-week sum GW{weeks[0]}-{weeks[-1]})"
+          if weeks else "WILDCARD DRAFT  (no upcoming fixtures in the export)")
+    print("=" * 78)
+    if not weeks:
         return
-
-    spend = sum(p["price"] for p in squad)
-    print("  " + "-" * 74)
-    print(f"  ONE VALID SQUAD  (£{spend:.1f}m of £{budget:.1f}m, "
-          f"proj {sum(p['proj'] for p in squad):.1f} pts/GW across all 15)")
-    print("  " + "-" * 74)
+    print(f"  budget £{budget:.1f}m = team value"
+          + (f" (bank £{stand['bank']/10:.1f}m included)" if stand else ""))
+    print("  split by position, current squad shape: "
+          + "  ".join(f"{POS[k]} £{v:.1f}m" for k, v in split.items()))
+    print("  layer 1  excluded: " + ", ".join(f"{v} {k}" for k, v in sorted(excluded.items())))
+    print("  layer 2  role edges: pens / corners / fk = first choice; defcon = hit rate "
+          f">= {ROLE_DEFCON_RATE:.0%} over 2+ starts; arb = DEF with xGI/90 >= MID median")
+    print("  layer 3  within position: GK/DEF by six-week bottomup; MID/FWD by P(start) x")
+    print("           fixtures, then xGI/90. A role edge outranks the model.")
+    print(f"\n  SHORTLISTS  (top 8 per position; 6wk = projected points over GW{weeks[0]}-{weeks[-1]})")
     for pos in (1, 2, 3, 4):
-        grp = sorted([p for p in squad if p["pos"] == pos], key=lambda x: -x["proj"])
-        line = ", ".join(f"{p['web_name']} ({p['team']} £{p['price']:.1f})" for p in grp)
-        print(f"    {POS[pos]:4s} {line}")
-
-    xi = _best_xi(squad)
-    bench = [p for p in squad if p not in xi]
-    print(f"\n    XI proj    {sum(p['proj'] for p in xi):>6.2f} pts/GW")
-    print(f"    bench proj {sum(p['proj'] for p in bench):>6.2f} pts/GW   "
-          f"<- Bench Boost is worth roughly this much")
-
-    mine = {r["web_name"] for r in d["squads"] if r["entry_name"] == me}
-    keep = [p["web_name"] for p in squad if p["web_name"] in mine]
-    print(f"\n    keeps from your current 15 ({len(keep)}): {', '.join(sorted(keep))}")
-
-    print("\n  ! Run --section backtest before trusting the ordering above.")
-    print("    On GW1-2 -> GW3 (re-measured 2026-09-11) this projection ranked")
-    print("    players at rho +0.15: real but weak, below the +0.20 bar, and")
-    print("    mostly from spotting who gets benched. Use the shortlists as a")
-    print("    price-and-fixture filter, not as a ranking.")
-    print("\n  HOW THIS IS SCORED  (read before trusting it)")
-    print("    Raw points per 90 is shrunk toward the positional median with a")
-    print(f"    {SHRINK:.0f}-match prior, so a hot start over 2-3 games does not read as")
-    print("    permanent. Then scaled by minutes reliability and adjusted +/-12%")
-    print("    per point of fixture difficulty. This ranks candidates; it does not")
-    print("    predict. Treat the squad as a starting point, not an answer.\n")
+        print(f"    {POS[pos]}   {'player':15s}{'team':5s}{'£':>5}  {'roles':16s}{'6wk':>6}"
+              f"{'P(st)xfix':>10}{'xGI/90':>8}")
+        for c in cands[pos][:8]:
+            print(f"         {c['name'][:14]:15s}{c['team']:5s}{c['price']:>5.1f}  "
+                  f"{','.join(c['roles'])[:15]:16s}{c['sum6']:>6.1f}"
+                  f"{c['p_start'] * c['nfix']:>10.2f}{c['xgi90']:>8.2f}")
+    squad, spent, _ = build_three_layer_squad(cands, budget, split)
+    if len(squad) < sum(FULL_QUOTA.values()):
+        print("\n  Could not assemble a legal 15 from the candidates.\n")
+        return
+    xi = _best_xi([dict(c, proj=c["sum6"]) for c in squad])
+    xi_ids = {c["id"] for c in xi}
+    captain = max(xi, key=lambda c: c["proj"])
+    bench = sorted((c for c in squad if c["id"] not in xi_ids),
+                   key=lambda c: (c["pos"] != 1, -c["sum6"]))
+    mine = {(r["web_name"], r["team"]) for r in d["squads"] if r["entry_name"] == me}
+    keeps = sorted(c["name"] for c in squad if (c["name"], c["team"]) in mine)
+    form = "-".join(str(sum(1 for c in xi if c["pos"] == k)) for k in (2, 3, 4))
+    print(f"\n  SQUAD  £{spent:.1f}m of £{budget:.1f}m   keeps from your current 15 ({len(keeps)}): "
+          f"{', '.join(keeps) or '-'}")
+    print(f"    XI ({form})")
+    for c in sorted(xi, key=lambda c: (c["pos"], -c["proj"])):
+        print(f"      {POS[c['pos']]:4s}{c['name'][:14]:15s}{c['team']:5s}{c['price']:>5.1f}"
+              f"  6wk {c['proj']:>5.1f}  {','.join(c['roles'])}"
+              + ("  (C)" if c["id"] == captain["id"] else ""))
+    fx = week_fixtures(d)
+    later = weeks[2:]                                   # the bench's GW8-11 from a GW5 export
+    print(f"    BENCH{'':28s}6wk   fixtures GW{later[0]}-{later[-1]}" if later
+          else "    BENCH")
+    for c in bench:
+        cells = []
+        for w in later:
+            f = fx[c["team"]].get(w, [])
+            cells.append(" + ".join(f"{o} ({'H' if h else 'A'}) {fdr}" for o, h, fdr in f) or "BLANK")
+        print(f"      {POS[c['pos']]:4s}{c['name'][:14]:15s}{c['team']:5s}{c['price']:>5.1f}"
+              f"  {c['sum6']:>5.1f}   {' | '.join(cells)}")
+    print(f"    XI six-week sum {sum(c['proj'] for c in xi):.1f}   "
+          f"bench six-week sum {sum(c['sum6'] for c in bench):.1f}")
+    print()
 
 
 def _build_squad(pool, budget, quota=None):
