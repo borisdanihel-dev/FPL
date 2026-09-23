@@ -2210,6 +2210,105 @@ class BatchRecordCheck(unittest.TestCase):
         self.assertNotIn("FINISHED WITH ERRORS", log)
 
 
+class StrandedTmp(unittest.TestCase):
+    """A pre-deadline write that failed leaves the only copy of that week's
+    forecasts in projection_log.csv.tmp. The next run - after the deadline,
+    RECORD OK 0 - must promote it, never overwrite it."""
+
+    FROZEN = [{"made_at": "2026-09-17T21:55:18+00:00", "source": "bottomup",
+               "event": "9", "player_id": str(900 + i), "web_name": f"Frozen{i}",
+               "predicted": "3.1"} for i in range(5)]
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.log = os.path.join(self.tmp, "projection_log.csv")
+        self.stranded = self.log + ".tmp"
+        with redirect_stdout(io.StringIO()):
+            E.record_projections(_recordable_export(), 6, "own", None, self.log)
+        self.base = E.read_log(self.log)
+        self.real_sleep = E._sleep
+        E._sleep = lambda s: None
+
+    def tearDown(self):
+        E._sleep = self.real_sleep
+        shutil.rmtree(self.tmp)
+
+    def _stage(self, newer=True, cut=False):
+        rows = self.base + self.FROZEN
+        with open(self.stranded, "w", encoding="utf-8", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=E.LOG_FIELDS)
+            w.writeheader()
+            w.writerows(rows)
+        if cut:                                   # die mid-row, as a crash would
+            data = open(self.stranded, encoding="utf-8").read()
+            at = data.rfind("\n", 0, len(data) // 2) + 12
+            open(self.stranded, "w", encoding="utf-8", newline="").write(data[:at])
+        t = os.path.getmtime(self.log) + (60 if newer else -60)
+        os.utime(self.stranded, (t, t))
+        return rows
+
+    def _frozen_in_log(self):
+        return sum(1 for r in E.read_log(self.log) if r["web_name"].startswith("Frozen"))
+
+    def test_newer_tmp_is_promoted_before_a_post_deadline_record(self):
+        self._stage()
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ok, n, reason = E.record_status(make_export(), 6, "minutes", None, self.log)
+        self.assertEqual((ok, n), (True, 0), reason)          # deadline passed
+        self.assertIn(f"RECOVERED {len(self.base) + 5} rows", buf.getvalue())
+        self.assertEqual(self._frozen_in_log(), 5, "the frozen rows were lost")
+        self.assertFalse(os.path.exists(self.stranded))
+
+    def test_promotion_happens_before_a_pre_deadline_record_too(self):
+        self._stage()
+        with redirect_stdout(io.StringIO()):
+            ok, n, reason = E.record_status(_recordable_export(), 6, "minutes", None, self.log)
+        self.assertTrue(ok, reason)
+        self.assertGreater(n, 0)
+        after = E.read_log(self.log)
+        self.assertEqual(self._frozen_in_log(), 5)
+        self.assertIn("minutes", {r["source"] for r in after})
+
+    def test_older_tmp_is_left_alone(self):
+        self._stage(newer=False)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            E.record_status(make_export(), 6, "minutes", None, self.log)
+        self.assertNotIn("RECOVERED", buf.getvalue())
+        self.assertEqual(E.read_log(self.log), self.base)
+        self.assertTrue(os.path.exists(self.stranded))
+
+    def test_truncated_tmp_is_never_promoted_and_never_deleted(self):
+        self._stage(cut=True)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ok, n, reason = E.record_status(_recordable_export(), 6, "minutes", None, self.log)
+        self.assertIn("refusing to promote", buf.getvalue())
+        self.assertEqual(self._frozen_in_log(), 0, "junk was promoted over the log")
+        self.assertTrue(ok, reason)                            # recording continues
+        aside = [f for f in os.listdir(self.tmp) if ".tmp.refused-" in f]
+        self.assertEqual(len(aside), 1, "the refused .tmp was not preserved")
+        self.assertFalse(os.path.exists(self.stranded))
+
+    @unittest.skipUnless(os.name == "nt", "reproduces a Windows file lock")
+    def test_locked_log_blocks_recording_rather_than_clobbering_the_tmp(self):
+        rows = self._stage()
+        held = open(self.log, "r")
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                ok, n, reason = E.record_status(_recordable_export(), 6, "minutes",
+                                                None, self.log)
+        finally:
+            held.close()
+        self.assertFalse(ok)
+        self.assertIn("unpromoted", reason)
+        self.assertEqual(E.read_log(self.stranded), rows,
+                         "the stranded forecasts were overwritten by a new write")
+        self.assertEqual(E.read_log(self.log), self.base)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):

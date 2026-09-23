@@ -1919,6 +1919,66 @@ WRITE_WAIT = 5.0            # seconds between attempts
 _sleep = time.sleep         # tests replace this so they do not really wait
 
 
+def _replace_with_retry(src, dst, retries=WRITE_RETRIES, wait=WRITE_WAIT):
+    """os.replace(src, dst), retried while dst is locked. Raises after the last
+    attempt; the caller decides what a failure means."""
+    for attempt in range(retries + 1):
+        try:
+            os.replace(src, dst)
+            return attempt
+        except OSError as e:
+            if attempt == retries:
+                raise
+            print(f"  {os.path.basename(dst)} is locked ({e.strerror or e}) - "
+                  f"retry {attempt + 1}/{retries} in {wait:.0f}s")
+            _sleep(wait)
+
+
+def recover_stranded_log(path, retries=WRITE_RETRIES, wait=WRITE_WAIT):
+    """Promote <path>.tmp into place when it is newer than the log.
+
+    A pre-deadline write that failed (log locked) leaves that week's frozen
+    forecasts in the .tmp - the only copy. The next run is after the deadline
+    and records nothing for that week, so unless the .tmp goes first, a later
+    successful write builds on the stale log and overwrites it.
+
+    Returns (state, n_rows): "none" (no .tmp), "recovered", "stale" (.tmp older
+    than the log - left alone), "refused" (unreadable or incomplete - moved
+    aside as <tmp>.refused-<stamp>, never promoted, never deleted), or
+    "locked" (could not be promoted - left alone; the caller must not write).
+    """
+    tmp = path + ".tmp"
+    name = os.path.basename(tmp)
+    if not os.path.exists(tmp):
+        return "none", 0
+    if os.path.exists(path) and os.path.getmtime(tmp) <= os.path.getmtime(path):
+        print(f"  ignoring {name}: older than the log")
+        return "stale", 0
+    try:
+        rows = read_log(tmp)
+        bad = [r for r in rows if set(r) != set(LOG_FIELDS)
+               or any(v in (None, "") for v in r.values())]
+    except (OSError, csv.Error, UnicodeDecodeError) as e:
+        rows, bad = [], [str(e)]
+    groups = lambda rs: {(r["source"], r["event"]) for r in rs}
+    missing = (groups(read_log(path)) if os.path.exists(path) else set()) - groups(rows)
+    if bad or missing:
+        why = ("unreadable or truncated rows" if bad
+               else f"it lacks {sorted(missing)}, which the log has")
+        from datetime import datetime, timezone
+        aside = f"{tmp}.refused-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
+        os.replace(tmp, aside)
+        print(f"  refusing to promote {name}: {why}; kept as {os.path.basename(aside)}")
+        return "refused", len(rows)
+    try:
+        _replace_with_retry(tmp, path, retries, wait)
+    except OSError as e:
+        print(f"  could not promote {name} ({e.strerror or e})")
+        return "locked", len(rows)
+    print(f"  RECOVERED {len(rows)} rows from {name}")
+    return "recovered", len(rows)
+
+
 def write_log_atomic(path, rows, retries=WRITE_RETRIES, wait=WRITE_WAIT):
     """Write the whole log to <path>.tmp, then os.replace() it over <path>.
 
@@ -1934,16 +1994,7 @@ def write_log_atomic(path, rows, retries=WRITE_RETRIES, wait=WRITE_WAIT):
         w = csv.DictWriter(fh, fieldnames=LOG_FIELDS)
         w.writeheader()
         w.writerows(rows)
-    for attempt in range(retries + 1):
-        try:
-            os.replace(tmp, path)
-            return attempt
-        except OSError as e:
-            if attempt == retries:
-                raise
-            print(f"  {os.path.basename(path)} is locked ({e.strerror or e}) - "
-                  f"retry {attempt + 1}/{retries} in {wait:.0f}s")
-            _sleep(wait)
+    return _replace_with_retry(tmp, path, retries, wait)
 
 
 def record_status(d, horizon, source="own", proj_path=None, path=None):
@@ -1961,6 +2012,12 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
     import csv
     from datetime import datetime, timezone
     path = path or LOG_PATH
+    state, held = recover_stranded_log(path)
+    if state == "locked":
+        # writing now would rebuild the log without those rows and overwrite
+        # the .tmp that holds them
+        return False, 0, (f"{os.path.basename(path)}.tmp holds {held} unpromoted "
+                          f"rows and the log is locked - close it and re-run")
     target = d["gameweek"] + 1
     dl = next_deadline(d, target)
     now = datetime.now(timezone.utc)
