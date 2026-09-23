@@ -1920,6 +1920,65 @@ class SyncExportsSettledFlags(unittest.TestCase):
         self.assertEqual(len(cols), 8)
 
 
+class ExportWindow(unittest.TestCase):
+    """The export's per-gameweek rows and fixture flags cover the whole season,
+    not a six-gameweek window; the last-4 form columns keep their window."""
+
+    @staticmethod
+    def _sync_ns():
+        ns = {}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        return ns
+
+    def _export_at(self, gw):
+        import sqlite3
+        ns = self._sync_ns()
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        ns["migrate"](db)
+        db.executemany("INSERT INTO teams (id,name,short_name,strength) VALUES (?,?,?,3)",
+                       [(1, "A", "AAA"), (2, "B", "BBB")])
+        db.execute("INSERT INTO players (id,web_name,team_id,position,now_cost,status,"
+                   "total_points,minutes,starts) VALUES (7,'Seven',1,3,50,'a',0,0,0)")
+        db.executemany("INSERT INTO events (id,name,finished,data_checked) VALUES (?,?,1,1)",
+                       [(ev, f"GW{ev}") for ev in range(1, gw + 1)])
+        db.executemany("INSERT INTO fixtures (id,event,team_h,team_a,team_h_difficulty,"
+                       "team_a_difficulty,team_h_score,team_a_score,finished) "
+                       "VALUES (?,?,1,2,2,2,1,0,1)", [(ev, ev) for ev in range(1, gw + 1)])
+        db.executemany("INSERT INTO player_gw (player_id,event,minutes,total_points,starts,"
+                       "expected_goals,expected_assists,defensive_contribution) "
+                       "VALUES (7,?,90,?,1,0.1,0.1,3)", [(ev, ev % 7) for ev in range(1, gw + 1)])
+        tmp, cwd = tempfile.mkdtemp(), os.getcwd()
+        try:
+            os.chdir(tmp)
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, gw)
+            return E.load(f"fpl_export_gw{gw}.json")
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_rows_and_fixture_flags_cover_the_whole_season(self):
+        for gw in (8, 10, 20, 38):
+            with self.subTest(gw=gw):
+                d = self._export_at(gw)
+                self.assertEqual(sorted({r["event"] for r in d["player_gw_recent"]}),
+                                 list(range(1, gw + 1)), "per-gameweek rows are windowed")
+                self.assertEqual(sorted({f["event"] for f in d["fixtures_status"]}),
+                                 list(range(1, gw + 1)), "fixture flags are windowed")
+                c = E.canonical_from_export(d)
+                self.assertEqual(sorted({r["event"] for r in c["rows"]}), list(range(1, gw + 1)))
+
+    def test_last_four_form_columns_keep_their_window(self):
+        d = self._export_at(10)
+        p = next(p for p in d["all_players"] if p["id"] == 7)
+        self.assertEqual(p["mins_last4"], 360)
+        self.assertEqual(p["starts_last4"], 4)
+        self.assertEqual(p["pts_last4"], sum(ev % 7 for ev in range(7, 11)))
+
+
 class Shipping(unittest.TestCase):
     """Archive, backup and the Drive copy. Loud, recoverable, never the database."""
 

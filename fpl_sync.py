@@ -420,12 +420,14 @@ def export(db, gw):
              AND (f.team_h=pl.team_id OR f.team_a=pl.team_id)
         LEFT JOIN teams th ON th.id=f.team_h
         LEFT JOIN teams ta ON ta.id=f.team_a
-        WHERE g.event BETWEEN ?-5 AND ? AND g.minutes>0
+        WHERE g.event<=? AND g.minutes>0
+        -- the whole season, not a window: the canonical slice, the measured
+        -- weights and the rates need every gameweek (CHANGELOG 2026-09-24).
         -- one row per player per gameweek. player_gw holds a GW TOTAL, so the
         -- fixtures join must not fan a double out into two copies of it, and
         -- the per-match columns stay NULL when there is more than one match.
         GROUP BY g.player_id, g.event
-        ORDER BY g.event, g.total_points DESC""", (gw, gw))
+        ORDER BY g.event, g.total_points DESC""", (gw,))
 
     out["fixtures_played"] = q(db, """
         SELECT f.event, th.short_name AS home, ta.short_name AS away,
@@ -467,7 +469,7 @@ def export(db, gw):
         SELECT f.event, th.short_name AS home, ta.short_name AS away,
                f.kickoff_time, f.finished
         FROM fixtures f JOIN teams th ON th.id=f.team_h JOIN teams ta ON ta.id=f.team_a
-        WHERE f.event BETWEEN ?-5 AND ? ORDER BY f.event, f.kickoff_time""", (gw, gw))
+        WHERE f.event<=? ORDER BY f.event, f.kickoff_time""", (gw,))
 
     out["price_changes_7d"] = q(db, """
         SELECT pl.web_name, t.short_name AS team, a.now_cost/10.0 AS price_now,

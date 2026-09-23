@@ -2454,8 +2454,8 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
                 rows.append((p["id"], p["web_name"], round(proj, 3)))
     elif source == "bottomup":
         # BUILD_SPEC 2 on the live export. The canonical slice carries the
-        # export's rows (currently the last six gameweeks), so weights and
-        # rates come from that window; the historical run uses full windows.
+        # export's rows - the whole season since 2026-09-24 (the last six
+        # gameweeks before that) - so weights and rates use every gameweek.
         tick, _ = build_ticker(d, horizon)
         inp = reliability_inputs(canonical_from_export(d), gws_played=d["gameweek"])
         for p in d["all_players"]:
