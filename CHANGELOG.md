@@ -1344,3 +1344,25 @@ removed, promoted regardless of age, no validation, locked promotion falling
 through to a write (clobbers the `.tmp`), `RECOVERED` not printed, refused
 `.tmp` deleted. Recording output unchanged: GW6 regenerated 1,046 of 1,046
 identical, no recovery chatter on a clean log.
+
+---
+
+## 2026-09-23 — item 2: the horizon test run as pre-registered (`5a9ec05`)
+
+`fpl_hist.py --horizon` implements the definition frozen in `9b43a78` without
+change and calls the same `reliability_inputs()` / `project_reliability()` as
+the single-week backtest; H = 1 reproduces `backtest_week` exactly (tested).
+One implementation detail, not a redefinition: an origin t is used for a given
+H only when t+H−1 ≤ GW38, so every graded horizon is complete.
+
+The result table — per H and position, bottomup-H vs minutes-H with 95%
+intervals, pooled by training window — is appended to
+`HISTORICAL_VALIDATION.md` with the UTC timestamp and this commit hash, and
+kept as `reports/horizon_2025-26.txt`. No pass criterion was pre-registered, so
+none is applied here and nothing is concluded from it.
+
+**Verified:** 6 tests, suite 152 → 158; 8 mutations each red — training on
+the target weeks (leak), minutes-H not scaled by fixtures, benched players
+dropped instead of scored 0, teams with no fixture kept, an incomplete horizon
+graded, per-fixture projections not summed, either rho column dropped from the
+report.
