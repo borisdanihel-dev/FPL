@@ -2518,6 +2518,65 @@ class BenchBoost(unittest.TestCase):
         self.assertIn("GK/DEF at FDR 4+", out)
 
 
+class Budget(unittest.TestCase):
+    """The API's entry value already includes the bank. On the GW4 and GW5
+    deadline days, value = sum(prices of the 15) + bank to the tenth."""
+
+    def test_budget_is_team_value_alone(self):
+        d = make_export()                       # value 1003, bank 2
+        self.assertAlmostEqual(E.bench_boost_table(d, _fifteen(d))["budget"], 100.3, 9)
+        out = run("wildcard", d)
+        self.assertIn("budget £100.3m", out)
+        self.assertNotIn("£100.5m", out)
+
+    def test_real_export_value_is_prices_plus_bank(self):
+        """If a real export is sitting here: value - (sum of my 15's prices +
+        bank) is price drift since the deadline - at most a tick per player -
+        and in particular far smaller than the bank, which value + bank would
+        count twice."""
+        here = os.path.dirname(os.path.abspath(__file__))
+        path = E.newest_export(here)
+        if not path:
+            self.skipTest("no real export in this folder")
+        d = E.load(path)
+        me = E.my_name(d)
+        st = next(s for s in d["standings"] if s["entry_name"] == me)
+        mine = [r for r in d["squads"] if r["entry_name"] == me]
+        self.assertEqual(len(mine), 15)
+        value, bank = st["value"] / 10, st["bank"] / 10
+        gap = value - (sum(r["price"] for r in mine) + bank)
+        self.assertLessEqual(abs(gap), 0.1 * 15, f"gap {gap:+.1f} is more than a tick a player")
+        if bank >= 0.5:
+            self.assertLess(abs(gap), bank, "value + bank would double-count the bank")
+
+
+class MinutesIsAProbability(unittest.TestCase):
+    """B: the minutes source is P(start), not points - rho columns only."""
+
+    def _out(self):
+        d, gw, log = _graded_world()
+        log += [dict(r, source="minutes", predicted="0.75") for r in log]
+        return _calibration(d, log)
+
+    def test_minutes_row_shows_rho_only(self):
+        import re
+        out = self._out()
+        row = re.search(r"^  minutes\s+\d+\s+(\d+)\s+(\S+)\s+(\S+)\s+([+-]?\d\.\d{3})\s+([+-]?\d\.\d{3})\s+\d+\s+(\S+)\s+(.*)$",
+                        out, re.M)
+        self.assertIsNotNone(row, "no minutes row")
+        self.assertEqual((row.group(2), row.group(3), row.group(6)), ("-", "-", "-"),
+                         "MAE / const / bias printed for a start probability")
+        self.assertIn("rho only", row.group(7))
+        self.assertIn("its MAE, const and bias are undefined", out, "the one-line note is missing")
+
+    def test_other_sources_still_print_mae(self):
+        import re
+        out = self._out()
+        self.assertRegex(out, r"(?m)^  xg\s+\d+\s+\d+\s+\d\.\d{2}\s+\d\.\d{2}\s", "xg lost its MAE")
+        self.assertRegex(out, r"MINUTES over 1 gameweek\(s\), \d+ forecasts\n    rho ")
+        self.assertRegex(out, r"XG over 1 gameweek\(s\), \d+ forecasts\n    MAE ")
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):

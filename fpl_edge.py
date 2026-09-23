@@ -1020,7 +1020,7 @@ def sec_wildcard(d, horizon):
     tick, gws = build_ticker(d, horizon)
     gws_played = d["gameweek"]
     stand = next(s for s in d["standings"] if s["entry_name"] == me)
-    budget = (stand["value"] + stand["bank"]) / 10.0
+    budget = stand["value"] / 10.0      # the API's value already includes the bank
 
     priors = positional_priors(d["all_players"])
     personal = personal_priors(d)
@@ -1040,8 +1040,8 @@ def sec_wildcard(d, horizon):
         q["vpm"] = proj / p["price"]
         pool.append(q)
 
-    print(f"\n  budget £{budget:.1f}m   (squad value £{stand['value']/10:.1f}m "
-          f"+ bank £{stand['bank']/10:.1f}m)")
+    print(f"\n  budget £{budget:.1f}m = team value (bank £{stand['bank']/10:.1f}m "
+          f"included; squad prices £{budget - stand['bank']/10:.1f}m)")
     print(f"  {len(pool)} players pass the availability and minutes filter")
     print("  priors (median pts/90 of established starters): "
           + ", ".join(f"{POS[k]} {v:.1f}" for k, v in sorted(priors.items())) + "\n")
@@ -2273,9 +2273,16 @@ def sec_calibration(d, horizon, path=None):
         rho_st = _spearman([p for p, _ in st], [a for _, a in st])
         bias = sum(p - a for p, a in pairs) / n
         by_source[src].extend(pairs)
-        print(f"  {src[:10]:10s}{ev:>4}{n:>6}{mae:>7.2f}{const:>7.2f}"
-              f"{rho:>8.3f}{rho_st:>10.3f}{len(st):>6}{bias:>+7.2f}   "
-              f"{'beats const' if mae < const else 'loses'}")
+        if src == "minutes":
+            print(f"  {src[:10]:10s}{ev:>4}{n:>6}{'-':>7}{'-':>7}"
+                  f"{rho:>8.3f}{rho_st:>10.3f}{len(st):>6}{'-':>7}   rho only")
+        else:
+            print(f"  {src[:10]:10s}{ev:>4}{n:>6}{mae:>7.2f}{const:>7.2f}"
+                  f"{rho:>8.3f}{rho_st:>10.3f}{len(st):>6}{bias:>+7.2f}   "
+                  f"{'beats const' if mae < const else 'loses'}")
+    if any(src == "minutes" for src, _ in graded):
+        print("  minutes is a start probability, not a points forecast: its MAE, const "
+              "and bias are undefined, so only rho is shown.")
 
     print()
     for src, pairs in sorted(by_source.items()):
@@ -2287,8 +2294,11 @@ def sec_calibration(d, horizon, path=None):
         rho = _spearman([p for p, _ in pairs], [a for _, a in pairs])
         se = (1.0 / (n - 1)) ** 0.5 if n > 2 else 1.0
         print(f"  {src.upper()} over {weeks} gameweek(s), {n} forecasts")
-        print(f"    MAE {mae:.3f} vs constant {const:.3f}   "
-              f"rho {rho:+.3f} +-{1.96*se:.3f}")
+        if src == "minutes":
+            print(f"    rho {rho:+.3f} +-{1.96*se:.3f}   (start probability: rho only)")
+        else:
+            print(f"    MAE {mae:.3f} vs constant {const:.3f}   "
+                  f"rho {rho:+.3f} +-{1.96*se:.3f}")
         verdict = ("real signal" if rho - 1.96 * se > 0.10
                    else "still indistinguishable from noise")
         print(f"    {verdict}")
@@ -2378,7 +2388,8 @@ def bench_boost_table(d, squad_ids=None, horizon=6):
             played[f["home"]] += 1
             played[f["away"]] += 1
     stand = next((s for s in d["standings"] if s["entry_name"] == my_name(d)), None)
-    budget = ((stand["value"] + stand["bank"]) / 10.0 if stand
+    # the API's value = squad prices at the deadline + bank: it IS the budget
+    budget = (stand["value"] / 10.0 if stand
               else sum(by_id[i]["price"] for i in ids))
     available = [p for p in d["all_players"]
                  if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
@@ -2440,7 +2451,7 @@ def sec_bench_boost(d, horizon, squad_ids=None):
     print(f"BENCH BOOST SCREEN  (frozen three-layer rule, next {len(t['weeks'])} gameweeks)")
     print("=" * 78)
     print(f"  squad: {len(t['ids'])} players ({'--squad' if squad_ids else 'my current 15'})"
-          f"   budget £{t['budget']:.1f}m = squad value + bank")
+          f"   budget £{t['budget']:.1f}m = team value (bank included)")
     print("  proj  GK/DEF: bottomup (P(start), xGI, Poisson clean sheet, DEFCON)")
     print("        MID/FWD: P(start) + xGI-per-90 x P(start), in points - bare xGI, no")
     print(f"        fixture term.  FLAG: minutes share <= {FLAG_SHARE_MAX} over the last four")
