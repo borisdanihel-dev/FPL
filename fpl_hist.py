@@ -9,6 +9,7 @@ the model here: if the historical run passes, it is our code that passed.
     python fpl_hist.py historical/2025-26 --season 2025/26
     python fpl_hist.py historical/2025-26 --windows 4,8,12,20,38
     python fpl_hist.py historical/2025-26 --backtest          # Steps 3-5
+    python fpl_hist.py historical/2025-26 --horizon           # pre-registered 9b43a78
 
 Two things this adapter owns, because they are properties of the source and not
 of the model:
@@ -143,6 +144,97 @@ def _fmt(sc):
     return f"{sc['rho']:>+7.3f} {lo:>+7.3f}..{hi:<+7.3f}"
 
 
+HORIZONS = (1, 2, 4, 6, 8, 12)
+HORIZON_DEFINITION = """\
+  Pre-registered 2026-09-14 (commit 9b43a78), run without change:
+    For H in {1, 2, 4, 6, 8, 12}, on 2025/26 with the rolling-origin harness:
+    train on GW1..t-1; predict the SUM of points over GW t..t+H-1 with the SUM
+    of per-fixture bottomup projections over the same gameweeks, fixture
+    pairings taken as known in advance and results not; minutes-H = P(start)
+    times the number of fixtures in the horizon. Whole population with blanks
+    as 0, per position, tie-corrected Spearman with intervals, pooled by
+    training window as in Steps 3-5. A player is in the population if he
+    passes the usual gate at t and his team has at least one fixture in the
+    horizon.
+  Implementation detail, not a redefinition: an origin t is used for a given H
+  only when t+H-1 <= GW38, so every graded horizon is complete."""
+
+
+def horizon_rows(c, t, hs=HORIZONS, gate_mins=45):
+    """One origin t: train once on GW1..t-1 (the same reliability_inputs the
+    single-week backtest uses), then for each H sum per-fixture bottomup
+    projections and actual points over GW t..t+H-1."""
+    train = E.canonical_through(c, t - 1)
+    inp = E.reliability_inputs(train, gws_played=t - 1)
+    last, span = c["through_gw"], t + max(hs) - 1
+    fx = defaultdict(lambda: defaultdict(list))
+    for m in c["team_matches"]:
+        if t <= m["event"] <= span:
+            fx[m["team"]][m["event"]].append((m["opponent"], m["was_home"]))
+    pts = defaultdict(float)
+    for r in c["rows"]:
+        if t <= r["event"] <= span:
+            pts[(r["player_id"], r["event"])] += r["pts"] or 0
+    out = []
+    for pid, p in inp["players"].items():
+        if p["mins_last4"] < gate_mins:
+            continue
+        row = {"pid": pid, "pos": p["pos"], "origin": t, "H": {}}
+        for H in hs:
+            if t + H - 1 > last:
+                continue                              # incomplete horizon
+            events = range(t, t + H)
+            nfix = sum(len(fx[p["team"]].get(e, ())) for e in events)
+            if nfix == 0:
+                continue                              # no fixture in the horizon
+            bottomup = 0.0
+            for e in events:
+                f = fx[p["team"]].get(e)
+                if f:
+                    bottomup += E.project_reliability(pid, inp, f) or 0.0
+            row["H"][H] = {"bottomup": bottomup,
+                           "minutes": p["p_start"] * nfix,
+                           "actual": sum(pts.get((pid, e), 0.0) for e in events)}
+        if row["H"]:
+            out.append(row)
+    return out
+
+
+def _rho_cell(pred, act):
+    n = len(pred)
+    if n < 3:
+        return f"{'-':>22}"
+    rho = E._spearman(pred, act)
+    ci = 1.96 / (n - 1) ** 0.5
+    return f"{rho:>+7.3f} {max(-1, rho - ci):>+6.3f}..{min(1, rho + ci):<+6.3f}"
+
+
+def horizon_report(c, hs=HORIZONS, first=5):
+    last = c["through_gw"]
+    by_origin = {t: horizon_rows(c, t, hs) for t in range(first, last + 1)}
+    out = [f"HORIZON TEST  {c['season']}  origins GW{first}-{last}", HORIZON_DEFINITION, ""]
+    windows = list(WINDOWS) + [(WINDOWS[0][0], WINDOWS[-1][1])]
+    for H in hs:
+        origins = [t for t in by_origin if t + H - 1 <= last]
+        out += ["=" * 78,
+                f"H = {H:<3} sum over GW t..t+{H - 1}   origins GW{origins[0]}-{origins[-1]} "
+                f"({len(origins)})",
+                "=" * 78,
+                f"  {'training':12s}{'pos':5s}{'n':>6}{'bottomup-H rho, 95%':>24}"
+                f"{'minutes-H rho, 95%':>24}"]
+        for lo, hi in windows:
+            label = f"GW{lo:>2}-{hi:<3}" + ("all" if (lo, hi) == windows[-1] else "   ")
+            for pos in (0, 1, 2, 3, 4):
+                sel = [r["H"][H] for t in origins if lo <= t - 1 <= hi
+                       for r in by_origin[t] if H in r["H"] and (pos == 0 or r["pos"] == pos)]
+                act = [s["actual"] for s in sel]
+                out.append(f"  {label:12s}{POSN[pos]:5s}{len(sel):>6}"
+                           f"  {_rho_cell([s['bottomup'] for s in sel], act)}"
+                           f"  {_rho_cell([s['minutes'] for s in sel], act)}")
+            out.append("")
+    return "\n".join(out)
+
+
 def backtest_report(c, first=5, last=None):
     """Steps 3-5. Rolling origin GW `first`..`last`; rows pooled by training
     window; every figure per position with its interval; the crossover named
@@ -226,6 +318,8 @@ def main():
                     help="comma-separated training windows, e.g. 4,8,12,20,38")
     ap.add_argument("--backtest", action="store_true",
                     help="rolling-origin backtest, four baselines, ablation (Steps 3-5)")
+    ap.add_argument("--horizon", action="store_true",
+                    help="the pre-registered horizon test (commit 9b43a78)")
     ap.add_argument("--out", help="also write the output to this file")
     args = ap.parse_args()
     E.force_utf8()
@@ -235,6 +329,13 @@ def main():
     for n in c["notes"]:
         print(f"  ! {n}")
     print()
+    if args.horizon:
+        text = horizon_report(c)
+        print(text)
+        if args.out:
+            with open(args.out, "w", encoding="utf-8") as fh:
+                fh.write(text + "\n")
+        return
     if args.backtest:
         text = backtest_report(c)
         print(text)

@@ -2309,6 +2309,86 @@ class StrandedTmp(unittest.TestCase):
         self.assertEqual(E.read_log(self.log), self.base)
 
 
+class HorizonTest(unittest.TestCase):
+    """The pre-registered horizon test (9b43a78): same training, same
+    functions as the single-week backtest, summed over GW t..t+H-1."""
+
+    def test_h1_reproduces_the_single_week_backtest(self):
+        c = _model_world(gws=8)
+        week = {r["pid"]: r for r in E.backtest_week(c, 6)}
+        hz = {r["pid"]: r for r in H.horizon_rows(c, 6, hs=(1,))}
+        self.assertEqual(set(week), set(hz))
+        for pid in week:
+            self.assertAlmostEqual(hz[pid]["H"][1]["bottomup"], week[pid]["preds"]["bottomup"], 12)
+            self.assertAlmostEqual(hz[pid]["H"][1]["minutes"], week[pid]["preds"]["minutes"], 12)
+            self.assertEqual(hz[pid]["H"][1]["actual"], week[pid]["actual"])
+
+    def test_target_weeks_do_not_leak_into_predictions(self):
+        c = _model_world(gws=8)
+        a = {r["pid"]: r for r in H.horizon_rows(c, 6, hs=(1, 2))}
+        leaky = dict(c, rows=[dict(r, xg=r["xg"] + 5, defcon=r["defcon"] + 30,
+                                   pts=r["pts"] + 20, starts=0, minutes=0)
+                              if r["event"] >= 6 else r for r in c["rows"]])
+        b = {r["pid"]: r for r in H.horizon_rows(leaky, 6, hs=(1, 2))}
+        self.assertEqual(set(a), set(b))
+        for pid in a:
+            for Hn in (1, 2):
+                for k in ("bottomup", "minutes"):
+                    self.assertEqual(a[pid]["H"][Hn][k], b[pid]["H"][Hn][k],
+                                     f"{pid} H={Hn} {k}: the target weeks leaked")
+        self.assertNotEqual(a[4]["H"][2]["actual"], b[4]["H"][2]["actual"])
+
+    def test_sums_fixtures_counts_blanks_as_zero_and_excludes_no_fixture_teams(self):
+        c = _model_world(gws=8)
+        # BET has no fixture in GW6 or GW7; ALP still does (a phantom opponent)
+        c["team_matches"] = [m for m in c["team_matches"]
+                             if not (m["event"] in (6, 7) and m["team"] == "BET")]
+        # player 4 (ALP) is benched in both weeks: no rows, team played
+        c["rows"] = [r for r in c["rows"] if not (r["player_id"] == 4 and r["event"] in (6, 7))]
+        rows = {r["pid"]: r for r in H.horizon_rows(c, 6, hs=(2,))}
+        self.assertNotIn(9, rows, "a team with no fixture in the horizon was kept")
+        self.assertIn(4, rows, "a benched player was dropped instead of scored 0")
+        self.assertEqual(rows[4]["H"][2]["actual"], 0.0)
+        inp = E.reliability_inputs(E.canonical_through(c, 5), gws_played=5)
+        fx6 = [(m["opponent"], m["was_home"]) for m in c["team_matches"]
+               if m["event"] == 6 and m["team"] == "ALP"]
+        fx7 = [(m["opponent"], m["was_home"]) for m in c["team_matches"]
+               if m["event"] == 7 and m["team"] == "ALP"]
+        self.assertAlmostEqual(rows[4]["H"][2]["bottomup"],
+                               E.project_reliability(4, inp, fx6) + E.project_reliability(4, inp, fx7), 12)
+        self.assertAlmostEqual(rows[4]["H"][2]["minutes"], inp["players"][4]["p_start"] * 2, 12)
+
+    def test_incomplete_horizon_is_skipped(self):
+        c = _model_world(gws=8)
+        rows = H.horizon_rows(c, 8, hs=(1, 2))
+        self.assertTrue(rows)
+        self.assertTrue(all(set(r["H"]) == {1} for r in rows), "GW9 does not exist")
+
+    def test_double_gameweek_counts_twice(self):
+        c = _model_world(gws=8)
+        extra = [{"event": 6, "team": "ALP", "opponent": "BET", "was_home": False,
+                  "goals_for": 0, "goals_against": 0, "fixture_id": None},
+                 {"event": 6, "team": "BET", "opponent": "ALP", "was_home": True,
+                  "goals_for": 0, "goals_against": 0, "fixture_id": None}]
+        one = {r["pid"]: r for r in H.horizon_rows(c, 6, hs=(1,))}
+        two = {r["pid"]: r for r in H.horizon_rows(dict(c, team_matches=c["team_matches"] + extra), 6, hs=(1,))}
+        self.assertAlmostEqual(two[4]["H"][1]["minutes"], 2 * one[4]["H"][1]["minutes"], 12)
+        self.assertGreater(two[4]["H"][1]["bottomup"], 1.5 * one[4]["H"][1]["bottomup"])
+
+    def test_report_prints_both_columns_with_intervals_for_every_h_and_position(self):
+        import re
+        out = H.horizon_report(_model_world(gws=8), hs=(1, 2), first=5)
+        self.assertIn("9b43a78", out)
+        num = "[+-][0-9][.][0-9]{3}"                       # e.g. +0.335
+        cell = f"{num} {num}[.][.]{num}"                    # rho lo..hi
+        for Hn in (1, 2):
+            block = out.split(f"H = {Hn} ")[1].split("=" * 78)[1]   # the rows
+            for pos in ("ALL", "GK", "DEF", "MID", "FWD"):
+                rows = re.findall(f"^ +GW *4-7 +{pos} +[0-9]+ +({cell}) +({cell}) *$",
+                                  block, re.M)
+                self.assertEqual(len(rows), 1, f"H={Hn} {pos}: expected one row with two rho cells")
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):
