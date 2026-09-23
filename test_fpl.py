@@ -2718,6 +2718,228 @@ class WildcardThreeLayer(unittest.TestCase):
         self.assertIn("budget £100.3m", out)
 
 
+class WildcardCrossPosition(unittest.TestCase):
+    """D: no cross-position choice on the mixed-unit sums. Formation and money
+    split are parameters; captain and vice come from MID/FWD; every sum is the
+    full model, one unit; the bench is the cheapest who pass layer 1."""
+
+    @staticmethod
+    def _rig_defenders(d):
+        """Defenders project far above everyone else: the sums would pick five.
+        Two midfielders keep a little xG so the best MID/FWD is unique."""
+        mids = [p for p in d["all_players"] if p["pos"] == 3 and p["status"] == "a"]
+        for r in d["player_gw_recent"]:
+            if r["pos"] == 2:
+                r["xg"], r["xa"], r["defcon"] = 1.0, 0.5, 15
+            elif r["pos"] in (3, 4):
+                r["xg"], r["xa"] = 0.0, 0.0
+            if r["player_id"] == mids[0]["id"]:
+                r["xg"] = 0.6
+            if r["player_id"] == mids[1]["id"]:
+                r["xg"] = 0.3
+        return d
+
+    @staticmethod
+    def _blocks(out):
+        xi_block, bench_block = out.split("SQUAD")[1].split("BENCH")
+        return xi_block, bench_block
+
+    @staticmethod
+    def _lines(block):
+        return [l for l in block.splitlines() if l.strip()[:3] in ("GK ", "DEF", "MID", "FWD")]
+
+    @staticmethod
+    def _sum(line):
+        import re
+        return float(re.search(r"6wk\s+([\d.]+)", line).group(1))
+
+    @staticmethod
+    def _wc(d, formation=None, split=None, horizon=6):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            E.sec_wildcard(d, horizon, formation, split)
+        return buf.getvalue()
+
+    def test_a_formation_the_sums_would_not_choose_is_honoured(self):
+        d = self._rig_defenders(make_export())
+        cands, _, _ = E.wildcard_candidates(d)
+        squad, _, _ = E.build_three_layer_squad(cands, 300.0, E.budget_split(d, 300.0))
+        by_sums = E._best_xi([dict(c, proj=c["sum6"]) for c in squad])
+        self.assertEqual(sum(1 for c in by_sums if c["pos"] == 2), 5,
+                         "the rig did not make the sums prefer five defenders")
+        xi = [c for c in squad if c["xi"]]
+        self.assertEqual({k: sum(1 for c in xi if c["pos"] == k) for k in (1, 2, 3, 4)},
+                         {1: 1, 2: 4, 3: 3, 4: 3}, "the default 4-3-3 was not honoured")
+        club = {}                                    # the top of each list, 3-per-club
+        for pos, n in ((1, 1), (2, 4), (3, 3), (4, 3)):
+            want = []
+            for c in cands[pos]:
+                if len(want) == n:
+                    break
+                if club.get(c["team"], 0) < 3:
+                    want.append(c["id"])
+                    club[c["team"]] = club.get(c["team"], 0) + 1
+            self.assertEqual(sorted(c["id"] for c in xi if c["pos"] == pos), sorted(want),
+                             f"{E.POS[pos]}: the XI is not the top of the ordered list")
+        out = self._wc(d)
+        self.assertIn("XI (4-3-3, --formation)", out)
+        out = self._wc(d, "3-5-2")
+        xi_lines = self._lines(self._blocks(out)[0])
+        self.assertIn("XI (3-5-2, --formation)", out)
+        self.assertEqual([sum(1 for l in xi_lines if l.strip().startswith(k))
+                          for k in ("DEF", "MID", "FWD")], [3, 5, 2])
+        for bad in ("6-2-2", "4-3-2", "4-6-0", "x"):
+            with self.assertRaises(ValueError):
+                E.parse_formation(bad)
+
+    def test_a_defender_with_the_top_sum_is_never_captain(self):
+        d = self._rig_defenders(make_export())
+        xi_block, _ = self._blocks(self._wc(d))
+        lines = self._lines(xi_block)
+        top = max(lines, key=self._sum)
+        self.assertTrue(top.strip().startswith("DEF"), "the rig did not put a DEF on top")
+        cap = [l for l in lines if "(C)" in l]
+        vice = [l for l in lines if "(V)" in l]
+        self.assertEqual((len(cap), len(vice)), (1, 1))
+        self.assertIn(cap[0].strip()[:3], ("MID", "FWD"))
+        self.assertIn(vice[0].strip()[:3], ("MID", "FWD"))
+        att = sorted((l for l in lines if l.strip()[:3] in ("MID", "FWD")),
+                     key=self._sum, reverse=True)
+        self.assertGreater(self._sum(att[0]), self._sum(att[1]), "the rig left a tie")
+        self.assertGreater(self._sum(att[1]), self._sum(att[2]), "the rig left a tie")
+        self.assertEqual(cap[0], att[0], "the captain is not the best MID/FWD")
+        self.assertEqual(vice[0], att[1], "the vice is not the next MID/FWD")
+        self.assertIn("captain restricted to MID/FWD: DEF over-spread", xi_block)
+
+    def test_the_fifteen_sums_are_one_unit_the_full_model(self):
+        d = make_export()
+        cands, weeks, _ = E.wildcard_candidates(d)
+        inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=d["gameweek"])
+        fx = E.week_fixtures(d)
+        by_id = {p["id"]: p for p in d["all_players"]}
+
+        def total(c, terms):
+            return sum(x for x in (E.project_week(c["id"], by_id[c["id"]], inp, fx, w, terms)
+                                   for w in weeks) if x is not None)
+
+        for pos in (1, 2, 3, 4):
+            c = cands[pos][0]
+            self.assertAlmostEqual(c["sum6"], total(c, E.ALL_TERMS), 6,
+                                   f"{E.POS[pos]}: the sum is not the full model")
+        mid = cands[3][0]
+        self.assertGreater(mid["sum6"], total(mid, E.three_layer_terms(3)) + 1e-6,
+                           "fixture cannot tell the full model from the bare xGI term")
+        out = self._wc(d)
+        xi_block, bench_block = self._blocks(out)
+        xi_vals = [self._sum(l) for l in self._lines(xi_block)]
+        bench_vals = [self._sum(l) for l in self._lines(bench_block)]
+        self.assertEqual((len(xi_vals), len(bench_vals)), (11, 4))
+        import re
+        m = re.search(r"XI six-week sum ([\d.]+)\s+bench six-week sum ([\d.]+)\s+fifteen ([\d.]+)", out)
+        self.assertIsNotNone(m, "the three totals are not printed")
+        self.assertAlmostEqual(float(m.group(1)), sum(xi_vals), delta=0.6)
+        self.assertAlmostEqual(float(m.group(2)), sum(bench_vals), delta=0.25)
+        self.assertAlmostEqual(float(m.group(3)), float(m.group(1)) + float(m.group(2)), delta=0.11)
+        self.assertIn("one unit: full model, all terms", out)
+
+    def test_bench_is_the_cheapest_who_pass_layer_one_with_the_fixture_tiebreak(self):
+        d = make_export()
+        cheap = sorted((p for p in d["all_players"] if p["pos"] == 2 and p["status"] == "a"),
+                       key=lambda p: (p["price"], p["id"]))[:2]
+        self.assertEqual(cheap[0]["price"], cheap[1]["price"], "no price tie to break")
+        self.assertNotEqual(cheap[0]["team"], cheap[1]["team"])
+        for r in d["player_gw_recent"]:              # bottom of the DEF order, never XI
+            if r["player_id"] in (cheap[0]["id"], cheap[1]["id"]):
+                r["xg"], r["xa"], r["defcon"] = 0.0, 0.0, 0
+        weeks = sorted({f["event"] for f in d["fixtures_next6"]})
+
+        def build(blanks):
+            dd = json.loads(json.dumps(d))
+            dd["fixtures_next6"] = [f for f in dd["fixtures_next6"]
+                                    if not any(f["event"] in ws and t in (f["home"], f["away"])
+                                               for t, ws in blanks)]
+            cands, _, _ = E.wildcard_candidates(dd)
+            budget = dd["standings"][0]["value"] / 10
+            squad, _, _ = E.build_three_layer_squad(cands, budget, E.budget_split(dd, budget))
+            xi_ids = {c["id"] for c in squad if c["xi"]}
+            bench = [c for c in squad if not c["xi"]]
+            self.assertEqual(sorted(c["pos"] for c in bench), [1, 2, 3, 3])
+            in_squad = {c["id"] for c in squad}
+            for c in bench:                          # nobody cheaper was legal
+                clubs = {}
+                for x in squad:
+                    if x["id"] != c["id"]:
+                        clubs[x["team"]] = clubs.get(x["team"], 0) + 1
+                cheaper = [x["name"] for x in cands[c["pos"]]
+                           if x["id"] not in in_squad and x["price"] < c["price"] - 1e-9
+                           and clubs.get(x["team"], 0) < E.CLUB_MAX]
+                self.assertEqual(cheaper, [], f"{E.POS[c['pos']]} bench is not the cheapest")
+                self.assertGreater(c["share"], E.FLAG_SHARE_MAX)
+            self.assertFalse(xi_ids & {cheap[0]["id"], cheap[1]["id"]}, "the rig reached the XI")
+            return next(c["id"] for c in bench if c["pos"] == 2)
+
+        a, b = cheap[0]["id"], cheap[1]["id"]
+        ta, tb = cheap[0]["team"], cheap[1]["team"]
+        self.assertEqual(build([(tb, weeks[2:3])]), a, "a GW8 blank did not decide the tie")
+        self.assertEqual(build([(ta, weeks[2:3])]), b, "the tie-break is not two-sided")
+        # two blanks before the later window against one inside it: only the window counts
+        self.assertEqual(build([(ta, weeks[:2]), (tb, weeks[3:4])]), a,
+                         "a blank before the later window counted against a bench body")
+
+    def test_split_parameter_is_scaled_to_the_budget_and_moves_the_money(self):
+        d = make_export()
+        even = E.budget_split(d, 100.3, given=E.parse_split("1,1,1,1"))
+        for k in (1, 2, 3, 4):
+            self.assertAlmostEqual(even[k], 100.3 / 4, 9)
+        heavy = E.budget_split(d, 100.3, given=E.parse_split("5,25,50,20.3"))
+        self.assertAlmostEqual(heavy[3], 50.0, 9)
+        d["standings"][0]["value"] = 750              # £75.0m: the money binds
+        out = self._wc(d, None, "1,1,1,1")
+        quarter = f"£{75 / 4:.1f}m"
+        self.assertIn(f"split by position, --split scaled to the budget: GK {quarter}  DEF {quarter}", out)
+        default = self._wc(d)
+        self.assertIn("split by position, current squad shape:", default)
+        for text in (out, default):
+            import re
+            m = re.search(r"SQUAD  £([\d.]+)m of £75\.0m", text)
+            self.assertIsNotNone(m, "no squad was printed")
+            self.assertLessEqual(float(m.group(1)), 75.0, "over budget")
+        self.assertNotEqual(self._lines(self._blocks(out)[0]), self._lines(self._blocks(default)[0]),
+                            "an even split bought the same XI as the squad-shape split")
+        starved = self._wc(d, None, "1,1,1,20")       # GK/DEF/MID shares below their cheapest fill
+        self.assertIn("split repaired so every position can buy its cheapest fill", starved)
+        self.assertRegex(starved, r"SQUAD  £([\d.]+)m of £75\.0m")
+        d["standings"][0]["value"] = 650              # below the cheapest legal 15: refused
+        self.assertIn("Could not assemble a legal 15 within £65.0m", self._wc(d))
+        for bad in ("1,2,3", "1,2,3,0", "a,b,c,d"):
+            with self.assertRaises(ValueError):
+                E.parse_split(bad)
+
+    def test_cli_formation_and_split_reach_the_section(self):
+        tmp = tempfile.mkdtemp()
+        export = os.path.join(tmp, "fpl_export_gw3.json")
+        with open(export, "w", encoding="utf-8") as fh:
+            json.dump(make_export(), fh)
+        argv, saved = sys.argv, (E.WC_FORMATION, E.WC_SPLIT)
+        try:
+            sys.argv = ["fpl_edge.py", export, "--section", "wildcard",
+                        "--formation", "3-4-3", "--split", "1,1,1,1"]
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                E.main()
+            self.assertIn("XI (3-4-3, --formation)", buf.getvalue())
+            self.assertIn("--split scaled to the budget", buf.getvalue())
+            sys.argv = ["fpl_edge.py", export, "--section", "wildcard", "--formation", "6-2-2"]
+            with redirect_stdout(io.StringIO()):
+                with self.assertRaises(SystemExit) as cm:
+                    E.main()
+            self.assertIn("not legal", str(cm.exception))
+        finally:
+            sys.argv = argv
+            E.WC_FORMATION, E.WC_SPLIT = saved
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):
