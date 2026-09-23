@@ -1312,3 +1312,35 @@ GW5 settled: `data_checked = 1` since the night of Mon 21 Sep. Both commands run
 
   VERDICT: PASS
 ```
+
+---
+
+## 2026-09-23 — item 1: a stranded `projection_log.csv.tmp` is promoted before recording (`44c7e6f`)
+
+If a pre-deadline write fails (log locked), the `.tmp` holds the only copy of
+that week's frozen forecasts, and the next run — after the deadline,
+`RECORD OK 0` — must not overwrite it. `recover_stranded_log()` runs at the
+start of every `--record`, **before the deadline check**: a `.tmp` newer than
+the log is `os.replace()`d into place with the same 3 × 5 s retry as the write,
+`RECOVERED <n> rows from projection_log.csv.tmp` is printed, then recording
+proceeds. A clean log prints nothing.
+
+Three cases a literal implementation gets wrong, each pinned by a test and a
+mutation:
+
+- **`.tmp` older than the log** → left alone (a later successful write
+  superseded it).
+- **Unreadable or truncated** — a crash while the `.tmp` was being written
+  leaves a half-file that is *newer* than the log → never promoted and never
+  deleted: moved aside as `projection_log.csv.tmp.refused-<UTC stamp>`;
+  recording continues.
+- **Log still locked** → `RECORD FAIL <source> projection_log.csv.tmp holds
+  <n> unpromoted rows and the log is locked - close it and re-run`. Writing
+  would rebuild the log from the stale copy and overwrite the `.tmp` that
+  holds the rows.
+
+**Verified:** 5 tests, suite **147 → 152**; 6 mutations each red — promotion
+removed, promoted regardless of age, no validation, locked promotion falling
+through to a write (clobbers the `.tmp`), `RECOVERED` not printed, refused
+`.tmp` deleted. Recording output unchanged: GW6 regenerated 1,046 of 1,046
+identical, no recovery chatter on a clean log.
