@@ -1096,9 +1096,10 @@ def sec_wildcard(d, horizon):
     print("    predict. Treat the squad as a starting point, not an answer.\n")
 
 
-def _build_squad(pool, budget):
-    """Greedy by value-per-million, then hill-climb swaps to spend the rest."""
-    quota = {1: 2, 2: 5, 3: 5, 4: 3}
+def _build_squad(pool, budget, quota=None):
+    """Greedy by value-per-million, then hill-climb swaps to spend the rest.
+    `quota` is players per position; the default is a full 15."""
+    quota = quota or {1: 2, 2: 5, 3: 5, 4: 3}
     picked, spent = [], 0.0
     club = defaultdict(int)
     filled = defaultdict(int)
@@ -1112,7 +1113,7 @@ def _build_squad(pool, budget):
         spent += p["price"]
         filled[p["pos"]] += 1
         club[p["team"]] += 1
-    if sum(filled.values()) < 15:
+    if sum(filled.values()) < sum(quota.values()):
         return None
 
     for _ in range(400):
@@ -2301,6 +2302,171 @@ def sec_calibration(d, horizon, path=None):
         print()
 
 
+# ---------------------------------------------------------------------------
+# bench boost screen - the frozen three-layer rule applied to one 15
+# ---------------------------------------------------------------------------
+
+FLAG_SHARE_MAX = 0.667      # the frozen P1 flag (CHANGELOG 2026-09-11 22:04); inclusive
+SQUAD_IDS = None            # --squad 1,2,3,...   None = my current 15
+FULL_QUOTA = {1: 2, 2: 5, 3: 5, 4: 3}
+
+
+def three_layer_terms(pos):
+    """The frozen wildcard rule (CHANGELOG 2026-09-14 16:10): bottomup for GK
+    and DEF; bare xGI for MID and FWD. "Bare xGI" is project_reliability with
+    the xGI term only - P(start) plus xGI-per-90 x P(start), in points - so the
+    fifteen sum in one unit. No fixture term reaches a MID or FWD."""
+    return ALL_TERMS if pos in (1, 2) else frozenset({"xgi"})
+
+
+def week_fixtures(d):
+    """team -> event -> [(opponent, was_home, fdr)] for the upcoming gameweeks."""
+    fx = defaultdict(lambda: defaultdict(list))
+    for f in d.get("fixtures_next6") or []:
+        fx[f["home"]][f["event"]].append((f["away"], True, f["h_fdr"]))
+        fx[f["away"]][f["event"]].append((f["home"], False, f["a_fdr"]))
+    return fx
+
+
+def project_week(pid, p, inp, fx, week):
+    """One player, one gameweek. None on a blank - no fixture, no forecast. A
+    double is two fixtures in the list and project_reliability sums them."""
+    f = fx[p["team"]].get(week, [])
+    if not f:
+        return None
+    pairs = [(opp, home) for opp, home, _ in f]
+    return project_reliability(pid, inp, pairs, three_layer_terms(p["pos"]))
+
+
+def minutes_share(p, played):
+    """The frozen P1 predictor: minutes over the last min(4, gws) gameweeks
+    over 90 x the fixtures the team played in that window. None if unknown."""
+    n = played.get(p["team"], 0)
+    return (p.get("mins_last4") or 0) / (90.0 * n) if n else None
+
+
+def my_squad_ids(d):
+    """The 15 in my current squad, as element ids (web_name + team -> id)."""
+    me = my_name(d)
+    by_key = {}
+    for p in d["all_players"]:
+        by_key.setdefault((p["web_name"], p["team"]), p["id"])
+    rows = sorted((r for r in d["squads"] if r["entry_name"] == me), key=lambda r: r["slot"])
+    ids = [by_key.get((r["web_name"], r["team"])) for r in rows]
+    return [i for i in ids if i is not None]
+
+
+def bench_boost_table(d, squad_ids=None, horizon=6):
+    """Everything the section prints, as data. Per candidate week: each of the
+    fifteen with fixtures, projection (None = blank), P(start), minutes share
+    and flag; the fifteen's total; GK/DEF at FDR 4+; the best XI from this 15
+    and its points; the best XI the same budget buys around a fodder bench,
+    same formation, and its points."""
+    gw = d["gameweek"]
+    by_id = {p["id"]: p for p in d["all_players"]}
+    ids = list(squad_ids) if squad_ids else my_squad_ids(d)
+    missing = [i for i in ids if i not in by_id]
+    if missing:
+        raise ValueError(f"player ids not in the export: {missing}")
+    inp = reliability_inputs(canonical_from_export(d), gws_played=gw)
+    fx = week_fixtures(d)
+    weeks = sorted({f["event"] for f in d.get("fixtures_next6") or []})[:horizon]
+    window = range(gw - min(4, gw) + 1, gw + 1)
+    played = defaultdict(int)
+    for f in d.get("fixtures_played") or []:
+        if f["event"] in window:
+            played[f["home"]] += 1
+            played[f["away"]] += 1
+    stand = next((s for s in d["standings"] if s["entry_name"] == my_name(d)), None)
+    budget = ((stand["value"] + stand["bank"]) / 10.0 if stand
+              else sum(by_id[i]["price"] for i in ids))
+    available = [p for p in d["all_players"]
+                 if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
+
+    out = {"ids": ids, "budget": budget, "weeks": []}
+    for week in weeks:
+        rows = []
+        for pid in ids:
+            p = by_id[pid]
+            share = minutes_share(p, played)
+            rows.append({
+                "id": pid, "name": p["web_name"], "team": p["team"], "pos": p["pos"],
+                "price": p["price"], "fixtures": fx[p["team"]].get(week, []),
+                "proj": project_week(pid, p, inp, fx, week),
+                "p_start": inp["players"][pid]["p_start"] if pid in inp["players"] else 0.0,
+                "share": share,
+                "flag": share is not None and share <= FLAG_SHARE_MAX,
+            })
+        total = sum(r["proj"] for r in rows if r["proj"] is not None)
+        hard = sum(1 for r in rows if r["pos"] in (1, 2) and r["fixtures"]
+                   and max(f[2] for f in r["fixtures"]) >= 4)
+
+        xi = _best_xi([dict(r, proj=r["proj"] or 0.0) for r in rows])
+        xi_pts = sum(r["proj"] for r in xi)
+        formation = {k: sum(1 for r in xi if r["pos"] == k) for k in FULL_QUOTA}
+
+        # the same money, spent on the XI only: cheapest legal fillers on the
+        # bench, then the best XI of the same shape the remainder buys
+        fodder, fodder_cost = [], 0.0
+        for pos, need in FULL_QUOTA.items():
+            for p in sorted((p for p in d["all_players"] if p["pos"] == pos
+                             and p["status"] == "a"),
+                            key=lambda p: (p["price"], p["id"]))[:need - formation[pos]]:
+                fodder.append(p)
+                fodder_cost += p["price"]
+        taken = {p["id"] for p in fodder}
+        market = []
+        for p in available:
+            if p["id"] in taken:
+                continue
+            pr = project_week(p["id"], p, inp, fx, week)
+            if pr:
+                market.append({"id": p["id"], "web_name": p["web_name"], "team": p["team"],
+                               "pos": p["pos"], "price": p["price"], "proj": pr,
+                               "vpm": pr / p["price"]})
+        alt = _build_squad(market, budget - fodder_cost, quota=formation) if xi else None
+        out["weeks"].append({
+            "event": week, "rows": rows, "total": total, "gk_def_fdr4": hard,
+            "xi": xi, "xi_pts": xi_pts, "formation": formation,
+            "fodder": fodder, "fodder_cost": fodder_cost,
+            "alt_xi": alt, "alt_pts": sum(r["proj"] for r in alt) if alt else None,
+        })
+    return out
+
+
+def sec_bench_boost(d, horizon, squad_ids=None):
+    t = bench_boost_table(d, squad_ids, horizon)
+    print("=" * 78)
+    print(f"BENCH BOOST SCREEN  (frozen three-layer rule, next {len(t['weeks'])} gameweeks)")
+    print("=" * 78)
+    print(f"  squad: {len(t['ids'])} players ({'--squad' if squad_ids else 'my current 15'})"
+          f"   budget £{t['budget']:.1f}m = squad value + bank")
+    print("  proj  GK/DEF: bottomup (P(start), xGI, Poisson clean sheet, DEFCON)")
+    print("        MID/FWD: P(start) + xGI-per-90 x P(start), in points - bare xGI, no")
+    print(f"        fixture term.  FLAG: minutes share <= {FLAG_SHARE_MAX} over the last four")
+    print("        gameweeks, the frozen P1 predictor.  BLANK: no fixture, no forecast.")
+    for w in t["weeks"]:
+        print(f"\n  GW{w['event']}")
+        print(f"    {'pos':4s}{'player':15s}{'team':5s}{'fixture':15s}{'P(st)':>6}{'share':>7}{'proj':>7}")
+        for r in w["rows"]:
+            fixt = " + ".join(f"{o} ({'H' if h else 'A'}) {fdr}" for o, h, fdr in r["fixtures"]) or "BLANK"
+            proj = f"{r['proj']:>7.2f}" if r["proj"] is not None else f"{'-':>7}"
+            share = f"{r['share']:>7.2f}" if r["share"] is not None else f"{'-':>7}"
+            print(f"    {POS[r['pos']]:4s}{r['name'][:14]:15s}{r['team']:5s}{fixt[:14]:15s}"
+                  f"{r['p_start']:>6.2f}{share}{proj}{'  FLAG' if r['flag'] else ''}")
+        blanks = sum(1 for r in w["rows"] if r["proj"] is None)
+        print(f"    all 15 projected: {w['total']:.1f} pts   GK/DEF at FDR 4+: {w['gk_def_fdr4']}"
+              f"   blanks: {blanks}   flagged: {sum(1 for r in w['rows'] if r['flag'])}")
+        form = "-".join(str(w["formation"][k]) for k in (2, 3, 4))
+        print(f"    XI from this 15 ({form}):                             {w['xi_pts']:6.1f} pts")
+        if w["alt_pts"] is None:
+            print(f"    best XI, same budget, fodder bench ({form}): could not be filled inside the budget")
+        else:
+            print(f"    best XI, same budget, fodder bench ({form}, fodder £{w['fodder_cost']:.1f}m): "
+                  f"{w['alt_pts']:6.1f} pts")
+    print()
+
+
 SECTIONS = {
     "league": lambda d, h: sec_league(d),
     "eo": lambda d, h: sec_eo(d),
@@ -2318,6 +2484,7 @@ SECTIONS = {
     "consistency": sec_consistency,
     "compare": lambda d, h: sec_compare(d, h, PROJECTIONS_PATH),
     "calibration": lambda d, h: sec_calibration(d, h),
+    "bench_boost": lambda d, h: sec_bench_boost(d, h, SQUAD_IDS),
 }
 
 PROJECTIONS_PATH = None
@@ -2366,6 +2533,9 @@ def main():
                     help="label for --record, e.g. openfpl")
     ap.add_argument("--status",
                     help="with --record: append the RECORD OK/FAIL line to this file")
+    ap.add_argument("--squad",
+                    help="comma-separated player ids for --section bench_boost "
+                         "(default: my current 15)")
     ap.add_argument("--projections",
                     help="external projections CSV to score (use with "
                          "--section compare)")
@@ -2378,8 +2548,9 @@ def main():
                     help="comma list: " + ",".join(SECTIONS))
     args = ap.parse_args()
 
-    global PROJECTIONS_PATH
+    global PROJECTIONS_PATH, SQUAD_IDS
     PROJECTIONS_PATH = args.projections
+    SQUAD_IDS = [int(x) for x in args.squad.split(",")] if args.squad else None
 
     path = args.export or newest_export()
     if not path:
@@ -2413,7 +2584,7 @@ def main():
     if args.section == "all":
         want = [w for w in SECTIONS
                 if w not in ("brief", "wildcard", "backtest", "compare",
-                             "calibration")]
+                             "calibration", "bench_boost")]
     else:
         want = args.section.split(",")
 

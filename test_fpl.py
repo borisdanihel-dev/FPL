@@ -2389,6 +2389,135 @@ class HorizonTest(unittest.TestCase):
                 self.assertEqual(len(rows), 1, f"H={Hn} {pos}: expected one row with two rho cells")
 
 
+def _fifteen(d, prefer=None):
+    """A legal 15 from the export, preferring players of `prefer` team."""
+    ids = []
+    for pos, need in ((1, 2), (2, 5), (3, 5), (4, 3)):
+        pool = sorted((p for p in d["all_players"] if p["pos"] == pos),
+                      key=lambda p: (p["team"] != prefer, p["id"]))
+        ids += [p["id"] for p in pool[:need]]
+    return ids
+
+
+class BenchBoost(unittest.TestCase):
+    """--section bench_boost: the frozen three-layer rule on one 15."""
+
+    def test_flag_constant_matches_the_frozen_p1_definition(self):
+        self.assertEqual(E.FLAG_SHARE_MAX, P1.FLAG_MAX)
+
+    def test_blank_week_gives_no_forecast(self):
+        d = make_export(blank_team="HUL")
+        t = E.bench_boost_table(d, _fifteen(d, prefer="HUL"))
+        nxt = d["gameweek"] + 1
+        week = next(w for w in t["weeks"] if w["event"] == nxt)
+        playing = {x for f in d["fixtures_next6"] if f["event"] == nxt
+                   for x in (f["home"], f["away"])}
+        self.assertNotIn("HUL", playing)
+        blank = [r for r in week["rows"] if r["team"] not in playing]
+        rest = [r for r in week["rows"] if r["team"] in playing]
+        self.assertTrue(blank and rest)
+        self.assertTrue(any(r["team"] == "HUL" for r in blank))
+        self.assertTrue(all(r["proj"] is None for r in blank), "a blank got a forecast")
+        self.assertTrue(all(r["proj"] is not None for r in rest))
+        self.assertAlmostEqual(week["total"], sum(r["proj"] for r in rest), 9)
+
+    def test_double_counts_twice(self):
+        ids = _fifteen(make_export(), prefer=TEAMS[0])
+        one = E.bench_boost_table(make_export(), ids)["weeks"][0]
+        two = E.bench_boost_table(make_export(double_team=TEAMS[0]), ids)["weeks"][0]
+        pairs = [(a, b) for a, b in zip(one["rows"], two["rows"]) if a["team"] == TEAMS[0]]
+        self.assertTrue(pairs)
+        for a, b in pairs:
+            self.assertGreater(b["proj"], 1.5 * a["proj"], f"{a['name']}: double not counted twice")
+            self.assertEqual(len(b["fixtures"]), 2)
+
+    def test_fixture_term_moves_gk_def_and_not_mid_fwd(self):
+        """Concede more in the past -> a worse clean-sheet probability. That
+        reaches GK and DEF through the Poisson term and must not reach MID or
+        FWD, who get bare xGI."""
+        d = make_export()
+        ids = _fifteen(d, prefer=TEAMS[0])
+        base = E.bench_boost_table(d, ids)["weeks"][0]
+        leakier = make_export()
+        for f in leakier["fixtures_played"]:
+            if f["home"] == TEAMS[0]:
+                f["a_goals"] += 3
+            if f["away"] == TEAMS[0]:
+                f["h_goals"] += 3
+        moved = E.bench_boost_table(leakier, ids)["weeks"][0]
+        for a, b in zip(base["rows"], moved["rows"]):
+            if a["team"] != TEAMS[0]:
+                continue
+            if a["pos"] in (1, 2):
+                self.assertLess(b["proj"], a["proj"], f"{a['name']} (GK/DEF) did not move")
+            else:
+                self.assertEqual(b["proj"], a["proj"], f"{a['name']} (MID/FWD) moved")
+
+    def test_flag_is_the_frozen_inclusive_two_thirds(self):
+        d = make_export(gw=3)                       # window of 3, 270 minutes
+        ids = _fifteen(d)
+        by_id = {p["id"]: p for p in d["all_players"]}
+        by_id[ids[2]]["mins_last4"] = 180           # 0.6667 -> flagged (inclusive)
+        by_id[ids[3]]["mins_last4"] = 181           # 0.6704 -> not flagged
+        rows = {r["id"]: r for r in E.bench_boost_table(d, ids)["weeks"][0]["rows"]}
+        self.assertTrue(rows[ids[2]]["flag"])
+        self.assertFalse(rows[ids[3]]["flag"])
+        self.assertAlmostEqual(rows[ids[2]]["share"], 180 / 270, 9)
+
+    def test_default_squad_is_my_fifteen_and_ids_override(self):
+        d = make_export()
+        mine = E.my_squad_ids(d)
+        self.assertEqual(len(mine), 15)
+        self.assertEqual(E.bench_boost_table(d)["ids"], mine)
+        other = _fifteen(d, prefer="NFO")
+        self.assertEqual(E.bench_boost_table(d, other)["ids"], other)
+        with self.assertRaises(ValueError):
+            E.bench_boost_table(d, [999999] + other[1:])
+
+    def test_gk_def_at_fdr4_counts_only_gk_and_def(self):
+        w = E.bench_boost_table(make_export(), _fifteen(make_export()))["weeks"][0]
+        expect = sum(1 for r in w["rows"] if r["pos"] in (1, 2) and r["fixtures"]
+                     and max(f[2] for f in r["fixtures"]) >= 4)
+        any_pos = sum(1 for r in w["rows"] if r["fixtures"] and max(f[2] for f in r["fixtures"]) >= 4)
+        self.assertEqual(w["gk_def_fdr4"], expect)
+        self.assertNotEqual(expect, any_pos, "fixture cannot tell GK/DEF from everyone")
+
+    def test_fodder_xi_has_the_same_formation_and_lives_within_budget(self):
+        t = E.bench_boost_table(make_export(), _fifteen(make_export()))
+        for w in t["weeks"]:
+            self.assertIsNotNone(w["alt_xi"], f"GW{w['event']}: no fodder XI")
+            got = {k: sum(1 for r in w["alt_xi"] if r["pos"] == k) for k in (1, 2, 3, 4)}
+            self.assertEqual(got, w["formation"])
+            spend = sum(r["price"] for r in w["alt_xi"]) + w["fodder_cost"]
+            self.assertLessEqual(spend, t["budget"] + 1e-9)
+            self.assertEqual(len(w["fodder"]), 4)
+
+    def test_fodder_cost_comes_out_of_the_xi_budget_when_it_binds(self):
+        """With 100m the synthetic pool never touches the ceiling; at 77m it
+        does (a top-projection XI wants ~100m; the cheapest legal XI is ~46m),
+        and the fodder must be paid for before the XI is bought."""
+        d = make_export()
+        d["standings"][0]["value"], d["standings"][0]["bank"] = 770, 0
+        t = E.bench_boost_table(d, _fifteen(d))
+        self.assertAlmostEqual(t["budget"], 77.0, 9)
+        for w in t["weeks"]:
+            self.assertIsNotNone(w["alt_xi"], f"GW{w['event']}: 77m must still fill an XI")
+            xi_spend = sum(r["price"] for r in w["alt_xi"])
+            self.assertLessEqual(xi_spend + w["fodder_cost"], 77.0 + 1e-9,
+                                 f"GW{w['event']}: spent {xi_spend + w['fodder_cost']:.1f} of 77.0")
+            self.assertGreater(xi_spend, 77.0 - w["fodder_cost"] - 6.0,
+                               "fixture is not budget-bound - the check proves nothing")
+
+    def test_section_prints_two_labelled_numbers_per_week(self):
+        d = make_export()
+        out = run("bench_boost", d)
+        weeks = len({f["event"] for f in d["fixtures_next6"]})
+        self.assertEqual(out.count("XI from this 15"), weeks)
+        self.assertEqual(out.count("best XI, same budget, fodder bench"), weeks)
+        self.assertIn("all 15 projected", out)
+        self.assertIn("GK/DEF at FDR 4+", out)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):
