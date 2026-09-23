@@ -1725,3 +1725,96 @@ not a slice, and the frozen P1 predictor reads them.
 20 and 38 carries per-gameweek rows and fixture flags for every gameweek and
 the canonical slice sees them all; the last-4 columns at GW10 still sum four
 gameweeks. 3 mutations each red — the player_gw_recent window restored to six gameweeks, the fixtures_status window restored, the last-4 columns widened to the season.
+
+---
+
+## 2026-09-24 — item 7 (task-list 6): the mini-league layer — effective ownership with captaincy (`d939845`)
+
+`--section eo` keeps its two ownership-gap blocks and the historical captaincy
+block, and gains three forward-looking ones. No detailed specification reached
+me beyond "effective ownership with captaincy", so the definitions are stated
+here and can be argued with:
+
+- **Effective ownership with captaincy.** From the latest picks (GW gw — the
+  next gameweek's picks are not visible before the deadline): a captain counts
+  2, a starter 1, a bench player 0, a Triple Captain 2 (spent, cannot recur).
+  For every player in any squad: my multiplier, the rivals' EO (mean
+  multiplier over the N rivals), how many rivals start and captain him, and
+  **net/pt = mine − EO**, the points gained on the average rival per point he
+  scores. Two lists: their stakes I don't match (net < 0) and mine they don't
+  (net > 0).
+- **Per rival, next gameweek (projected).** For each rival, with the full
+  model, all terms, one unit, for the first upcoming gameweek: **swing** =
+  Σ (my multiplier − theirs) × projection; **shared** = Σ min(mine, theirs)
+  × projection; **yours / theirs** = what only one side holds. Blanks and
+  unmapped names count 0. Their captain named. This is the model's number
+  under the current picks, with the DEF calibration still pending.
+- **Captain cover.** My candidates are the MID/FWD in my XI, by projection —
+  never a DEF (review D). Each with the rivals' EO of him, how many captain
+  him, and the net stake per point if I captain him (2 − EO). Printed with the
+  reason it is not a recommendation: the expected value of a captaincy is its
+  projection alone; EO changes the variance of my rank, not the expectation —
+  the field's captain covers, a differential swings.
+- Nothing here changes a projection or a recording.
+
+**Live, GW5 export** (`reports/eo_gw5.txt`), the three new blocks:
+
+```
+  EFFECTIVE OWNERSHIP WITH CAPTAINCY   (rival picks as of GW5; captain = 2, bench = 0, TC = 2)
+  THEIR STAKES YOU DON'T MATCH   (net/pt < 0: every point he scores costs you)
+  player         team pos  mine    EO  start  capt  net/pt
+  Gvardiol       MCI  DEF     0  0.67   4/6    0/6    -0.67
+  Rogers         CHE  MID     0  0.67   4/6    0/6    -0.67
+  Gibbs-White    NFO  MID     0  0.50   2/6    1/6    -0.50
+  Calvert-Lewin  LEE  FWD     0  0.50   3/6    0/6    -0.50
+  Kinsky         TOT  GK      0  0.33   2/6    0/6    -0.33
+  Muharemović    LEE  DEF     0  0.33   2/6    0/6    -0.33
+  Saka           ARS  MID     0  0.33   2/6    0/6    -0.33
+  Raya           ARS  GK      0  0.33   2/6    0/6    -0.33
+  Ndiaye         MCI  MID     0  0.17   1/6    0/6    -0.17
+  Van Hecke      TOT  DEF     0  0.17   1/6    0/6    -0.17
+  M.Sangaré      BRE  MID     0  0.17   1/6    0/6    -0.17
+  Palmer         CHE  MID     0  0.17   1/6    0/6    -0.17
+  YOUR STAKES THEY DON'T MATCH   (net/pt > 0: every point gains on the average rival)
+  player         team pos  mine    EO  start  capt  net/pt
+  Verbruggen     BHA  GK      1  0.00   0/6    0/6    +1.00
+  Virgil         LIV  DEF     1  0.00   0/6    0/6    +1.00
+  Mitchell       CRY  DEF     1  0.00   0/6    0/6    +1.00
+  Barry          EVE  FWD     1  0.00   0/6    0/6    +1.00
+  Groß           BHA  MID     1  0.17   1/6    0/6    +0.83
+  Wissa          NEW  FWD     1  0.17   1/6    0/6    +0.83
+  N.Williams     NFO  DEF     1  0.33   2/6    0/6    +0.67
+  Szoboszlai     LIV  MID     1  0.33   2/6    0/6    +0.67
+  Haaland        MCI  FWD     2  1.50   5/6    4/6    +0.50
+  B.Fernandes    MUN  MID     1  0.50   2/6    1/6    +0.50
+
+  PER RIVAL, GW6   (projected: full model, all terms, one unit; picks as of GW5; blanks 0)
+  rival                 their captain    swing  shared  yours  theirs
+  ReturnOfTheDjedi FC   Gibbs-White       -2.0    18.8   34.7    36.7
+  Revelstoke FC         Haaland           +1.0    24.5   29.1    28.1
+  No More Mr. Rice Guy  Haaland           +1.8    29.0   24.5    22.7
+  Skori FC              B.Fernandes       +1.9    10.2   43.3    41.4
+  Bruno Dos Tres        Haaland           +4.2    15.2   38.3    34.1
+  PyroNeniZlocin        Haaland           +7.3    15.2   38.3    31.0
+
+  CAPTAIN COVER, GW6   (MID/FWD in your XI by projection; stake/pt = 2 - EO if captained)
+  candidate      team   proj    EO  capt  stake/pt
+  B.Fernandes    MUN    5.17  0.50   1/6      +1.50
+  Haaland        MCI    5.11  1.50   4/6      +0.50
+  Barry          EVE    4.57  0.00   0/6      +2.00
+  Szoboszlai     LIV    4.30  0.33   0/6      +1.67
+  Groß           BHA    4.29  0.17   0/6      +1.83
+  Wissa          NEW    3.76  0.17   0/6      +1.83
+  the expected value of a captaincy is its projection alone; EO changes the variance
+  of your rank, not the expectation: the field's captain covers, a differential swings.
+```
+
+Read: six rivals; Haaland is captained by four of them (EO 1.50), so my
+armband on him is a +0.50 stake per point — cover, not a swing. Fernandes
+projects marginally higher (5.17 v 5.11) at EO 0.50; Barry at EO 0.00 is the
+pure differential. The per-rival swings are within ±8 points of projection —
+the league is decided by variance on shared assets, which is the point of the
+layer.
+
+**Verified:** 4 tests, suite **193 → 197**; 12 mutations each red — Triple Captain as 3, bench as 1, captain not doubled, net sign flipped, cover counting starters, swing ignoring multipliers, projections in the mixed units, candidates including DEF, candidates including the bench, stake = 1 − EO, candidates unordered, expectation note dropped. `bench_boost`,
+`wildcard` and `squad` byte-identical; GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
