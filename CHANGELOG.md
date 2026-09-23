@@ -1366,3 +1366,75 @@ the target weeks (leak), minutes-H not scaled by fixtures, benched players
 dropped instead of scored 0, teams with no fixture kept, an incomplete horizon
 graded, per-fixture projections not summed, either rho column dropped from the
 report.
+
+---
+
+## 2026-09-23 — item 3: `--section bench_boost` (`3806daf`)
+
+**Input:** a 15 — my current squad by default (`web_name` + team → id), or
+`--squad id,id,…`. **Weeks:** the export's next six gameweeks (GW6–11 from
+the GW5 export). **Per week:** each of the fifteen with fixture and FDR,
+projection, P(start), minutes share and FLAG; the fifteen's total; GK/DEF slots
+at FDR 4+; blanks; then **two labelled numbers** — the best XI from this 15,
+and the best XI the same money buys around a fodder bench (the cheapest legal
+fillers for the bench slots), same formation.
+
+**Projection = the frozen three-layer rule**, through `project_reliability`
+with the week's fixture list. GK/DEF: all terms (bottomup). MID/FWD: the xGI
+term only — P(start) + xGI-per-90 × P(start), expressed in points. The
+instruction wrote "xGI-per-90 × P(start)"; carrying it through the model's
+scoring value keeps the fifteen in one unit so they can be summed and an XI
+compared. Ordering within position is unchanged by that, and no fixture term
+reaches a MID or FWD (tested, mutation-verified). Blank → no forecast; double
+→ summed. FLAG is the frozen P1 predictor, minutes share ≤ 0.667 inclusive;
+the constant is tested equal to `p1_eval.FLAG_MAX`.
+
+**No new model code.** `_build_squad` gained a `quota` argument (default
+unchanged) so the fodder-bench XI keeps the current XI's formation — the
+16:10 amendment's per-position quota, not a cross-position optimiser; no
+MILP. The 3-per-club limit is applied within the XI; the fodder are the
+cheapest available and are not counted against it. Excluded from the nightly
+"all" report.
+
+**Not a projection change:** GW6 regenerated identical for all four sources;
+`--section wildcard` output byte-identical before and after.
+
+**Live, GW5 export, my current 15, budget £102.9m** (`reports/bench_boost_gw5.txt`):
+
+```
+  GW6
+    all 15 projected: 57.8 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.0 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.2 pts
+  GW7
+    all 15 projected: 58.3 pts   GK/DEF at FDR 4+: 1   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.0 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   55.0 pts
+  GW8
+    all 15 projected: 58.2 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.3 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   54.9 pts
+  GW9
+    all 15 projected: 57.9 pts   GK/DEF at FDR 4+: 4   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               46.8 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.8 pts
+  GW10
+    all 15 projected: 58.6 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.3 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   58.0 pts
+  GW11
+    all 15 projected: 59.4 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               48.8 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.2 pts
+```
+
+**Verified:** 10 tests, suite **158 → 168**; 9 mutations each red — a blank
+given a phantom fixture, a double counted once, the fixture term reaching
+MID/FWD, the flag exclusive at 2/3 (unflags 180 of 270), the total counting
+GK/DEF only, the FDR 4+ count including every position, the fodder XI built as
+a full 15, the fodder cost not deducted from the XI budget (this one needed a
+budget-bound fixture — at £100m the synthetic pool never touches the
+ceiling; at £77m it does), the second labelled number dropped. One equivalent
+mutant recorded rather than "caught": `<` vs `<=` at 0.667 is unobservable,
+because no minutes total over 270 or 360 lands on 0.667 exactly; the boundary
+that matters is 2/3, and that mutation is red.
