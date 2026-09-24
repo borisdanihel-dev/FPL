@@ -444,8 +444,15 @@ def sec_squad(d, horizon):
     tick, _ = build_ticker(d, horizon)
     by_name = {p["web_name"]: p for p in d["all_players"]}
 
+    by_key = {}
+    for p in d["all_players"]:
+        by_key.setdefault((p["web_name"], p["team"]), p)
+    variants = xgi_rate_variants(canonical_from_export(d)["rows"])   # printed only
+
     mine = [r for r in d["squads"] if r["entry_name"] == me]
     mine.sort(key=lambda r: r["slot"])
+    print(f"    {'':4s}{'player':15s}{'team':5s}{'£':>5} {'pts':>6}{'L4':>7}{'mins':>6}"
+          f"{'fdr':>8}{'xGI/90':>8}{'conc':>6}{'trim90':>7}{'med90':>7}  fixtures")
     for r in mine:
         p = by_name.get(r["web_name"], {})
         fx = tick.get(r["team"], [])
@@ -454,9 +461,16 @@ def sec_squad(d, horizon):
         if p.get("status") and p["status"] != "a":
             flag = f"  !! {p['status']} {p.get('news','')[:40]}"
         loc = "XI " if r["slot"] <= 11 else "BEN"
+        pl = by_key.get((r["web_name"], r["team"]))
+        v = variants.get(pl["id"]) if pl else None
+        rate = f"{v['raw90']:>8.2f}" if v and v["raw90"] is not None else f"{'-':>8}"
         print(f"{loc} {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{r['team']:5s}{r['price']:>5.1f} "
               f"pts{p.get('total_points',0):>3} L4:{p.get('pts_last4',0):>3} "
-              f"m{p.get('mins_last4',0):>4} fdr{fdr_avg(tick, r['team']):>4.1f}  {run}{flag}")
+              f"m{p.get('mins_last4',0):>4} fdr{fdr_avg(tick, r['team']):>4.1f}"
+              f"{rate}{conc_cells(v)}  {run}{flag}")
+    print(f"    xGI/90 = season xGI per 90; conc = best game's share of it ('!' at {CONC_FLAG:.2f}+);")
+    print("    trim90 = without that game (4+ games); med90 = median per-game rate over 60+ minute")
+    print("    games. Printed for a human eye - nothing orders or projects on them.")
     print()
 
     week, rows, flagged = bench_vs_xi(d)
@@ -1251,6 +1265,51 @@ def project(p, tick, horizon, gws_played, priors, personal=None):
 
 ROLE_DEFCON_RATE = 0.5      # DEFCON hit rate that counts as a role edge (2+ starts)
 CLUB_MAX = 3
+CONC_FLAG = 0.50            # one-match concentration worth a look at draft time
+
+
+def xgi_rate_variants(rows, min_games=4, med_mins=60):
+    """Per player, from canonical per-gameweek rows: the raw xGI/90 and three
+    one-match-concentration readings. Information only - nothing orders or
+    projects on them (CHANGELOG 2026-09-24, item 8):
+      conc   = best single gameweek's xGI / season xGI (None when season xGI is 0)
+      trim90 = xGI/90 with that best gameweek removed, when the player has
+               min_games+ gameweeks with minutes, else None
+      med90  = median per-gameweek xGI per 90 over gameweeks of med_mins+
+               minutes, else None
+    A double gameweek is one row here, so it counts as one 'game'."""
+    from statistics import median
+    by = defaultdict(list)
+    for r in rows:
+        if (r.get("minutes") or 0) > 0:
+            by[r["player_id"]].append(((r.get("xg") or 0) + (r.get("xa") or 0), r["minutes"]))
+    out = {}
+    for pid, games in by.items():
+        xgi = sum(g for g, _ in games)
+        mins = sum(m for _, m in games)
+        best_xgi, best_min = max(games, key=lambda g: g[0])
+        full = [g / m * 90 for g, m in games if m >= med_mins]
+        out[pid] = {
+            "games": len(games), "xgi": xgi, "minutes": mins,
+            "raw90": xgi / mins * 90 if mins else None,
+            "conc": best_xgi / xgi if xgi > 0 else None,
+            "trim90": ((xgi - best_xgi) / (mins - best_min) * 90
+                       if len(games) >= min_games and mins - best_min > 0 else None),
+            "med90": median(full) if full else None,
+        }
+    return out
+
+
+def conc_cells(v):
+    """The 'conc trim90 med90' cells for one player's variants (None = no
+    rows): blank where undefined; conc carries '!' at CONC_FLAG and above."""
+    if not v:
+        return f"{'-':>6}{'-':>7}{'-':>7}"
+    conc = ("-" if v["conc"] is None
+            else f"{v['conc']:.2f}{'!' if v['conc'] >= CONC_FLAG else ' '}")
+    trim = "-" if v["trim90"] is None else f"{v['trim90']:.2f}"
+    med = "-" if v["med90"] is None else f"{v['med90']:.2f}"
+    return f"{conc:>6}{trim:>7}{med:>7}"
 
 
 def role_edges(d):
@@ -1298,7 +1357,9 @@ def wildcard_candidates(d, horizon=6):
     alone: GK/DEF by the six-week sum (all terms = bottomup), MID/FWD by
     P(start) x fixtures, then xGI/90."""
     gw = d["gameweek"]
-    inp = reliability_inputs(canonical_from_export(d), gws_played=gw)
+    canon = canonical_from_export(d)
+    inp = reliability_inputs(canon, gws_played=gw)
+    variants = xgi_rate_variants(canon["rows"])          # printed, never ordered on
     fx = week_fixtures(d)
     weeks = sorted({f["event"] for f in d.get("fixtures_next6") or []})[:horizon]
     window = range(gw - min(4, gw) + 1, gw + 1)
@@ -1337,7 +1398,7 @@ def wildcard_candidates(d, horizon=6):
             "id": pid, "name": p["web_name"], "team": p["team"], "pos": p["pos"],
             "price": p["price"], "roles": sorted(roles.get(pid, ())), "sum6": sum6,
             "nfix": nfix, "nfix_later": nfix_later, "p_start": p_start, "xgi90": xgi90,
-            "share": share, "key": key})
+            "share": share, "key": key, "var": variants.get(pid)})
     for pos in cands:
         cands[pos].sort(key=lambda c: c["key"], reverse=True)
         for i, c in enumerate(cands[pos]):
@@ -1586,14 +1647,17 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     print("           bottomup sum; MID/FWD by P(start) x fixtures, then xGI/90. Roles are")
     print("           printed beside each player for a human override at draft time.")
     print(f"\n  SHORTLISTS  (top 8 per position; 6wk = full model, all terms, GW{weeks[0]}-{weeks[-1]}:")
-    print("               one unit for every position, next to the ordering metric)")
+    print("               one unit for every position, next to the ordering metric;")
+    print(f"               conc = best game's xGI / season xGI ('!' at {CONC_FLAG:.2f}+), trim90 =")
+    print("               xGI/90 without that game (4+ games), med90 = median per-game xGI/90")
+    print("               over 60+ minute games - printed, never ordered or projected on)")
     for pos in (1, 2, 3, 4):
         print(f"    {POS[pos]}   {'player':15s}{'team':5s}{'£':>5}  {'roles':16s}{'6wk':>6}"
-              f"{'P(st)xfix':>10}{'xGI/90':>8}")
+              f"{'P(st)xfix':>10}{'xGI/90':>8}{'conc':>6}{'trim90':>7}{'med90':>7}")
         for c in cands[pos][:8]:
             print(f"         {c['name'][:14]:15s}{c['team']:5s}{c['price']:>5.1f}  "
                   f"{','.join(c['roles'])[:15]:16s}{c['sum6']:>6.1f}"
-                  f"{c['p_start'] * c['nfix']:>10.2f}{c['xgi90']:>8.2f}")
+                  f"{c['p_start'] * c['nfix']:>10.2f}{c['xgi90']:>8.2f}{conc_cells(c['var'])}")
     squad, spent, split_built = build_three_layer_squad(cands, budget, split_used, form)
     if any(abs(split_built[k] - split_used[k]) > 0.05 for k in split_used):
         print("\n  split repaired so every position can buy its cheapest fill: "
@@ -1614,11 +1678,12 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     print(f"    XI ({form_str}, --formation)   sums = full model, all terms   by = the frozen ordering metric")
     for c in sorted(xi, key=lambda c: (c["pos"], c["rank"])):
         metric = (f"bottomup {c['sum6']:.1f}" if c["pos"] in (1, 2)
-                  else f"P(st)xfix {c['p_start'] * c['nfix']:.2f} xGI/90 {c['xgi90']:.2f}")
+                  else f"P(st)xfix {c['p_start'] * c['nfix']:.2f} xGI/90 {c['xgi90']:.2f}"
+                       f" conc/trim/med{conc_cells(c['var'])}")
         mark = ("  (C)" if captain and c["id"] == captain["id"]
                 else "  (V)" if vice and c["id"] == vice["id"] else "")
         print(f"      {POS[c['pos']]:4s}{c['name'][:14]:15s}{c['team']:5s}{c['price']:>5.1f}"
-              f"  6wk {c['sum6']:>5.1f}  by {metric:31s}{','.join(c['roles'])}{mark}")
+              f"  6wk {c['sum6']:>5.1f}  by {metric:52s} {','.join(c['roles'])}{mark}")
     print("    captain restricted to MID/FWD: DEF over-spread")
     fx = week_fixtures(d)
     later = weeks[2:]                                   # the bench's GW8-11 from a GW5 export

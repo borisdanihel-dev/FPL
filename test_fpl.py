@@ -3261,6 +3261,108 @@ class EffectiveOwnership(unittest.TestCase):
         self.assertIn("EO changes the variance", out)
 
 
+class Concentration(unittest.TestCase):
+    """F (1): conc, trim90, med90 beside every printed xGI/90 - information
+    only. Nothing orders or projects on them."""
+
+    @staticmethod
+    def _rows(pid, games):
+        return [{"player_id": pid, "event": i + 1, "minutes": m, "xg": g, "xa": 0.0}
+                for i, (g, m) in enumerate(games)]
+
+    def test_arithmetic_on_five_games_with_one_spike(self):
+        v = E.xgi_rate_variants(self._rows(7, [(0.1, 90), (0.1, 90), (0.1, 90), (0.1, 90), (0.6, 90)]))[7]
+        self.assertEqual(v["games"], 5)
+        self.assertAlmostEqual(v["raw90"], 1.0 / 450 * 90, 9)
+        self.assertAlmostEqual(v["conc"], 0.6, 9)
+        self.assertAlmostEqual(v["trim90"], 0.4 / 360 * 90, 9)
+        self.assertAlmostEqual(v["med90"], 0.1, 9)
+        cells = E.conc_cells(v)
+        self.assertEqual(cells, f"{'0.60!':>6}{'0.10':>7}{'0.10':>7}")
+        even = E.xgi_rate_variants(self._rows(8, [(0.2, 90), (0.4, 90), (0.1, 90), (0.3, 90)]))[8]
+        self.assertAlmostEqual(even["med90"], 0.25, 9)          # even count: mean of the middle two
+        self.assertAlmostEqual(even["conc"], 0.4, 9)
+        self.assertNotIn("!", E.conc_cells(even))
+
+    def test_blanks_and_the_sixty_minute_gate(self):
+        three = E.xgi_rate_variants(self._rows(1, [(0.2, 90), (0.2, 90), (0.5, 90)]))[1]
+        self.assertIsNone(three["trim90"], "trim90 needs four games")
+        self.assertAlmostEqual(three["med90"], 0.2, 9)
+        short = E.xgi_rate_variants(self._rows(2, [(0.2, 45), (0.2, 30), (0.2, 59), (0.1, 20)]))[2]
+        self.assertIsNone(short["med90"], "med90 needs a 60-minute game")
+        self.assertAlmostEqual(short["raw90"], 0.7 / 154 * 90, 9)
+        self.assertAlmostEqual(short["trim90"], 0.5 / 109 * 90, 9)     # best = first 0.2 (max keeps the first)
+        zero = E.xgi_rate_variants(self._rows(3, [(0.0, 90), (0.0, 90), (0.0, 90), (0.0, 90)]))[3]
+        self.assertIsNone(zero["conc"])
+        self.assertEqual(zero["trim90"], 0.0)
+        mixed = E.xgi_rate_variants(self._rows(4, [(0.3, 45), (0.3, 90), (0.3, 90), (0.3, 90)]))[4]
+        self.assertAlmostEqual(mixed["med90"], 0.3, 9)                 # the 45-minute game is out of med90 ...
+        self.assertAlmostEqual(mixed["raw90"], 1.2 / 315 * 90, 9)      # ... and in raw90
+        self.assertEqual(E.conc_cells(None), f"{'-':>6}{'-':>7}{'-':>7}")
+        self.assertEqual(E.conc_cells(zero), f"{'-':>6}{'0.00':>7}{'0.00':>7}")
+        self.assertNotIn(5, E.xgi_rate_variants(self._rows(5, [(0.0, 0), (0.0, 0)])),
+                         "a player with no minutes has no rate")
+
+    def _spike_world(self):
+        d = make_export(gw=5)
+        mids = [p for p in d["all_players"] if p["pos"] == 3 and p["status"] == "a"]
+        spike, steady = mids[0], mids[1]
+        for p in (spike, steady):
+            p["pens_order"] = p["corners_order"] = p["fk_order"] = None
+        for r in d["player_gw_recent"]:
+            if r["player_id"] == spike["id"]:
+                r["xg"], r["xa"] = (3.0 if r["event"] == 1 else 0.0), 0.0
+            elif r["player_id"] == steady["id"]:
+                r["xg"], r["xa"] = 0.5, 0.0
+        return d, spike, steady
+
+    def test_ordering_and_projection_ignore_the_variants(self):
+        d, spike, steady = self._spike_world()
+        cands, _, _ = E.wildcard_candidates(d)
+        seen = {c["id"]: c for c in cands[3]}
+        s, t = seen[spike["id"]], seen[steady["id"]]
+        self.assertAlmostEqual(s["xgi90"], 3.0 / 450 * 90, 6)
+        self.assertAlmostEqual(t["xgi90"], 2.5 / 450 * 90, 6)
+        self.assertAlmostEqual(s["var"]["conc"], 1.0, 9)
+        self.assertAlmostEqual(s["var"]["trim90"], 0.0, 9)
+        self.assertAlmostEqual(t["var"]["trim90"], 0.5, 9)
+        self.assertGreater(t["var"]["med90"], s["var"]["med90"])
+        self.assertAlmostEqual(s["p_start"], t["p_start"], 9)
+        order = [c["id"] for c in cands[3]]
+        self.assertLess(order.index(spike["id"]), order.index(steady["id"]),
+                        "the ordering left the raw rate")
+        self.assertEqual(s["xgi90"], s["var"]["raw90"], "the ordering rate is the raw rate")
+        inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=d["gameweek"])
+        self.assertAlmostEqual(inp["players"][spike["id"]]["xgi90"], s["var"]["raw90"], 9,
+                               "the rate the projection consumes is not the raw rate")
+
+    def test_columns_printed_in_the_shortlists_xi_and_squad_section(self):
+        d, spike, steady = self._spike_world()
+        out = run("wildcard", d)
+        short = out.split("SHORTLISTS")[1].split("SQUAD")[0]
+        self.assertIn(f"{'xGI/90':>8}{'conc':>6}{'trim90':>7}{'med90':>7}", short)
+        line = next(l for l in short.splitlines() if l.strip().startswith(spike["web_name"][:14]))
+        self.assertIn("1.00!", line)
+        self.assertTrue(line.rstrip().endswith("0.00"), line)
+        xi_block = out.split("SQUAD")[1].split("BENCH")[0]
+        line = next(l for l in xi_block.splitlines() if l.strip().startswith("MID " + spike["web_name"][:14]))
+        self.assertIn("conc/trim/med", line)
+        self.assertIn("1.00!", line)
+        self.assertIn("printed, never ordered or projected on", out)
+        me = E.my_name(d)
+        row = next(r for r in d["squads"] if r["entry_name"] == me)
+        for r in d["squads"]:                       # put the spike in my squad
+            if r["entry_name"] == me and r["pos"] == 3:
+                r["web_name"], r["team"] = spike["web_name"], spike["team"]
+                break
+        sq = run("squad", d)
+        self.assertIn(f"{'xGI/90':>8}{'conc':>6}{'trim90':>7}{'med90':>7}", sq)
+        line = next(l for l in sq.splitlines() if spike["web_name"][:14] in l and l[:3] in ("XI ", "BEN"))
+        self.assertIn("1.00!", line)
+        self.assertRegex(line, r"fdr\s*\d\.\d\s+0\.60\s+1\.00!")
+        self.assertIn("nothing orders or projects on them", sq)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):
