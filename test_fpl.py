@@ -2790,7 +2790,7 @@ class WildcardThreeLayer(unittest.TestCase):
     def test_output_has_xi_captain_bench_sums_and_bench_fixtures(self):
         d = make_export()
         out = run("wildcard", d)
-        body = out.split("SQUAD")[1]
+        body = out.split("BENCH BOOST SCREEN")[0].split("SQUAD")[1]
         xi_block, bench_block = body.split("BENCH")
         self.assertEqual(sum(1 for l in xi_block.splitlines() if "6wk " in l), 11)
         self.assertEqual(xi_block.count("(C)"), 1)
@@ -2829,6 +2829,7 @@ class WildcardCrossPosition(unittest.TestCase):
 
     @staticmethod
     def _blocks(out):
+        out = out.split("BENCH BOOST SCREEN")[0]          # G: the draft's screen follows
         xi_block, bench_block = out.split("SQUAD")[1].split("BENCH")
         return xi_block, bench_block
 
@@ -3471,6 +3472,39 @@ class ConcentrationTest(unittest.TestCase):
         self.assertIn("VERDICT:", text)
         self.assertIn(verdict, ("raw", "trim90", "med90"))
         self.assertIn("Pre-registered 2026-09-24", text)
+
+
+class BoostOnDraft(unittest.TestCase):
+    """G: the wildcard's appended bench_boost block is the existing screen on
+    the drafted fifteen - byte-identical to a direct call on the same ids."""
+
+    def test_wildcard_appends_the_screen_for_the_drafted_fifteen(self):
+        d = make_export()
+        out = run("wildcard", d)
+        marker = "BENCH BOOST SCREEN  ("
+        self.assertEqual(out.count(marker), 1, "the screen must appear exactly once")
+        block = out[out.index(marker):]
+        cands, _, _ = E.wildcard_candidates(d)
+        budget = d["standings"][0]["value"] / 10
+        squad, _, _ = E.build_three_layer_squad(cands, budget, E.budget_split(d, budget))
+        ids = [c["id"] for c in squad]
+        self.assertEqual(len(ids), 15)
+        self.assertNotEqual(sorted(ids), sorted(E.my_squad_ids(d)),
+                            "fixture cannot tell the draft from my current 15")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            E.sec_bench_boost(d, 6, ids)
+        direct = buf.getvalue()
+        self.assertEqual(block, direct[direct.index(marker):],
+                         "the appended block is not the screen on the drafted ids")
+        gw = d["gameweek"]
+        for w in range(gw + 1, gw + 7):
+            self.assertIn(f"  GW{w}\n", block, f"GW{w} missing from the appended screen")
+        self.assertIn("GK/DEF at FDR 4+", block)
+        self.assertIn("XI from this 15", block)
+        self.assertIn("best XI, same budget, fodder bench", block)
+        self.assertIn("BENCH BOOST SCREEN FOR THIS DRAFT", out)
+        self.assertLess(out.index("XI six-week sum"), out.index(marker), "the screen must follow the squad")
 
 
 class Hygiene(unittest.TestCase):

@@ -1701,6 +1701,10 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     print(f"    XI six-week sum {xi_sum:.1f}   bench six-week sum {bench_sum:.1f}   "
           f"fifteen {xi_sum + bench_sum:.1f}   (one unit: full model, all terms)")
     print()
+    # G: the draft's boost-week verdict - the existing screen on the drafted
+    # fifteen, unchanged, so a --squad call on these ids prints the same block
+    print("  BENCH BOOST SCREEN FOR THIS DRAFT  (--section bench_boost on the drafted 15)")
+    sec_bench_boost(d, horizon, [c["id"] for c in squad])
 
 
 def _build_squad(pool, budget, quota=None):
