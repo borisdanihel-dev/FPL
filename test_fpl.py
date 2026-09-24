@@ -3363,6 +3363,116 @@ class Concentration(unittest.TestCase):
         self.assertIn("nothing orders or projects on them", sq)
 
 
+class ConcentrationTest(unittest.TestCase):
+    """F (2)/(3): the pre-registered harness on synthetic data only."""
+
+    @staticmethod
+    def _spiked(gws=8):
+        """_model_world with MID 4's xGI concentrated in GW1."""
+        c = _model_world(gws)
+        for r in c["rows"]:
+            if r["player_id"] == 4:
+                r["xg"], r["xa"] = (2.0, 1.0) if r["event"] == 1 else (0.05, 0.0)
+        return c
+
+    def test_metrics_are_p_start_times_fixtures_times_rate_for_mid_fwd_only(self):
+        c = self._spiked()
+        rows = {r["pid"]: r for r in H.concentration_rows(c, 6, hs=(1, 2))}
+        self.assertTrue(rows and all(r["pos"] in (3, 4) for r in rows.values()))
+        self.assertNotIn(2, rows, "a defender was included")
+        train = E.canonical_through(c, 5)
+        inp = E.reliability_inputs(train, gws_played=5)
+        var = E.xgi_rate_variants(train["rows"])
+        r4 = rows[4]["H"][2]
+        base = inp["players"][4]["p_start"] * 2
+        self.assertAlmostEqual(r4["raw"], base * inp["players"][4]["xgi90"], 9)
+        self.assertAlmostEqual(r4["trim90"], base * var[4]["trim90"], 9)
+        self.assertAlmostEqual(r4["med90"], base * var[4]["med90"], 9)
+        self.assertLess(r4["trim90"], r4["raw"], "the spike was not trimmed")
+        self.assertEqual(rows[4]["H"][1]["actual"] + 0, sum(r["pts"] for r in c["rows"]
+                                                            if r["player_id"] == 4 and r["event"] == 6))
+        nfx = {}
+        for m in c["team_matches"]:
+            if m["event"] in (6, 7):
+                nfx[m["team"]] = nfx.get(m["team"], 0) + 1
+        for pid, r in rows.items():                 # every row: P(start) x fixtures x rate
+            p = inp["players"][pid]
+            self.assertAlmostEqual(r["H"][2]["raw"], p["p_start"] * nfx[p["team"]] * (p["xgi90"] or 0.0), 9)
+        self.assertIn(12, rows, "the never-starter passes the minutes gate")
+        self.assertEqual(inp["players"][12]["p_start"], 0.0)
+        self.assertEqual(rows[12]["H"][2]["raw"], 0.0, "a never-starter must carry P(start) = 0")
+
+    def test_an_undefined_variant_falls_back_to_raw(self):
+        c = self._spiked()
+        rows = {r["pid"]: r for r in H.concentration_rows(c, 4, hs=(1,))}   # 3 training games
+        self.assertIsNone(E.xgi_rate_variants(E.canonical_through(c, 3)["rows"])[4]["trim90"])
+        self.assertEqual(rows[4]["H"][1]["trim90"], rows[4]["H"][1]["raw"])
+        self.assertNotEqual(rows[4]["H"][1]["med90"], rows[4]["H"][1]["raw"])
+
+    def test_target_weeks_do_not_leak_and_incomplete_horizons_are_skipped(self):
+        c = self._spiked()
+        a = {r["pid"]: r for r in H.concentration_rows(c, 6, hs=(1, 2))}
+        leaky = dict(c, rows=[dict(r, xg=r["xg"] + 5, pts=r["pts"] + 20, starts=0, minutes=0)
+                              if r["event"] >= 6 else r for r in c["rows"]])
+        b = {r["pid"]: r for r in H.concentration_rows(leaky, 6, hs=(1, 2))}
+        self.assertEqual(set(a), set(b))
+        for pid in a:
+            for Hn in (1, 2):
+                for k in ("raw", "trim90", "med90"):
+                    self.assertEqual(a[pid]["H"][Hn][k], b[pid]["H"][Hn][k], f"{pid} {Hn} {k} leaked")
+        last = {r["pid"]: r for r in H.concentration_rows(c, 8, hs=(1, 2))}
+        self.assertEqual(set(last[4]["H"]), {1}, "an incomplete horizon was graded")
+
+    def test_paired_bootstrap_is_seeded_paired_and_finds_a_real_gain(self):
+        import random
+        rng = random.Random(1)
+        act = [rng.random() * 10 for _ in range(300)]
+        good = [a + rng.gauss(0, 1) for a in act]
+        noise = [rng.random() * 10 for _ in act]
+        res = H.paired_delta_intervals({"raw": noise, "trim90": good, "med90": list(noise)}, act, B=200)
+        again = H.paired_delta_intervals({"raw": noise, "trim90": good, "med90": list(noise)}, act, B=200)
+        self.assertEqual(res, again, "not seeded")
+        d, lo, hi = res["trim90"]
+        self.assertGreater(lo, 0, "a real gain did not exclude zero")
+        self.assertGreater(d, 0.5)
+        self.assertEqual(res["med90"], (0.0, 0.0, 0.0), "identical predictions must give a zero interval")
+
+    def test_rule_needs_both_positions_above_raw_with_intervals_excluding_zero(self):
+        win = {3: (0.30, 0.34, +0.01, +0.07), 4: (0.31, 0.36, +0.02, +0.08)}
+        one = {3: (0.30, 0.34, +0.01, +0.07), 4: (0.31, 0.30, -0.05, +0.03)}
+        wide = {3: (0.30, 0.34, -0.01, +0.09), 4: (0.31, 0.36, +0.02, +0.08)}
+        self.assertEqual(H.concentration_rule({"trim90": win, "med90": one}), "trim90")
+        self.assertEqual(H.concentration_rule({"trim90": one, "med90": one}), "raw")
+        self.assertEqual(H.concentration_rule({"trim90": wide, "med90": one}), "raw")
+        bigger = {3: (0.30, 0.40, +0.05, +0.15), 4: (0.31, 0.36, +0.02, +0.08)}
+        self.assertEqual(H.concentration_rule({"trim90": win, "med90": bigger}), "med90")
+        self.assertEqual(H.concentration_rule({"trim90": {3: win[3]}, "med90": one}), "raw")
+
+    def test_report_carries_both_horizons_the_pairs_and_the_verdict(self):
+        c = self._spiked(gws=12)
+        text, verdict, stats = H.concentration_report(c, first=5, B=50)
+        by_origin = {t: H.concentration_rows(c, t, hs=(1, 6)) for t in range(5, 13)}
+
+        def pooled(Hn, pos):
+            sel = [r["H"][Hn] for t in by_origin for r in by_origin[t]
+                   if Hn in r["H"] and r["pos"] == pos]
+            return E._spearman([s["raw"] for s in sel], [s["actual"] for s in sel])
+
+        self.assertAlmostEqual(stats["trim90"][3][0], pooled(6, 3), 9, "the verdict is not fed by H = 6")
+        self.assertAlmostEqual(stats["med90"][4][0], pooled(6, 4), 9)
+        self.assertNotAlmostEqual(pooled(6, 3), pooled(1, 3), 3, "fixture cannot tell H = 1 from H = 6")
+        self.assertIn("H = 1 ", text)
+        self.assertIn("H = 6 ", text)
+        self.assertIn("(decides)", text)
+        self.assertIn("(reported only)", text)
+        self.assertRegex(text, r"(?m)^    MID  trim90\s+rho [+-]\d\.\d{3} v raw [+-]\d\.\d{3}   delta")
+        self.assertRegex(text, r"(?m)^    FWD  med90\s+rho ")
+        self.assertEqual(text.count("(decides)"), 1)
+        self.assertIn("VERDICT:", text)
+        self.assertIn(verdict, ("raw", "trim90", "med90"))
+        self.assertIn("Pre-registered 2026-09-24", text)
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):

@@ -235,6 +235,168 @@ def horizon_report(c, hs=HORIZONS, first=5):
     return "\n".join(out)
 
 
+CONC_HORIZONS = (1, 6)
+CONC_B, CONC_SEED = 2000, 20260924
+CONC_DEFINITION = """\
+  Pre-registered 2026-09-24 (CHANGELOG, item 8 F 2), run without change:
+    MID and FWD only; a player is in at origin t if he passes the usual gate
+    (45+ minutes over the last four training gameweeks) and his team has a
+    fixture in the horizon; whole population, blanks as 0. H = 1 and H = 6,
+    target = the sum of points over GW t..t+H-1, an origin used only when
+    t+H-1 <= 38. Metric = P(start) x fixtures in the horizon x rate, with
+    rate = raw (training xGI / minutes x 90, the live ordering rate), trim90
+    (best training gameweek removed, 4+ gameweeks with minutes) or med90
+    (median per-gameweek xGI/90 over 60+ minute training gameweeks); where a
+    variant is undefined the player keeps his raw rate. Rates unshrunk.
+    Tie-corrected Spearman with 1.96/sqrt(n-1) intervals, pooled by training
+    window. Paired difference v raw on the all-window rows: 95% percentile
+    interval of rho(variant) - rho(raw) over B = 2000 bootstrap resamples of
+    the rows, pairs kept together, seed 20260924.
+  Rule: a variant replaces raw for MID/FWD ordering only if at H = 6 its rho
+    exceeds raw's for MID and for FWD and its paired-difference interval
+    excludes zero for MID and for FWD; both qualifying, the larger MID + FWD
+    gain. Otherwise raw stays and conc remains a printed flag."""
+
+
+def concentration_rows(c, t, hs=CONC_HORIZONS, gate_mins=45):
+    """One origin t, MID/FWD only: train on GW1..t-1 (the same reliability
+    inputs as the horizon test), then for each H the three ordering metrics
+    P(start) x fixtures x rate and the actual sum over GW t..t+H-1. A variant
+    undefined for a player falls back to his raw rate."""
+    train = E.canonical_through(c, t - 1)
+    inp = E.reliability_inputs(train, gws_played=t - 1)
+    var = E.xgi_rate_variants(train["rows"])
+    last, span = c["through_gw"], t + max(hs) - 1
+    nfx = defaultdict(lambda: defaultdict(int))
+    for m in c["team_matches"]:
+        if t <= m["event"] <= span:
+            nfx[m["team"]][m["event"]] += 1
+    pts = defaultdict(float)
+    for r in c["rows"]:
+        if t <= r["event"] <= span:
+            pts[(r["player_id"], r["event"])] += r["pts"] or 0
+    out = []
+    for pid, p in inp["players"].items():
+        if p["pos"] not in (3, 4) or p["mins_last4"] < gate_mins:
+            continue
+        raw = p["xgi90"] or 0.0
+        v = var.get(pid) or {}
+        rates = {"raw": raw,
+                 "trim90": raw if v.get("trim90") is None else v["trim90"],
+                 "med90": raw if v.get("med90") is None else v["med90"]}
+        row = {"pid": pid, "pos": p["pos"], "origin": t, "H": {}}
+        for H in hs:
+            if t + H - 1 > last:
+                continue                              # incomplete horizon
+            events = range(t, t + H)
+            nfix = sum(nfx[p["team"]].get(e, 0) for e in events)
+            if nfix == 0:
+                continue                              # no fixture in the horizon
+            base = p["p_start"] * nfix
+            row["H"][H] = {k: base * r for k, r in rates.items()}
+            row["H"][H]["actual"] = sum(pts.get((pid, e), 0.0) for e in events)
+        if row["H"]:
+            out.append(row)
+    return out
+
+
+def paired_delta_intervals(preds, act, B=CONC_B, seed=CONC_SEED):
+    """{variant: (delta, lo, hi)} for every variant in `preds` other than
+    'raw': delta = rho(variant) - rho(raw) on the rows; lo..hi the 2.5th-97.5th
+    percentile of that difference over B bootstrap resamples of the rows, the
+    row's predictions and actual kept together."""
+    import random
+    rng = random.Random(seed)
+    n = len(act)
+    names = [k for k in preds if k != "raw"]
+    point = {k: E._spearman(preds[k], act) - E._spearman(preds["raw"], act) for k in names}
+    deltas = {k: [] for k in names}
+    for _ in range(B):
+        idx = [rng.randrange(n) for _ in range(n)]
+        y = [act[i] for i in idx]
+        base = E._spearman([preds["raw"][i] for i in idx], y)
+        for k in names:
+            deltas[k].append(E._spearman([preds[k][i] for i in idx], y) - base)
+    out = {}
+    for k in names:
+        d = sorted(deltas[k])
+        out[k] = (point[k], d[int(0.025 * B)], d[int(0.975 * B) - 1])
+    return out
+
+
+def concentration_rule(stats):
+    """The pre-registered rule. stats = {variant: {pos: (rho_raw, rho_var,
+    lo, hi)}} at H = 6 on the all-window rows for pos 3 and 4. Returns the
+    variant that replaces raw, or 'raw'."""
+    winners = {}
+    for name, by_pos in stats.items():
+        ok = all(pos in by_pos and by_pos[pos][1] > by_pos[pos][0]
+                 and (by_pos[pos][2] > 0 or by_pos[pos][3] < 0) and by_pos[pos][2] > 0
+                 for pos in (3, 4))
+        if ok:
+            winners[name] = sum(by_pos[pos][1] - by_pos[pos][0] for pos in (3, 4))
+    return max(winners, key=winners.get) if winners else "raw"
+
+
+def concentration_report(c, hs=CONC_HORIZONS, first=5, B=CONC_B, seed=CONC_SEED):
+    """The table per H, training window and position for raw / trim90 /
+    med90, the paired differences on the all-window rows, and the verdict.
+    Returns (text, verdict)."""
+    last = c["through_gw"]
+    by_origin = {t: concentration_rows(c, t, hs) for t in range(first, last + 1)}
+    out = [f"ONE-MATCH CONCENTRATION TEST  {c['season']}  origins GW{first}-{last}",
+           CONC_DEFINITION, ""]
+    windows = list(WINDOWS) + [(WINDOWS[0][0], WINDOWS[-1][1])]
+    stats6 = {"trim90": {}, "med90": {}}
+    for H in hs:
+        origins = [t for t in by_origin if t + H - 1 <= last]
+        out += ["=" * 78,
+                f"H = {H:<3} sum over GW t..t+{H - 1}   origins GW{origins[0]}-{origins[-1]} "
+                f"({len(origins)})",
+                "=" * 78,
+                f"  {'training':12s}{'pos':5s}{'n':>6}{'raw rho, 95%':>24}"
+                f"{'trim90 rho, 95%':>24}{'med90 rho, 95%':>24}"]
+        pooled = {}
+        for lo, hi in windows:
+            label = f"GW{lo:>2}-{hi:<3}" + ("all" if (lo, hi) == windows[-1] else "   ")
+            for pos in (3, 4):
+                sel = [r["H"][H] for t in origins if lo <= t - 1 <= hi
+                       for r in by_origin[t] if H in r["H"] and r["pos"] == pos]
+                act = [s["actual"] for s in sel]
+                out.append(f"  {label:12s}{POSN[pos]:5s}{len(sel):>6}"
+                           + "".join(f"  {_rho_cell([s[k] for s in sel], act)}"
+                                     for k in ("raw", "trim90", "med90")))
+                if (lo, hi) == windows[-1]:
+                    pooled[pos] = sel
+            out.append("")
+        out.append(f"  paired difference v raw, all-window rows, B = {B} bootstrap resamples, "
+                   f"seed {seed}{'  (decides)' if H == 6 else '  (reported only)'}:")
+        for pos in (3, 4):
+            sel = pooled[pos]
+            act = [s["actual"] for s in sel]
+            if len(sel) < 3:
+                out.append(f"    {POSN[pos]:4s} n<3")
+                continue
+            preds = {k: [s[k] for s in sel] for k in ("raw", "trim90", "med90")}
+            rho = {k: E._spearman(preds[k], act) for k in preds}
+            res = paired_delta_intervals(preds, act, B, seed)
+            for name in ("trim90", "med90"):
+                d, lo_, hi_ = res[name]
+                excl = lo_ > 0 or hi_ < 0
+                out.append(f"    {POSN[pos]:4s} {name:7s} rho {rho[name]:+.3f} v raw {rho['raw']:+.3f}"
+                           f"   delta {d:+.3f}   95% {lo_:+.3f}..{hi_:+.3f}   "
+                           f"{'excludes 0' if excl else 'includes 0'}")
+                if H == 6:
+                    stats6[name][pos] = (rho["raw"], rho[name], lo_, hi_)
+        out.append("")
+    verdict = concentration_rule(stats6)
+    out += ["RULE (pre-registered): a variant replaces raw for MID/FWD ordering only if at",
+            "  H = 6 its rho exceeds raw's for MID and for FWD and its paired-difference",
+            "  interval excludes zero for both; otherwise raw stays, conc remains a flag.",
+            f"VERDICT: {'raw stays - conc remains a printed flag' if verdict == 'raw' else verdict + ' replaces raw for MID/FWD ordering'}"]
+    return "\n".join(out), verdict, stats6
+
+
 def backtest_report(c, first=5, last=None):
     """Steps 3-5. Rolling origin GW `first`..`last`; rows pooled by training
     window; every figure per position with its interval; the crossover named
@@ -320,6 +482,8 @@ def main():
                     help="rolling-origin backtest, four baselines, ablation (Steps 3-5)")
     ap.add_argument("--horizon", action="store_true",
                     help="the pre-registered horizon test (commit 9b43a78)")
+    ap.add_argument("--concentration", action="store_true",
+                    help="the pre-registered one-match concentration test (item 8)")
     ap.add_argument("--out", help="also write the output to this file")
     args = ap.parse_args()
     E.force_utf8()
@@ -329,6 +493,13 @@ def main():
     for n in c["notes"]:
         print(f"  ! {n}")
     print()
+    if args.concentration:
+        text, _, _ = concentration_report(c)
+        print(text)
+        if args.out:
+            with open(args.out, "w", encoding="utf-8") as fh:
+                fh.write(text + "\n")
+        return
     if args.horizon:
         text = horizon_report(c)
         print(text)
