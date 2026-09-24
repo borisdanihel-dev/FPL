@@ -2031,3 +2031,34 @@ best game neither helps nor hurts the ordering at H = 6 at this sample size,
 and taking his median hurts it slightly. As pre-registered, a double
 gameweek is one row and so one "game"; the harness is `f96643c`, unchanged
 by the run.
+
+---
+
+## 2026-09-24 — item G: every wildcard draft carries its boost-week verdict (`fa4b0a4`)
+
+When `--section wildcard` prints a squad it now appends the existing
+`bench_boost` screen for that fifteen — `sec_bench_boost(d, horizon, ids)`
+on the drafted ids, unchanged: the same six weeks (GW6–11 from a GW5
+export), the same two labelled numbers per week (XI from this 15 v the best
+XI the same budget buys around a fodder bench) and the GK/DEF at FDR 4+
+count. No new logic; a `--section bench_boost --squad <ids>` call on the
+drafted ids prints the same block byte for byte (tested). One line leads it
+in so the reader knows whose fifteen it is. Note the screen's own "XI from
+this 15" line still picks its XI with `_best_xi` — the existing screen's
+logic, left as it is; review D restricted the wildcard's XI, not this screen.
+
+**Live, GW5 export, the draft of item 4c:** all fifteen project in every
+week (blanks 0, flagged 0); GK/DEF at FDR 4+ run 2, 4, 3, 1, 1, 2 for
+GW6–11; the fifteen's XI against the fodder-bench alternative runs
+55.6/57.1, 54.4/55.5, 53.2/54.7, 55.7/56.6, 56.4/58.8, 54.4/57.0 — the
+bench spend costs 0.9–2.6 points a week against the boost week's gain of the
+four bench projections (roughly 13–14 points), as the item 3 screen was built
+to show.
+
+**Verified:** 1 test, suite **207 → 208** — the appended block equals a
+direct `sec_bench_boost` call on the drafted ids (which differ from my
+current 15 in the fixture), carries all six weeks, the FDR 4+ count and both
+labelled numbers, and follows the squad. Two test helpers now stop at the
+appended block. 4 mutations each red — the call dropped, the screen called on my current 15 instead of the draft, called on the XI only, called for one week. `bench_boost`, `squad` and `eo`
+byte-identical; the draft byte-identical up to the appended block;
+GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
