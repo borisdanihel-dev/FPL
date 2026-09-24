@@ -1818,3 +1818,102 @@ layer.
 
 **Verified:** 4 tests, suite **193 → 197**; 12 mutations each red — Triple Captain as 3, bench as 1, captain not doubled, net sign flipped, cover counting starters, swing ignoring multipliers, projections in the mixed units, candidates including DEF, candidates including the bench, stake = 1 − EO, candidates unordered, expectation note dropped. `bench_boost`,
 `wildcard` and `squad` byte-identical; GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
+
+---
+
+## 2026-09-24 — item 4c (review E): layer 2 admits, layer 3 ranks — the role tier leaves the ordering key (`c97ae18`)
+
+Item C read "shortlist by role" as a rank: the ordering key was (number of
+role edges, metric), so a three-role player sat above any higher metric in
+his position. That was my reading, not the rule. As specified now: **layer 2
+admits a player to the shortlist and never ranks him**; **layer 3 orders the
+whole shortlist by its metric alone** — GK/DEF by the summed per-fixture
+bottomup (the six-week sum, all terms), MID/FWD by P(start) × fixtures, then
+xGI/90. The role flags (pens, corners, fk, defcon, arb) are still computed
+and printed beside every player — shortlists, XI and bench — for a human
+override at draft time. The header says so. Nothing else in the section
+moves: budget, split, formation, bench, captain rule as in review D.
+
+**Live, GW5 export, budget £100.3m, 4-3-3, squad-shape split**
+(`reports/wildcard_gw5.txt`), the top eight of each ordered shortlist with
+price, then the squad:
+
+```
+  SHORTLISTS  (top 8 per position; 6wk = full model, all terms, GW6-11:
+               one unit for every position, next to the ordering metric)
+    GK   player         team     £  roles              6wk P(st)xfix  xGI/90
+         Pickford       EVE    5.5                    26.2      6.00    0.00
+         Trafford       LEE    5.0                    25.0      6.00    0.00
+         Raya           ARS    6.1                    23.8      6.00    0.00
+         Kelleher       BRE    5.0                    23.4      6.00    0.00
+         Tzolakis       HUL    4.6                    21.7      6.00    0.00
+         Verbruggen     BHA    4.5                    21.1      6.00    0.04
+         A.Becker       LIV    5.5                    21.0      6.00    0.00
+         Donnarumma     MCI    5.5                    20.8      6.00    0.00
+    DEF   player         team     £  roles              6wk P(st)xfix  xGI/90
+         Muharemović    LEE    5.0  defcon            34.8      6.00    0.11
+         Bogle          LEE    4.6  arb               34.2      6.00    0.36
+         Branthwaite    EVE    5.5  defcon            33.5      6.00    0.04
+         Tarkowski      EVE    6.1  defcon            33.0      6.00    0.04
+         Justin         LEE    4.5                    32.2      6.00    0.13
+         De Cuyper      BHA    4.9  arb               31.8      6.00    0.47
+         Calafiori      ARS    5.8  arb               31.3      6.00    0.28
+         Gabriel        ARS    8.0                    30.7      6.00    0.14
+    MID   player         team     £  roles              6wk P(st)xfix  xGI/90
+         Saka           ARS    9.5  pens              34.6      6.00    0.91
+         B.Fernandes    MUN   11.9  corners,fk,pens   30.5      6.00    0.78
+         Mbeumo         MUN    7.9                    30.3      6.00    0.77
+         E.Le Fée       SUN    5.7  corners           28.3      6.00    0.70
+         Cherki         MCI    7.8  corners,fk        28.8      6.00    0.67
+         Ndoye          NFO    5.5                    28.0      6.00    0.62
+         Rudoni         COV    4.9  fk                29.2      6.00    0.62
+         Rogers         CHE    7.7                    26.5      6.00    0.61
+    FWD   player         team     £  roles              6wk P(st)xfix  xGI/90
+         Haaland        MCI   15.6  pens              30.7      6.00    0.99
+         Isak           LIV    9.1                    27.4      6.00    0.79
+         Barry          EVE    5.6  pens              27.4      6.00    0.79
+         Brobbey        SUN    5.7                    25.8      6.00    0.69
+         Thiago         BRE    7.8  pens              25.5      6.00    0.67
+         Calvert-Lewin  LEE    6.0  pens              25.0      6.00    0.64
+         Gonzalo        FUL    6.0  pens              24.6      6.00    0.62
+         Emersonn       IPS    5.5                    22.6      6.00    0.49
+
+  SQUAD  £100.3m of £100.3m   keeps from your current 15 (5): B.Fernandes, Barry, Haaland, Slater, Verbruggen
+    XI (4-3-3, --formation)   sums = full model, all terms   by = the frozen ordering metric
+      GK  Tzolakis       HUL    4.6  6wk  21.7  by bottomup 21.7                  
+      DEF Muharemović    LEE    5.0  6wk  34.8  by bottomup 34.8                  defcon
+      DEF Bogle          LEE    4.6  6wk  34.2  by bottomup 34.2                  arb
+      DEF Branthwaite    EVE    5.5  6wk  33.5  by bottomup 33.5                  defcon
+      DEF Tarkowski      EVE    6.1  6wk  33.0  by bottomup 33.0                  defcon
+      MID Saka           ARS    9.5  6wk  34.6  by P(st)xfix 6.00 xGI/90 0.91     pens  (C)
+      MID B.Fernandes    MUN   11.9  6wk  30.5  by P(st)xfix 6.00 xGI/90 0.78     corners,fk,pens
+      MID Rudoni         COV    4.9  6wk  29.2  by P(st)xfix 6.00 xGI/90 0.62     fk
+      FWD Haaland        MCI   15.6  6wk  30.7  by P(st)xfix 6.00 xGI/90 0.99     pens  (V)
+      FWD Isak           LIV    9.1  6wk  27.4  by P(st)xfix 6.00 xGI/90 0.79     
+      FWD Barry          EVE    5.6  6wk  27.4  by P(st)xfix 6.00 xGI/90 0.79     pens
+    captain restricted to MID/FWD: DEF over-spread
+    BENCH  cheapest who pass layer 1 per remaining slot (GK/DEF ties: GW8-11 fixture count)      fixtures GW8-11
+      GK  Verbruggen     BHA    4.5  6wk  21.1   LIV (A) 4 | MCI (A) 5 | BRE (H) 3 | HUL (A) 2
+      DEF Thomas         COV    4.0  6wk  26.4   FUL (H) 2 | SUN (H) 2 | EVE (A) 3 | CRY (H) 3
+      MID Slater         HUL    4.5  6wk  20.1   BRE (H) 3 | IPS (H) 2 | ARS (A) 5 | BHA (H) 2
+      MID Sadiki         SUN    4.9  6wk  18.3   LEE (H) 2 | COV (A) 2 | CHE (H) 4 | AVL (A) 4
+    XI six-week sum 337.0   bench six-week sum 85.9   fifteen 423.0   (one unit: full model, all terms)
+```
+
+Against item 4b (tier ordering): the XI six-week sum rises 312.7 → 337.0 and
+the money is fully spent. The MID list is now Saka, Fernandes, Mbeumo,
+Le Fée, Cherki, Ndoye, Rudoni, Rogers — Groß (three roles, xGI/90 0.53) and
+Szoboszlai (0.46) leave the top eight; Rudoni is the third XI midfielder
+because £4.9m is what the MID share leaves after Saka and Fernandes, and
+Tzolakis replaces Pickford in goal for the same reason (nothing is left over
+to upgrade). Five keeps from the current 15 (was seven). The shortlists are
+the argument: the flags say who has a role, the order says who the model
+prefers, and the draft is the human's.
+
+**Verified:** three item-C tests rewritten (roles admit but never rank — a
+three-role midfielder with the lower metric sits below a no-role midfielder
+with the higher one, the same for defenders, the roles still printed in the
+shortlist and beside him in the XI; the legal-squad rig now tops the lists by
+metric; the build takes the top of the list, not the value-per-million pick);
+the split test's binding budget moved to £80.0m. Suite stays at **197**.
+5 mutations each red — the role tier restored to the ordering key, the tier as a tiebreak after the metric, roles dropped from the shortlist print, roles dropped from the XI lines, the old global value-per-million build in place of the per-position fill. `bench_boost`, `squad` and `eo` byte-identical; GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
