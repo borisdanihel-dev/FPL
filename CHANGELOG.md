@@ -1953,3 +1953,45 @@ projection consumes is raw; the columns present in the shortlists, the XI
 line and the squad section with the flag on the spike. 11 mutations each red — conc over minutes, trim90 keeping the best game, trim90 on three games, med90 over every game, the flag threshold moved, MID/FWD ordered on trim90, ordered on med90, the columns dropped from the shortlist, from the XI line, from the squad section, and the squad section printing trim90 as the rate.
 `bench_boost` and `eo` byte-identical; the wildcard squad unchanged in
 names, prices and sums; GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
+
+---
+
+## 2026-09-24 07:39:51 UTC — item 8 (F 2): one-match concentration test PRE-REGISTERED before the run (`f96643c`)
+
+Frozen here before any run on 2025/26. The harness (`fpl_hist.py
+--concentration`) is committed with this entry and tested on synthetic data
+only; nothing below is tuned after the run.
+
+- **Data and harness:** 2025/26 (vaastav), the rolling-origin harness of the
+  horizon test: train on GW1..t−1 with the same `reliability_inputs()`,
+  origins GW5..38, fixture pairings known in advance, results not.
+- **Population:** MID and FWD only. A player is in at origin t if he passes
+  the usual gate (45+ minutes over the last four training gameweeks) and his
+  team has at least one fixture in the horizon. Whole population, blanks as 0.
+- **Horizons:** H = 1 and H = 6; target = the sum of points over GW
+  t..t+H−1; an origin is used for a given H only when t+H−1 ≤ 38.
+- **Metrics compared** — the wildcard's MID/FWD ordering metric as a
+  product, P(start) × fixtures in the horizon × rate, with the rate
+  (a) **raw**: training-slice xGI / minutes × 90, the rate the live ordering
+  uses; (b) **trim90**: xGI/90 with the best training gameweek removed, when
+  the player has 4+ training gameweeks with minutes; (c) **med90**: the
+  median per-gameweek xGI per 90 over training gameweeks of 60+ minutes.
+  Where trim90 or med90 is undefined for a player, that variant uses his raw
+  rate, so the three metrics differ only where the variant is defined. Rates
+  unshrunk, as the live ordering uses them; P(start) and the fixture count
+  identical across the three; everything else identical.
+- **Statistic:** tie-corrected Spearman (`_spearman`) of metric against the
+  actual sum, per position, pooled by training window (GW4–7, 8–11, 12–19,
+  20–37 and all GW4–37; the window is that of t−1, as in Steps 3–5), with
+  the 1.96/√(n−1) interval per cell as in the horizon table.
+- **Paired difference:** at each H on the all-window pooled rows, per
+  position, Δ = rho(variant) − rho(raw) on the same rows; its 95% interval
+  is the 2.5th–97.5th percentile of Δ over B = 2000 bootstrap resamples of
+  the rows with replacement, each row's three metrics and actual kept
+  together, seed 20260924. H = 1 is reported; only H = 6 decides.
+- **Decision rule:** a variant replaces raw for MID/FWD ordering only if, at
+  H = 6 on the all-window pooled rows, its rho exceeds raw's for MID and for
+  FWD **and** its paired-difference interval excludes zero for MID and for
+  FWD. If both variants qualify, the one with the larger MID + FWD rho gain.
+  Otherwise raw stays and conc remains a printed flag. The verdict is applied
+  as written, once, and logged with the table.
