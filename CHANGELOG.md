@@ -1995,3 +1995,39 @@ only; nothing below is tuned after the run.
   FWD. If both variants qualify, the one with the larger MID + FWD rho gain.
   Otherwise raw stays and conc remains a printed flag. The verdict is applied
   as written, once, and logged with the table.
+
+---
+
+## 2026-09-24 — item 8 (F 3): the one-match concentration test run as pre-registered — raw stays - conc remains a printed flag (`32fac1a`)
+
+Run once at 2026-09-24 07:40:00 UTC, 105 s, `python fpl_hist.py historical/2025-26
+--season 2025/26 --concentration`, code `32fac1a` — the harness committed
+with the pre-registration, unchanged. The full table (H = 1 and H = 6, per
+training window and position, raw v trim90 v med90 with intervals, the paired
+bootstrap differences and the verdict) is appended to
+`HISTORICAL_VALIDATION.md` with the timestamp and hash, and kept as
+`reports/concentration_2025-26.txt`.
+
+**Rule applied as written:** raw stays - conc remains a printed flag.
+
+**What the table says, and no more.** At H = 6 on the all-window rows
+(MID n = 4,332; FWD n = 1,035) trim90 sits +0.004 (MID) and +0.003 (FWD)
+above raw with both paired intervals including zero (−0.001..+0.009 and
+−0.011..+0.016); med90 sits −0.008 (MID) and −0.012 (FWD) below raw, both
+intervals including zero. Neither variant meets the rule. At H = 1 (reported
+only) trim90 is indistinguishable from raw (+0.001 / −0.006) and med90 is
+worse for MID (−0.013, interval −0.023..−0.003, excluding zero) and −0.015
+for FWD (including zero). Per training window at H = 6, trim90 is above raw
+in seven of ten cells by 0.005–0.021 and below in the two small early FWD
+cells (GW4–7 −0.073 on n = 127, GW8–11 −0.021 on n = 141); med90 is mixed,
+with one large positive cell (GW12–19 FWD +0.094, n = 283) and negatives
+elsewhere. The pooled paired difference was the pre-registered statistic; the
+cells are context.
+
+**What acts:** nothing. MID/FWD ordering stays P(start) × fixtures, then raw
+xGI/90; `conc`, `trim90` and `med90` stay printed beside it for a human eye.
+A flagged `conc` is not a discount the data supports: removing a player's
+best game neither helps nor hurts the ordering at H = 6 at this sample size,
+and taking his median hurts it slightly. As pre-registered, a double
+gameweek is one row and so one "game"; the harness is `f96643c`, unchanged
+by the run.
