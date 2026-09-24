@@ -1917,3 +1917,39 @@ shortlist and beside him in the XI; the legal-squad rig now tops the lists by
 metric; the build takes the top of the list, not the value-per-million pick);
 the split test's binding budget moved to £80.0m. Suite stays at **197**.
 5 mutations each red — the role tier restored to the ordering key, the tier as a tiebreak after the metric, roles dropped from the shortlist print, roles dropped from the XI lines, the old global value-per-million build in place of the per-position fill. `bench_boost`, `squad` and `eo` byte-identical; GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
+
+---
+
+## 2026-09-24 — item 8 (F 1): one-match concentration in xGI rates — three columns, information only (`389495a`)
+
+Wherever an xGI-per-90 rate is printed — the wildcard shortlists, the
+wildcard XI lines (MID/FWD), and the squad section, which now prints the rate
+for my 15 — three columns sit beside it, computed by one function
+(`xgi_rate_variants`) from the canonical per-gameweek rows:
+
+- **conc** = best single gameweek's xGI / season xGI, flagged `!` at 0.50 and
+  above; blank when season xGI is 0.
+- **trim90** = xGI/90 with that best gameweek removed, when the player has 4+
+  gameweeks with minutes; else blank.
+- **med90** = median per-gameweek xGI per 90 over gameweeks of 60+ minutes;
+  else blank.
+
+A double gameweek is one row in the canonical slice, so it counts as one
+"game" here. **Nothing orders or projects on these:** the ordering rate and
+the rate the model consumes are the raw season xGI/90 as before (tested), and
+the recording path is untouched. Two things the live columns show at once:
+goalkeepers read `1.00!` because their season xGI is one tiny event, so the
+flag is noise for GK by construction; and among the draft's midfielders
+Fernandes (0.64), Mbeumo (0.51) and Rudoni (0.52) carry the flag while Saka
+(0.35) does not — which is exactly what F (2) tests before anything acts on it.
+
+**Verified:** 4 tests, suite **197 → 201** — the arithmetic on five games with
+one spike (conc 0.60, trim90 0.10, med90 0.10) and an even count (median of
+the middle two); the blanks (three games → no trim90; no 60-minute game → no
+med90; zero xGI → no conc; a 45-minute game out of med90 and in raw90; no
+minutes → no rate); a spike-vs-steady pair where raw prefers the spike and
+trim90/med90 the steady one — the ordering follows raw and the rate the
+projection consumes is raw; the columns present in the shortlists, the XI
+line and the squad section with the flag on the spike. 11 mutations each red — conc over minutes, trim90 keeping the best game, trim90 on three games, med90 over every game, the flag threshold moved, MID/FWD ordered on trim90, ordered on med90, the columns dropped from the shortlist, from the XI line, from the squad section, and the squad section printing trim90 as the rate.
+`bench_boost` and `eo` byte-identical; the wildcard squad unchanged in
+names, prices and sums; GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
