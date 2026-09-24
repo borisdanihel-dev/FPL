@@ -2658,21 +2658,51 @@ class WildcardThreeLayer(unittest.TestCase):
         self.assertNotIn(ids[7], seen)
         self.assertGreaterEqual(excluded[f"minutes share <= {E.FLAG_SHARE_MAX}"], 1)
 
-    def test_a_role_edge_outranks_the_model_within_a_position(self):
+    def test_roles_admit_but_never_rank(self):
+        """A three-role midfielder with the lower metric sits below a no-role
+        midfielder with the higher one; the same for defenders; the roles are
+        still printed beside him in the shortlist and in the XI."""
         d = make_export()
-        defs = [p for p in d["all_players"] if p["pos"] == 2][:2]
-        weak, strong = defs
-        for r in d["player_gw_recent"]:              # strong: far better xG
-            if r["player_id"] == strong["id"]:
-                r["xg"] = 1.5
-        weak["pens_order"] = 1                       # weak: a role edge
+        for p in d["all_players"]:
+            p["pens_order"] = p["corners_order"] = p["fk_order"] = None
+        mids = [p for p in d["all_players"] if p["pos"] == 3 and p["status"] == "a"]
+        norole, threerole = mids[0], mids[1]
+        threerole["pens_order"] = threerole["corners_order"] = threerole["fk_order"] = 1
+        for r in d["player_gw_recent"]:
+            if r["player_id"] == norole["id"]:
+                r["xg"], r["defcon"] = 1.2, 0        # the higher metric, no role
+            elif r["player_id"] == threerole["id"]:
+                r["xg"], r["defcon"] = 0.9, 0        # three roles, the lower metric
+        defs = [p for p in d["all_players"] if p["pos"] == 2 and p["status"] == "a"]
+        d_norole, d_threerole = defs[0], defs[1]
+        d_threerole["pens_order"] = d_threerole["corners_order"] = d_threerole["fk_order"] = 1
+        for r in d["player_gw_recent"]:
+            if r["player_id"] == d_norole["id"]:
+                r["xg"], r["xa"], r["defcon"] = 1.0, 0.5, 15
+            elif r["player_id"] == d_threerole["id"]:
+                r["xg"], r["xa"], r["defcon"] = 0.0, 0.0, 0
         cands, _, _ = E.wildcard_candidates(d)
-        order = [c["id"] for c in cands[2]]
         seen = self._by_id(cands)
-        self.assertGreater(seen[strong["id"]]["sum6"], seen[weak["id"]]["sum6"],
-                           "fixture cannot tell the layers apart")
-        self.assertLess(order.index(weak["id"]), order.index(strong["id"]),
-                        "the model overrode a role edge")
+        self.assertEqual(seen[threerole["id"]]["roles"], ["corners", "fk", "pens"])
+        self.assertEqual(seen[norole["id"]]["roles"], [])
+        self.assertAlmostEqual(seen[norole["id"]]["p_start"], seen[threerole["id"]]["p_start"], 9)
+        self.assertGreater(seen[norole["id"]]["xgi90"], seen[threerole["id"]]["xgi90"])
+        order = [c["id"] for c in cands[3]]
+        self.assertLess(order.index(norole["id"]), order.index(threerole["id"]),
+                        "three roles ranked a midfielder above a higher metric")
+        self.assertEqual(order[:2], [norole["id"], threerole["id"]])
+        self.assertGreater(seen[d_norole["id"]]["sum6"], seen[d_threerole["id"]]["sum6"])
+        dorder = [c["id"] for c in cands[2]]
+        self.assertLess(dorder.index(d_norole["id"]), dorder.index(d_threerole["id"]),
+                        "three roles ranked a defender above a higher bottomup sum")
+        out = run("wildcard", d)
+        short = out.split("SHORTLISTS")[1].split("SQUAD")[0]
+        line = next(l for l in short.splitlines() if l.strip().startswith(threerole["web_name"][:14]))
+        self.assertIn("corners,fk,pens", line, "roles not printed in the shortlist")
+        xi_block = out.split("SQUAD")[1].split("BENCH")[0]
+        line = next(l for l in xi_block.splitlines()
+                    if l.strip().startswith("MID " + threerole["web_name"][:14]))
+        self.assertIn("corners,fk,pens", line, "roles not printed beside the XI player")
 
     def test_mid_ordering_is_expected_appearances_then_xgi_not_points(self):
         d = make_export()
@@ -2708,8 +2738,9 @@ class WildcardThreeLayer(unittest.TestCase):
 
     def test_squad_is_legal_within_budget_and_clubs(self):
         d = make_export()
-        for p in d["all_players"]:                    # rig BHA to top every list
-            p["pens_order"] = 1 if p["team"] == "BHA" else None
+        for r in d["player_gw_recent"]:              # rig BHA to top every outfield list
+            if r["team"] == "BHA":
+                r["xg"], r["xa"], r["defcon"] = 1.5, 0.8, 15
         cands, _, _ = E.wildcard_candidates(d)
         budget = d["standings"][0]["value"] / 10
         squad, spent, split = E.build_three_layer_squad(cands, budget, E.budget_split(d, budget))
@@ -2723,28 +2754,26 @@ class WildcardThreeLayer(unittest.TestCase):
         self.assertLessEqual(max(clubs.values()), 3, clubs)
         self.assertGreaterEqual(clubs.get("BHA", 0), 3, "the rig did not bite")
 
-    def test_the_build_keeps_a_role_pick_a_value_per_million_climb_would_drop(self):
-        """The cheapest defender, given every set-piece role and the worst
-        projection in his position, tops the DEF list by layer 2 and must be in
-        the squad. A global value-per-million build with a projection
-        hill-climb swaps him out for a better-projecting body."""
+    def test_the_build_takes_the_top_of_the_list_not_the_value_per_million_pick(self):
+        """The dearest defender, given the best projection in his position,
+        tops the DEF list and starts - at the lowest points per pound of any
+        XI defender. A value-per-million build would not begin with him."""
         d = make_export()
         defs = [p for p in d["all_players"] if p["pos"] == 2 and p["status"] == "a"]
-        cheap = min(defs, key=lambda p: (p["price"], p["id"]))
-        for p in d["all_players"]:
-            p["pens_order"] = p["corners_order"] = p["fk_order"] = None
-        cheap["pens_order"] = cheap["corners_order"] = cheap["fk_order"] = 1
+        dear = max(defs, key=lambda p: (p["price"], p["id"]))
         for r in d["player_gw_recent"]:
-            if r["player_id"] == cheap["id"]:
-                r["xg"], r["xa"], r["defcon"] = 0.0, 0.0, 0
+            if r["player_id"] == dear["id"]:
+                r["xg"], r["xa"], r["defcon"] = 1.0, 0.5, 15
         cands, _, _ = E.wildcard_candidates(d)
-        self.assertEqual(cands[2][0]["id"], cheap["id"], "the rig did not top the list")
-        self.assertEqual(min(cands[2], key=lambda c: c["sum6"])["id"], cheap["id"],
-                         "the rig is not the worst projection")
+        self.assertEqual(cands[2][0]["id"], dear["id"], "the rig did not top the list")
         budget = d["standings"][0]["value"] / 10
         squad, _, _ = E.build_three_layer_squad(cands, budget, E.budget_split(d, budget))
-        self.assertIn(cheap["id"], {c["id"] for c in squad}, "the model overrode layer 2 in the build")
-        self.assertIn(cheap["web_name"], run("wildcard", d).split("SQUAD")[1])
+        xi_def = [c for c in squad if c["xi"] and c["pos"] == 2]
+        self.assertIn(dear["id"], {c["id"] for c in xi_def}, "the top of the list did not start")
+        vpm = {c["id"]: c["sum6"] / c["price"] for c in xi_def}
+        self.assertEqual(max(c["price"] for c in xi_def), dear["price"])
+        self.assertNotEqual(max(vpm, key=vpm.get), dear["id"], "the rig is the best value in the XI")
+        self.assertIn(dear["web_name"][:14], run("wildcard", d).split("SQUAD")[1].split("BENCH")[0])
 
     def test_split_is_the_current_squad_shape_not_a_global_vpm(self):
         d = make_export()
@@ -2952,22 +2981,22 @@ class WildcardCrossPosition(unittest.TestCase):
             self.assertAlmostEqual(even[k], 100.3 / 4, 9)
         heavy = E.budget_split(d, 100.3, given=E.parse_split("5,25,50,20.3"))
         self.assertAlmostEqual(heavy[3], 50.0, 9)
-        d["standings"][0]["value"] = 750              # £75.0m: the money binds
+        d["standings"][0]["value"] = 800              # £80.0m: the money binds
         out = self._wc(d, None, "1,1,1,1")
-        quarter = f"£{75 / 4:.1f}m"
+        quarter = f"£{80 / 4:.1f}m"
         self.assertIn(f"split by position, --split scaled to the budget: GK {quarter}  DEF {quarter}", out)
         default = self._wc(d)
         self.assertIn("split by position, current squad shape:", default)
         for text in (out, default):
             import re
-            m = re.search(r"SQUAD  £([\d.]+)m of £75\.0m", text)
+            m = re.search(r"SQUAD  £([\d.]+)m of £80\.0m", text)
             self.assertIsNotNone(m, "no squad was printed")
-            self.assertLessEqual(float(m.group(1)), 75.0, "over budget")
+            self.assertLessEqual(float(m.group(1)), 80.0, "over budget")
         self.assertNotEqual(self._lines(self._blocks(out)[0]), self._lines(self._blocks(default)[0]),
                             "an even split bought the same XI as the squad-shape split")
         starved = self._wc(d, None, "1,1,1,20")       # GK/DEF/MID shares below their cheapest fill
         self.assertIn("split repaired so every position can buy its cheapest fill", starved)
-        self.assertRegex(starved, r"SQUAD  £([\d.]+)m of £75\.0m")
+        self.assertRegex(starved, r"SQUAD  £([\d.]+)m of £80\.0m")
         d["standings"][0]["value"] = 650              # below the cheapest legal 15: refused
         self.assertIn("Could not assemble a legal 15 within £65.0m", self._wc(d))
         for bad in ("1,2,3", "1,2,3,0", "a,b,c,d"):

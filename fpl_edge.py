@@ -1291,9 +1291,12 @@ def wildcard_candidates(d, horizon=6):
     """Layers 1-3, per position. Returns ({pos: [cand, ...] ordered}, weeks,
     {reason: excluded count}). Each cand carries the six-week sum in one unit
     (the full model, every term, for every position - so the fifteen add up),
-    the role edges, P(start) x fixtures and xGI/90, the fixture count in the
-    horizon's later weeks (the bench tie-break), its ordering key and rank.
-    For GK/DEF the full sum is the bottomup sum: the ordering is unchanged."""
+    the role edges (layer 2: flags that admit a player, printed for a human
+    override - they never rank him), P(start) x fixtures and xGI/90, the
+    fixture count in the horizon's later weeks (the bench tie-break), its
+    ordering key and rank. Layer 3 orders the whole shortlist by its metric
+    alone: GK/DEF by the six-week sum (all terms = bottomup), MID/FWD by
+    P(start) x fixtures, then xGI/90."""
     gw = d["gameweek"]
     inp = reliability_inputs(canonical_from_export(d), gws_played=gw)
     fx = week_fixtures(d)
@@ -1328,9 +1331,8 @@ def wildcard_candidates(d, horizon=6):
         nfix_later = sum(len(fx[p["team"]].get(w, ())) for w in weeks[2:])
         ip = inp["players"].get(pid, {})
         p_start, xgi90 = ip.get("p_start", 0.0), ip.get("xgi90") or 0.0
-        tier = len(roles.get(pid, ()))                              # layer 2
-        key = ((tier, sum6) if p["pos"] in (1, 2)                   # layer 3
-               else (tier, p_start * nfix, xgi90))
+        key = ((sum6,) if p["pos"] in (1, 2)                        # layer 3: the metric
+               else (p_start * nfix, xgi90))                        # alone - roles admit
         cands[p["pos"]].append({
             "id": pid, "name": p["web_name"], "team": p["team"], "pos": p["pos"],
             "price": p["price"], "roles": sorted(roles.get(pid, ())), "sum6": sum6,
@@ -1577,10 +1579,12 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     print("  split by position, " + ("--split scaled to the budget" if given else "current squad shape")
           + ": " + "  ".join(f"{POS[k]} £{v:.1f}m" for k, v in split_used.items()))
     print("  layer 1  excluded: " + ", ".join(f"{v} {k}" for k, v in sorted(excluded.items())))
-    print("  layer 2  role edges: pens / corners / fk = first choice; defcon = hit rate "
-          f">= {ROLE_DEFCON_RATE:.0%} over 2+ starts; arb = DEF with xGI/90 >= MID median")
-    print("  layer 3  within position: GK/DEF by six-week bottomup; MID/FWD by P(start) x")
-    print("           fixtures, then xGI/90. A role edge outranks the model.")
+    print("  layer 2  role flags (admit, never rank): pens / corners / fk = first choice;")
+    print(f"           defcon = hit rate >= {ROLE_DEFCON_RATE:.0%} over 2+ starts; arb = DEF with "
+          "xGI/90 >= MID median")
+    print("  layer 3  orders the whole shortlist by its metric alone: GK/DEF by the six-week")
+    print("           bottomup sum; MID/FWD by P(start) x fixtures, then xGI/90. Roles are")
+    print("           printed beside each player for a human override at draft time.")
     print(f"\n  SHORTLISTS  (top 8 per position; 6wk = full model, all terms, GW{weeks[0]}-{weeks[-1]}:")
     print("               one unit for every position, next to the ordering metric)")
     for pos in (1, 2, 3, 4):
