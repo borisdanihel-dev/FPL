@@ -2159,3 +2159,35 @@ dated export per gameweek without overwriting, no export anywhere, the log
 appended on a second run, the real record and report with no database in the
 folder, the batch-file parity; the workflow's schedule, steps, commit-back and
 the ignore/attribute/requirements rules as text. 29 mutations each red — five in fpl_sync.py (script User-Agent, two retries, flat wait, a failed request not counted, a partial sync exiting 0), thirteen in fpl_nightly.py (the gate removed, red tests not a failure, a failed sync, record or report not red, a silent crash unreported, exports not restored, restore overwriting, restore taking the oldest copy, the export not archived, a missing export not red, the log replaced, the Drive ship step back), seven in the workflow (cron moved, no manual dispatch, [skip ci] dropped, commit only on success, the database not committed, requirements not installed, the batch file run instead), four in the repository rules (database ignored again, export pattern unanchored, log line endings unpinned, a package in requirements.txt). One survived the first round: the ship step called with an empty list is invisible on a machine with Drive mounted, so the test now asserts the ship and backup functions are never called.
+
+---
+
+## 2026-10-05 21:50 UTC — item J: the first runner run; the two unverified points are answered (`a6e425a`)
+
+- **Remote.** Pushed to the private repository `borisdanihel-dev/FPL` at
+  17:55 UTC, at Boris's request, with a deploy key that can write to that
+  repository only (`core.sshCommand` is set in this checkout alone). The
+  repository returns 404 without credentials.
+- **Registration.** The Actions tab listed no workflow after the first push.
+  It was listed by 19:11 UTC, after an empty commit (`5b4800c`, 19:05) and a
+  one-comment change to the workflow file (`a4fd003`, 19:09); which of the two
+  did it is not known. GitHub had an Actions incident from 14:47 to 17:56 UTC
+  and another from 19:11.
+- **Manual run #1 (19:11 UTC) failed on GitHub's side** after fifteen minutes
+  in the queue — "The job was not acquired by Runner of type hosted", "Internal
+  server error". No step ran; it says nothing about this project.
+- **The scheduled run was green.** Cron 21:40 UTC, started 21:49:59 UTC.
+  Python 3.14.7 on `ubuntu-latest`; three working exports restored; **228
+  tests, OK, 11 skipped** — the eight that reproduce a Windows file lock and
+  the three that run the batch file, none failed; **the FPL API answered every
+  request first time** (no retry, no failure); RECORD OK 259 / 241 / 241 / 241;
+  report; dated export; committed back as `a6e425a` `nightly 2026-10-05
+  [skip ci]` by `github-actions[bot]`.
+- **Identical across platforms.** The runner's 982 GW6 forecasts equal the
+  local 19:18 run's on every prediction (982 of 982), and the commit's diff of
+  `projection_log.csv` is exactly those 982 rows — no line-ending churn under
+  `.gitattributes`.
+- **Still open:** the local scheduled task is enabled, so there are two
+  nightly writers until Boris disables it. Its runs leave uncommitted changes
+  to `projection_log.csv`, `fpl.sqlite` and the day's report in this checkout,
+  which have to be discarded before the runner's next commit can be pulled.
