@@ -2062,3 +2062,100 @@ labelled numbers, and follows the squad. Two test helpers now stop at the
 appended block. 4 mutations each red — the call dropped, the screen called on my current 15 instead of the draft, called on the XI only, called for one week. `bench_boost`, `squad` and `eo`
 byte-identical; the draft byte-identical up to the appended block;
 GW6 regenerated from the same export under both codes: 1,046 of 1,046 rows identical on source, event, player and predicted.
+
+---
+
+## 2026-10-05 — item J: the nightly run moves to GitHub Actions (`a7bead8`, data `09f6af6`)
+
+The local scheduled run left no log for 28 Sep or 2–4 Oct. The nightly path
+is now a workflow; `fpl_run.bat` stays as the manual local path, unchanged.
+
+**New pieces.**
+
+- **`.github/workflows/nightly.yml`** — `cron: "40 21 * * *"` (21:40 UTC =
+  23:40 Prague in CEST, 22:40 in CET) plus `workflow_dispatch`;
+  `ubuntu-latest`, `setup-python` 3.14 (the local version),
+  `pip install -r requirements.txt`, then `python fpl_nightly.py`; a final
+  step with `if: always()` commits `projection_log.csv`, `fpl.sqlite`,
+  `exports/`, `logs/`, `reports/` as `nightly <date> [skip ci]` and pushes.
+  `permissions: contents: write`; one run at a time. No secrets.
+- **`fpl_nightly.py`** — the steps of `fpl_run.bat` in the same order, on any
+  platform: tests → sync → record own/xg/minutes/bottomup → report, the same
+  status-line rules, the red-suite gate on `--record` kept. Differences, all
+  deliberate: no Windows paths; no Drive ship, no outbox, no database backup
+  (git history is the archive); the dated export goes to `exports/` and the
+  run log to `logs/`; **any** failure — tests, sync, a record, the report, the
+  archive — exits 1 so the run goes red and GitHub sends mail (the batch file
+  exits 1 only for a failed record or report). A runner starts from a fresh
+  checkout, so step 0 restores the working `fpl_export_gwN.json` from the
+  newest dated copy per gameweek in `exports/`: `--diff` finds the previous
+  gameweek and a failed sync falls back to yesterday's data, as the local
+  folder does for the batch file.
+- **`fpl_sync.py`** — every request carries a browser-style User-Agent and
+  gets **three retries with doubling backoff** (2, 4, 8 s; it was two retries
+  at a flat 2 s). A request that never succeeds is counted, the sync saves
+  what it fetched, and `main()` then exits non-zero (`SYNC INCOMPLETE: n
+  request(s) …`); before, a partial sync exited 0. No local log since
+  6 Sep contains a failed request, so this changes no past run.
+- **`requirements.txt`** — comments only: standard library only, and a test
+  fails if a package line appears. `pip install -r` on it exits 0.
+- **`.gitattributes`, `.gitignore`** — two writers on two platforms:
+  `projection_log.csv text eol=crlf` (the csv module writes CRLF everywhere;
+  LF in the repository, CRLF in every checkout, so neither writer rewrites
+  every line), `fpl.sqlite binary`; the root export pattern is anchored
+  (`/fpl_export_gw*.json` — unanchored it would have ignored `exports/` too);
+  `fpl.sqlite` and `reports/` are no longer ignored; the batch file's own run
+  logs (`reports/run_*.log`) stay local.
+
+**Endpoints and secrets.** `fpl_sync.py` calls eight paths, all public, none
+needing a login cookie: `bootstrap-static/`, `fixtures/`, `event/{gw}/live/`,
+`element-summary/{id}/` (only with `--history`),
+`leagues-classic/{league}/standings/`, `entry/{id}/history/`,
+`entry/{id}/transfers/`, `entry/{id}/event/{gw}/picks/`. `my-team` and `me`
+are not used. A test pins the set, so a new endpoint has to be looked at
+before it reaches the runner.
+
+**The database.** `fpl.sqlite` is 1.32 MB (1,323,008 bytes; 0.43 MB
+gzipped) — under the 20 MB line, so it is **committed**, by the runner each
+night. It holds the only copy of `price_history` (16,543 rows, ~662 a day,
+~29 KB a day), which the API cannot give back, so neither a rebuild per run
+nor `actions/cache` (evicted after 7 unused days, not durable) may hold it.
+At that rate it reaches ~8 MB by GW38; git keeps a version per night, at
+worst ~350 MB of history over the season before GitHub's delta packing.
+`projection_log.csv` never depends on it: `fpl_edge.py` does not import
+sqlite and records from the export alone (tested with no database present).
+
+**Seeded so the first runner night is not a cold start:** `fpl.sqlite` and
+`projection_log.csv` as written by tonight's 19:18 local run; `exports/` with
+the fourteen dated exports that exist (GW3 of 11 Sep, GW4 of 17 Sep, the
+twelve GW5 copies of 20 Sep–5 Oct from `archive/`); the existing report
+texts in `reports/` (they would otherwise collide with the runner's files of
+the same name).
+
+**Both paths write identical files — proved on one run.** Tonight's real
+export, the same starting log, each path in its own folder: the batch file
+and `fpl_nightly.py` wrote the same 2,555 log rows on every column but
+`made_at` (982 for GW6: 259/241/241/241), a byte-identical report (28,896
+bytes) and the same dated export — and all three equal tonight's real 19:18
+run. A Windows-only test repeats this on a synthetic export. Separately, a
+folder holding exactly what the repository holds (no working export, no
+ignored file) ran `fpl_nightly.py` end to end with the real suite and a real
+sync: 3 exports restored, 228 tests, 0 retries, 4 × RECORD OK, exit 0, 28 s.
+
+**Not verified, and it cannot be from here:** the repository has no GitHub
+remote and this machine has no Linux, so the suite has not run on
+`ubuntu-latest` and nobody yet knows whether the FPL API answers a GitHub
+runner. The three Windows-only test classes were already guarded; the rest
+was audited, not executed. The first manual dispatch after the push answers
+both. Until it is green the local scheduled task should stay on.
+
+**Verified:** 20 tests, suite **208 → 228** — the User-Agent is a browser's;
+two failures then success back off 2 s then 4 s; a dead request gets three
+retries (2, 4, 8 s) and is counted; a partial sync still exports and exits
+non-zero, a clean one exits 0; the endpoint set is the public eight; the
+driver's clean run, a silent record crash, red tests blocking the record but
+not the report, a failed sync, a failed report, the restore of the newest
+dated export per gameweek without overwriting, no export anywhere, the log
+appended on a second run, the real record and report with no database in the
+folder, the batch-file parity; the workflow's schedule, steps, commit-back and
+the ignore/attribute/requirements rules as text. 29 mutations each red — five in fpl_sync.py (script User-Agent, two retries, flat wait, a failed request not counted, a partial sync exiting 0), thirteen in fpl_nightly.py (the gate removed, red tests not a failure, a failed sync, record or report not red, a silent crash unreported, exports not restored, restore overwriting, restore taking the oldest copy, the export not archived, a missing export not red, the log replaced, the Drive ship step back), seven in the workflow (cron moved, no manual dispatch, [skip ci] dropped, commit only on success, the database not committed, requirements not installed, the batch file run instead), four in the repository rules (database ignored again, export pattern unanchored, log line endings unpinned, a package in requirements.txt). One survived the first round: the ship step called with an empty list is invisible on a machine with Drive mounted, so the test now asserts the ship and backup functions are never called.
