@@ -36,7 +36,7 @@ DIFF  GW4 -> GW5
     Schuster       BRE  £  4.5 L4  21 (+14)  own   0.3%
     Kamara         AVL  £  5.0 L4  13 (+13)  own   0.3%
     Manzambi       AVL  £  5.9 L4  14 (+13)  own   0.4%
-    Groß           BHA  £  5.9 L4  45 (+12)  own  29.4% *YOURS*
+    Groß           BHA  £  5.9 L4  45 (+12)  own  29.5% *YOURS*
     Rushworth      COV  £  4.5 L4  15 (+10)  own   0.8%
     Hall           NEW  £  5.3 L4  28 (+10)  own  17.5%
     Buendía        AVL  £  5.9 L4  19 (+10)  own   1.0%
@@ -281,7 +281,7 @@ FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
   DEF
     player         team     £   L4  pts/£m   fdr  score   own%
     Thomas         COV    4.0   21    5.25  2.67   6.12    8.5
-    Bogle          LEE    4.6   36    7.83  3.50   5.87    7.3
+    Bogle          LEE    4.6   36    7.83  3.50   5.87    7.4
     Davis          IPS    4.0   23    5.75  3.00   5.75    7.0
     Dasilva        COV    4.0   19    4.75  2.67   5.54    0.7
     Tarkowski      EVE    6.2   37    5.97  3.17   5.47   16.7
@@ -295,14 +295,14 @@ FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
 
   MID
     player         team     £   L4  pts/£m   fdr  score   own%
-    Groß           BHA    5.9   45    7.63  3.17   6.99   29.4
+    Groß           BHA    5.9   45    7.63  3.17   6.99   29.5
     Schade         BRE    6.2   36    5.81  3.17   5.32   11.9
     Belloumi       HUL    5.1   28    5.49  3.17   5.03    5.2
     Barnes         NEW    6.1   26    4.26  3.00   4.26    5.9
     Yalcouyé       BHA    4.5   19    4.22  3.17   3.87    4.0
     Cherki         MCI    7.8   26    3.33  2.83   3.61   28.4
     Janelt         BRE    5.0   19    3.80  3.17   3.48    2.5
-    King           FUL    5.5   17    3.09  2.83   3.35    2.7
+    King           FUL    5.5   17    3.09  2.83   3.35    2.8
     Gomez          BHA    5.0   18    3.60  3.17   3.30    3.9
     Kamada         CRY    5.0   18    3.60  3.17   3.30    0.5
     Willock        NEW    5.0   16    3.20  3.00   3.20    0.6
@@ -395,13 +395,13 @@ POSITION ARBITRAGE  (the scoring system is wrong about these players)
 
   DEFENDERS with attacking output
     player         team     £  xG+xA/90  DEFCON/90   own%   fdr
-    De Cuyper      BHA    5.0      0.47        3.1   27.9  3.17
+    De Cuyper      BHA    5.0      0.47        3.1   28.0  3.17
     Davis          IPS    4.0      0.41        4.2    7.0  3.00
-    Bogle          LEE    4.6      0.36        4.3    7.3  3.50
+    Bogle          LEE    4.6      0.36        4.3    7.4  3.50
     Kayode         BRE    4.6      0.30        4.9    7.6  3.17
     Muñoz          NFO    5.4      0.28        4.9    5.7  3.17
     Calafiori      ARS    5.8      0.28        3.5   50.5  3.00
-    Guéhi          MCI    6.0      0.27        6.2   18.2  2.83
+    Guéhi          MCI    6.0      0.27        6.2   18.1  2.83
     Mukiele        SUN    5.4      0.26       12.0    1.9  3.00
 
   MIDFIELDERS carrying defensive load (DEFCON + goals)
@@ -423,7 +423,7 @@ POSITION ARBITRAGE  (the scoring system is wrong about these players)
     Haaland        MCI   15.6       51.6     5    4.95   73.9
     Barry          EVE    5.7       44.7     2    3.65    8.3
     Yalcouyé       BHA    4.5       42.3     2    1.91    4.0
-    King           FUL    5.5       37.9     2    2.00    2.7
+    King           FUL    5.5       37.9     2    2.00    2.8
     Sávio          TOT    6.5       36.0     0    1.11    0.6
     Igor Jesus     NFO    5.8       35.0     1    1.33    2.6
     Calvert-Lewin  LEE    6.0       32.9     3    3.08   24.8
