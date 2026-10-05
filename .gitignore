@@ -1,15 +1,19 @@
 __pycache__/
 *.pyc
-# regenerated from the API / DB on every run
-fpl_export_gw*.json
-reports/
-# binary, rewritten nightly - holds the only copy of price_history: back it up separately
-fpl.sqlite
+
+# the working export in the repository root is regenerated on every run; the
+# dated point-in-time copies in exports/ are tracked (anchored: root only)
+/fpl_export_gw*.json
+
+# local-only artefacts of fpl_run.bat: its run logs and the status scratch file.
+# The Actions runner logs to logs/, which is tracked, as are reports/*.txt
+reports/run_*.log
+reports/record_status.tmp
 
 # downloaded historical data (regenerable, ~6.5MB)
 historical/
 
-# point-in-time inputs, database backups, files waiting for Drive
+# local point-in-time copies, database backups, files waiting for Drive
 archive/
 backup/
 outbox/

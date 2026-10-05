@@ -1,0 +1,3 @@
+# Standard library only - nothing to install (CLAUDE.md: "stdlib only, no pip").
+# This file exists so the workflow's install step is explicit. A package line
+# added here is a deliberate break of that rule, and test_fpl.py will say so.

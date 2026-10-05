@@ -25,6 +25,7 @@ import fpl_edge as E                                            # noqa: E402
 import p1_eval as P1                                            # noqa: E402
 import fpl_hist as H                                            # noqa: E402
 import fpl_ship as SHIP                                         # noqa: E402
+import fpl_nightly as N                                         # noqa: E402
 
 TEAMS = ["ARS", "BHA", "CHE", "CRY", "HUL", "LIV", "MCI", "MUN", "NEW", "NFO"]
 ENTRIES = ["My Team", "Rival A", "Rival B", "Rival C"]
@@ -3505,6 +3506,393 @@ class BoostOnDraft(unittest.TestCase):
         self.assertIn("best XI, same budget, fodder bench", block)
         self.assertIn("BENCH BOOST SCREEN FOR THIS DRAFT", out)
         self.assertLess(out.index("XI six-week sum"), out.index(marker), "the screen must follow the squad")
+
+
+class SyncNetwork(unittest.TestCase):
+    """J: a browser-style User-Agent, three retries with doubling backoff, and
+    a sync that says so when a request never succeeded."""
+
+    API = "https://fantasy.premierleague.com/api/"
+
+    @staticmethod
+    def _ns(full=False):
+        ns = {"__name__": "fpl_sync_under_test"}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src if full else src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        ns["sleeps"] = []
+        ns["_sleep"] = ns["sleeps"].append
+        return ns
+
+    @staticmethod
+    def _reply(payload):
+        return io.BytesIO(json.dumps(payload).encode("utf-8"))
+
+    def test_user_agent_is_a_browser_not_a_script(self):
+        ns, seen = self._ns(), []
+
+        def opener(req, timeout=30):
+            seen.append(req)
+            return self._reply({"ok": 1})
+
+        ns["_urlopen"] = opener
+        self.assertEqual(ns["get"]("bootstrap-static/"), {"ok": 1})
+        ua = seen[0].get_header("User-agent")
+        self.assertTrue(ua.startswith("Mozilla/5.0 ("), ua)
+        self.assertIn("Chrome/", ua)
+        self.assertIn("Safari/", ua)
+        for tell in ("fpl_sync", "python", "urllib"):
+            self.assertNotIn(tell, ua.lower())
+        self.assertEqual(seen[0].full_url, self.API + "bootstrap-static/")
+
+    def test_two_failures_then_success_backs_off_two_then_four_seconds(self):
+        ns, calls = self._ns(), []
+
+        def opener(req, timeout=30):
+            calls.append(req.full_url)
+            if len(calls) < 3:
+                raise OSError("HTTP Error 503")
+            return self._reply({"ok": 2})
+
+        ns["_urlopen"] = opener
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(ns["get"]("fixtures/"), {"ok": 2})
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(ns["sleeps"], [2.0, 4.0, ns["PAUSE"]])
+        self.assertEqual(ns["FAILED"], [])
+
+    def test_a_request_that_never_succeeds_gets_three_retries_and_is_counted(self):
+        ns, calls = self._ns(), []
+
+        def opener(req, timeout=30):
+            calls.append(req.full_url)
+            raise OSError("HTTP Error 403: Forbidden")
+
+        ns["_urlopen"] = opener
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            self.assertIsNone(ns["get"]("fixtures/"))
+        self.assertEqual(len(calls), 4, "one attempt and three retries")
+        self.assertEqual(ns["sleeps"], [2.0, 4.0, 8.0])
+        self.assertEqual(ns["FAILED"], [self.API + "fixtures/"])
+        self.assertIn("! failed", buf.getvalue())
+
+    def _main(self, fixtures_fail):
+        ns = self._ns(full=True)
+        boot = {"teams": [], "elements": [], "events": [
+            {"id": 1, "name": "GW1", "deadline_time": "2026-08-15T10:00:00Z",
+             "finished": True, "data_checked": True, "is_current": True}]}
+
+        def opener(req, timeout=30):
+            url = req.full_url
+            if "bootstrap-static" in url:
+                return self._reply(boot)
+            if "fixtures" in url:
+                if fixtures_fail:
+                    raise OSError("HTTP Error 503")
+                return self._reply([])
+            if "/live/" in url:
+                return self._reply({"elements": []})
+            if "leagues-classic" in url:
+                return self._reply({"standings": {"results": []}})
+            raise AssertionError("unexpected request " + url)
+
+        ns["_urlopen"] = opener
+        tmp, cwd, argv = tempfile.mkdtemp(), os.getcwd(), sys.argv
+        ns["DB_PATH"] = os.path.join(tmp, "t.sqlite")
+        try:
+            os.chdir(tmp)
+            sys.argv = ["fpl_sync.py"]
+            code = 0
+            with redirect_stdout(io.StringIO()):
+                try:
+                    ns["main"]()
+                except SystemExit as e:
+                    code = e.code
+            return code, os.path.exists("fpl_export_gw1.json")
+        finally:
+            os.chdir(cwd)
+            sys.argv = argv
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_a_partial_sync_still_exports_and_exits_nonzero(self):
+        code, exported = self._main(fixtures_fail=True)
+        self.assertIn("SYNC INCOMPLETE: 1 request", str(code))
+        self.assertTrue(exported, "the export was not written from what was fetched")
+
+    def test_a_clean_sync_exits_zero(self):
+        code, exported = self._main(fixtures_fail=False)
+        self.assertEqual(code, 0)
+        self.assertTrue(exported)
+
+    def test_every_endpoint_is_public_no_login_needed(self):
+        import re
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        paths = set(re.findall(r'(?<![.\w])get\(f?"([^"]+)"\)', src))
+        self.assertEqual(paths, {
+            "bootstrap-static/", "fixtures/", "event/{gw}/live/", "element-summary/{pid}/",
+            "leagues-classic/{LEAGUE_ID}/standings/", "entry/{eid}/history/",
+            "entry/{eid}/transfers/", "entry/{eid}/event/{gw}/picks/"},
+            "a new endpoint: check that it needs no login before it reaches the runner")
+        for needs_login in ("my-team", "/me/", "cookie", "password", "login"):
+            self.assertNotIn(needs_login, src.lower())
+
+
+NIGHTLY_EDGE_STUB = EDGE_STUB.replace(
+    'print("EDGE", " ".join(a))',
+    'if open("MODE").read().strip() == "noreport":\n    sys.exit(1)\nprint("EDGE", " ".join(a))')
+
+
+class NightlyRunner(unittest.TestCase):
+    """J: fpl_nightly.py - the steps of fpl_run.bat on any platform, the Drive
+    shipping replaced by files the workflow commits; any failure is red."""
+
+    STAMP = "2026-10-05"
+    FOUR = ("own", "xg", "minutes", "bottomup")
+
+    @staticmethod
+    def _put(path, body):
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(body)
+
+    @staticmethod
+    def _get(path):
+        with open(path, encoding="utf-8") as fh:
+            return fh.read()
+
+    def _world(self, mode="clean", tests=0, sync=0, export=True, edge=None):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        stubs = {"test_fpl.py": f"import sys\nsys.exit({tests})\n",
+                 "fpl_sync.py": f"import sys\nprint('sync ran')\nsys.exit({sync})\n",
+                 "fpl_edge.py": edge or NIGHTLY_EDGE_STUB, "MODE": mode}
+        if export:
+            stubs["fpl_export_gw3.json"] = "{}"
+        for name, body in stubs.items():
+            self._put(os.path.join(tmp, name), body)
+        return tmp
+
+    def _run(self, tmp):
+        console = []
+        code = N.nightly(root=tmp, stamp=self.STAMP, echo=console.append)
+        log = self._get(os.path.join(tmp, "logs", f"run_{self.STAMP}.log"))
+        return code, [l.strip() for l in log.splitlines()], [l.strip() for l in console]
+
+    def test_clean_run_logs_reports_archives_and_exits_zero(self):
+        tmp = self._world()
+        real_ship, real_backup, calls = SHIP.ship, SHIP.backup_db, []
+        SHIP.ship = lambda *a, **k: calls.append("ship") or 0
+        SHIP.backup_db = lambda *a, **k: calls.append("backup_db") or ("", [])
+        try:
+            code, log, console = self._run(tmp)
+        finally:
+            SHIP.ship, SHIP.backup_db = real_ship, real_backup
+        self.assertEqual(calls, [], "the runner path must never ship to Drive or back up the database")
+        self.assertEqual(code, 0, log)
+        summary = log[log.index("record summary:") + 1:]
+        self.assertEqual(summary[:4], [f"RECORD OK {s} 5" for s in self.FOUR])
+        order = [log.index(x) for x in ("running tests ...", "syncing FPL API ...",
+                                        "recording forecasts for next GW ...",
+                                        "building report ...", "record summary:",
+                                        "archiving the export ...")]
+        self.assertEqual(order, sorted(order), "the steps ran out of order")
+        self.assertIn("sync ran", log)
+        self.assertIn("EDGE --diff --out " + os.path.join("reports", f"fpl_{self.STAMP}.txt"), log)
+        dated = os.path.join(tmp, "exports", f"fpl_export_gw3_{self.STAMP}.json")
+        self.assertEqual(self._get(dated), "{}", "tonight's export was not kept under its date")
+        self.assertTrue(log[-1].startswith("Done"), log[-3:])
+        self.assertEqual(log, console, "the console and the committed log differ")
+        for local_only in ("archive", "backup", "outbox"):
+            self.assertFalse(os.path.exists(os.path.join(tmp, local_only)),
+                             f"{local_only}/ belongs to the local path")
+        self.assertFalse(any("SHIP" in l or "Drive" in l for l in log))
+
+    def test_a_silent_record_crash_is_caught_and_the_run_is_red(self):
+        code, log, _ = self._run(self._world(mode="broken"))
+        summary = log[log.index("record summary:") + 1:]
+        per = {s: [l for l in summary if l.startswith("RECORD ") and l.split()[2] == s]
+               for s in self.FOUR}
+        self.assertEqual({s: len(v) for s, v in per.items()}, dict.fromkeys(self.FOUR, 1))
+        self.assertEqual(per["own"][0], "RECORD OK own 5")
+        self.assertEqual(per["minutes"][0], "RECORD FAIL minutes locked")
+        self.assertTrue(per["xg"][0].startswith("RECORD FAIL xg python exited"),
+                        "a crash with no status line went unreported")
+        self.assertTrue(any(l.startswith("EDGE --diff") for l in log),
+                        "a failed record stopped the report")
+        self.assertTrue(any(l.startswith("ARCHIVE OK") for l in log))
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: record")
+        self.assertEqual(code, 1)
+
+    def test_red_tests_block_the_record_but_not_the_report(self):
+        code, log, _ = self._run(self._world(tests=1))
+        self.assertEqual(code, 1)
+        self.assertIn("SKIPPED --record: test suite is red, no forecasts written", log)
+        summary = log[log.index("record summary:") + 1:]
+        self.assertEqual(summary[:4],
+                         [f"RECORD FAIL {s} skipped - test suite is red" for s in self.FOUR])
+        self.assertFalse(any(l.startswith("RECORD OK") for l in log),
+                         "a forecast was recorded on a red suite")
+        self.assertTrue(any(l.startswith("EDGE --diff") for l in log))
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: tests, record")
+
+    def test_sync_failure_continues_on_existing_data_and_is_red(self):
+        code, log, _ = self._run(self._world(sync=1))
+        self.assertIn("SYNC FAILED - continuing with existing data", log)
+        summary = log[log.index("record summary:") + 1:]
+        self.assertEqual(summary[:4], [f"RECORD OK {s} 5" for s in self.FOUR])
+        self.assertTrue(any(l.startswith("EDGE --diff") for l in log))
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: sync")
+        self.assertEqual(code, 1, "on the runner a failed sync must turn the run red")
+
+    def test_report_failure_is_red(self):
+        code, log, _ = self._run(self._world(mode="noreport"))
+        self.assertIn("EDGE FAILED", log)
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: report")
+        self.assertEqual(code, 1)
+
+    def test_fresh_checkout_restores_the_newest_dated_export_per_gameweek(self):
+        tmp = self._world(export=False)
+        os.makedirs(os.path.join(tmp, "exports"))
+        for name, body in (("fpl_export_gw4_2026-09-17.json", "four"),
+                           ("fpl_export_gw5_2026-10-01.json", "old five"),
+                           ("fpl_export_gw5_2026-10-04.json", "new five"),
+                           ("fpl_export_gw5.json", "not dated"), ("notes.txt", "x")):
+            self._put(os.path.join(tmp, "exports", name), body)
+        code, log, _ = self._run(tmp)
+        self.assertEqual(code, 0, log)
+        self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw4.json")), "four")
+        self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw5.json")), "new five")
+        self.assertLess(
+            log.index("RESTORED     fpl_export_gw5_2026-10-04.json -> fpl_export_gw5.json"),
+            log.index("running tests ..."), "the working exports must be back before any step")
+        self.assertEqual(self._get(os.path.join(tmp, "exports", f"fpl_export_gw5_{self.STAMP}.json")),
+                         "new five")
+        self._put(os.path.join(tmp, "fpl_export_gw5.json"), "synced tonight")
+        self.assertEqual(N.restore_exports(tmp, lambda line: None), [])
+        self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw5.json")), "synced tonight",
+                         "a working export already in place was overwritten")
+
+    def test_no_export_anywhere_fails_the_archive(self):
+        code, log, _ = self._run(self._world(export=False))
+        self.assertIn("ARCHIVE FAILED: no fpl_export_gw*.json in this folder", log)
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: archive")
+        self.assertEqual(code, 1)
+
+    def test_a_second_run_the_same_day_appends_to_the_log(self):
+        tmp = self._world()
+        self._run(tmp)
+        _, log, _ = self._run(tmp)
+        self.assertEqual(sum(1 for l in log if l.startswith("==== run ")), 2)
+
+    def _real_world(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        tmp = self._world(export=False, edge=self._get(os.path.join(here, "fpl_edge.py")))
+        with open(os.path.join(tmp, "fpl_export_gw3.json"), "w", encoding="utf-8") as fh:
+            json.dump(self.export, fh)
+        with open(os.path.join(tmp, "fpl_export_gw2.json"), "w", encoding="utf-8") as fh:
+            json.dump(self.previous, fh)
+        return tmp
+
+    def test_the_real_record_and_report_need_no_database(self):
+        self.export, self.previous = _recordable_export(), make_export(gw=2)
+        tmp = self._real_world()
+        code, log, _ = self._run(tmp)
+        self.assertEqual(code, 0, log[-12:])
+        summary = log[log.index("record summary:") + 1:][:4]
+        for s, line in zip(self.FOUR, summary):
+            self.assertRegex(line, rf"^RECORD OK {s} [1-9]\d*$")
+        rows = E.read_log(os.path.join(tmp, "projection_log.csv"))
+        self.assertEqual({r["source"] for r in rows}, set(self.FOUR))
+        self.assertGreater(os.path.getsize(os.path.join(tmp, "reports", f"fpl_{self.STAMP}.txt")), 1000)
+        self.assertEqual([f for f in os.listdir(tmp) if "sqlite" in f], [],
+                         "the record or the report touched a database")
+        here = os.path.dirname(os.path.abspath(__file__))
+        for name in ("fpl_edge.py", "fpl_nightly.py"):
+            self.assertNotIn("import sqlite3", self._get(os.path.join(here, name)),
+                             f"{name}: projection_log.csv must never depend on the database")
+
+    @unittest.skipUnless(os.name == "nt", "runs fpl_run.bat under cmd.exe")
+    def test_bat_and_nightly_write_the_same_forecasts_and_report(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        self.export, self.previous = _recordable_export(), make_export(gw=2)
+        bat, run = self._real_world(), self._real_world()
+        shutil.copy(os.path.join(here, "fpl_run.bat"), bat)
+        self._put(os.path.join(bat, "fpl_ship.py"), "print('SHIP STUB')\n")
+        r = subprocess.run(["cmd", "/c", os.path.join(bat, "fpl_run.bat")], cwd=bat,
+                           timeout=300, capture_output=True, text=True, errors="replace")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        reports = [f for f in os.listdir(os.path.join(bat, "reports")) if f.startswith("fpl_")]
+        self.assertEqual(len(reports), 1)
+        self.assertEqual(N.nightly(root=run, stamp=reports[0][4:-4], echo=lambda line: None), 0)
+        with open(os.path.join(bat, "reports", reports[0]), "rb") as fh:
+            a = fh.read()
+        with open(os.path.join(run, "reports", reports[0]), "rb") as fh:
+            b = fh.read()
+        self.assertGreater(len(a), 1000)
+        self.assertEqual(a, b, "the two paths wrote different reports for the same export")
+        key = lambda r: tuple(r[k] for k in E.LOG_FIELDS if k != "made_at")
+        la = [key(r) for r in E.read_log(os.path.join(bat, "projection_log.csv"))]
+        lb = [key(r) for r in E.read_log(os.path.join(run, "projection_log.csv"))]
+        self.assertGreater(len(la), 100)
+        self.assertEqual(la, lb, "the two paths recorded different forecasts for the same export")
+
+
+class NightlyWorkflow(unittest.TestCase):
+    """J: the workflow file, the stdlib-only requirements file and the ignore
+    rules, pinned as text - there is no YAML parser in the standard library."""
+
+    @staticmethod
+    def _read(*parts):
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, *parts), encoding="utf-8") as fh:
+            return fh.read()
+
+    def test_schedule_runner_and_steps(self):
+        y = self._read(".github", "workflows", "nightly.yml")
+        self.assertIn('- cron: "40 21 * * *"', y)
+        self.assertIn("workflow_dispatch:", y)
+        self.assertIn("runs-on: ubuntu-latest", y)
+        self.assertIn("actions/setup-python@", y)
+        self.assertIn("run: python -m pip install -r requirements.txt", y)
+        self.assertIn("run: python fpl_nightly.py", y)
+        self.assertLess(y.index("pip install -r requirements.txt"), y.index("run: python fpl_nightly.py"))
+        code = "\n".join(l for l in y.splitlines() if not l.strip().startswith("#"))
+        for foreign in ("\\", "My Drive", "outbox", "fpl_ship", "fpl_run.bat", "secrets."):
+            self.assertNotIn(foreign, code, f"{foreign!r} has no place on the runner")
+
+    def test_outputs_are_committed_back_even_from_a_red_run(self):
+        y = self._read(".github", "workflows", "nightly.yml")
+        self.assertIn("contents: write", y)
+        commit = y[y.index("Commit outputs back"):]
+        self.assertIn("if: always()", commit)
+        add = next(l for l in commit.splitlines() if l.strip().startswith("git add "))
+        self.assertEqual(set(add.split()[2:]),
+                         {"projection_log.csv", "fpl.sqlite", "exports", "logs", "reports"})
+        self.assertIn('git commit -m "nightly $(date -u +%F) [skip ci]"', commit)
+        self.assertIn("git push", commit)
+        self.assertLess(y.index("run: python fpl_nightly.py"), y.index("git add "))
+
+    def test_requirements_install_nothing(self):
+        lines = [l.strip() for l in self._read("requirements.txt").splitlines() if l.strip()]
+        self.assertTrue(lines and all(l.startswith("#") for l in lines),
+                        "stdlib only: a package line was added to requirements.txt")
+
+    def test_ignore_and_attribute_rules_fit_two_writers(self):
+        ignore = [l.strip() for l in self._read(".gitignore").splitlines()
+                  if l.strip() and not l.startswith("#")]
+        self.assertNotIn("fpl.sqlite", ignore,
+                         "the database holds the only price history: it must be committed")
+        self.assertIn("/fpl_export_gw*.json", ignore)
+        self.assertNotIn("fpl_export_gw*.json", ignore, "unanchored, this ignores exports/ too")
+        for tracked in ("reports/", "exports/", "logs/", "projection_log.csv"):
+            self.assertNotIn(tracked, ignore)
+        for local in ("archive/", "backup/", "outbox/", "projection_log.csv.tmp",
+                      "reports/run_*.log"):
+            self.assertIn(local, ignore)
+        attrs = self._read(".gitattributes").splitlines()
+        self.assertIn("projection_log.csv text eol=crlf", attrs)
+        self.assertIn("fpl.sqlite binary", attrs)
 
 
 class Hygiene(unittest.TestCase):

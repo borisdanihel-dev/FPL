@@ -1,0 +1,56 @@
+# The nightly FPL run on GitHub's runners - the scheduled path.
+# fpl_run.bat stays the manual local path; for the same export both write the
+# same forecasts and the same report (tested in test_fpl.py).
+# No secrets: every endpoint fpl_sync.py calls is public.
+name: nightly
+
+on:
+  schedule:
+    # 21:40 UTC = 23:40 Prague in summer time (CEST), 22:40 in winter (CET).
+    # Actions cron can start late; this keeps a margin before the Friday-night
+    # freeze, and fpl_edge.py refuses to record once a deadline has passed.
+    - cron: "40 21 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write            # the run commits its outputs back
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false  # never cut a run that may be mid-write
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install requirements
+        run: python -m pip install -r requirements.txt
+
+      # tests -> sync -> record x4 -> report -> dated export.
+      # Exits 1 on any failure, so the run goes red and GitHub sends mail.
+      - name: Nightly run
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python fpl_nightly.py
+
+      # always: a red run still commits its log, so the failure explains itself
+      - name: Commit outputs back
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p exports logs reports
+          git add projection_log.csv fpl.sqlite exports logs reports
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "nightly $(date -u +%F) [skip ci]"
+            git push || (git pull --rebase && git push)
+          fi

@@ -1,0 +1,10 @@
+# One repository, two writers: Windows (fpl_run.bat) and Linux (the Actions runner).
+* text=auto
+
+# csv.writer ends every row with CRLF on any platform. Keep the checkout CRLF on
+# both and LF in the repository, so neither writer rewrites every line of the log.
+projection_log.csv text eol=crlf
+*.bat text eol=crlf
+
+# the database is binary: never diffed, never merged
+fpl.sqlite binary

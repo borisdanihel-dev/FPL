@@ -24,25 +24,41 @@ MY_ENTRY = 3073318          # 1. FC Kiripolcz
 DB_PATH = "fpl.sqlite"
 BASE = "https://fantasy.premierleague.com/api"
 PAUSE = 0.4                 # seconds between requests, be polite to the API
+# The API turns scripts away from cloud addresses; ask the way a browser does.
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36")
+RETRIES = 3                 # after the first attempt
+BACKOFF = 2.0               # seconds before the first retry, doubling: 2, 4, 8
+FAILED = []                 # urls that still failed after every retry
+_urlopen = urllib.request.urlopen
+_sleep = time.sleep
 
 # ----------------------------------------------------------------------------
 # HTTP
 # ----------------------------------------------------------------------------
 
 def get(path):
+    """One API path as JSON: a browser-style User-Agent and up to RETRIES
+    retries with doubling backoff. A request that never succeeds is recorded in
+    FAILED and returns None - the sync saves what it can, and main() then exits
+    non-zero so a partial sync is never mistaken for a clean one."""
     url = f"{BASE}/{path.lstrip('/')}"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 fpl_sync"})
-    for attempt in range(3):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": USER_AGENT, "Accept": "application/json, text/plain, */*"})
+    for attempt in range(RETRIES + 1):
         try:
-            with urllib.request.urlopen(req, timeout=30) as r:
+            with _urlopen(req, timeout=30) as r:
                 data = json.load(r)
-            time.sleep(PAUSE)
+            _sleep(PAUSE)
             return data
         except Exception as e:  # noqa: BLE001
-            if attempt == 2:
+            if attempt == RETRIES:
                 print(f"  ! failed {url}: {e}")
+                FAILED.append(url)
                 return None
-            time.sleep(2)
+            wait = BACKOFF * 2 ** attempt
+            print(f"  retry {attempt + 1}/{RETRIES} in {wait:.0f}s - {url}: {e}")
+            _sleep(wait)
 
 # ----------------------------------------------------------------------------
 # Schema
@@ -513,6 +529,10 @@ def main():
     sync_entries(db, entries, last_gw)
     export(db, args.gw or last_gw)
     db.close()
+    if FAILED:
+        # the export above holds what was fetched; the exit code says it is partial
+        sys.exit(f"SYNC INCOMPLETE: {len(FAILED)} request(s) still failed after "
+                 f"{RETRIES} retries each")
 
 
 if __name__ == "__main__":
