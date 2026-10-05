@@ -2,6 +2,7 @@
 # fpl_run.bat stays the manual local path; for the same export both write the
 # same forecasts and the same report (tested in test_fpl.py).
 # No secrets: every endpoint fpl_sync.py calls is public.
+# To start a run by hand: Actions tab -> nightly -> Run workflow, branch master.
 name: nightly
 
 on:
