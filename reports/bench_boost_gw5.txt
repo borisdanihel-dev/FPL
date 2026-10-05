@@ -1,0 +1,137 @@
+[reading fpl_export_gw5.json]
+
+==============================================================================
+BENCH BOOST SCREEN  (frozen three-layer rule, next 6 gameweeks)
+==============================================================================
+  squad: 15 players (my current 15)   budget £100.3m = team value (bank included)
+  proj  GK/DEF: bottomup (P(start), xGI, Poisson clean sheet, DEFCON)
+        MID/FWD: P(start) + xGI-per-90 x P(start), in points - bare xGI, no
+        fixture term.  FLAG: minutes share <= 0.667 over the last four
+        gameweeks, the frozen P1 predictor.  BLANK: no fixture, no forecast.
+
+  GW6
+    pos player         team fixture         P(st)  share   proj
+    GK  Verbruggen     BHA  SUN (A) 3        1.00   1.00   3.25
+    DEF Virgil         LIV  MCI (H) 4        1.00   1.00   4.42
+    DEF Calafiori      ARS  LEE (H) 2        1.00   0.93   5.02
+    DEF Mitchell       CRY  NFO (H) 3        1.00   0.91   3.59
+    DEF N.Williams     NFO  CRY (A) 3        1.00   1.00   4.91
+    MID B.Fernandes    MUN  TOT (H) 3        1.00   1.00   4.72
+    MID Szoboszlai     LIV  MCI (H) 4        1.00   0.97   3.72
+    MID Groß           BHA  SUN (A) 3        1.00   1.00   3.93
+    FWD Haaland        MCI  LIV (A) 4        1.00   1.00   5.11
+    FWD Barry          EVE  HUL (A) 2        1.00   0.94   4.57
+    FWD Wissa          NEW  COV (A) 2        1.00   0.97   3.76
+    GK  Kinsky         TOT  MUN (A) 4        1.00   1.00   2.47
+    MID Ndiaye         MCI  LIV (A) 4        0.75   0.82   2.24
+    MID Slater         HUL  EVE (H) 3        1.00   0.96   2.80
+    DEF Shaw           MUN  TOT (H) 3        0.75   0.68   3.29
+    all 15 projected: 57.8 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.0 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.0 pts
+
+  GW7
+    pos player         team fixture         P(st)  share   proj
+    GK  Verbruggen     BHA  CRY (H) 3        1.00   1.00   3.95
+    DEF Virgil         LIV  BRE (A) 3        1.00   1.00   4.49
+    DEF Calafiori      ARS  NFO (A) 3        1.00   0.93   5.08
+    DEF Mitchell       CRY  BHA (A) 3        1.00   0.91   3.28
+    DEF N.Williams     NFO  ARS (H) 4        1.00   1.00   4.42
+    MID B.Fernandes    MUN  LEE (A) 3        1.00   1.00   4.72
+    MID Szoboszlai     LIV  BRE (A) 3        1.00   0.97   3.72
+    MID Groß           BHA  CRY (H) 3        1.00   1.00   3.93
+    FWD Haaland        MCI  IPS (H) 2        1.00   1.00   5.11
+    FWD Barry          EVE  CHE (H) 4        1.00   0.94   4.57
+    FWD Wissa          NEW  AVL (H) 3        1.00   0.97   3.76
+    GK  Kinsky         TOT  COV (H) 2        1.00   1.00   3.43
+    MID Ndiaye         MCI  IPS (H) 2        0.75   0.82   2.24
+    MID Slater         HUL  FUL (A) 3        1.00   0.96   2.80
+    DEF Shaw           MUN  LEE (A) 3        0.75   0.68   2.83
+    all 15 projected: 58.3 pts   GK/DEF at FDR 4+: 1   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.0 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   54.8 pts
+
+  GW8
+    pos player         team fixture         P(st)  share   proj
+    GK  Verbruggen     BHA  LIV (A) 4        1.00   1.00   3.48
+    DEF Virgil         LIV  BHA (H) 2        1.00   1.00   4.31
+    DEF Calafiori      ARS  EVE (H) 3        1.00   0.93   5.15
+    DEF Mitchell       CRY  NEW (H) 2        1.00   0.91   4.01
+    DEF N.Williams     NFO  IPS (A) 2        1.00   1.00   4.56
+    MID B.Fernandes    MUN  BOU (H) 3        1.00   1.00   4.72
+    MID Szoboszlai     LIV  BHA (H) 2        1.00   0.97   3.72
+    MID Groß           BHA  LIV (A) 4        1.00   1.00   3.93
+    FWD Haaland        MCI  AVL (A) 4        1.00   1.00   5.11
+    FWD Barry          EVE  ARS (A) 5        1.00   0.94   4.57
+    FWD Wissa          NEW  CRY (A) 3        1.00   0.97   3.76
+    GK  Kinsky         TOT  CHE (A) 4        1.00   1.00   2.85
+    MID Ndiaye         MCI  AVL (A) 4        0.75   0.82   2.24
+    MID Slater         HUL  BRE (H) 3        1.00   0.96   2.80
+    DEF Shaw           MUN  BOU (H) 3        0.75   0.68   2.97
+    all 15 projected: 58.2 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.3 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   54.7 pts
+
+  GW9
+    pos player         team fixture         P(st)  share   proj
+    GK  Verbruggen     BHA  MCI (A) 5        1.00   1.00   3.12
+    DEF Virgil         LIV  ARS (H) 4        1.00   1.00   4.76
+    DEF Calafiori      ARS  LIV (A) 4        1.00   0.93   4.92
+    DEF Mitchell       CRY  TOT (A) 3        1.00   0.91   4.08
+    DEF N.Williams     NFO  BRE (A) 3        1.00   1.00   4.16
+    MID B.Fernandes    MUN  CHE (A) 4        1.00   1.00   4.72
+    MID Szoboszlai     LIV  ARS (H) 4        1.00   0.97   3.72
+    MID Groß           BHA  MCI (A) 5        1.00   1.00   3.93
+    FWD Haaland        MCI  BHA (H) 2        1.00   1.00   5.11
+    FWD Barry          EVE  NEW (A) 3        1.00   0.94   4.57
+    FWD Wissa          NEW  EVE (H) 3        1.00   0.97   3.76
+    GK  Kinsky         TOT  CRY (H) 3        1.00   1.00   3.12
+    MID Ndiaye         MCI  BHA (H) 2        0.75   0.82   2.24
+    MID Slater         HUL  IPS (H) 2        1.00   0.96   2.80
+    DEF Shaw           MUN  CHE (A) 4        0.75   0.68   2.88
+    all 15 projected: 57.9 pts   GK/DEF at FDR 4+: 4   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               46.8 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.6 pts
+
+  GW10
+    pos player         team fixture         P(st)  share   proj
+    GK  Verbruggen     BHA  BRE (H) 3        1.00   1.00   3.20
+    DEF Virgil         LIV  CRY (A) 3        1.00   1.00   5.24
+    DEF Calafiori      ARS  HUL (H) 2        1.00   0.93   5.54
+    DEF Mitchell       CRY  LIV (H) 4        1.00   0.91   3.49
+    DEF N.Williams     NFO  MCI (H) 4        1.00   1.00   4.09
+    MID B.Fernandes    MUN  AVL (H) 3        1.00   1.00   4.72
+    MID Szoboszlai     LIV  CRY (A) 3        1.00   0.97   3.72
+    MID Groß           BHA  BRE (H) 3        1.00   1.00   3.93
+    FWD Haaland        MCI  NFO (A) 3        1.00   1.00   5.11
+    FWD Barry          EVE  COV (H) 2        1.00   0.94   4.57
+    FWD Wissa          NEW  FUL (A) 3        1.00   0.97   3.76
+    GK  Kinsky         TOT  LEE (A) 3        1.00   1.00   2.78
+    MID Ndiaye         MCI  NFO (A) 3        0.75   0.82   2.24
+    MID Slater         HUL  ARS (A) 5        1.00   0.96   2.80
+    DEF Shaw           MUN  AVL (H) 3        0.75   0.68   3.40
+    all 15 projected: 58.6 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               47.3 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   57.7 pts
+
+  GW11
+    pos player         team fixture         P(st)  share   proj
+    GK  Verbruggen     BHA  HUL (A) 2        1.00   1.00   4.13
+    DEF Virgil         LIV  MUN (H) 4        1.00   1.00   4.48
+    DEF Calafiori      ARS  NEW (A) 3        1.00   0.93   5.55
+    DEF Mitchell       CRY  COV (A) 2        1.00   0.91   4.10
+    DEF N.Williams     NFO  BOU (A) 3        1.00   1.00   4.75
+    MID B.Fernandes    MUN  LIV (A) 4        1.00   1.00   4.72
+    MID Szoboszlai     LIV  MUN (H) 4        1.00   0.97   3.72
+    MID Groß           BHA  HUL (A) 2        1.00   1.00   3.93
+    FWD Haaland        MCI  FUL (H) 2        1.00   1.00   5.11
+    FWD Barry          EVE  BRE (A) 3        1.00   0.94   4.57
+    FWD Wissa          NEW  ARS (H) 4        1.00   0.97   3.76
+    GK  Kinsky         TOT  IPS (H) 2        1.00   1.00   2.79
+    MID Ndiaye         MCI  FUL (H) 2        0.75   0.82   2.24
+    MID Slater         HUL  BHA (H) 2        1.00   0.96   2.80
+    DEF Shaw           MUN  LIV (A) 4        0.75   0.68   2.76
+    all 15 projected: 59.4 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               48.8 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.0 pts
+

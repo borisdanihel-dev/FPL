@@ -1,0 +1,214 @@
+[reading fpl_export_gw5.json]
+
+==============================================================================
+WILDCARD DRAFT  (frozen three-layer rule, six-week sum GW6-11)
+==============================================================================
+  budget £100.3m = team value (bank £2.6m included)
+  formation 4-3-3 (--formation): the XI is the top of each position's ordered list, never a choice on the sums
+  split by position, current squad shape: GK £9.3m  DEF £26.8m  MID £36.0m  FWD £28.2m
+  layer 1  excluded: 100 minutes share <= 0.667, 201 status not 'a', 191 under 45 min in the last four
+  layer 2  role flags (admit, never rank): pens / corners / fk = first choice;
+           defcon = hit rate >= 50% over 2+ starts; arb = DEF with xGI/90 >= MID median
+  layer 3  orders the whole shortlist by its metric alone: GK/DEF by the six-week
+           bottomup sum; MID/FWD by P(start) x fixtures, then xGI/90. Roles are
+           printed beside each player for a human override at draft time.
+
+  SHORTLISTS  (top 8 per position; 6wk = full model, all terms, GW6-11:
+               one unit for every position, next to the ordering metric;
+               conc = best game's xGI / season xGI ('!' at 0.50+), trim90 =
+               xGI/90 without that game (4+ games), med90 = median per-game xGI/90
+               over 60+ minute games - printed, never ordered or projected on)
+    GK   player         team     £  roles              6wk P(st)xfix  xGI/90  conc trim90  med90
+         Pickford       EVE    5.5                    26.2      6.00    0.00 1.00!   0.00   0.00
+         Trafford       LEE    5.0                    25.0      6.00    0.00     -   0.00   0.00
+         Raya           ARS    6.1                    23.8      6.00    0.00 1.00!   0.00   0.00
+         Kelleher       BRE    5.0                    23.4      6.00    0.00 1.00!   0.00   0.00
+         Tzolakis       HUL    4.6                    21.7      6.00    0.00     -   0.00   0.00
+         Verbruggen     BHA    4.5                    21.1      6.00    0.04 1.00!   0.00   0.00
+         A.Becker       LIV    5.5                    21.0      6.00    0.00     -   0.00   0.00
+         Donnarumma     MCI    5.5                    20.8      6.00    0.00     -   0.00   0.00
+    DEF   player         team     £  roles              6wk P(st)xfix  xGI/90  conc trim90  med90
+         Muharemović    LEE    5.0  defcon            34.8      6.00    0.11 0.76!   0.03   0.02
+         Bogle          LEE    4.6  arb               34.2      6.00    0.36 0.63!   0.16   0.10
+         Branthwaite    EVE    5.5  defcon            33.5      6.00    0.04 0.53!   0.02   0.01
+         Tarkowski      EVE    6.1  defcon            33.0      6.00    0.04 0.50!   0.03   0.03
+         Justin         LEE    4.5                    32.2      6.00    0.13 0.44    0.09   0.14
+         De Cuyper      BHA    4.9  arb               31.8      6.00    0.47 0.76!   0.14   0.17
+         Calafiori      ARS    5.8  arb               31.3      6.00    0.28 0.44    0.20   0.15
+         Gabriel        ARS    8.0                    30.7      6.00    0.14 0.46    0.10   0.14
+    MID   player         team     £  roles              6wk P(st)xfix  xGI/90  conc trim90  med90
+         Saka           ARS    9.5  pens              34.6      6.00    0.91 0.35    0.76   0.97
+         B.Fernandes    MUN   11.9  corners,fk,pens   30.5      6.00    0.78 0.64!   0.34   0.36
+         Mbeumo         MUN    7.9                    30.3      6.00    0.77 0.51!   0.48   0.57
+         E.Le Fée       SUN    5.7  corners           28.3      6.00    0.70 0.42    0.51   0.55
+         Cherki         MCI    7.8  corners,fk        28.8      6.00    0.67 0.40    0.55   0.71
+         Ndoye          NFO    5.5                    28.0      6.00    0.62 0.45    0.43   1.16
+         Rudoni         COV    4.9  fk                29.2      6.00    0.62 0.52!   0.39   0.45
+         Rogers         CHE    7.7                    26.5      6.00    0.61 0.39    0.47   0.40
+    FWD   player         team     £  roles              6wk P(st)xfix  xGI/90  conc trim90  med90
+         Haaland        MCI   15.6  pens              30.7      6.00    0.99 0.31    0.85   0.88
+         Isak           LIV    9.1                    27.4      6.00    0.79 0.30    0.70   0.87
+         Barry          EVE    5.6  pens              27.4      6.00    0.79 0.41    0.56   0.62
+         Brobbey        SUN    5.7                    25.8      6.00    0.69 0.78!   0.19   0.32
+         Thiago         BRE    7.8  pens              25.5      6.00    0.67 0.33    0.55   0.75
+         Calvert-Lewin  LEE    6.0  pens              25.0      6.00    0.64 0.32    0.56   0.78
+         Gonzalo        FUL    6.0  pens              24.6      6.00    0.62 0.35    0.49   0.64
+         Emersonn       IPS    5.5                    22.6      6.00    0.49 0.51!   0.30   0.51
+
+  SQUAD  £100.3m of £100.3m   keeps from your current 15 (5): B.Fernandes, Barry, Haaland, Slater, Verbruggen
+    XI (4-3-3, --formation)   sums = full model, all terms   by = the frozen ordering metric
+      GK  Tzolakis       HUL    4.6  6wk  21.7  by bottomup 21.7                                        
+      DEF Muharemović    LEE    5.0  6wk  34.8  by bottomup 34.8                                        defcon
+      DEF Bogle          LEE    4.6  6wk  34.2  by bottomup 34.2                                        arb
+      DEF Branthwaite    EVE    5.5  6wk  33.5  by bottomup 33.5                                        defcon
+      DEF Tarkowski      EVE    6.1  6wk  33.0  by bottomup 33.0                                        defcon
+      MID Saka           ARS    9.5  6wk  34.6  by P(st)xfix 6.00 xGI/90 0.91 conc/trim/med 0.35    0.76   0.97 pens  (C)
+      MID B.Fernandes    MUN   11.9  6wk  30.5  by P(st)xfix 6.00 xGI/90 0.78 conc/trim/med 0.64!   0.34   0.36 corners,fk,pens
+      MID Rudoni         COV    4.9  6wk  29.2  by P(st)xfix 6.00 xGI/90 0.62 conc/trim/med 0.52!   0.39   0.45 fk
+      FWD Haaland        MCI   15.6  6wk  30.7  by P(st)xfix 6.00 xGI/90 0.99 conc/trim/med 0.31    0.85   0.88 pens  (V)
+      FWD Isak           LIV    9.1  6wk  27.4  by P(st)xfix 6.00 xGI/90 0.79 conc/trim/med 0.30    0.70   0.87 
+      FWD Barry          EVE    5.6  6wk  27.4  by P(st)xfix 6.00 xGI/90 0.79 conc/trim/med 0.41    0.56   0.62 pens
+    captain restricted to MID/FWD: DEF over-spread
+    BENCH  cheapest who pass layer 1 per remaining slot (GK/DEF ties: GW8-11 fixture count)      fixtures GW8-11
+      GK  Verbruggen     BHA    4.5  6wk  21.1   LIV (A) 4 | MCI (A) 5 | BRE (H) 3 | HUL (A) 2
+      DEF Thomas         COV    4.0  6wk  26.4   FUL (H) 2 | SUN (H) 2 | EVE (A) 3 | CRY (H) 3
+      MID Slater         HUL    4.5  6wk  20.1   BRE (H) 3 | IPS (H) 2 | ARS (A) 5 | BHA (H) 2
+      MID Sadiki         SUN    4.9  6wk  18.3   LEE (H) 2 | COV (A) 2 | CHE (H) 4 | AVL (A) 4
+    XI six-week sum 337.0   bench six-week sum 85.9   fifteen 423.0   (one unit: full model, all terms)
+
+  BENCH BOOST SCREEN FOR THIS DRAFT  (--section bench_boost on the drafted 15)
+==============================================================================
+BENCH BOOST SCREEN  (frozen three-layer rule, next 6 gameweeks)
+==============================================================================
+  squad: 15 players (--squad)   budget £100.3m = team value (bank included)
+  proj  GK/DEF: bottomup (P(start), xGI, Poisson clean sheet, DEFCON)
+        MID/FWD: P(start) + xGI-per-90 x P(start), in points - bare xGI, no
+        fixture term.  FLAG: minutes share <= 0.667 over the last four
+        gameweeks, the frozen P1 predictor.  BLANK: no fixture, no forecast.
+
+  GW6
+    pos player         team fixture         P(st)  share   proj
+    GK  Tzolakis       HUL  EVE (H) 3        1.00   1.00   3.90
+    DEF Muharemović    LEE  ARS (A) 5        1.00   1.00   5.70
+    DEF Bogle          LEE  ARS (A) 5        1.00   0.76   5.60
+    DEF Branthwaite    EVE  HUL (A) 2        1.00   1.00   5.87
+    DEF Tarkowski      EVE  HUL (A) 2        1.00   1.00   5.78
+    MID Saka           ARS  LEE (H) 2        1.00   0.97   5.13
+    MID B.Fernandes    MUN  TOT (H) 3        1.00   1.00   4.72
+    MID Rudoni         COV  NEW (H) 2        1.00   0.77   4.21
+    FWD Haaland        MCI  LIV (A) 4        1.00   1.00   5.11
+    FWD Barry          EVE  HUL (A) 2        1.00   0.94   4.57
+    FWD Isak           LIV  MCI (H) 4        1.00   0.90   4.57
+    GK  Verbruggen     BHA  SUN (A) 3        1.00   1.00   3.25
+    DEF Thomas         COV  NEW (H) 2        1.00   0.96   4.68
+    MID Slater         HUL  EVE (H) 3        1.00   0.96   2.80
+    MID Sadiki         SUN  BHA (H) 2        1.00   0.89   2.75
+    all 15 projected: 68.6 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (5-2-3):                               55.6 pts
+    best XI, same budget, fodder bench (5-2-3, fodder £17.2m):   57.1 pts
+
+  GW7
+    pos player         team fixture         P(st)  share   proj
+    GK  Tzolakis       HUL  FUL (A) 3        1.00   1.00   3.77
+    DEF Muharemović    LEE  MUN (H) 4        1.00   1.00   5.43
+    DEF Bogle          LEE  MUN (H) 4        1.00   0.76   5.33
+    DEF Branthwaite    EVE  CHE (H) 4        1.00   1.00   5.48
+    DEF Tarkowski      EVE  CHE (H) 4        1.00   1.00   5.38
+    MID Saka           ARS  NFO (A) 3        1.00   0.97   5.13
+    MID B.Fernandes    MUN  LEE (A) 3        1.00   1.00   4.72
+    MID Rudoni         COV  TOT (A) 3        1.00   0.77   4.21
+    FWD Haaland        MCI  IPS (H) 2        1.00   1.00   5.11
+    FWD Barry          EVE  CHE (H) 4        1.00   0.94   4.57
+    FWD Isak           LIV  BRE (A) 3        1.00   0.90   4.57
+    GK  Verbruggen     BHA  CRY (H) 3        1.00   1.00   3.95
+    DEF Thomas         COV  TOT (A) 3        1.00   0.96   4.75
+    MID Slater         HUL  FUL (A) 3        1.00   0.96   2.80
+    MID Sadiki         SUN  BOU (A) 3        1.00   0.89   2.75
+    all 15 projected: 67.9 pts   GK/DEF at FDR 4+: 4   blanks: 0   flagged: 0
+    XI from this 15 (5-2-3):                               54.4 pts
+    best XI, same budget, fodder bench (5-2-3, fodder £17.2m):   55.5 pts
+
+  GW8
+    pos player         team fixture         P(st)  share   proj
+    GK  Tzolakis       HUL  BRE (H) 3        1.00   1.00   3.37
+    DEF Muharemović    LEE  SUN (A) 3        1.00   1.00   5.50
+    DEF Bogle          LEE  SUN (A) 3        1.00   0.76   5.40
+    DEF Branthwaite    EVE  ARS (A) 5        1.00   1.00   5.29
+    DEF Tarkowski      EVE  ARS (A) 5        1.00   1.00   5.20
+    MID Saka           ARS  EVE (H) 3        1.00   0.97   5.13
+    MID B.Fernandes    MUN  BOU (H) 3        1.00   1.00   4.72
+    MID Rudoni         COV  FUL (H) 2        1.00   0.77   4.21
+    FWD Haaland        MCI  AVL (A) 4        1.00   1.00   5.11
+    FWD Barry          EVE  ARS (A) 5        1.00   0.94   4.57
+    FWD Isak           LIV  BHA (H) 2        1.00   0.90   4.57
+    GK  Verbruggen     BHA  LIV (A) 4        1.00   1.00   3.48
+    DEF Thomas         COV  FUL (H) 2        1.00   0.96   4.19
+    MID Slater         HUL  BRE (H) 3        1.00   0.96   2.80
+    MID Sadiki         SUN  LEE (H) 2        1.00   0.89   2.75
+    all 15 projected: 66.3 pts   GK/DEF at FDR 4+: 3   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               53.2 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   54.7 pts
+
+  GW9
+    pos player         team fixture         P(st)  share   proj
+    GK  Tzolakis       HUL  IPS (H) 2        1.00   1.00   3.78
+    DEF Muharemović    LEE  BOU (A) 3        1.00   1.00   5.99
+    DEF Bogle          LEE  BOU (A) 3        1.00   0.76   5.89
+    DEF Branthwaite    EVE  NEW (A) 3        1.00   1.00   5.89
+    DEF Tarkowski      EVE  NEW (A) 3        1.00   1.00   5.79
+    MID Saka           ARS  LIV (A) 4        1.00   0.97   5.13
+    MID B.Fernandes    MUN  CHE (A) 4        1.00   1.00   4.72
+    MID Rudoni         COV  SUN (H) 2        1.00   0.77   4.21
+    FWD Haaland        MCI  BHA (H) 2        1.00   1.00   5.11
+    FWD Barry          EVE  NEW (A) 3        1.00   0.94   4.57
+    FWD Isak           LIV  ARS (H) 4        1.00   0.90   4.57
+    GK  Verbruggen     BHA  MCI (A) 5        1.00   1.00   3.12
+    DEF Thomas         COV  SUN (H) 2        1.00   0.96   3.98
+    MID Slater         HUL  IPS (H) 2        1.00   0.96   2.80
+    MID Sadiki         SUN  COV (A) 2        1.00   0.89   2.75
+    all 15 projected: 68.3 pts   GK/DEF at FDR 4+: 1   blanks: 0   flagged: 0
+    XI from this 15 (4-3-3):                               55.7 pts
+    best XI, same budget, fodder bench (4-3-3, fodder £16.7m):   56.6 pts
+
+  GW10
+    pos player         team fixture         P(st)  share   proj
+    GK  Tzolakis       HUL  ARS (A) 5        1.00   1.00   3.64
+    DEF Muharemović    LEE  TOT (H) 3        1.00   1.00   6.34
+    DEF Bogle          LEE  TOT (H) 3        1.00   0.76   6.24
+    DEF Branthwaite    EVE  COV (H) 2        1.00   1.00   5.96
+    DEF Tarkowski      EVE  COV (H) 2        1.00   1.00   5.87
+    MID Saka           ARS  HUL (H) 2        1.00   0.97   5.13
+    MID B.Fernandes    MUN  AVL (H) 3        1.00   1.00   4.72
+    MID Rudoni         COV  EVE (A) 3        1.00   0.77   4.21
+    FWD Haaland        MCI  NFO (A) 3        1.00   1.00   5.11
+    FWD Barry          EVE  COV (H) 2        1.00   0.94   4.57
+    FWD Isak           LIV  CRY (A) 3        1.00   0.90   4.57
+    GK  Verbruggen     BHA  BRE (H) 3        1.00   1.00   3.20
+    DEF Thomas         COV  EVE (A) 3        1.00   0.96   4.30
+    MID Slater         HUL  ARS (A) 5        1.00   0.96   2.80
+    MID Sadiki         SUN  CHE (H) 4        1.00   0.89   2.75
+    all 15 projected: 69.4 pts   GK/DEF at FDR 4+: 1   blanks: 0   flagged: 0
+    XI from this 15 (5-2-3):                               56.4 pts
+    best XI, same budget, fodder bench (5-2-3, fodder £17.2m):   58.8 pts
+
+  GW11
+    pos player         team fixture         P(st)  share   proj
+    GK  Tzolakis       HUL  BHA (H) 2        1.00   1.00   3.19
+    DEF Muharemović    LEE  CHE (A) 4        1.00   1.00   5.88
+    DEF Bogle          LEE  CHE (A) 4        1.00   0.76   5.78
+    DEF Branthwaite    EVE  BRE (A) 3        1.00   1.00   5.04
+    DEF Tarkowski      EVE  BRE (A) 3        1.00   1.00   4.95
+    MID Saka           ARS  NEW (A) 3        1.00   0.97   5.13
+    MID B.Fernandes    MUN  LIV (A) 4        1.00   1.00   4.72
+    MID Rudoni         COV  CRY (H) 3        1.00   0.77   4.21
+    FWD Haaland        MCI  FUL (H) 2        1.00   1.00   5.11
+    FWD Barry          EVE  BRE (A) 3        1.00   0.94   4.57
+    FWD Isak           LIV  MUN (H) 4        1.00   0.90   4.57
+    GK  Verbruggen     BHA  HUL (A) 2        1.00   1.00   4.13
+    DEF Thomas         COV  CRY (H) 3        1.00   0.96   4.49
+    MID Slater         HUL  BHA (H) 2        1.00   0.96   2.80
+    MID Sadiki         SUN  AVL (A) 4        1.00   0.89   2.75
+    all 15 projected: 67.3 pts   GK/DEF at FDR 4+: 2   blanks: 0   flagged: 0
+    XI from this 15 (5-2-3):                               54.4 pts
+    best XI, same budget, fodder bench (5-2-3, fodder £17.2m):   57.0 pts
+

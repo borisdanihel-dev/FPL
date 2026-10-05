@@ -1,0 +1,407 @@
+==============================================================================
+DIFF  GW4 -> GW5
+==============================================================================
+
+  TABLE
+   Bruno Dos Tres         1( =)   336 (+13)  val 101.3 (+0.3)
+   Revelstoke FC          2( =)   325 (+7)  val 101.1 (+0.4)
+   ReturnOfTheDjedi FC    3( =)   323 (+13)  val 101.1 (+0.5)
+   Skori FC               4( =)   311 (+10)  val 100.9 (+0.3)
+>> 1. FC Kiripolcz        5( =)   297 (+29)  val 100.3 (-0.1)
+   No More Mr. Rice Guy   6( =)   288 (+20)  val 100.5 (+0.2)
+   PyroNeniZlocin         7( =)   245 (+9)  val 100.1 (+0.1)
+
+  YOUR SQUAD: price moves
+    Haaland        MCI   £15.5 -> £15.6  (+0.1)
+    Ndiaye         MCI   £5.9 -> £5.8  (-0.1)
+    Shaw           MUN   £4.4 -> £4.3  (-0.1)
+
+  NEW FLAGS (owned by anyone in the league)
+    !! James          CHE  d 75%  Hamstring injury - 75% chance of playing
+
+  FORM MOVERS  (last-4 points, biggest gains, 60+ mins)
+    Thomas         COV  £  4.0 L4  21 (+19)  own   8.6%
+    Dasilva        COV  £  4.0 L4  19 (+19)  own   0.7%
+    Schuster       BRE  £  4.5 L4  21 (+14)  own   0.2%
+    Kamara         AVL  £  5.0 L4  13 (+13)  own   0.3%
+    Manzambi       AVL  £  5.9 L4  14 (+13)  own   0.2%
+    Groß           BHA  £  5.7 L4  45 (+12)  own  23.6% *YOURS*
+    Rushworth      COV  £  4.5 L4  16 (+11)  own   0.8%
+    Hall           NEW  £  5.2 L4  28 (+10)  own  15.3%
+    Buendía        AVL  £  5.9 L4  19 (+10)  own   0.9%
+    Anthony        BRE  £  5.9 L4  14 (+9)  own   0.1%
+
+  CHIPS PLAYED SINCE
+    ReturnOfTheDjedi FC    WC GW5
+
+==============================================================================
+LEAGUE  (after GW5)
+==============================================================================
+   team                     GW   tot   gap    val bench  chips left (1st half)
+   Bruno Dos Tres           13   336     0  101.3    14  WC FH
+   Revelstoke FC             7   325   -11  101.1    23  WC FH BB
+   ReturnOfTheDjedi FC      13   323   -13  101.1    15  FH
+   Skori FC                 10   311   -25  100.9     7  WC FH TC
+>> 1. FC Kiripolcz          29   297   -39  100.3     4  WC FH BB TC
+   No More Mr. Rice Guy     20   288   -48  100.5    17  WC FH BB TC
+   PyroNeniZlocin            9   245   -91  100.1    10  WC FH BB
+
+==============================================================================
+MINI-LEAGUE OWNERSHIP
+==============================================================================
+
+  YOU DON'T OWN, THEY DO   (forward-looking: every point is a loss)
+  player         team pos      £  rivals  gap/pt
+  João Pedro     CHE  FWD    7.8    4/6   -0.67
+  Gvardiol       MCI  DEF    5.7    4/6   -0.67
+  Rogers         CHE  MID    7.7    4/6   -0.67
+  Calvert-Lewin  LEE  FWD    6.0    3/6   -0.50
+  Muharemović    LEE  DEF    5.0    2/6   -0.33
+  Gibbs-White    NFO  MID    8.0    2/6   -0.33
+  Konsa          ARS  DEF    4.6    2/6   -0.33
+  De Cuyper      BHA  DEF    4.9    2/6   -0.33
+  Maguire        MUN  DEF    4.9    2/6   -0.33
+  Saka           ARS  MID    9.5    2/6   -0.33
+  Raya           ARS  GK     6.0    2/6   -0.33
+  Van Hecke      TOT  DEF    4.9    1/6   -0.17
+
+  YOU OWN, THEY MOSTLY DON'T   (your differentials)
+  player         team pos      £  rivals  gap/pt
+  Virgil         LIV  DEF    6.5    0/6   +1.00
+  Mitchell       CRY  DEF    4.5    0/6   +1.00
+  Barry          EVE  FWD    5.6    0/6   +1.00
+  Slater         HUL  MID    4.5    0/6   +1.00
+  Shaw           MUN  DEF    4.3    0/6   +1.00
+  Verbruggen     BHA  GK     4.5    1/6   +0.83
+  Wissa          NEW  FWD    6.2    1/6   +0.83
+  Ndiaye         MCI  MID    5.8    1/6   +0.83
+  N.Williams     NFO  DEF    5.0    2/6   +0.67
+  B.Fernandes    MUN  MID   12.0    2/6   +0.67
+  Szoboszlai     LIV  MID    7.0    2/6   +0.67
+  Groß           BHA  MID    5.7    3/6   +0.50
+
+  CAPTAINCY EFFECT IN GW5   (historical - not a transfer signal)
+  player         team   mult gap  note
+  Kinsky         TOT       -0.33  
+  Ndiaye         MCI       -0.17  
+  B.Fernandes    MUN       +0.50  
+  Haaland        MCI       +0.50  
+  N.Williams     NFO       +0.67  
+  Szoboszlai     LIV       +0.67  
+  Groß           BHA       +0.83  
+  Wissa          NEW       +0.83  
+  Verbruggen     BHA       +1.00  
+  Virgil         LIV       +1.00  
+  Mitchell       CRY       +1.00  
+  Barry          EVE       +1.00  
+
+  gap/pt = net points gained on the average rival per point that player
+  scores. Ownership gap is what transfers change. The captaincy block
+  reflects one past gameweek only.
+
+==============================================================================
+YOUR SQUAD  (form, flags, next 6 fixtures)
+==============================================================================
+XI  GK  Verbruggen     BHA    4.5 pts 23 L4: 17 m 360 fdr 3.3  SUNA3 CRYH3 LIVA4 MCIA5 BREH3 HULA2
+XI  DEF Virgil         LIV    6.5 pts 17 L4: 15 m 270 fdr 3.3  MCIH4 BREA3 BHAH2 ARSH4 CRYA3 MUNH4
+XI  DEF Calafiori      ARS    5.8 pts 29 L4: 20 m 336 fdr 2.8  LEEH2 NFOA3 EVEH3 LIVA4 HULH2 NEWA3
+XI  DEF Mitchell       CRY    4.5 pts 17 L4: 16 m 239 fdr 2.8  NFOH3 BHAA3 NEWH2 TOTA3 LIVH4 COVA2
+XI  DEF N.Williams     NFO    5.0 pts 19 L4: 17 m 360 fdr 3.2  CRYA3 ARSH4 IPSA2 BREA3 MCIH4 BOUA3
+XI  MID B.Fernandes    MUN   12.0 pts 29 L4: 27 m 270 fdr 3.3  TOTH3 LEEA3 BOUH3 CHEA4 AVLH3 LIVA4
+XI  MID Szoboszlai     LIV    7.0 pts 18 L4: 10 m 270 fdr 3.3  MCIH4 BREA3 BHAH2 ARSH4 CRYA3 MUNH4
+XI  MID Groß           BHA    5.7 pts 47 L4: 45 m 360 fdr 3.3  SUNA3 CRYH3 LIVA4 MCIA5 BREH3 HULA2
+XI  FWD Haaland        MCI   15.6 pts 33 L4: 31 m 270 fdr 2.8  LIVA4 IPSH2 AVLA4 BHAH2 NFOA3 FULH2
+XI  FWD Barry          EVE    5.6 pts 20 L4: 12 m 339 fdr 3.2  HULA2 CHEH4 ARSA5 NEWA3 COVH2 BREA3
+XI  FWD Wissa          NEW    6.2 pts 15 L4: 11 m 351 fdr 3.0  COVA2 AVLH3 CRYA3 EVEH3 FULA3 ARSH4
+BEN GK  Kinsky         TOT    4.5 pts 18 L4: 16 m 360 fdr 3.0  MUNA4 COVH2 CHEA4 CRYH3 LEEA3 IPSH2
+BEN MID Ndiaye         MCI    5.8 pts 17 L4:  8 m 221 fdr 2.8  LIVA4 IPSH2 AVLA4 BHAH2 NFOA3 FULH2
+BEN MID Slater         HUL    4.5 pts 15 L4:  9 m 347 fdr 3.0  EVEH3 FULA3 BREH3 IPSH2 ARSA5 BHAH2
+BEN DEF Shaw           MUN    4.3 pts  7 L4:  6 m 162 fdr 3.3  TOTH3 LEEA3 BOUH3 CHEA4 AVLH3 LIVA4  !! d Unspecified injury - 50% chance of playi
+
+==============================================================================
+FIXTURE TICKER  (next 6, sorted by average difficulty)
+==============================================================================
+  COV   2.50     NEW (H)2    TOT (A)3    FUL (H)2    SUN (H)2    EVE (A)3    CRY (H)3
+  ARS   2.83     LEE (H)2    NFO (A)3    EVE (H)3    LIV (A)4    HUL (H)2    NEW (A)3
+  BOU   2.83     CHE (A)4    SUN (H)2    MUN (A)4    LEE (H)2    IPS (A)2    NFO (H)3
+  FUL   2.83     IPS (A)2    HUL (H)2    COV (A)2    AVL (A)4    NEW (H)2    MCI (A)5
+  SUN   2.83     BHA (H)2    BOU (A)3    LEE (H)2    COV (A)2    CHE (H)4    AVL (A)4
+  CRY   2.83     NFO (H)3    BHA (A)3    NEW (H)2    TOT (A)3    LIV (H)4    COV (A)2
+  MCI   2.83     LIV (A)4    IPS (H)2    AVL (A)4    BHA (H)2    NFO (A)3    FUL (H)2
+  AVL   3.00     BRE (H)3    NEW (A)3    MCI (H)4    FUL (H)2    MUN (A)4    SUN (H)2
+  CHE   3.00     BOU (H)3    EVE (A)3    TOT (H)3    MUN (H)4    SUN (A)3    LEE (H)2
+  IPS   3.00     FUL (H)2    MCI (A)5    NFO (H)3    HUL (A)2    BOU (H)3    TOT (A)3
+  TOT   3.00     MUN (A)4    COV (H)2    CHE (A)4    CRY (H)3    LEE (A)3    IPS (H)2
+  HUL   3.00     EVE (H)3    FUL (A)3    BRE (H)3    IPS (H)2    ARS (A)5    BHA (H)2
+  NEW   3.00     COV (A)2    AVL (H)3    CRY (A)3    EVE (H)3    FUL (A)3    ARS (H)4
+  BRE   3.17     AVL (A)4    LIV (H)4    HUL (A)2    NFO (H)3    BHA (A)3    EVE (H)3
+  NFO   3.17     CRY (A)3    ARS (H)4    IPS (A)2    BRE (A)3    MCI (H)4    BOU (A)3
+  EVE   3.17     HUL (A)2    CHE (H)4    ARS (A)5    NEW (A)3    COV (H)2    BRE (A)3
+  BHA   3.33     SUN (A)3    CRY (H)3    LIV (A)4    MCI (A)5    BRE (H)3    HUL (A)2
+  MUN   3.33     TOT (H)3    LEE (A)3    BOU (H)3    CHE (A)4    AVL (H)3    LIV (A)4
+  LIV   3.33     MCI (H)4    BRE (A)3    BHA (H)2    ARS (H)4    CRY (A)3    MUN (H)4
+  LEE   3.67     ARS (A)5    MUN (H)4    SUN (A)3    BOU (A)3    TOT (H)3    CHE (A)4
+
+==============================================================================
+DEFCON RATE  (per 90 vs threshold: DEF 10, MID 12)
+==============================================================================
+
+  DEF (threshold 10/match)
+    player         team     £     /90  margin     hit     per game   own%
+    Muharemović    LEE    5.0    14.3    +4.3     3/4   7 19 13 11    4.3
+    Pinnock        COV    4.5    13.7    +3.7     3/3     13 10 18    0.1
+    Fofana         CHE    5.0    13.6    +3.6     2/4    9 17 6 15    0.2
+    Schuster       BRE    4.5    13.5    +3.5     3/3     10 12 16    0.2
+    Mukiele        SUN    5.4    13.0    +3.0     2/3      19 14 6    1.9
+    Mendy          HUL    4.1    12.6    +2.6     2/2        13 10    6.4
+    Botman         NEW    5.0    12.2    +2.2     3/5 10 5 9 17 18    0.7
+    Milenković     NFO    5.4    12.0    +2.0     2/3      7 13 11    1.1
+    Branthwaite    EVE    5.5    11.5    +1.5     3/5 8 12 11 9 14    2.3
+    Lacroix        CHE    5.9    11.5    +1.5     3/4   12 9 11 12    6.9
+    Thomas         COV    4.0    10.9    +0.9     3/6 10 9 12 8 13 3    8.6
+    Tarkowski      EVE    6.1    10.5    +0.5     3/5 9 10 12 8 12   14.4
+    Truffert       BOU    5.5    10.3    +0.3     1/4     7 9 6 16    3.1
+    Khalaili       CRY    5.0    10.3    +0.3     2/3      14 10 5    0.3
+    Vuskovic       BHA    5.0    10.1    +0.1     2/5  4 8 10 9 12    3.2
+
+  MID (threshold 12/match)
+    player         team     £     /90  margin     hit     per game   own%
+    Mainoo         MUN    5.5    15.4    +3.4     3/3     15 15 13    1.6
+    Bentancur      TOT    5.5    15.2    +3.2     2/4  11 17 10 17    0.2
+    Palacios       IPS    5.0    14.4    +2.4     2/6 4 9 0 19 13 6    0.1
+    Charles        FUL    5.0    14.2    +2.2     1/2        11 17    0.1
+    Scott          BOU    6.1    13.9    +1.9     2/4  11 15 11 15    5.8
+    Anderson       MCI    6.3    13.4    +1.4     2/4   6 14 11 14    4.1
+    M.Sangaré      BRE    5.6    12.8    +0.8     3/3     13 14 13   10.7
+    Janelt         BRE    5.0    12.8    +0.8     3/5 13 10 12 20 9    2.5
+    Garner         EVE    6.0    12.5    +0.5     1/4    10 8 17 9    0.2
+    Schlager       NFO    5.0    12.0    +0.0     2/4   15 10 16 7    0.1
+    Mac Allister   LIV    5.4    11.9    -0.1     0/2        10 11    1.3
+    Tanaka         LEE    4.9    11.5    -0.5     0/2          8 5    0.3
+    Ndiaye         MCI    5.8    11.4    -0.6     2/3      12 13 5    7.1
+    Stach          LEE    6.0    11.1    -0.9     2/4   16 16 6 11    2.6
+    Xhaka          SUN    5.5    11.0    -1.0     2/4   13 7 15 11    3.8
+
+  hit = gameweeks at or above the threshold, out of starts.
+  per game = raw actions per gameweek, oldest first. A player at 10.0/90
+  who went 4-16-10 is a coin flip; one who went 10-10-10 is an asset.
+
+==============================================================================
+FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
+==============================================================================
+
+  GK
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Tzolakis       HUL    4.6   24    5.22  3.00   5.22   11.7
+    Rushworth      COV    4.5   16    3.56  2.50   4.44    0.8
+    Raya           ARS    6.0   24    4.00  2.83   4.33   41.8
+    Kinsky         TOT    4.5   16    3.56  3.00   3.56   18.0
+    Suzuki         AVL    5.0   16    3.20  3.00   3.20    1.8
+    Verbruggen     BHA    4.5   17    3.78  3.33   3.15   21.7
+    Leno           FUL    4.5   13    2.89  2.83   3.13    3.2
+    Pickford       EVE    5.5   18    3.27  3.17   3.00    9.0
+    Donnarumma     MCI    5.5   14    2.55  2.83   2.76    7.8
+    Horníček       NEW    5.0   13    2.60  3.00   2.60    1.5
+    A.Becker       LIV    5.5   17    3.09  3.33   2.58    3.9
+    Kelleher       BRE    5.0   13    2.60  3.17   2.38    6.1
+
+  DEF
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Thomas         COV    4.0   21    5.25  2.50   6.56    8.6
+    Dasilva        COV    4.0   19    4.75  2.50   5.94    0.7
+    Davis          IPS    4.0   23    5.75  3.00   5.75    6.8
+    Tarkowski      EVE    6.1   37    6.07  3.17   5.56   14.4
+    Hall           NEW    5.2   28    5.38  3.00   5.38   15.3
+    Van Hecke      TOT    4.9   23    4.69  3.00   4.69    6.6
+    Gvardiol       MCI    5.7   24    4.21  2.83   4.56   26.1
+    Giles          HUL    4.0   18    4.50  3.00   4.50    2.9
+    Bogle          LEE    4.6   31    6.74  3.67   4.49    6.1
+    Egan           HUL    4.1   18    4.39  3.00   4.39    7.1
+    Vuskovic       BHA    5.0   26    5.20  3.33   4.33    3.2
+    Schuster       BRE    4.5   21    4.67  3.17   4.28    0.2
+
+  MID
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Groß           BHA    5.7   45    7.89  3.33   6.58   23.6
+    Belloumi       HUL    5.1   28    5.49  3.00   5.49    4.5
+    Schade         BRE    6.1   36    5.90  3.17   5.41    8.5
+    Scott          BOU    6.1   26    4.26  2.83   4.62    5.8
+    Barnes         NEW    6.1   26    4.26  3.00   4.26    4.7
+    Yalcouyé       BHA    4.5   19    4.22  3.33   3.52    4.0
+    Janelt         BRE    5.0   19    3.80  3.17   3.48    2.5
+    Tavernier      BOU    6.1   19    3.11  2.83   3.37    6.6
+    Kamada         CRY    5.0   15    3.00  2.83   3.25    0.5
+    Buendía        AVL    5.9   19    3.22  3.00   3.22    0.9
+    Willock        NEW    5.0   16    3.20  3.00   3.20    0.5
+    Rudoni         COV    4.9   12    2.45  2.50   3.06    0.1
+
+  FWD
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Kostoulas      BHA    5.5   27    4.91  3.33   4.09    1.6
+    Emersonn       IPS    5.5   17    3.09  3.00   3.09    3.4
+    Evanilson      BOU    6.0   12    2.00  2.83   2.17    3.3
+    Haaland        MCI   15.6   31    1.99  2.83   2.15   73.4
+    Calvert-Lewin  LEE    6.0   19    3.17  3.67   2.11   25.7
+    Isak           LIV    9.1   23    2.53  3.33   2.11   21.9
+    Strand Larsen  CRY    6.0   11    1.83  2.83   1.99    0.6
+    Barry          EVE    5.6   12    2.14  3.17   1.96    8.0
+    Havertz        ARS    7.6   13    1.71  2.83   1.85    8.5
+    Wissa          NEW    6.2   11    1.77  3.00   1.77   19.2
+    Thomas-Asante  COV    5.0    7    1.40  2.50   1.75    0.7
+    McBurnie       HUL    5.5    9    1.64  3.00   1.64    2.0
+
+==============================================================================
+BENCH AUDIT
+==============================================================================
+>> 1. FC Kiripolcz        bench=  2  best benched Slater      ( 2)  worst XI B.Fernandes ( 0)  perfect-XI gain +2
+   Bruno Dos Tres         bench=  8  best benched De Cuyper   ( 6)  worst XI Calvert-Lewi( 0)  perfect-XI gain +6
+   No More Mr. Rice Guy   bench= 11  best benched Thomas      ( 9)  worst XI B.Fernandes ( 0)  perfect-XI gain +9
+   PyroNeniZlocin         bench=  8  best benched Branthwaite ( 8)  worst XI Enzo        ( 0)  perfect-XI gain +8
+   ReturnOfTheDjedi FC    bench= 15  best benched Groß        (14)  worst XI Gvardiol    ( 0)  perfect-XI gain +14
+   Revelstoke FC          bench= 20  best benched Groß        (14)  worst XI Calvert-Lewi( 0)  perfect-XI gain +14
+   Skori FC               bench=  6  best benched De Cuyper   ( 6)  worst XI B.Fernandes ( 0)  perfect-XI gain +6
+
+==============================================================================
+FDR AUDIT  (rating vs result, all finished fixtures)
+==============================================================================
+
+  40 matches, 80 team-performances
+
+   FDR    n  goals for  conceded  clean sheets  win rate
+     2   22       1.59      1.23          36%       45%
+     3   36       1.47      1.31          31%       31%
+     4   18       1.33      1.78          22%       28%
+     5    4       0.50      2.00           0%        0%
+
+  easy (FDR<=2) vs hard (FDR>=4)
+    goals scored   1.59  vs  1.18   gap +0.41
+    clean sheets    36%  vs   18%   gap +18%
+
+  BIGGEST UPSETS  (favourite by 2+ difficulty points, lost or drew)
+    GW1  HUL 2-0 MUN   MUN was favoured by 2
+    GW4  CHE 2-2 HUL   CHE was favoured by 2
+    GW4  LIV 0-0 FUL   LIV was favoured by 2
+
+==============================================================================
+FIXTURE SENSITIVITY  (per player-match, with 95% intervals)
+==============================================================================
+
+  953 player-matches of 60+ minutes
+
+            easy FDR<=2     hard FDR>=4     gap        95% interval  verdict
+  GK       4.08 (n= 25)    3.17 (n= 24)    0.91      -0.73 to 2.56    noise
+  DEF      4.25 (n=104)    3.23 (n=102)    1.02       0.10 to 1.95    REAL
+  MID      4.29 (n=103)    3.68 (n=103)    0.61      -0.27 to 1.49    noise
+  FWD      4.96 (n= 23)    3.67 (n= 24)    1.29      -0.67 to 3.25    noise
+
+  CHASING EASY vs AVOIDING HARD
+    GK    FDR2 over FDR3  +0.48 (+-1.55)    FDR3 over FDR4+  +0.44 (+-1.41)
+    DEF   FDR2 over FDR3  +0.38 (+-0.85)    FDR3 over FDR4+  +0.65 (+-0.84)
+    MID   FDR2 over FDR3  +0.32 (+-0.81)    FDR3 over FDR4+  +0.29 (+-0.74)
+    FWD   FDR2 over FDR3  +1.44 (+-1.94)    FDR3 over FDR4+  -0.15 (+-1.41)
+
+  HOME vs AWAY
+    GK    gap -0.37  +-1.23   noise
+    DEF   gap +0.41  +-0.70   noise
+    MID   gap +0.18  +-0.63   noise
+    FWD   gap +0.46  +-1.40   noise
+
+  Only rows marked REAL survive the sample size. Everything else is
+  a difference this data cannot distinguish from chance - do not spend
+  transfers on it. Re-run as gameweeks accumulate and the intervals
+  will narrow.
+  Currently real: DEF.
+
+==============================================================================
+POSITION ARBITRAGE  (the scoring system is wrong about these players)
+==============================================================================
+
+  A defender who plays forward earns 6 for a goal AND 4 for a clean
+  sheet. FPL fixes position in July and rarely changes it.
+
+  DEFENDERS with attacking output
+    player         team     £  xG+xA/90  DEFCON/90   own%   fdr
+    De Cuyper      BHA    4.9      0.47        3.1   25.7  3.33
+    Bogle          LEE    4.6      0.42        5.2    6.1  3.67
+    Davis          IPS    4.0      0.41        4.2    6.8  3.00
+    Khalaili       CRY    5.0      0.40       10.3    0.3  2.83
+    Guéhi          MCI    6.0      0.32        7.0   18.5  2.83
+    Kayode         BRE    4.6      0.30        4.9    7.7  3.17
+    Castagne       FUL    4.5      0.30        5.5    0.9  2.83
+    Muñoz          NFO    5.4      0.28        4.9    5.9  3.17
+
+  MIDFIELDERS carrying defensive load (DEFCON + goals)
+    player         team     £  xG+xA/90  DEFCON/90   own%   fdr
+    Mainoo         MUN    5.5      0.22       15.4    1.6  3.33
+    Tavernier      BOU    6.1      0.65        9.7    6.6  2.83
+    Saka           ARS    9.5      0.91        6.2   13.3  2.83
+    Rudoni         COV    4.9      0.61        9.4    0.1  2.50
+    Scott          BOU    6.1      0.22       13.9    5.8  2.83
+    M.Sangaré      BRE    5.6      0.30       12.8   10.7  3.17
+    Yalcouyé       BHA    4.5      0.73        7.4    4.0  3.33
+    Mbeumo         MUN    7.9      0.84        6.0   21.4  3.33
+
+  CHANCE QUALITY vs FINISHING  (threat is FPL's shot-danger index)
+  High threat, few returns = chances are coming, goals have not.
+
+    player         team     £  threat/90   G+A   xG+xA   own%
+    Haaland        MCI   15.6       50.2     4    3.84   73.4
+    Isak           LIV    9.1       47.6     3    2.85   21.9
+    Saka           ARS    9.5       44.1     3    4.20   13.3
+    Yalcouyé       BHA    4.5       40.0     2    1.91    4.0
+    Barry          EVE    5.6       38.8     2    3.65    8.0
+    Tavernier      BOU    6.1       36.8     3    2.51    6.6
+    Kluivert       BOU    6.0       36.7     1    1.07    1.0
+    Calvert-Lewin  LEE    6.0       36.7     3    2.56   25.7
+    King           FUL    5.5       34.6     2    1.59    2.1
+    Cherki         MCI    7.8       33.4     4    2.00   27.8
+
+==============================================================================
+CONSISTENCY  (delivery pattern, not total)
+==============================================================================
+
+  196 players with 3+ full appearances, 127 averaging 3.0+
+
+  METRONOMES  (good average, small swing - captain and bench-boost picks)
+    player         team pos   mean  swing floor blanks   per game
+    Wirtz          LIV  MID    3.0    0.8     2      1   2 4 3 3
+    Schlager       NFO  MID    3.0    0.8     2      1   4 3 3 2
+    Anderson       MCI  MID    3.2    1.3     2      1   2 3 3 5
+    Belloumi       HUL  MID    4.5    1.3     3      0   3 6 5 4
+    Bentancur      TOT  MID    3.5    1.3     2      1   2 5 3 4
+    Evanilson      BOU  FWD    4.0    1.4     2      1   4 5 2 5
+    Rudoni         COV  MID    3.0    1.4     2      2   3 2 2 5
+    Muharemović    LEE  DEF    5.2    1.5     4      0   6 4 4 7
+    Botman         NEW  DEF    3.0    1.6     1      2   3 5 1 2 4
+    Slater         HUL  MID    3.0    1.7     2      3   6 2 3 2 2
+
+  LOTTERY TICKETS  (same average, huge swing - differentials, not anchors)
+    B.Fernandes    MUN  MID    7.2   10.5     2      3   2 23 2 2
+    Groß           BHA  MID    9.4    7.4     1      2   2 13 1 17 14
+    Mitchell       CRY  DEF    4.2    7.2     0      3   1 0 15 1
+    De Cuyper      BHA  DEF    7.6    6.6     0      1   17 0 4 11 6
+    Bogle          LEE  DEF    9.2    6.3     2      1   6 2 14 15
+    Dasilva        COV  DEF    4.0    6.2     0      4   1 2 2 0 15
+    Schuster       BRE  DEF    7.0    6.1     3      0   4 3 14
+    M.Sangaré      BRE  MID    7.3    5.8     4      0   14 4 4
+
+  YOUR SQUAD
+    Groß           BHA  MID    9.4    7.4     1      2   2 13 1 17 14  volatile
+    Haaland        MCI  FWD    8.2    4.6     2      1   2 13 9 9  volatile
+    B.Fernandes    MUN  MID    7.2   10.5     2      3   2 23 2 2  volatile
+    Calafiori      ARS  DEF    5.8    4.3     1      2   9 11 2 6 1  volatile
+    Ndiaye         MCI  MID    5.3    3.2     3      0   9 4 3
+    Verbruggen     BHA  GK     4.6    3.1     0      1   6 0 3 8 6
+    Szoboszlai     LIV  MID    4.5    2.4     3      0   8 4 3 3
+    Virgil         LIV  DEF    4.2    3.3     1      2   2 1 6 8
+    Mitchell       CRY  DEF    4.2    7.2     0      3   1 0 15 1  volatile
+    Barry          EVE  FWD    4.0    2.8     2      3   8 2 2 2 6
+    N.Williams     NFO  DEF    3.8    2.5     2      3   2 6 7 2 2
+    Kinsky         TOT  GK     3.6    2.7     1      3   2 1 6 7 2
+    Slater         HUL  MID    3.0    1.7     2      3   6 2 3 2 2  steady
+    Wissa          NEW  FWD    3.0    3.2     0      3   4 8 1 2 0
+    Shaw           MUN  DEF    2.3    1.5     1      2   1 2 4
+
+  swing is the standard deviation of gameweek scores. Three matches is
+  far too few to trust an individual figure - read it again at GW8.
+
