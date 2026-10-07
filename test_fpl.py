@@ -3641,7 +3641,12 @@ class SyncNetwork(unittest.TestCase):
 
 NIGHTLY_EDGE_STUB = EDGE_STUB.replace(
     'print("EDGE", " ".join(a))',
-    'if open("MODE").read().strip() == "noreport":\n    sys.exit(1)\nprint("EDGE", " ".join(a))')
+    'mode = open("MODE").read().strip()\n'
+    'if "--watch" in a:\n'
+    '    if mode == "nowatch":\n        sys.exit(1)\n'
+    '    open(a[a.index("--out") + 1], "w").write("WATCH STUB\\n")\n    sys.exit(0)\n'
+    'if mode == "noreport":\n    sys.exit(1)\n'
+    'print("EDGE", " ".join(a))')
 
 
 class NightlyRunner(unittest.TestCase):
@@ -3749,6 +3754,30 @@ class NightlyRunner(unittest.TestCase):
         code, log, _ = self._run(self._world(mode="noreport"))
         self.assertIn("EDGE FAILED", log)
         self.assertEqual(log[-1], "FINISHED WITH ERRORS: report")
+        self.assertEqual(code, 1)
+
+    def test_watch_file_is_written_after_the_record_and_before_the_report(self):
+        tmp = self._world()
+        self._put(os.path.join(tmp, "watchlist.txt"), "# two\n109\n82\n")
+        code, log, _ = self._run(tmp)
+        self.assertEqual(code, 0, log)
+        order = [log.index(x) for x in ("recording forecasts for next GW ...",
+                                        "writing the watch file ...", "building report ...")]
+        self.assertEqual(order, sorted(order), "the watch file must follow the record and precede the report")
+        self.assertEqual(self._get(os.path.join(tmp, "reports", f"watch_{self.STAMP}.txt")), "WATCH STUB\n")
+
+    def test_missing_watchlist_is_skipped_not_red(self):
+        code, log, _ = self._run(self._world())
+        self.assertIn("WATCH skipped: no watchlist.txt", log)
+        self.assertEqual(code, 0)
+
+    def test_watch_failure_is_red_but_the_report_still_runs(self):
+        tmp = self._world(mode="nowatch")
+        self._put(os.path.join(tmp, "watchlist.txt"), "109\n")
+        code, log, _ = self._run(tmp)
+        self.assertIn("WATCH FAILED", log)
+        self.assertTrue(any(l.startswith("EDGE --diff") for l in log))
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: watch")
         self.assertEqual(code, 1)
 
     def test_fresh_checkout_restores_the_newest_dated_export_per_gameweek(self):
@@ -3893,6 +3922,156 @@ class NightlyWorkflow(unittest.TestCase):
         attrs = self._read(".gitattributes").splitlines()
         self.assertIn("projection_log.csv text eol=crlf", attrs)
         self.assertIn("fpl.sqlite binary", attrs)
+
+
+class WatchFile(unittest.TestCase):
+    """L: watchlist.txt -> reports/watch_<date>.txt - the watched ids and the
+    top twelve per position, with the forecasts as recorded, under 15 KB."""
+
+    SEED = [109, 82, 334, 8, 230, 229, 173, 12, 427, 542, 183, 290, 411, 249, 106, 124, 4, 379]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp()
+        cls.d = _recordable_export(blank_team="HUL", double_team="ARS")
+        cls.log_path = os.path.join(cls.tmp, "projection_log.csv")
+        with redirect_stdout(io.StringIO()):
+            for src in ("own", "xg", "minutes", "bottomup"):
+                E.record_projections(cls.d, 6, src, None, cls.log_path)
+        cls.log = E.read_log(cls.log_path)
+        cls.event = cls.d["gameweek"] + 1
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def _write(self, name, body):
+        p = os.path.join(self.tmp, name)
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write(body)
+        return p
+
+    def _recorded(self, pid):
+        return {r["source"]: float(r["predicted"]) for r in self.log
+                if int(r["player_id"]) == pid and int(r["event"]) == self.event}
+
+    def test_watchlist_parses_ids_and_refuses_junk(self):
+        p = self._write("wl.txt", "# watched\n109\n 82 # keeper\n\n334\n")
+        self.assertEqual(E.read_watchlist(p), [109, 82, 334])
+        p = self._write("bad.txt", "109\nSaka\n")
+        with self.assertRaises(ValueError) as cm:
+            E.read_watchlist(p)
+        self.assertIn("line 2", str(cm.exception))
+
+    def test_repo_watchlist_holds_the_seed(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        self.assertEqual(E.read_watchlist(os.path.join(here, "watchlist.txt")), self.SEED)
+
+    def test_rows_carry_the_recorded_forecasts_fixture_and_news(self):
+        d = self.d
+        fxall = E.week_fixtures(d)                   # the double's opponent plays twice too
+        starter = next(p for p in d["all_players"] if p["status"] == "a" and p["pos"] == 3
+                       and len(fxall[p["team"]].get(self.event, [])) == 1)
+        doubled = next(p for p in d["all_players"] if p["status"] == "a" and p["team"] == "ARS")
+        blanked = next(p for p in d["all_players"] if p["status"] == "a" and p["team"] == "HUL")
+        hurt = next(p for p in d["all_players"] if p["status"] == "d")
+        hurt["news"] = "Knock -  " + "x" * 100
+        rows = E.watch_rows(d, self.log, [starter["id"], doubled["id"], blanked["id"], hurt["id"], 99999])
+        self.assertEqual([r["id"] for r in rows], [starter["id"], doubled["id"], blanked["id"], hurt["id"], 99999])
+        want = self._recorded(starter["id"])
+        self.assertEqual(set(want), {"own", "xg", "bottomup", "minutes"}, "fixture did not record all four")
+        r = rows[0]
+        self.assertEqual((r["name"], r["team"], r["pos"], r["price"], r["status"], r["chance"]),
+                         (starter["web_name"], starter["team"], starter["pos"], starter["price"], "a", None))
+        for src in want:
+            self.assertEqual(r[src], want[src], f"{src} is not the recorded forecast")
+        fx = E.week_fixtures(d)[starter["team"]][self.event]
+        self.assertEqual(r["fixture"], f"{fx[0][0]} ({'H' if fx[0][1] else 'A'}) {fx[0][2]}")
+        self.assertIn(" + ", rows[1]["fixture"], "a double must show both fixtures")
+        self.assertEqual(rows[2]["fixture"], "BLANK")
+        self.assertEqual((rows[3]["own"], rows[3]["xg"], rows[3]["bottomup"], rows[3]["minutes"]),
+                         (None, None, None, None), "a player with no recorded forecast must read blank")
+        self.assertEqual((rows[3]["status"], rows[3]["chance"]), ("d", 50))
+        self.assertEqual(rows[3]["news"], "Knock - " + "x" * 100, "news must be whitespace-normalised, not cut here")
+        self.assertIsNone(rows[4]["name"])
+        text = E.watch_report(d, self.log, [starter["id"], hurt["id"], 99999])
+        line = next(l for l in text.splitlines() if l.startswith(f"  {starter['id']:<6}"))
+        seg = (f"{want['own']:.1f}".rjust(6) + f"{want['xg']:.1f}".rjust(6)
+               + f"{want['bottomup']:.1f}".rjust(6) + f"{want['minutes']:.2f}".rjust(6))
+        self.assertIn(seg, line, "own / xg / bottomup / minutes in that order")
+        self.assertIn(r["fixture"], line)
+        hurt_line = next(l for l in text.splitlines() if l.startswith(f"  {hurt['id']:<6}"))
+        self.assertIn(" d   50", hurt_line)
+        self.assertTrue(hurt_line.endswith("Knock - " + "x" * 52), "news cut at 60 characters")
+        self.assertIn("     -     -     -     -", hurt_line)
+        self.assertIn(f"  {99999:<6}(not in export)", text)
+        self.assertTrue(text.startswith(f"WATCH  GW{self.event}  export "))
+        self.assertIn("forecasts recorded " + self.log[-1]["made_at"][:16], text)
+
+    def test_top_twelve_per_position_by_own(self):
+        tops = E.watch_top(self.d, self.log)
+        by_pos = {}
+        for r in self.log:
+            if r["source"] == "own" and int(r["event"]) == self.event:
+                p = next(p for p in self.d["all_players"] if p["id"] == int(r["player_id"]))
+                by_pos.setdefault(p["pos"], []).append((-float(r["predicted"]), p["id"]))
+        for pos in (1, 2, 3, 4):
+            want = [pid for _, pid in sorted(by_pos[pos])[:12]]
+            self.assertEqual([r["id"] for r in tops[pos]], want, f"{E.POS[pos]}: not the top 12 by own")
+            self.assertLessEqual(len(tops[pos]), 12)
+        self.assertEqual(len(tops[2]), 12, "twenty defenders must give a full twelve")
+        text = E.watch_report(self.d, self.log, [])
+        block = text.split("TOP 12 PER POSITION BY OWN")[1]
+        self.assertEqual(sum(1 for l in block.splitlines() if l.startswith("  ") and l[2:8].strip().isdigit()),
+                         sum(len(tops[pos]) for pos in (1, 2, 3, 4)))
+
+    def test_file_stays_under_15kb(self):
+        for p in self.d["all_players"]:
+            p["news"] = "Long news " * 12
+        normal = E.watch_report(self.d, self.log, self.SEED)
+        self.assertLess(len(normal.encode("utf-8")), 15000)
+        self.assertNotIn("truncated", normal)
+        flood = E.watch_report(self.d, self.log, [p["id"] for p in self.d["all_players"]] * 6)
+        self.assertLessEqual(len(flood.encode("utf-8")), 15000, "the watch file must stay under 15 KB")
+        self.assertRegex(flood.splitlines()[-1], r"^  \.\.\. truncated to stay under 15 KB \(\d+ lines dropped\)$")
+        self.assertGreater(len(flood.splitlines()), 50, "truncation dropped far more than it had to")
+        for p in self.d["all_players"]:
+            p["news"] = ""
+
+    def test_cli_writes_the_file_from_the_log(self):
+        export = self._write("fpl_export_gw3.json", json.dumps(self.d))
+        recorded = next(int(r["player_id"]) for r in self.log
+                        if r["source"] == "own" and int(r["event"]) == self.event)
+        ids = (1, 9, recorded, 49)
+        wl = self._write("watchlist.txt", "# mine\n" + "\n".join(str(i) for i in ids) + "\n")
+        out = os.path.join(self.tmp, "watch_2026-10-07.txt")
+        argv, cwd = sys.argv, os.getcwd()
+        try:
+            os.chdir(self.tmp)                     # projection_log.csv is read from here
+            sys.argv = ["fpl_edge.py", export, "--watch", wl, "--out", out]
+            with redirect_stdout(io.StringIO()):
+                E.main()
+            text = open(out, encoding="utf-8").read()
+            self.assertTrue(text.startswith(f"WATCH  GW{self.event}"))
+            for pid in ids:
+                self.assertTrue(any(l.startswith(f"  {pid:<6}") for l in text.splitlines()), pid)
+            want = self._recorded(recorded)          # the forecasts come from projection_log.csv
+            line = next(l for l in text.splitlines() if l.startswith(f"  {recorded:<6}"))
+            self.assertIn(f"{want['own']:.1f}".rjust(6) + f"{want['xg']:.1f}".rjust(6), line,
+                          "the CLI did not read the recorded forecasts")
+            bad = self._write("bad.txt", "1\nnope\n")
+            sys.argv = ["fpl_edge.py", export, "--watch", bad, "--out", out]
+            with redirect_stdout(io.StringIO()):
+                with self.assertRaises(SystemExit) as cm:
+                    E.main()
+            self.assertIn("WATCH FAILED", str(cm.exception.code))
+            sys.argv = ["fpl_edge.py", export, "--watch", wl]
+            with redirect_stdout(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    E.main()
+        finally:
+            sys.argv = argv
+            os.chdir(cwd)
 
 
 class Hygiene(unittest.TestCase):

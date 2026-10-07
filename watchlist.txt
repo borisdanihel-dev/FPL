@@ -1,0 +1,24 @@
+# watchlist.txt - one FPL player id per line; '#' starts a comment.
+# After the record step, fpl_nightly.py writes reports/watch_<date>.txt for
+# these ids: name, team, position, price, status, chance, the four forecasts
+# recorded for the next gameweek (own / xg / bottomup / minutes), the fixture,
+# the news - then the top twelve per position by own. Under 15 KB, for a chat.
+# An id is the `id` of all_players in the export (the API's element id).
+109   # Verbruggen   BHA GK
+82    # Kelleher     BRE GK
+334   # Muharemović  LEE DEF
+8     # Calafiori    ARS DEF
+230   # Branthwaite  EVE DEF
+229   # Tarkowski    EVE DEF
+173   # Thomas       COV DEF
+12    # Saka         ARS MID
+427   # Mbeumo       MUN MID
+542   # E.Le Fée     SUN MID
+183   # Rudoni       COV MID
+290   # Slater       HUL MID
+411   # Haaland      MCI FWD
+249   # Barry        EVE FWD
+106   # Thiago       BRE FWD
+124   # Groß         BHA MID
+4     # Gabriel      ARS DEF
+379   # Isak         LIV FWD

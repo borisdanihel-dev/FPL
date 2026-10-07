@@ -3091,6 +3091,129 @@ def sec_bench_boost(d, horizon, squad_ids=None):
     print()
 
 
+# ---------------------------------------------------------------------------
+# watch file - a chat-sized digest of a few players (item L)
+# ---------------------------------------------------------------------------
+
+WATCH_MAX_BYTES = 15000     # "under 15 KB": the file is meant to fit a chat
+WATCH_SOURCES = ("own", "xg", "bottomup", "minutes")
+WATCH_TOP = 12
+
+
+def read_watchlist(path):
+    """One FPL player id per line; blank lines and '#' comments ignored. A line
+    that is not an id is an error, not a silent skip."""
+    ids = []
+    with open(path, encoding="utf-8") as fh:
+        for n, raw in enumerate(fh, 1):
+            line = raw.split("#", 1)[0].strip()
+            if not line:
+                continue
+            if not line.isdigit():
+                raise ValueError(f"{path} line {n}: {raw.strip()!r} is not a player id")
+            ids.append(int(line))
+    return ids
+
+
+def _watch_context(d, log):
+    """The next event, the players, that event's fixtures, and the forecasts
+    recorded for it in projection_log.csv - point-in-time rows, never
+    recomputed here."""
+    event = d["gameweek"] + 1
+    forecasts, made = defaultdict(dict), []
+    for r in log:
+        if int(r["event"]) == event and r["source"] in WATCH_SOURCES:
+            forecasts[int(r["player_id"])][r["source"]] = float(r["predicted"])
+            made.append(r["made_at"])
+    return event, {p["id"]: p for p in d["all_players"]}, week_fixtures(d), forecasts, made
+
+
+def _watch_row(pid, event, by_id, fx, forecasts):
+    p = by_id.get(pid)
+    if p is None:
+        return {"id": pid, "name": None}
+    f = forecasts.get(pid, {})
+    return {"id": pid, "name": p["web_name"], "team": p["team"], "pos": p["pos"],
+            "price": p["price"], "status": p["status"], "chance": p.get("chance_next_round"),
+            "news": " ".join((p.get("news") or "").split()),
+            "own": f.get("own"), "xg": f.get("xg"), "bottomup": f.get("bottomup"),
+            "minutes": f.get("minutes"),
+            "fixture": " + ".join(f"{o} ({'H' if h else 'A'}) {fdr}"
+                                  for o, h, fdr in fx[p["team"]].get(event, [])) or "BLANK"}
+
+
+def watch_rows(d, log, ids):
+    """One row per watched id, in watchlist order; an id not in the export
+    gives a row whose name is None."""
+    event, by_id, fx, forecasts, _ = _watch_context(d, log)
+    return [_watch_row(pid, event, by_id, fx, forecasts) for pid in ids]
+
+
+def watch_top(d, log, top=WATCH_TOP):
+    """pos -> the top `top` rows by the recorded own forecast for the next
+    event, highest first (ties by id)."""
+    event, by_id, fx, forecasts, _ = _watch_context(d, log)
+    ranked = defaultdict(list)
+    for pid, f in forecasts.items():
+        if "own" in f and pid in by_id:
+            ranked[by_id[pid]["pos"]].append((-f["own"], pid))
+    return {pos: [_watch_row(pid, event, by_id, fx, forecasts)
+                  for _, pid in sorted(ranked[pos])[:top]] for pos in (1, 2, 3, 4)}
+
+
+def watch_report(d, log, ids, max_bytes=WATCH_MAX_BYTES, top=WATCH_TOP, news_width=60):
+    """The watch file: the watched ids, then the top `top` per position by the
+    recorded own forecast, one line each - id, name, team, position, price,
+    status, chance, own / xg / bottomup / minutes for the next event, that
+    event's fixture, the news (first `news_width` characters). Kept under
+    `max_bytes`: the news column shrinks first, then lines are dropped and
+    the last line says how many."""
+    event, _, _, _, made = _watch_context(d, log)
+    rows, tops = watch_rows(d, log, ids), watch_top(d, log, top)
+    header = (f"  {'id':<6}{'player':15s}{'team':5s}{'pos':4s}{'£':>5} {'st':2s}{'ch%':>4}"
+              f"{'own':>6}{'xg':>6}{'bu':>6}{'min':>6}  {'fixture':22s} news")
+
+    def cell(v, src):
+        return "-" if v is None else (f"{v:.2f}" if src == "minutes" else f"{v:.1f}")
+
+    def line(r, width):
+        if r["name"] is None:
+            return f"  {r['id']:<6}(not in export)"
+        chance = "-" if r["chance"] is None else str(r["chance"])
+        return (f"  {r['id']:<6}{r['name'][:14]:15s}{r['team']:5s}{POS[r['pos']]:4s}"
+                f"{r['price']:>5.1f} {r['status']:2s}{chance:>4}"
+                f"{cell(r['own'], 'own'):>6}{cell(r['xg'], 'xg'):>6}"
+                f"{cell(r['bottomup'], 'bottomup'):>6}{cell(r['minutes'], 'minutes'):>6}"
+                f"  {r['fixture']:22s} {r['news'][:width]}").rstrip()
+
+    def build(width):
+        out = [f"WATCH  GW{event}  export {str(d.get('generated', '?'))[:16]}  "
+               f"forecasts recorded {max(made)[:16] if made else '-'}  "
+               "(own / xg / bu = bottomup / min = P(start), as in projection_log.csv)",
+               header]
+        out += [line(r, width) for r in rows]
+        out += ["", f"TOP {top} PER POSITION BY OWN, GW{event}", header]
+        for pos in (1, 2, 3, 4):
+            out += [line(r, width) for r in tops[pos]]
+        return "\n".join(out) + "\n"
+
+    text = ""
+    for width in (news_width, 24, 0):
+        text = build(width)
+        if len(text.encode("utf-8")) <= max_bytes:
+            return text
+    lines = text.splitlines()
+    note = f"  ... truncated to stay under {max_bytes // 1000} KB"
+    kept, size = [], 0
+    for l in lines:
+        n = len(l.encode("utf-8")) + 1
+        if size + n + len(note.encode("utf-8")) + 24 > max_bytes:
+            break
+        kept.append(l)
+        size += n
+    return "\n".join(kept + [f"{note} ({len(lines) - len(kept)} lines dropped)"]) + "\n"
+
+
 SECTIONS = {
     "league": lambda d, h: sec_league(d),
     "eo": lambda d, h: sec_eo(d),
@@ -3157,6 +3280,9 @@ def main():
                     help="label for --record, e.g. openfpl")
     ap.add_argument("--status",
                     help="with --record: append the RECORD OK/FAIL line to this file")
+    ap.add_argument("--watch",
+                    help="watchlist file (one player id per line, # comments): "
+                         "write the watch file to --out and stop")
     ap.add_argument("--squad",
                     help="comma-separated player ids for --section bench_boost "
                          "(default: my current 15)")
@@ -3198,6 +3324,18 @@ def main():
     print(f"[reading {os.path.basename(path)}]\n")
 
     d = load(path)
+    if args.watch:
+        if not args.out:
+            sys.exit("--watch needs --out <file>")
+        try:
+            ids = read_watchlist(args.watch)
+        except (OSError, ValueError) as e:
+            sys.exit(f"WATCH FAILED: {e}")
+        text = watch_report(d, read_log(), ids)
+        with open(args.out, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        print(f"[watch file: {len(ids)} ids, {len(text.encode('utf-8'))} bytes -> {args.out}]")
+        return
     if args.record:
         try:
             ok, n, reason = record_status(d, args.horizon, args.source,

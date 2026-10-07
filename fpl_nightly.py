@@ -12,6 +12,7 @@ workflow commits back to the repository:
 
     logs/run_<UTC date>.log                    everything every step printed
     reports/fpl_<UTC date>.txt                 the report (fpl_edge.py --diff --out)
+    reports/watch_<UTC date>.txt               the watch file for watchlist.txt (item L)
     exports/fpl_export_gwN_<UTC date>.json     tonight's export, point-in-time
     projection_log.csv                         written by fpl_edge.py --record only
 
@@ -148,6 +149,17 @@ def nightly(root=".", stamp=None, py=None, echo=print):
             with open(status, "a", encoding="utf-8") as fh:
                 for src in SOURCES:
                     fh.write(f"RECORD FAIL {src} skipped - test suite is red\n")
+
+        # the watch file: a chat-sized digest of the watched ids and the top
+        # twelve per position, from the forecasts just recorded (item L)
+        watch_rel = os.path.join(REPORTS, f"watch_{stamp}.txt")
+        if os.path.exists(os.path.join(root, "watchlist.txt")):
+            say("writing the watch file ...")
+            if step("fpl_edge.py", "--watch", "watchlist.txt", "--out", watch_rel) != 0:
+                failed.append("watch")
+                say("WATCH FAILED")
+        else:
+            say("WATCH skipped: no watchlist.txt")
 
         say("building report ...")
         if step("fpl_edge.py", "--diff", "--out", report_rel) != 0:
