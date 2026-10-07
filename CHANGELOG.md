@@ -2191,3 +2191,47 @@ the ignore/attribute/requirements rules as text. 29 mutations each red — five 
   nightly writers until Boris disables it. Its runs leave uncommitted changes
   to `projection_log.csv`, `fpl.sqlite` and the day's report in this checkout,
   which have to be discarded before the runner's next commit can be pulled.
+
+---
+
+## 2026-10-07 — item L: `watchlist.txt` and the nightly watch file (`7dfd4d7`)
+
+A chat-sized digest of a few players, written every night by the runner.
+
+- **`watchlist.txt`** in the repository: one FPL player id per line, `#`
+  comments; seeded with 109 82 334 8 230 229 173 12 427 542 183 290 411 249
+  106 124 4 379 — the item 4c draft's fifteen plus Mbeumo, Groß, Gabriel and
+  Isak, named in comments. A line that is not an id is an error, not a
+  silent skip.
+- **`fpl_nightly.py`** writes `reports/watch_<UTC date>.txt` after the record
+  step and before the report (`python fpl_edge.py --watch watchlist.txt
+  --out …`); the workflow commits it with the rest. No `watchlist.txt` →
+  "WATCH skipped", not red; a failed watch step → red, the report still
+  built. `fpl_run.bat` is untouched.
+- **The file:** one line per watched id — id, name, team, position, price,
+  status, chance, the four forecasts recorded in `projection_log.csv` for the
+  next event (own / xg / bottomup / minutes — the point-in-time rows, never
+  recomputed), that event's fixture (opponent, H/A, FDR; a double shows both,
+  a blank says BLANK), the news (first 60 characters) — then the top 12 per
+  position by the recorded own forecast, same columns. A player with no
+  recorded forecast reads `-`; an unknown id reads `(not in export)`.
+- **Under 15 KB:** the news column shrinks to 24 characters and then to
+  nothing if the file would exceed 15,000 bytes; if it still would, lines are
+  dropped and the last line says how many. Tonight's file is 5,644 bytes.
+
+**Live, GW6 (6 Oct export and forecasts):** 17 of the 18 carry all four
+forecasts; Isak (379) reads status `d`, chance 75, "Thigh injury - 75% chance
+of playing" and no forecast — he is outside the recording gate — which is why
+he left the FWD shortlist on 6 Oct. Rudoni reads chance 100: the API's
+"confirmed fit" note, printed as the data gives it.
+
+**Verified:** 9 tests, suite **228 → 237** — the watchlist parses ids and
+refuses junk, the repository's seed is pinned; the rows carry the recorded
+forecasts, the fixture (single, double, blank), status, chance and the news
+whitespace-normalised, with the line cut at 60 and `-` where nothing was
+recorded; the top twelve per position equal an independent sort of the log;
+the file stays under 15 KB when flooded with 360 lines and says how many it
+dropped; the CLI writes the file from the log, refuses a bad watchlist and
+`--watch` without `--out`; the runner writes it after the record and before
+the report, skips it without a watchlist, and goes red on a failure.
+16 mutations each red — news not cut at 60, the top list ranked by xg, top fifteen, the size guard off, forecasts read for the played gameweek, own and xg swapped, the fixture dropped, comments not stripped, a junk line silently skipped, a missing forecast printed as 0, --watch ignoring projection_log.csv, the watch step before the record, after the report, its failure not red, never running, a missing watchlist red. One mutant survived the first round: the CLI test had not checked that the file carries the recorded values, and now does. Recording path unchanged: GW6 regenerated from the same export under both codes: 978 of 978 rows identical on source, event, player and predicted.
