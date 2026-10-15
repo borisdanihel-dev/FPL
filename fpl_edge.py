@@ -3170,6 +3170,10 @@ def watch_report(d, log, ids, max_bytes=WATCH_MAX_BYTES, top=WATCH_TOP, news_wid
     the last line says how many."""
     event, _, _, _, made = _watch_context(d, log)
     rows, tops = watch_rows(d, log, ids), watch_top(d, log, top)
+    fh = free_hit_table(d, log)
+    fh_lines = ([f"FREE HIT SCREEN  budget £{fh['budget']:.1f}m; FH candidate: gap > {FH_GAP:g} "
+                 f"or {FH_NOT_A}+ of our XI not 'a' (item N)"] + free_hit_lines(fh)
+                if fh["weeks"] else [])
     header = (f"  {'id':<6}{'player':15s}{'team':5s}{'pos':4s}{'£':>5} {'st':2s}{'ch%':>4}"
               f"{'own':>6}{'xg':>6}{'bu':>6}{'min':>6}  {'fixture':22s} news")
 
@@ -3192,6 +3196,8 @@ def watch_report(d, log, ids, max_bytes=WATCH_MAX_BYTES, top=WATCH_TOP, news_wid
                "(own / xg / bu = bottomup / min = P(start), as in projection_log.csv)",
                header]
         out += [line(r, width) for r in rows]
+        if fh_lines:
+            out += [""] + fh_lines
         out += ["", f"TOP {top} PER POSITION BY OWN, GW{event}", header]
         for pos in (1, 2, 3, 4):
             out += [line(r, width) for r in tops[pos]]
@@ -3214,6 +3220,347 @@ def watch_report(d, log, ids, max_bytes=WATCH_MAX_BYTES, top=WATCH_TOP, news_wid
     return "\n".join(kept + [f"{note} ({len(lines) - len(kept)} lines dropped)"]) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# free hit screen (item N): the best legal one-week XI the team value buys,
+# against our own best XI, gameweek by gameweek
+# ---------------------------------------------------------------------------
+
+FH_GAP = 8.0                # FH candidate: the best one-week XI beats ours by more than this
+FH_NOT_A = 3                # ... or this many of our best XI are not status 'a'
+FORMATIONS = tuple((dd, mm, 10 - dd - mm) for dd in (3, 4, 5) for mm in (2, 3, 4, 5)
+                   if 1 <= 10 - dd - mm <= 3)
+XI_MAX = {1: 1, 2: 5, 3: 5, 4: 3}       # the most of a position any formation starts
+BENCH_MAX = {1: 1, 2: 2, 3: 3, 4: 2}    # the most of a position any formation benches
+FH_NODE_LIMIT = 3000        # branch-and-bound safety valve; hitting it is reported
+
+
+def one_week_points(d, log):
+    """(weeks, pts, src) for the upcoming gameweeks (six at most): pts[week][pid]
+    for every player in the export by the frozen one-week metric - `own` as
+    recorded in projection_log.csv for that event where it exists, else
+    bottomup (the full model, all terms) summed over the week's fixtures; a
+    blank scores 0. src[week][pid] is 'own', 'bottomup' or 'blank'. The log
+    records one week ahead, so only the first week can carry `own`."""
+    weeks = sorted({f["event"] for f in d.get("fixtures_next6") or []})[:6]
+    own = defaultdict(dict)
+    for r in log:
+        if r["source"] == "own":
+            own[int(r["event"])][int(r["player_id"])] = float(r["predicted"])
+    inp = reliability_inputs(canonical_from_export(d), gws_played=d["gameweek"])
+    fx = week_fixtures(d)
+    pts, src = {}, {}
+    for w in weeks:
+        pts[w], src[w] = {}, {}
+        for p in d["all_players"]:
+            pid = p["id"]
+            if pid in own[w]:
+                pts[w][pid], src[w][pid] = own[w][pid], "own"
+                continue
+            v = project_week(pid, p, inp, fx, w, ALL_TERMS)
+            pts[w][pid] = v or 0.0
+            src[w][pid] = "blank" if not fx[p["team"]].get(w) else "bottomup"
+    return weeks, pts, src
+
+
+def _tenths(price):
+    return int(round(price * 10))
+
+
+def _pareto(table):
+    """cost -> (pts, picks) as a cost-sorted list on which pts strictly rises."""
+    out, best = [], None
+    for c in sorted(table):
+        v, picks = table[c]
+        if best is None or v > best:
+            out.append((c, v, picks))
+            best = v
+    return out
+
+
+def _dominance_prune(items, clubs_needed):
+    """Drop a player when the players that dominate him (same position, price
+    <=, metric >=, ties broken by id) come from at least `clubs_needed`
+    distinct clubs. With clubs_needed = the position's most XI slots + 4 this
+    is exact under the club limit: in any optimal fifteen, at most slots - 1 of
+    them start beside him and at most 4 clubs are full, so a dominator from a
+    free club is always there to swap in at no cost."""
+    kept = []
+    for x in items:
+        clubs = set()
+        for y in items:
+            if y is not x and y["price"] <= x["price"] and y["pts"] >= x["pts"] and (
+                    y["price"] < x["price"] or y["pts"] > x["pts"] or y["id"] < x["id"]):
+                clubs.add(y["team"])
+                if len(clubs) >= clubs_needed:
+                    break
+        if len(clubs) < clubs_needed:
+            kept.append(x)
+    return kept
+
+
+def _position_frontier(items, n, cap):
+    """[k] -> the Pareto list (cost, pts, ids) of choosing exactly k of `items`
+    within `cap` tenths, k = 0..n. A 0/1 knapsack per count."""
+    F = [dict() for _ in range(n + 1)]
+    F[0][0] = (0.0, ())
+    for it in items:
+        c0, v0, pid = _tenths(it["price"]), it["pts"], it["id"]
+        for k in range(n, 0, -1):
+            dst = F[k]
+            for c, (v, picks) in F[k - 1].items():
+                nc = c + c0
+                if nc > cap:
+                    continue
+                cur = dst.get(nc)
+                if cur is None or v + v0 > cur[0]:
+                    dst[nc] = (v + v0, picks + (pid,))
+    return [_pareto(F[k]) for k in range(n + 1)]
+
+
+def _combine(a, b, cap):
+    t = {}
+    for ca, va, pa in a:
+        for cb, vb, pb in b:
+            c = ca + cb
+            if c > cap:
+                break                   # b is sorted by cost
+            cur = t.get(c)
+            if cur is None or va + vb > cur[0]:
+                t[c] = (va + vb, pa + pb)
+    return _pareto(t)
+
+
+def _relaxed_xi(fronts, shape, cap):
+    """The best XI of `shape` within `cap` tenths ignoring the club limit:
+    (pts, ids) or None."""
+    import bisect
+    d_, m_, f_ = shape
+    if (len(fronts[1]) < 2 or len(fronts[2]) <= d_ or len(fronts[3]) <= m_
+            or len(fronts[4]) <= f_):
+        return None
+    a = _combine(_combine(fronts[1][1], fronts[2][d_], cap), fronts[3][m_], cap)
+    fw = fronts[4][f_]
+    costs = [c for c, _, _ in fw]
+    best = None
+    for c, v, picks in a:
+        i = bisect.bisect_right(costs, cap - c) - 1
+        if i >= 0 and (best is None or v + fw[i][1] > best[0]):
+            best = (v + fw[i][1], picks + fw[i][2])
+    return best
+
+
+def fh_bench(fodder):
+    """pos -> the bench candidates: the cheapest players at each position,
+    lowest metric first, from distinct clubs where they can be (the bench
+    scores nothing on a Free Hit, so every pound it saves goes to the XI)."""
+    bench, used = defaultdict(list), set()
+    order = sorted(fodder, key=lambda p: (p["price"], p["pts"], p["id"]))
+    for distinct in (True, False):
+        for p in order:
+            if len(bench[p["pos"]]) >= BENCH_MAX[p["pos"]] or p in bench[p["pos"]]:
+                continue
+            if distinct and p["team"] in used:
+                continue
+            bench[p["pos"]].append(p)
+            used.add(p["team"])
+    for pos in bench:
+        bench[pos].sort(key=lambda p: (p["price"], p["pts"], p["id"]))
+    return bench
+
+
+def best_one_week_xi(market, fodder, budget, shapes=FORMATIONS, prune=True,
+                     node_limit=FH_NODE_LIMIT):
+    """The best legal one-week fifteen: an XI of any legal formation from
+    `market`, the bench from `fodder` (fh_bench, set aside first), at most
+    `budget` in total, at most 3 per club across the fifteen. Exact for the XI
+    given that bench: a club-free dynamic programme over cost per position,
+    then branch and bound on the club limit - a node whose club-free optimum
+    puts too many of one club in the XI branches on which of them to drop.
+    Items are dicts with id, pos, team, price, pts. Returns None when no legal
+    fifteen exists, else {pts, shape, xi, bench, cost, bound (the club-free
+    optimum over all shapes), exact, nodes}."""
+    from collections import Counter
+    bench_all = fh_bench(fodder)
+    bench_ids = {p["id"] for pos in bench_all for p in bench_all[pos]}
+    pool = {pos: [p for p in market if p["pos"] == pos and p["id"] not in bench_ids]
+            for pos in (1, 2, 3, 4)}
+    team = {p["id"]: p["team"] for p in market}
+    pos_of = {p["id"]: p["pos"] for p in market}
+    budget_t = _tenths(budget)
+
+    plans = []
+    for shape in shapes:
+        need = {1: 1, 2: 5 - shape[0], 3: 5 - shape[1], 4: 3 - shape[2]}
+        if any(len(bench_all[pos]) < need[pos] for pos in need):
+            continue
+        bench = [p for pos in (1, 2, 3, 4) for p in bench_all[pos][:need[pos]]]
+        plans.append((shape, bench, budget_t - sum(_tenths(p["price"]) for p in bench)))
+    if not plans:
+        return None
+    cap_max = max(cap for _, _, cap in plans)
+
+    cache = {}
+
+    def fronts(ex):
+        out = {}
+        for pos in (1, 2, 3, 4):
+            key = (pos, frozenset(i for i in ex if pos_of[i] == pos))
+            if key not in cache:
+                items = [p for p in pool[pos] if p["id"] not in ex]
+                if prune:
+                    items = _dominance_prune(items, XI_MAX[pos] + 4)
+                cache[key] = _position_frontier(items, XI_MAX[pos], cap_max)
+            out[pos] = cache[key]
+        return out
+
+    roots = []
+    for shape, bench, cap in plans:
+        r = _relaxed_xi(fronts(frozenset()), shape, cap)
+        if r is not None:
+            roots.append((r[0], shape, bench, cap))
+    if not roots:
+        return None
+    roots.sort(key=lambda r: -r[0])               # strongest bound first: it prunes the rest
+    best, nodes, exact = None, 0, True
+    for bound, shape, bench, cap in roots:
+        if best is not None and bound <= best["pts"] + 1e-9:
+            continue
+        bench_club = Counter(p["team"] for p in bench)
+        stack, seen = [frozenset()], set()
+        while stack:
+            ex = stack.pop()
+            if ex in seen:
+                continue
+            seen.add(ex)
+            nodes += 1
+            if nodes > node_limit:
+                exact = False
+                break
+            r = _relaxed_xi(fronts(ex), shape, cap)
+            if r is None or (best is not None and r[0] <= best["pts"] + 1e-9):
+                continue
+            club = Counter(bench_club)
+            club.update(team[i] for i in r[1])
+            over = sorted(c for c, n in club.items() if n > 3)
+            if not over:
+                best = {"pts": r[0], "shape": shape, "ids": r[1], "bench": bench, "cap": cap}
+                continue
+            stack.extend(ex | {i} for i in r[1] if team[i] == over[0])
+        if not exact:
+            break
+    if best is None:
+        return None
+    by_id = {p["id"]: p for p in market}
+    xi = sorted((by_id[i] for i in best["ids"]), key=lambda p: (p["pos"], -p["pts"], p["id"]))
+    return {"pts": best["pts"], "shape": best["shape"], "xi": xi, "bench": best["bench"],
+            "cost": (budget_t - best["cap"]) / 10 + sum(p["price"] for p in xi),
+            "bound": roots[0][0], "exact": exact, "nodes": nodes}
+
+
+def free_hit_flag(gap, not_a):
+    """'FH candidate (...)' or '' - the frozen trigger: the gap beyond FH_GAP,
+    or FH_NOT_A or more of our best XI not status 'a'."""
+    why = []
+    if gap is not None and gap > FH_GAP:
+        why.append(f"gap > {FH_GAP:g}")
+    if not_a >= FH_NOT_A:
+        why.append(f"{not_a} of our XI not 'a'")
+    return f"FH candidate ({', '.join(why)})" if why else ""
+
+
+def free_hit_table(d, log):
+    """Everything the screen prints, as data, one entry per upcoming gameweek:
+    the metric, the best legal one-week fifteen the team value buys (the XI
+    from the usual gate - status 'a', 45+ minutes in the last four - the bench
+    from any status-'a' player), our best XI from our current 15 by the same
+    metric, the gap, how many of our XI are not status 'a', the flag."""
+    weeks, pts, src = one_week_points(d, log)
+    me = my_name(d)
+    stand = next((s for s in d["standings"] if s["entry_name"] == me), None)
+    by_id = {p["id"]: p for p in d["all_players"]}
+    ours_ids = [i for i in my_squad_ids(d) if i in by_id]
+    budget = (stand["value"] / 10.0 if stand
+              else sum(by_id[i]["price"] for i in ours_ids))
+    gate = [p for p in d["all_players"] if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
+    spare = [p for p in d["all_players"] if p["status"] == "a"]
+    out = {"budget": budget, "weeks": []}
+    for w in weeks:
+        def row(p):
+            return {"id": p["id"], "name": p["web_name"], "team": p["team"], "pos": p["pos"],
+                    "price": p["price"], "status": p["status"], "pts": pts[w][p["id"]]}
+        fh = best_one_week_xi([row(p) for p in gate], [row(p) for p in spare], budget)
+        xi = _best_xi([dict(row(by_id[i]), proj=pts[w][i]) for i in ours_ids])
+        ours = sum(p["proj"] for p in xi)
+        not_a = sum(1 for p in xi if p["status"] != "a")
+        gap = fh["pts"] - ours if fh else None
+        out["weeks"].append({
+            "event": w, "metric": "own" if any(s == "own" for s in src[w].values()) else "bottomup",
+            "fh": fh, "ours": ours, "ours_xi": xi,
+            "ours_shape": tuple(sum(1 for p in xi if p["pos"] == k) for k in (2, 3, 4)),
+            "not_a": not_a, "gap": gap, "flag": free_hit_flag(gap, not_a)})
+    return out
+
+
+def free_hit_lines(t):
+    """The per-gameweek table, shared by the report and the watch file."""
+    head = (f"  {'GW':5s}{'metric':10s}{'FH XI':>7}{'ours':>7}{'gap':>7}{'not a':>7}"
+            f"   {'shape FH / ours':17s} flag")
+    lines = [head]
+    for w in t["weeks"]:
+        fh = w["fh"]
+        shape = lambda s: "-".join(str(n) for n in s)
+        fh_cell = f"{fh['pts']:>7.1f}" if fh else f"{'-':>7}"
+        gap_cell = f"{w['gap']:>+7.1f}" if w["gap"] is not None else f"{'-':>7}"
+        shapes = f"{shape(fh['shape']) if fh else '-'} / {shape(w['ours_shape'])}"
+        lines.append(f"  GW{w['event']:<3}{w['metric']:10s}{fh_cell}{w['ours']:>7.1f}{gap_cell}"
+                     f"{w['not_a']:>7}   {shapes:17s} {w['flag']}".rstrip())
+    return lines
+
+
+def sec_free_hit(d, horizon, log=None):
+    """The Free Hit screen: one week at a time, the best legal XI the team
+    value buys against our best XI, by the frozen one-week metric."""
+    t = free_hit_table(d, read_log() if log is None else log)
+    weeks = t["weeks"]
+    print("=" * 78)
+    print(f"FREE HIT SCREEN  (GW{weeks[0]['event']}-{weeks[-1]['event']}, one week at a time; "
+          f"budget £{t['budget']:.1f}m = team value)" if weeks
+          else "FREE HIT SCREEN  (no upcoming fixtures in the export)")
+    print("=" * 78)
+    if not weeks:
+        print()
+        return
+    print("  metric  own as recorded in projection_log.csv for that gameweek where it exists")
+    print("          (one week ahead), else bottomup (full model, all terms) per fixture;")
+    print("          a blank scores 0. Both sides of the gap use the same metric.")
+    print("  FH XI   the best legal XI the budget buys around the cheapest legal bench, any")
+    print("          formation, at most 3 per club across the fifteen; XI from the usual gate")
+    print("          (status 'a', 45+ minutes in the last four). Exact for the XI given that")
+    print("          bench: dynamic programme on cost, branch and bound on the club limit.")
+    print("  ours    the best XI from our current 15 by the same metric, any formation.")
+    print(f"  flag    FH candidate when the gap exceeds {FH_GAP:g} or {FH_NOT_A}+ of our XI are")
+    print("          not status 'a' (today's status, for every week).")
+    print("  The formation is chosen on the sums here, which review D ruled out for the")
+    print("  wildcard while DEF is over-spread: read a 5-DEF FH XI in a bottomup week so.")
+    print()
+    for line in free_hit_lines(t):
+        print(line)
+    flagged = [w for w in weeks if w["flag"]]
+    show = flagged or [max((w for w in weeks if w["fh"]), key=lambda w: w["gap"], default=None)]
+    print()
+    for w in show:
+        if not w:
+            continue
+        fh = w["fh"]
+        groups = [", ".join(p["name"] for p in fh["xi"] if p["pos"] == k) for k in (1, 2, 3, 4)]
+        print(f"  GW{w['event']} FH XI ({'-'.join(str(n) for n in fh['shape'])}, £{fh['cost']:.1f}m"
+              f"{'' if fh['exact'] else ', node limit hit: best found, not proven'}"
+              f"{', flagged' if w['flag'] else ', largest gap, not flagged'}):")
+        print("    " + "; ".join(groups))
+        print("    bench " + ", ".join(p["name"] for p in fh["bench"]))
+    print()
+
+
 SECTIONS = {
     "league": lambda d, h: sec_league(d),
     "eo": lambda d, h: sec_eo(d),
@@ -3222,6 +3569,7 @@ SECTIONS = {
     "defcon": lambda d, h: sec_defcon(d),
     "value": sec_value,
     "bench": lambda d, h: sec_bench(d),
+    "free_hit": lambda d, h: sec_free_hit(d, h),
     "brief": sec_brief,
     "wildcard": lambda d, h: sec_wildcard(d, h, WC_FORMATION, WC_SPLIT),
     "backtest": sec_backtest,

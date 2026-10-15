@@ -4074,6 +4074,253 @@ class WatchFile(unittest.TestCase):
             os.chdir(cwd)
 
 
+class FreeHit(unittest.TestCase):
+    """N: the Free Hit screen - the frozen one-week metric, an exact legal
+    one-week fifteen, the gap against our best XI, the flag."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp()
+        cls.d = _recordable_export(blank_team="HUL")
+        cls.log_path = os.path.join(cls.tmp, "projection_log.csv")
+        with redirect_stdout(io.StringIO()):
+            for src in ("own", "bottomup"):
+                E.record_projections(cls.d, 6, src, None, cls.log_path)
+        cls.log = E.read_log(cls.log_path)
+        cls.next = cls.d["gameweek"] + 1
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    @staticmethod
+    def _world(seed, n=(3, 6, 6, 4), clubs="ABCDEF", budget=72.0):
+        """A small market whose clubs make the limit bind, and a fodder pool of
+        unique clubs at 4.0 - the bench then costs 16.0 whatever the shape."""
+        import random
+        rng = random.Random(seed)
+        market, pid = [], 0
+        for pos, k in zip((1, 2, 3, 4), n):
+            for _ in range(k):
+                pid += 1
+                market.append({"id": pid, "pos": pos, "team": rng.choice(clubs[:2] * 3 + clubs),
+                               "price": rng.choice([4.5, 5.0, 5.5, 6.0, 7.0, 8.5, 10.0]),
+                               "pts": round(rng.uniform(0.5, 8.0), 2), "status": "a"})
+                if market[-1]["team"] == "A":       # the strongest club: the limit must bite
+                    market[-1]["pts"] = round(market[-1]["pts"] + 4.0, 2)
+        fodder = [{"id": 900 + i, "pos": pos, "team": f"F{i}", "price": 4.0, "pts": 0.0, "status": "a"}
+                  for i, pos in enumerate((1, 1, 2, 2, 3, 3, 3, 4, 4))]
+        return market, fodder, budget + 16.0
+
+    @staticmethod
+    def _brute(market, cap):
+        from itertools import combinations
+        best = None
+        by = {k: [p for p in market if p["pos"] == k] for k in (1, 2, 3, 4)}
+        shapes = [(a, b, 10 - a - b) for a in range(3, 6) for b in range(2, 6) if 1 <= 10 - a - b <= 3]
+        for d_, m_, f_ in shapes:
+            for g in combinations(by[1], 1):
+                for D in combinations(by[2], d_):
+                    for M in combinations(by[3], m_):
+                        for F in combinations(by[4], f_):
+                            xi = g + D + M + F
+                            if sum(round(p["price"] * 10) for p in xi) > cap:
+                                continue
+                            clubs = {}
+                            for p in xi:
+                                clubs[p["team"]] = clubs.get(p["team"], 0) + 1
+                            if max(clubs.values()) > 3:
+                                continue
+                            v = sum(p["pts"] for p in xi)
+                            if best is None or v > best:
+                                best = v
+        return best
+
+    def test_metric_is_own_where_recorded_else_bottomup(self):
+        weeks, pts, src = E.one_week_points(self.d, self.log)
+        self.assertEqual(weeks, sorted({f["event"] for f in self.d["fixtures_next6"]}))
+        own = {int(r["player_id"]): float(r["predicted"]) for r in self.log
+               if r["source"] == "own" and int(r["event"]) == self.next}
+        bu = {int(r["player_id"]): float(r["predicted"]) for r in self.log
+              if r["source"] == "bottomup" and int(r["event"]) == self.next}
+        self.assertTrue(own, "the fixture recorded no own rows")
+        for pid, v in own.items():
+            self.assertEqual((pts[self.next][pid], src[self.next][pid]), (v, "own"))
+        inp = E.reliability_inputs(E.canonical_from_export(self.d), gws_played=self.d["gameweek"])
+        fx = E.week_fixtures(self.d)
+        hurt = next(p for p in self.d["all_players"] if p["status"] == "d" and p["team"] != "HUL")
+        self.assertNotIn(hurt["id"], own)
+        self.assertEqual(src[self.next][hurt["id"]], "bottomup")
+        self.assertAlmostEqual(pts[self.next][hurt["id"]],
+                               E.project_week(hurt["id"], hurt, inp, fx, self.next, E.ALL_TERMS), 9)
+        for pid, v in bu.items():                    # bottomup is the recorded definition
+            p = next(p for p in self.d["all_players"] if p["id"] == pid)
+            self.assertAlmostEqual(E.project_week(pid, p, inp, fx, self.next, E.ALL_TERMS), v, delta=6e-4)
+        later = weeks[1]
+        self.assertNotIn("own", set(src[later].values()), "own exists one week ahead only")
+        hul = next(p for p in self.d["all_players"] if p["team"] == "HUL" and p["status"] == "a")
+        self.assertEqual((pts[self.next][hul["id"]], src[self.next][hul["id"]]), (0.0, "blank"))
+        self.assertGreater(pts[later][hul["id"]], 0)
+
+    def test_the_optimizer_is_exact_against_brute_force(self):
+        tight = feasible = 0
+        for seed in range(16):
+            market, fodder, budget = self._world(seed)
+            r = E.best_one_week_xi(market, fodder, budget)
+            want = self._brute(market, round((budget - 16.0) * 10))
+            if want is None:
+                self.assertIsNone(r, f"seed {seed}: a fifteen where none is legal")
+                continue
+            self.assertIsNotNone(r, f"seed {seed}: no fifteen where one is legal")
+            feasible += 1
+            self.assertAlmostEqual(r["pts"], want, 9, f"seed {seed}: not the best legal XI")
+            self.assertTrue(r["exact"])
+            tight += r["bound"] > r["pts"] + 1e-9
+        self.assertGreaterEqual(feasible, 5, "too few feasible worlds to prove anything")
+        self.assertGreaterEqual(tight, 4, "too few worlds made the club limit bind")
+
+    def test_pruning_never_changes_the_answer(self):
+        for seed in range(4):
+            market, fodder, budget = self._world(100 + seed, n=(6, 14, 14, 9),
+                                                 clubs="ABCDEFGHIJKLMNOPQRST", budget=70.0)
+            a = E.best_one_week_xi(market, fodder, budget)
+            b = E.best_one_week_xi(market, fodder, budget, prune=False)
+            self.assertAlmostEqual(a["pts"], b["pts"], 9, f"seed {seed}: pruning lost the optimum")
+
+    def test_the_fifteen_is_legal(self):
+        t = E.free_hit_table(self.d, self.log)
+        self.assertEqual([w["event"] for w in t["weeks"]],
+                         sorted({f["event"] for f in self.d["fixtures_next6"]}))
+        self.assertAlmostEqual(t["budget"], self.d["standings"][0]["value"] / 10, 9)
+        by_id = {p["id"]: p for p in self.d["all_players"]}
+        for w in t["weeks"]:
+            fh = w["fh"]
+            fifteen = fh["xi"] + fh["bench"]
+            self.assertEqual(len({p["id"] for p in fifteen}), 15)
+            self.assertEqual(sorted(p["pos"] for p in fifteen), [1] * 2 + [2] * 5 + [3] * 5 + [4] * 3)
+            self.assertEqual(tuple(sum(1 for p in fh["xi"] if p["pos"] == k) for k in (2, 3, 4)), fh["shape"])
+            self.assertIn(fh["shape"], E.FORMATIONS)
+            self.assertLessEqual(sum(p["price"] for p in fifteen), t["budget"] + 1e-9)
+            self.assertAlmostEqual(fh["cost"], sum(p["price"] for p in fifteen), 9)
+            clubs = {}
+            for p in fifteen:
+                clubs[p["team"]] = clubs.get(p["team"], 0) + 1
+            self.assertLessEqual(max(clubs.values()), 3, f"GW{w['event']}: {clubs}")
+            for p in fh["xi"]:
+                q = by_id[p["id"]]
+                self.assertEqual(q["status"], "a")
+                self.assertGreaterEqual(q["mins_last4"], 45)
+            self.assertAlmostEqual(fh["pts"], sum(p["pts"] for p in fh["xi"]), 9)
+            cheapest = min(p["price"] for p in self.d["all_players"] if p["status"] == "a" and p["pos"] == 1)
+            self.assertEqual([p["price"] for p in fh["bench"] if p["pos"] == 1], [cheapest])
+
+    def test_the_market_is_the_recording_gate(self):
+        d = json.loads(json.dumps(self.d))
+        blank = {"HUL", "NFO"}                           # the fixture's two blank clubs next week
+        playing = [p for p in d["all_players"] if p["team"] not in blank]
+        hurt = next(p for p in playing if p["status"] == "d")
+        idle = next(p for p in playing if p["status"] == "a" and p["pos"] == 3 and p["price"] >= 6.0)
+        idle["mins_last4"] = 30
+        rig = [{"made_at": "2026-10-15T00:00:00+00:00", "source": "own", "event": str(self.next),
+                "player_id": str(p["id"]), "web_name": p["web_name"], "predicted": "30.0"}
+               for p in (hurt, idle)]
+        w = E.free_hit_table(d, self.log + rig)["weeks"][0]
+        picked = {p["id"] for p in w["fh"]["xi"]}
+        self.assertNotIn(hurt["id"], picked, "a doubtful player entered the Free Hit XI")
+        self.assertNotIn(idle["id"], picked, "a player under 45 minutes entered the Free Hit XI")
+        weeks, pts, _ = E.one_week_points(d, self.log + rig)   # the rig bites with the gate open
+        row = lambda p: {"id": p["id"], "pos": p["pos"], "team": p["team"], "price": p["price"],
+                         "pts": pts[self.next][p["id"]]}
+        spare = [row(p) for p in d["all_players"] if p["status"] == "a"]
+        opened = E.best_one_week_xi([row(p) for p in d["all_players"]], spare, w["fh"]["cost"] + 20)
+        self.assertTrue({hurt["id"], idle["id"]} <= {p["id"] for p in opened["xi"]})
+
+    def test_the_club_limit_holds_when_one_club_tops_every_list(self):
+        log = [dict(r, predicted=str(9.0 + float(r["predicted"]))) if r["source"] == "own"
+               and next(p for p in self.d["all_players"] if p["id"] == int(r["player_id"]))["team"] == "BHA"
+               else r for r in self.log]
+        w = E.free_hit_table(self.d, log)["weeks"][0]
+        fifteen = w["fh"]["xi"] + w["fh"]["bench"]
+        self.assertEqual([p["team"] for p in w["fh"]["bench"] if p["pos"] == 1], ["BHA"],
+                         "the fixture's cheapest keeper is BHA: the bench takes one BHA slot")
+        self.assertEqual(sum(1 for p in fifteen if p["team"] == "BHA"), 3)
+        self.assertEqual(sum(1 for p in w["fh"]["xi"] if p["team"] == "BHA"), 2)
+        self.assertGreater(w["fh"]["bound"], w["fh"]["pts"] + 1e-9, "the rig did not make the limit bind")
+
+    def test_gap_is_fh_minus_ours_by_the_same_metric(self):
+        t = E.free_hit_table(self.d, self.log)
+        weeks, pts, _ = E.one_week_points(self.d, self.log)
+        ours_ids = E.my_squad_ids(self.d)
+        for w in t["weeks"]:
+            xi = E._best_xi([{"id": i, "pos": next(p["pos"] for p in self.d["all_players"] if p["id"] == i),
+                              "proj": pts[w["event"]][i]} for i in ours_ids])
+            self.assertAlmostEqual(w["ours"], sum(p["proj"] for p in xi), 9)
+            self.assertAlmostEqual(w["gap"], w["fh"]["pts"] - w["ours"], 9)
+            self.assertEqual(w["metric"], "own" if w["event"] == self.next else "bottomup")
+            status = {p["id"]: p["status"] for p in self.d["all_players"]}
+            self.assertEqual(w["not_a"], sum(1 for p in w["ours_xi"] if status[p["id"]] != "a"))
+
+    def test_flags(self):
+        self.assertEqual(E.free_hit_flag(8.0, 0), "")
+        self.assertEqual(E.free_hit_flag(8.01, 0), "FH candidate (gap > 8)")
+        self.assertEqual(E.free_hit_flag(1.0, 2), "")
+        self.assertEqual(E.free_hit_flag(1.0, 3), "FH candidate (3 of our XI not 'a')")
+        self.assertEqual(E.free_hit_flag(9.0, 4), "FH candidate (gap > 8, 4 of our XI not 'a')")
+        self.assertEqual(E.free_hit_flag(None, 0), "")
+        d = json.loads(json.dumps(self.d))           # our whole fifteen blanks in GW+2
+        weeks = sorted({f["event"] for f in d["fixtures_next6"]})
+        ours = {(r["web_name"], r["team"]) for r in d["squads"] if r["entry_name"] == E.my_name(d)}
+        clubs = {t for _, t in ours}
+        d["fixtures_next6"] = [f for f in d["fixtures_next6"] if not (
+            f["event"] == weeks[1] and (f["home"] in clubs or f["away"] in clubs))]
+        w = next(w for w in E.free_hit_table(d, self.log)["weeks"] if w["event"] == weeks[1])
+        self.assertEqual(w["ours"], 0.0)
+        self.assertTrue(w["flag"].startswith("FH candidate (gap > 8"), w["flag"])
+        d = json.loads(json.dumps(self.d))           # three of our best XI doubtful, still projected
+        t0 = E.free_hit_table(d, self.log)["weeks"][1]
+        by_id = {p["id"]: p for p in d["all_players"]}
+        for p in [p for p in t0["ours_xi"] if p["status"] == "a"][:3]:
+            by_id[p["id"]]["status"] = "d"
+        w = E.free_hit_table(d, self.log)["weeks"][1]
+        self.assertEqual(w["not_a"], t0["not_a"] + 3)
+        self.assertIn("of our XI not 'a'", w["flag"])
+
+    def test_report_and_watch_file_print_the_gap_per_gameweek(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            E.sec_free_hit(self.d, 6, self.log)
+        text = out.getvalue()
+        t = E.free_hit_table(self.d, self.log)
+        import re
+        rows = [l for l in text.splitlines() if re.match(r"^  GW\d+ +(own|bottomup) ", l)]
+        self.assertEqual(len(rows), len(t["weeks"]))
+        for w, line in zip(t["weeks"], rows):
+            self.assertTrue(line.startswith(f"  GW{w['event']:<3}"), line)
+            self.assertIn(f"{w['gap']:>+7.1f}", line)
+            self.assertIn(w["metric"], line)
+        self.assertIn("FH XI (", text)
+        watch = E.watch_report(self.d, self.log, [1, 2])
+        block = watch.split("FREE HIT SCREEN")[1].split("TOP 12 PER POSITION")[0]
+        self.assertEqual(sum(1 for l in block.splitlines() if re.match(r"^  GW\d", l)), len(t["weeks"]))
+        for w in t["weeks"]:
+            self.assertIn(f"{w['gap']:>+7.1f}", block)
+        export = os.path.join(self.tmp, "fpl_export_gw3.json")
+        with open(export, "w", encoding="utf-8") as fh:
+            json.dump(self.d, fh)
+        report = os.path.join(self.tmp, "report.txt")
+        argv, cwd = sys.argv, os.getcwd()
+        try:
+            os.chdir(self.tmp)
+            sys.argv = ["fpl_edge.py", export, "--out", report]
+            with redirect_stdout(io.StringIO()):
+                E.main()
+        finally:
+            sys.argv = argv
+            os.chdir(cwd)
+        self.assertIn("FREE HIT SCREEN", open(report, encoding="utf-8").read(),
+                      "the nightly report does not carry the screen")
+
+
 class Hygiene(unittest.TestCase):
 
     def test_one_entry_league_does_not_crash_ownership(self):
