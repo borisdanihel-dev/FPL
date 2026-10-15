@@ -2235,3 +2235,95 @@ dropped; the CLI writes the file from the log, refuses a bad watchlist and
 `--watch` without `--out`; the runner writes it after the record and before
 the report, skips it without a watchlist, and goes red on a failure.
 16 mutations each red — news not cut at 60, the top list ranked by xg, top fifteen, the size guard off, forecasts read for the played gameweek, own and xg swapped, the fixture dropped, comments not stripped, a junk line silently skipped, a missing forecast printed as 0, --watch ignoring projection_log.csv, the watch step before the record, after the report, its failure not red, never running, a missing watchlist red. One mutant survived the first round: the CLI test had not checked that the file carries the recorded values, and now does. Recording path unchanged: GW6 regenerated from the same export under both codes: 978 of 978 rows identical on source, event, player and predicted.
+
+---
+
+## 2026-10-15 — item N: the Free Hit screen (`2552b4b`)
+
+`--section free_hit`, in the nightly report by default and as a block in the
+watch file. For each upcoming gameweek (six): the best legal one-week XI the
+team value buys, our own best XI, the gap, and the FH-candidate flag.
+
+**Definitions, as frozen by the item text** (the phrase "the frozen one-week
+metric" is not defined anywhere earlier in the repository, so the item's own
+parenthesis is the definition):
+
+- **Metric:** `own` as recorded in `projection_log.csv` for that gameweek
+  where it exists, else bottomup — the full model, all terms
+  (`project_reliability`, the recorded `bottomup` definition, tested equal to
+  the recorded rows) — summed over the week's fixtures; a blank scores 0. The
+  log records one week ahead, so in practice **the first week is `own` and
+  the other five are bottomup**: the gap is in one unit within a week, in two
+  different units across weeks.
+- **FH XI:** the best legal fifteen within the team value (the API's value,
+  bank included — item A): an XI of any legal formation (DEF 3–5, MID 2–5,
+  FWD 1–3) from the usual gate (status `a`, 45+ minutes in the last four),
+  plus a bench of the cheapest status-`a` players (lowest metric first,
+  distinct clubs), set aside before the XI is chosen; at most 3 per club
+  across the fifteen. Only the XI scores.
+- **Ours:** the best XI from our current fifteen by the same metric, any
+  formation (`_best_xi`), no gate.
+- **Flag:** `FH candidate` when the gap exceeds 8.0, or when 3 or more of our
+  best XI for that week are not status `a` (today's status, applied to every
+  week).
+
+**Solver — exact for the XI given that bench.** The repository's builder
+(`_build_squad`, greedy by value per million plus single swaps) is a
+heuristic and ignores the bench's clubs, which an 8-point threshold cannot
+sit on. New: per position a 0/1 knapsack over cost in tenths gives the
+Pareto frontier of choosing exactly k players; the frontiers combine per
+formation into the club-free optimum; branch and bound on the club limit
+(a node whose optimum puts too many of one club in the fifteen branches on
+which of them to drop) gives the legal optimum. Players are pruned only when
+dominated (cheaper or equal, metric higher or equal) by players from enough
+distinct clubs that a free swap always exists — exact under the limit. A
+node limit (3,000) is a safety valve; hitting it is printed. Live, every
+week is proven optimal, the largest search 342 nodes; the whole screen takes
+0.2 s.
+
+**Live, GW6 export (14 Oct), GW7–12, budget £100.0m** (`reports/free_hit_gw6.txt`):
+
+```
+  GW   metric      FH XI   ours    gap  not a   shape FH / ours   flag
+  GW7  own          47.3   35.5  +11.8      0   5-4-1 / 5-3-2     FH candidate (gap > 8)
+  GW8  bottomup     55.9   53.5   +2.4      0   5-4-1 / 4-4-2
+  GW9  bottomup     56.0   54.5   +1.5      0   5-4-1 / 4-4-2
+  GW10 bottomup     57.9   55.9   +2.0      0   5-4-1 / 5-3-2
+  GW11 bottomup     57.8   54.5   +3.3      0   5-4-1 / 5-3-2
+  GW12 bottomup     57.8   54.4   +3.4      0   5-4-1 / 5-3-2
+
+  GW7 FH XI (5-4-1, £91.8m, flagged):
+    A.Becker; De Cuyper, Vuskovic, Guéhi, Van Hecke, Dasilva; Groß, Semenyo, Barnes, Cunha; Haaland
+    bench Forster, Burrowes, Kusi-Asare, Mheuka
+```
+
+**Reading GW7, the only flag.** By the rule GW7 is a Free Hit candidate:
+own says the best one-week XI scores 47.3 to our 35.5. Three facts sit beside
+it. Live, `own` is the best-calibrated source (GW4–6: rho +0.343 ± 0.069,
+MAE 2.20 against the constant's 2.39, beating it every week), so the metric
+is the right one to trust for a week. But our fifteen was drafted on the
+frozen three-layer ordering, not on `own`: our fifteen sums 44.2 under `own`
+and 69.6 under bottomup, and `own` ranks the recorded 285 only +0.81 with
+bottomup — so part of the gap is the two models disagreeing about who is
+good, which a Free Hit on `own` would exploit for one week. And `own`'s
+projections are nearly flat in price: the FH XI leaves £8.2m unspent. The
+five bottomup weeks run +1.5 to +3.4, each with a 5-4-1 FH XI — the DEF
+over-spread choosing the formation, as the section's own note warns. No
+decision here: the flag is the frozen rule's output, and GW7 is planned as
+the Triple Captain week.
+
+**Verified:** 9 tests, suite **237 → 246** — the metric is `own` where
+recorded and bottomup elsewhere (a doubtful player without `own`, the later
+weeks, a blank at 0), and the computed bottomup equals the recorded rows;
+the solver equals brute force in all sixteen random worlds, feasible and
+not, with at least four where the club limit binds; pruning never changes
+the answer in four larger twenty-club worlds; every week's fifteen is legal
+(2/5/5/3, within budget, at most 3 per club counting the bench, XI from the
+gate, the cheapest bench); a doubtful player and one under 45 minutes, each
+given a recorded own of 30, stay out of the XI though the solver would take
+both with the gate open; one club rigged to top every list gets exactly
+3, one of them the bench keeper; the gap is FH minus ours by the same
+metric; the flags at 8.0 and 8.01, at 2 and 3 not `a`, a fifteen that blanks
+and three doubtful starters counted exactly; the table in the section, in the watch file and
+in the nightly report written by `main`. 21 mutations each red — own ignored, no bottomup fallback, five weeks instead of six, the club limit ignored, the bench's clubs not counted, the bench's cost not deducted, club-free pruning, one formation only, branching on one member of the club, the dearest bench, injured players admitted, the minutes gate dropped, the gap's sign flipped, a gap of exactly 8 flagged, threshold 9, counting players who are status a, needing four not three, our XI from our worst players, the section left out of the nightly report, the watch block dropped. Three survived the first round - nothing put an attractive player outside the gate in front of the solver, and nothing pinned the exact count - and the gate test and an exact count were added. GW7 regenerated from the same export under both codes: 1,071 of 1,071 rows identical on source, event, player and predicted; the
+nightly report is byte-identical apart from the new 1,808-byte section.
