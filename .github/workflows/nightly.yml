@@ -30,7 +30,10 @@ concurrency:
 
 jobs:
   nightly:
-    runs-on: ubuntu-latest
+    # pinned to the image the 17 Oct runs used (Image ubuntu-24.04, Version
+    # 20261012.334.1, from the run log), not ubuntu-latest, which moves to
+    # Ubuntu 26 from 19 Oct (S1 amendment 3, point 4)
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: write        # the pushing job: commits to data, Sunday releases

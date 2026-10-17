@@ -279,7 +279,8 @@ Item D3. Every check needs a test with a planted failure.
    `STATUS OK|WARN|FAIL | generated <UTC> | next deadline <GW, UTC and Prague> | checks n/N | repo <MB>`.
 3. **On failure,** open or update one GitHub issue, "Nightly run failed", listing the failing checks; GitHub Mobile notifies Boris. Close it on the next green run.
 4. **Backup schedule:** a second cron, `17 3 * * *`, that runs only when today's status file is missing. Set `timeout-minutes: 30`.
-5. Verifier → report → commit → push.
+5. **Action versions** (S1 amendment 3): bump `actions/checkout` and `actions/setup-python` past their Node 20 releases in every workflow, with a proof dispatch.
+6. Verifier → report → commit → push.
 
 | # | Check | Threshold |
 |---|---|---|

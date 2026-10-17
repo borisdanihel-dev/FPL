@@ -4061,7 +4061,9 @@ class NightlyWorkflow(unittest.TestCase):
         y = self._read(".github", "workflows", "nightly.yml")
         self.assertIn('- cron: "40 21 * * *"', y)
         self.assertIn("workflow_dispatch:", y)
-        self.assertIn("runs-on: ubuntu-latest", y)
+        self.assertIn("    runs-on: ubuntu-24.04" + chr(10), y)   # S1 amendment 3, point 4: pinned
+        self.assertNotIn("ubuntu-latest", "".join(l for l in y.splitlines(True)
+                                                 if not l.strip().startswith("#")))
         self.assertIn("actions/setup-python@", y)
         self.assertIn("run: python -m pip install -r requirements.txt", y)
         self.assertIn("run: python fpl_nightly.py", y)
@@ -4139,9 +4141,11 @@ class NightlyWorkflow(unittest.TestCase):
                       "S0c: requirements.txt must quote the current stdlib rule")
 
     def test_secret_scan_runs_the_pinned_gitleaks_action(self):
-        """D1 (Step 1.6; S1 amendment 1, point 6): the official gitleaks action,
-        pinned to a full commit SHA, on every push to master or data and on a
-        manual dispatch (full history: fetch-depth 0). Read-only, no secrets."""
+        """D1 (Step 1.6; S1 amendments 1 and 3): the official gitleaks action,
+        pinned to a full commit SHA, on every push to master or data, weekly
+        on Sundays at a non-round minute (UTC), and on a manual dispatch. A
+        full scan covers every branch (fetch-depth 0; gitleaks logs --all), so
+        there is no branch input and no ref. Read-only, no secrets."""
         import re
         y = self._read(".github", "workflows", "secret-scan.yml")
         code = "\n".join(l.split(" #")[0].rstrip() for l in y.splitlines()
@@ -4150,15 +4154,29 @@ class NightlyWorkflow(unittest.TestCase):
         gitleaks = [u for u in uses if u.startswith("gitleaks/gitleaks-action@")]
         self.assertEqual(len(gitleaks), 1)
         self.assertRegex(gitleaks[0], r"^gitleaks/gitleaks-action@[0-9a-f]{40}$")
-        self.assertIn("on:\n  push:\n    branches: [master, data]\n  workflow_dispatch:\n", code)
+        self.assertIn("on:\n  push:\n    branches: [master, data]\n  schedule:\n", code)
+        self.assertIn("\n  workflow_dispatch:\n\npermissions:", code)
+        crons = re.findall(r'- cron: "([^"]+)"', code)
+        self.assertEqual(len(crons), 1)
+        minute, hour, dom, month, dow = crons[0].split()
+        self.assertEqual((dom, month, dow), ("*", "*", "0"), "the scan runs on Sundays")
+        self.assertTrue(minute.isdigit() and int(minute) % 5 != 0, "a non-round minute")
+        self.assertTrue(hour.isdigit() and 0 <= int(hour) < 24)
         self.assertIn("fetch-depth: 0", code)
         self.assertIn("permissions:\n  contents: read\n", code)
-        # data holds no workflow, so it is scanned by a dispatch that checks it out
-        self.assertIn("      branch:\n", code)
-        self.assertIn("        options: [master, data]\n        default: master\n", code)
-        self.assertIn("          ref: ${{ inputs.branch || github.ref }}\n", code)
-        for banned in ("write", "secrets.", "GITLEAKS_LICENSE", "pull_request"):
+        for banned in ("write", "secrets.", "GITLEAKS_LICENSE", "pull_request", "inputs", "ref:"):
             self.assertNotIn(banned, code)
+
+    def test_gitleaksignore_holds_exact_fingerprints_only(self):
+        """S1 amendment 3, point 1: each accepted finding is one exact
+        commit:file:rule:line fingerprint - no file-wide or global entry."""
+        import re
+        lines = [l.strip() for l in self._read(".gitleaksignore").splitlines()
+                 if l.strip() and not l.strip().startswith("#")]
+        self.assertEqual(lines, ["ea7acaa32f333edb9ef76ae2bb00afa967911ab9:"
+                                 "worklog/verify_S1_pre.md:generic-api-key:281"])
+        for l in lines:
+            self.assertRegex(l, r"^[0-9a-f]{40}:[^:*]+:[a-z0-9-]+:\d+$")
 
     def test_master_ignores_every_data_path(self):
         """D1 (Step 1.4): generated data lives on the data branch only; master

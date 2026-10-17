@@ -53,6 +53,8 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
 - **Secrets.** `ODDS_API_KEY` is a GitHub Actions repository secret,
   optionally also a local environment variable. Never write it, or any URL or
   header containing it, to a file, a log or a report.
+- **Masking.** Every report and verifier report masks key-like strings: the
+  first 4 characters, then "...".
 - **When `BUILD_PLAN.md` and the code disagree, stop and report** instead of
   guessing.
 
@@ -108,12 +110,13 @@ g. If the session gets long or you notice you are losing earlier instructions, u
 - Once per clone: `python fpl_prepush.py --install` (the hook rejects a push to
   `master` that adds or changes a data path; deleting one is allowed).
 - Secret scan: `.github/workflows/secret-scan.yml` runs the gitleaks action on
-  every push to `master` (the pushed commits) and on Run workflow (the full
-  history of the branch chosen: `master` or `data`). Nothing scans `data`
-  automatically: it holds no workflow file, and the nightly's pushes start no
-  workflow. Every data commit is still checked before it is made by
-  `fpl_gate.py --secrets`; a full scan of `data` is a manual run with
-  branch = data.
+  every push to `master` (the pushed commits), and a full-history scan of every
+  branch, `data` included, on Sundays at 04:23 UTC and on Run workflow.
+  A push to `data` starts nothing (the branch holds no workflow file, and the
+  nightly's pushes start no workflow); every data commit is checked before it
+  is made by `fpl_gate.py --secrets`. Accepted findings go in
+  `.gitleaksignore`, one exact fingerprint (commit:file:rule:line) each, by
+  ruling only.
 - Raw URLs: `https://raw.githubusercontent.com/borisdanihel-dev/FPL/data/reports/watch_<date>.txt`
   and `.../data/reports/fpl_<date>.txt`.
 - Rollback: tag `pre-data-branch` is `master` before the migration.

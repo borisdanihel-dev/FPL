@@ -1,0 +1,6 @@
+# gitleaks findings accepted by ruling, one exact fingerprint each
+# (commit:file:rule:line), nothing broader.
+# S1 amendment 3: the first pre-check report quotes the hand-written 32-hex test
+# dummy of the old WIP test test_the_key_value_fails_the_commit_and_is_never_printed
+# (bb8c9b2/84a1bb0); it is not a key. The report itself is left unedited.
+ea7acaa32f333edb9ef76ae2bb00afa967911ab9:worklog/verify_S1_pre.md:generic-api-key:281
