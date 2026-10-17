@@ -2460,3 +2460,10 @@ The global config checksum is the same before and after. `git ls-remote
 origin` and a dry-run push both succeeded.
 
 **Tests:** 250 before and after, green. No `.py` file changed on `master`.
+
+**Verifier on S0b: PASS** (`worklog/verify_S0b.md`): prereg order, checks 1, 2,
+5, 6 and 7, and all eight acceptance tests. It reproduced every SMOKE2 figure
+independently. Its one gap: no test pins the agent file to the BUILD_PLAN
+block (a one-word mutant of the agent file leaves the suite green). Write guard
+after the run: `git status` showed only `?? worklog/verify_S0b.md`; `git diff`
+empty; the state snapshot was identical. Report: `worklog/cc_2026-10-17_S0b.md`.
