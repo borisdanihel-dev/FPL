@@ -32,6 +32,26 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   recording path did not move. Test at simulated GW10/20/38. Log what was
   measured in `CHANGELOG.md`, not just what was done.
 
+## Work-item protocol (BUILD_PLAN.md, from Step 0)
+- **One step per session.** Stop after the step's report; do not start the
+  next step until Boris says so.
+- **Runner code is Python standard library only.** Optional local tools (e.g.
+  a MILP solver) live under `tools/`, with their own requirements file, and
+  the nightly runner never imports them.
+- **Never edit frozen models in place.** A new or changed model is recorded to
+  the projection log under a **new source name**. It replaces nothing until
+  its pre-registered test passes and Boris accepts it in chat.
+- **Every item:** `prereg/<item>.md` committed before any code for it (copy
+  `prereg/TEMPLATE.md`) → implement → tests → the `backtest-verifier` agent
+  (`.claude/agents/backtest-verifier.md`) → report in
+  `worklog/cc_<date>_<item>.md`, the verifier's in `worklog/verify_<item>.md`
+  → changelog → commit and push. A FAIL verdict means the item is not done.
+- **Secrets.** `ODDS_API_KEY` is a GitHub Actions repository secret,
+  optionally also a local environment variable. Never write it, or any URL or
+  header containing it, to a file, a log or a report.
+- **When `BUILD_PLAN.md` and the code disagree, stop and report** instead of
+  guessing.
+
 ## Where things are
 - `CLAUDE_fable chat.md` — project handoff: data flow, design rules, FPL context.
 - `CLAUDE_opusChat.md` — measured findings, failed approaches, working practices.
