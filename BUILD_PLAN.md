@@ -41,6 +41,8 @@ It lives in the repo root as `BUILD_PLAN.md`.
 3. **Send the report to the chat.** I accept it, reverse parts of it, or send back fixes.
 4. **Start the next step only after that.** Never run two steps at once: they touch the same files.
 
+**Verifier write guard (Claude Code, every verifier run).** After every verifier run, the main session runs `git status` and `git diff`. Any change outside `worklog/verify_<item>.md` voids the verdict: the change is reverted and the verifier is rerun.
+
 ## Part C — Decision rules in force now (Boris and the chat; the steps below build the tooling)
 
 1. **Expected points first.** At a 56-point gap with ~31 GWs left, maximise xP. Variance-seeking starts only when the gap exceeds σ_d·√n (σ_d is measured in Step 9; on current assumptions about GW25–27).
@@ -108,10 +110,21 @@ Input: the work-item id. Read prereg/<item>.md. Use git log to confirm it was
 committed before the first code commit of the item; if not, verdict FAIL.
 
 Checks, each PASS/FAIL with evidence:
-1. Point-in-time: every input used for gameweek g must exist before g's
-   deadline (logged forecasts, pre-closing odds, data timestamps). Run one
-   leak probe: shift the target by one gameweek and confirm the metric
-   collapses toward zero.
+1. Point-in-time leak check, for any item that produces a forecast, feature
+   or evaluation metric:
+   a. Truncation test (decides): for 3 gameweeks (earliest, middle, latest
+      evaluated), rebuild the feature only from inputs available before that
+      gameweek's deadline (dated exports on or before the deadline date;
+      historical rows with round < g). Any value differing from the item's
+      output by more than 1e-9 = FAIL.
+   b. Timestamp audit (decides): every input row used for gameweek g is dated
+      at or before g's deadline. Any later row = FAIL.
+   c. Shift probe (warns only): for correlation metrics on points, recompute
+      with the target moved to g+1, among players with 60+ minutes in both g
+      and g+1, pooled over all gameweeks. WARN if the unshifted value is
+      above 0.25 (measured ceiling 0.15) or unshifted minus shifted is more
+      than 0.10 (fixture information adds only 0.02-0.06). A WARN is cleared
+      only by a and b.
 2. Clean-checkout test run: report counts before and after the item.
 3. Re-run the pre-registered evaluation yourself through the harness. Your
    numbers must match the implementer's within 1e-6.
@@ -244,7 +257,8 @@ Item D2. Each fix needs a unit test that fails before the fix and passes after.
    - *Tests:* 7.5 → 7.8 sells for 7.6; equal; falling; +0.1.
    - Ask Boris for the in-app screenshot (A9) and match all 15 players exactly.
 9. **Windows I/O:** open every file with `encoding="utf-8", newline=""`. Test that the CSV contains no `\r`.
-10. Verifier → report → commit → push.
+10. **Bench audit respects automatic substitutions:** points that already counted through an auto-sub are not a bench gain (use the picks' `automatic_subs` if the export has them, otherwise apply FPL's auto-sub rules). *Test:* a starter on 0 minutes whose bench player came on shows no gain.
+11. Verifier → report → commit → push.
 
 ## Step 3 — nightly checks, status line and alerts
 

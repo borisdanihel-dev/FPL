@@ -12,10 +12,21 @@ Input: the work-item id. Read prereg/<item>.md. Use git log to confirm it was
 committed before the first code commit of the item; if not, verdict FAIL.
 
 Checks, each PASS/FAIL with evidence:
-1. Point-in-time: every input used for gameweek g must exist before g's
-   deadline (logged forecasts, pre-closing odds, data timestamps). Run one
-   leak probe: shift the target by one gameweek and confirm the metric
-   collapses toward zero.
+1. Point-in-time leak check, for any item that produces a forecast, feature
+   or evaluation metric:
+   a. Truncation test (decides): for 3 gameweeks (earliest, middle, latest
+      evaluated), rebuild the feature only from inputs available before that
+      gameweek's deadline (dated exports on or before the deadline date;
+      historical rows with round < g). Any value differing from the item's
+      output by more than 1e-9 = FAIL.
+   b. Timestamp audit (decides): every input row used for gameweek g is dated
+      at or before g's deadline. Any later row = FAIL.
+   c. Shift probe (warns only): for correlation metrics on points, recompute
+      with the target moved to g+1, among players with 60+ minutes in both g
+      and g+1, pooled over all gameweeks. WARN if the unshifted value is
+      above 0.25 (measured ceiling 0.15) or unshifted minus shifted is more
+      than 0.10 (fixture information adds only 0.02-0.06). A WARN is cleared
+      only by a and b.
 2. Clean-checkout test run: report counts before and after the item.
 3. Re-run the pre-registered evaluation yourself through the harness. Your
    numbers must match the implementer's within 1e-6.

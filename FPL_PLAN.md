@@ -1,3 +1,4 @@
+Historical (written after GW3). Superseded by BUILD_PLAN.md. fpl_run.bat is retired; the nightly runs on GitHub Actions.
 # FPL Plan — 1. FC Kiripolcz
 
 Written after GW3. Rank 6/7, 204 pts, 39 behind. All four first-half chips intact.

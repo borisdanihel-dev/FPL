@@ -12,7 +12,6 @@ before any local session.
 Windows, Python 3.14. The measured findings are the product; the code serves them.
 
 ## Standing rules
-- **Standard library only.** No pip, no third-party dependencies.
 - **Never fabricate.** A missing input is reported and the work stops; nothing
   is substituted. Every correlation is printed with its interval.
 - **Point-in-time.** Forecasts are recorded before the deadline or not at all.
@@ -46,6 +45,9 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   (`.claude/agents/backtest-verifier.md`) → report in
   `worklog/cc_<date>_<item>.md`, the verifier's in `worklog/verify_<item>.md`
   → changelog → commit and push. A FAIL verdict means the item is not done.
+- **Verifier write guard.** After every verifier run, the main session runs
+  `git status` and `git diff`. Any change outside `worklog/verify_<item>.md`
+  voids the verdict: revert it and rerun the verifier.
 - **Secrets.** `ODDS_API_KEY` is a GitHub Actions repository secret,
   optionally also a local environment variable. Never write it, or any URL or
   header containing it, to a file, a log or a report.
