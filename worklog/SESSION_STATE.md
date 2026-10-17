@@ -4,25 +4,31 @@ Updated at the end of every item, before the push (`CLAUDE.md`, "Session
 operating mode"). A fresh session reads `CLAUDE.md`, `BUILD_PLAN.md` and this
 file, then waits for the next instruction.
 
-- **Current item:** S1 (Step 1, D1). **Migrated; waiting for the proof
-  dispatch, then the final verifier and the report.**
-  - **Second pre-check: PASS** (`worklog/verify_S1_pre2.md`).
-  - **Migration**, done 21:58–21:59 UTC on Sat 17 Oct, after "nightly
-    2026-10-17" (`26f543a`) landed and its run finished:
+- **Current item:** S1 (Step 1, D1). **Migrated and proven; stopped by 9e on
+  the secret scan.** The final verifier and the report are not yet done.
+  - **Migration (21:58–21:59 UTC, Sat 17 Oct)**, after "nightly 2026-10-17"
+    (`26f543a`) landed:
     - tag `pre-data-branch` on `26f543a`;
     - code commit `dddcb92`, a blob-identical copy of `scratch/s1-wip`
-      `b738e6d`, never a merge;
+      `b738e6d`;
     - `data` = `eeeede6`, orphan, with 103 files byte-identical;
-    - migration commit `57abbf1`, deletions only, pushed through the
-      pre-push hook;
-    - the worktree `C:\GIT\FPL-data` tracks `origin/data`.
-  - GitHub holds `master` `57abbf1`, `data` `eeeede6` and the tag. The
-    push-triggered secret-scan run was green.
-  - **Next:** Boris runs nightly with `force_backup` ticked, and secret-scan
-    with branch = master and with branch = data. Then the final verifier,
-    `worklog/cc_2026-10-17_S1.md` (final) and the CHANGELOG.
+    - migration commit `57abbf1`, deletions only;
+    - `C:\GIT\FPL-data` tracks `origin/data`.
+  - **Proof dispatch** (run 39073502058, `force_backup` ticked): every step
+    green.
+    - `data` gained one commit, `e84bee6`, with `fpl.sql` and the `.json.gz`.
+    - `master` was unchanged.
+    - 4679 log rows, 0 duplicate keys.
+    - Release `backup-2026-10-17` holds 2 assets.
+    - Both `data` raw URLs return HTTP 200 without sign-in.
+  - **Secret scan:** the push-triggered runs were green. Both full-history
+    dispatches (runs 39073872326 and 39073916594) failed with "Leaks
+    detected". Their findings are in the job summaries and the SARIF
+    artifacts, which need a signed-in user. **Waiting for Boris** to share the
+    job summaries (the action redacts values), and to confirm which branch
+    each run scanned.
 - **Last pushed commit:** the commit carrying this version of the file (`git
-  log -1 -- worklog/SESSION_STATE.md`). Before it: `57abbf1`.
+  log -1 -- worklog/SESSION_STATE.md`). Before it: `eb3ef1e`.
 - **Open decisions for the chat:**
   1. Nothing scans `data` automatically. The branch holds no workflow file,
      and the nightly's pushes start no workflow. Each data commit is checked
