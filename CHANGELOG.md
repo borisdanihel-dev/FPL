@@ -2375,3 +2375,88 @@ computation.
 then `toy_eval.py`, which ranks gameweek g by gameweek g's own points (mean
 per-gameweek Spearman 1.000000 over GW2–38). The verifier (run as a general-purpose agent following `.claude/agents/backtest-verifier.md`; the named agent loads only in a session started in `C:\GIT\FPL`) gave **FAIL, check 1 failing**, as Step 0.6 requires — feature and target the same object, all 29,065 feature rows after deadline(g) — and also failed checks 4 and 6 (no bootstrap, no tests). Its leak probe fell only to 0.708, not toward zero: whole-population points are autocorrelated, so the probe as worded cannot confirm itself on that filter. `worklog/verify_SMOKE.md`. The branch was
 deleted unmerged. The verifier on S0 itself: **PASS** — prereg order, checks 1, 2, 5, 6, 7 and the six acceptance tests (`worklog/verify_S0.md`); it notes that the bench audit ignores automatic substitutions (pre-existing, not hit in GW6). Report: `worklog/cc_2026-10-17_S0.md`.
+
+---
+
+## 2026-10-17 — S0b: rulings on the S0 report (`7e695c1` prereg, `01b67a3`)
+
+**Verifier check 1 amended**, identically in `.claude/agents/backtest-verifier.md`
+and the "Verifier agent" block of `BUILD_PLAN.md` (still byte-identical: 2,640
+bytes, sha256 `e4cfc97d…`). The old check (shift the target one gameweek and
+expect the metric to collapse toward zero) could not confirm itself. On the S0
+smoke test the shifted score fell from 1.000 only to 0.708, because across the
+whole population non-playing players score 0 week after week. Check 1 is now a
+point-in-time leak check for any item that produces a forecast, feature or
+evaluation metric:
+
+- **1a (decides):** a truncation test at the earliest, middle and latest
+  gameweeks evaluated.
+- **1b (decides):** a timestamp audit of every input row.
+- **1c (warns only):** a shift probe among players with 60+ minutes in both g
+  and g+1. Only 1a and 1b clear a 1c WARN.
+
+1c's thresholds come from the measured bound in "2026-09-14 — the ceiling on
+the starters question, measured":
+
+- adjacent-week Spearman among starters +0.023, ceiling ≈ 0.15;
+- the fixture-dependent term adds ~0.02–0.06.
+
+So 1c warns above 0.25 unshifted, or when unshifted minus shifted exceeds 0.10.
+This is a rule for the verifier, not a change to any frozen model definition.
+
+**Smoke test rerun (SMOKE2), with the native `backtest-verifier` agent** (S0b
+ruling 1: the native agent for every verifier run from now on).
+
+- **Setup.** Scratch branch `scratch/verifier-smoke2`: `prereg/SMOKE2.md`
+  (`4a7c469`), then the same toy as S0, `feature = pts[g]` (`f66ba8c`). Never
+  pushed; deleted.
+- **Verdict FAIL**, as required:
+  - **1a FAIL:** at GW2, GW20 and GW38, none of the 705, 790 and 841 feature
+    values can be rebuilt from rows with round < g.
+  - **1b FAIL:** 29,057 of 29,057 source rows are dated after deadline(g).
+  - **1c WARN**, not cleared.
+- **Measured on 1c's filter** (60+ minutes in both g and g+1, g = 2..37, 5,669
+  pooled pairs): unshifted 1.000000, shifted 0.024165 (90% CI
+  −0.002788..0.050639). The probe now collapses. The shifted value is
+  consistent with the 2026-09-14 adjacent-week figure (+0.023, n = 5,839 over
+  37 week-pairs), here from an independent computation over 36 pairs.
+- **Also failed** checks 4 (no bootstrap; the threshold is never applied) and
+  6 (no test covers the toy), as in S0.
+- **The agent's definition.** This session loaded it before `01b67a3`, so the
+  launch prompt pointed the agent to the file on disk. It reports applying the
+  amended check 1 from there. Sessions started from now on load it directly.
+
+`worklog/verify_SMOKE2.md`.
+
+**Verifier write guard** added to the work-item protocol in `CLAUDE.md` and to
+Part B of `BUILD_PLAN.md`. After the SMOKE2 run:
+
+- `git status` showed only `?? worklog/verify_SMOKE2.md`;
+- `git diff` was empty;
+- HEAD, the worktree list, branches, stash and local config were unchanged.
+
+**`CLAUDE.md`:** the line "Standard library only. No pip, no third-party
+dependencies." is deleted. The runner-stdlib / `tools/` rule in the
+work-item protocol is the only stdlib rule. `requirements.txt`'s comment still
+quotes the old wording; it is left as is, because the rule it enforces (the
+runner installs nothing) still holds.
+
+**`FPL_PLAN.md`:** one line added at the top ("Historical (written after GW3).
+Superseded by BUILD_PLAN.md. …"). Nothing else changed.
+
+**`BUILD_PLAN.md` Step 2:** new item 10, "Bench audit respects automatic
+substitutions". The verifier step is now 11. Measured for it: the 16 Oct GW6
+export has no `automatic_subs` field (0 occurrences), and `fpl_sync.py` does not
+fetch one. Step 2 must therefore add it to the sync or apply FPL's auto-sub
+rules itself.
+
+**Push setup (this clone's `.git/config` only; not in the repository):**
+
+- origin `git@github.com:borisdanihel-dev/FPL.git`;
+- `core.sshCommand` `ssh -i C:/Users/Boris/.ssh/fpl_deploy_ed25519 -o
+  IdentitiesOnly=yes`, as in the old folder.
+
+The global config checksum is the same before and after. `git ls-remote
+origin` and a dry-run push both succeeded.
+
+**Tests:** 250 before and after, green. No `.py` file changed on `master`.
