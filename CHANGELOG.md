@@ -2467,3 +2467,50 @@ independently. Its one gap: no test pins the agent file to the BUILD_PLAN
 block (a one-word mutant of the agent file leaves the suite green). Write guard
 after the run: `git status` showed only `?? worklog/verify_S0b.md`; `git diff`
 empty; the state snapshot was identical. Report: `worklog/cc_2026-10-17_S0b.md`.
+
+---
+
+## 2026-10-17 — S0c: the chat's ruling S0c (`4dca2b5` prereg, `76d939b`)
+
+Protocol, docs and tests only. The ruling is pasted verbatim into
+`prereg/S0c.md` — the first prereg made that way.
+
+- **Verifier independence.** "Never read session transcripts or chat logs.
+  The rulings you check are the verbatim text in prereg/<item>.md; …" added,
+  identically, to `.claude/agents/backtest-verifier.md` and the `BUILD_PLAN.md`
+  block. Still byte-identical as git stores them: 2,811 bytes, sha256
+  `1742bb23…`.
+- **New test** `VerifierAgent.test_the_plan_block_is_the_agent_file` closes
+  the gap the S0b verifier found (a one-word mutant of the agent file left the
+  suite green). Measured in a scratch copy: one word changed in the agent file
+  → red; restored → green; one word in the plan block → red; a CRLF-only
+  rewrite → green (it compares LF bytes, as git stores them). Two more tests
+  pin the independence sentence and the `requirements.txt` quote; both were red
+  before the doc edits.
+- **`requirements.txt`** quotes the current rule ("Runner code is Python
+  standard library only; optional local tools under tools/ have their own
+  requirements"), replacing the stale `"stdlib only, no pip"` noted in S0b.
+- **Work-item protocol** (`CLAUDE.md`, `BUILD_PLAN.md` Part B): rulings go
+  verbatim into the prereg before any code; every verifier launch starts with
+  the read-from-disk sentence. Part B step 1: use the current session; resume
+  a fresh one from `worklog/SESSION_STATE.md` (new).
+- **`CLAUDE.md`:** new section "Session operating mode", a–g word for word.
+- **`BUILD_PLAN.md` Step 2 item 10:** data source = `automatic_subs` from the
+  picks response the sync already fetches. **Correction to the S0b entry**
+  ("`fpl_sync.py` does not fetch one"): it does fetch it —
+  `fpl_sync.py:321` requests `entry/{eid}/event/{gw}/picks/`, and a read-only
+  GET of entry 3073318 GW6 returned the keys `active_chip`, `automatic_subs`,
+  `entry_history`, `picks` — but it stores everything except
+  `automatic_subs`. The 16 Oct export still has 0 occurrences.
+- **Runner freeze (9d):** not active; next deadline GW8 2026-10-23T17:30Z
+  (from `fpl.sqlite` `events`; the export has no `deadline_time` field).
+
+**Tests:** 250 → 253, green. Recording path unchanged: the verifier
+regenerated all four sources at `01d6d0f` and `76d939b` with the clock frozen
+(2026-10-17T09:00Z) and got byte-identical logs (sha256 `e88a5e5e…`), GW7
+within 1e-9 of the nightly's committed rows.
+
+**Verifier on S0c: PASS** (`worklog/verify_S0c.md`), launched natively with
+the read-from-disk sentence; no WARN. Write guard: `git status` showed only
+`?? worklog/verify_S0c.md`, `git diff` empty, state snapshot identical.
+Report: `worklog/cc_2026-10-17_S0c.md`.
