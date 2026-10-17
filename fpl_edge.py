@@ -626,9 +626,17 @@ def sec_bench(d):
                    if r["pos"] != 1) if bench else (0, "-")
         flag = ">>" if entry == me else "  "
         gain = max(0, best[0] - worst[0])
+        # the keeper swap: the bench keeper for the starting one, if he scored more
+        k_in = max((r for r in bench if r["pos"] == 1),
+                   key=lambda r: r["gw_points"] or 0, default=None)
+        k_out = min((r for r in rows if r["slot"] <= 11 and r["pos"] == 1),
+                    key=lambda r: r["gw_points"] or 0, default=None)
+        gk_gain = (max(0, (k_in["gw_points"] or 0) - (k_out["gw_points"] or 0))
+                   if k_in and k_out else 0)
+        keeper = k_in["web_name"] if k_in and k_out else "-"
         print(f"{flag} {entry[:22]:22s} bench={lost:>3}  best benched {best[1][:12]:12s}"
               f"({best[0]:>2})  worst XI {worst[1][:12]:12s}({worst[0]:>2})  "
-              f"perfect-XI gain +{gain}")
+              f"keeper {keeper[:12]:12s}+{gk_gain:<3} perfect-XI gain +{gain + gk_gain}")
     print()
 
 

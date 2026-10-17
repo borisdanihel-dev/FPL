@@ -3928,7 +3928,7 @@ class WatchFile(unittest.TestCase):
     """L: watchlist.txt -> reports/watch_<date>.txt - the watched ids and the
     top twelve per position, with the forecasts as recorded, under 15 KB."""
 
-    SEED = [109, 82, 334, 8, 230, 229, 173, 12, 427, 542, 183, 290, 411, 249, 106, 124, 4, 379]
+    SEED = [109, 82, 334, 8, 230, 229, 173, 12, 427, 165, 183, 290, 411, 249, 106, 124, 4, 379, 115]
 
     @classmethod
     def setUpClass(cls):
@@ -4319,6 +4319,57 @@ class FreeHit(unittest.TestCase):
             os.chdir(cwd)
         self.assertIn("FREE HIT SCREEN", open(report, encoding="utf-8").read(),
                       "the nightly report does not carry the screen")
+
+
+class BenchAudit(unittest.TestCase):
+    """S0 (b): the perfect-XI gain counts the goalkeeper swap as well as the
+    best outfield swap - GW6: Verbruggen 9 on the bench, Kelleher 2 in goal."""
+
+    @staticmethod
+    def _audit(d):
+        import re
+        out = run("bench", d)
+        line = next(l for l in out.splitlines() if l.startswith(">> "))
+        m = re.search(r"best benched (.{12})\(\s*(\d+)\)  worst XI (.{12})\(\s*(\d+)\)  "
+                      r"keeper (.{12})\+(\d+)\s+perfect-XI gain \+(\d+)$", line)
+        assert m, line
+        return {"best": m.group(1).strip(), "worst": m.group(3).strip(),
+                "keeper": m.group(5).strip(), "gk_gain": int(m.group(6)),
+                "gain": int(m.group(7)), "outfield": int(m.group(2)) - int(m.group(4))}
+
+    def _world(self, xi_gk, bench_gk, bench_best, xi_worst):
+        d = make_export()
+        slots = _legal_lineup(d)
+        for r in slots.values():
+            r["gw_points"] = 4                  # every other player level, so each case isolates one swap
+        slots[1]["gw_points"], slots[12]["gw_points"] = xi_gk, bench_gk
+        slots[14]["gw_points"], slots[7]["gw_points"] = bench_best, xi_worst
+        return d, slots
+
+    def test_the_keeper_swap_joins_the_outfield_swap(self):
+        d, slots = self._world(xi_gk=2, bench_gk=9, bench_best=7, xi_worst=2)
+        a = self._audit(d)
+        self.assertEqual(a["best"], slots[14]["web_name"][:12])
+        self.assertEqual(a["worst"], slots[7]["web_name"][:12])
+        self.assertEqual((a["keeper"], a["gk_gain"]), (slots[12]["web_name"][:12], 7))
+        self.assertEqual(a["gain"], 5 + 7, "the perfect-XI gain left out the keeper swap")
+
+    def test_a_worse_bench_keeper_adds_nothing(self):
+        d, slots = self._world(xi_gk=6, bench_gk=1, bench_best=7, xi_worst=2)
+        a = self._audit(d)
+        self.assertEqual((a["keeper"], a["gk_gain"]), (slots[12]["web_name"][:12], 0))
+        self.assertEqual(a["gain"], 5)
+
+    def test_the_keeper_swap_alone(self):
+        d, slots = self._world(xi_gk=0, bench_gk=3, bench_best=1, xi_worst=4)
+        a = self._audit(d)
+        self.assertEqual((a["outfield"], a["gk_gain"], a["gain"]), (0, 3, 3))
+
+    def test_a_squad_without_a_bench_keeper_reads_a_dash(self):
+        d = make_export()                       # the fixture's squads start both keepers
+        out = run("bench", d)
+        for line in (l for l in out.splitlines() if "perfect-XI gain" in l):
+            self.assertIn("keeper -", line)
 
 
 class Hygiene(unittest.TestCase):

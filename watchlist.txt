@@ -13,7 +13,7 @@
 173   # Thomas       COV DEF
 12    # Saka         ARS MID
 427   # Mbeumo       MUN MID
-542   # E.Le Fée     SUN MID
+165   # João Pedro   CHE FWD
 183   # Rudoni       COV MID
 290   # Slater       HUL MID
 411   # Haaland      MCI FWD
@@ -22,3 +22,4 @@
 124   # Groß         BHA MID
 4     # Gabriel      ARS DEF
 379   # Isak         LIV FWD
+115   # De Cuyper    BHA DEF
