@@ -1,4 +1,4 @@
-WATCH  GW8  export 2026-10-17T21:57  forecasts recorded 2026-10-17T21:57  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
+WATCH  GW8  export 2026-10-17T22:04  forecasts recorded 2026-10-17T22:04  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
   id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
   109   Verbruggen     BHA  GK    4.6 a    -   2.0   2.6   2.8  0.75  LIV (A) 4
   82    Kelleher       BRE  GK    5.0 a    -   2.3   4.5   4.0  1.00  HUL (A) 2
