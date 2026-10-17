@@ -1,0 +1,8 @@
+* text=auto
+# csv.writer ends every row with CRLF on any platform: keep the checkout CRLF
+projection_log.csv text eol=crlf
+# binary: never diffed, never merged
+*.sqlite binary
+*.gz binary
+# the dump holds stored values byte for byte: no end-of-line conversion
+fpl.sql -text

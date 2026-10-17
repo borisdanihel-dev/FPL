@@ -1,0 +1,7 @@
+# the data branch: generated data only (BUILD_PLAN.md Step 1.4)
+# the working exports are restored from exports/ on every run
+/fpl_export_gw*.json
+reports/record_status.tmp
+reports/run_*.log
+projection_log.csv.tmp
+*.tmp

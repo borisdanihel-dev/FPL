@@ -1,0 +1,71 @@
+WATCH  GW6  export 2026-10-08T21:51  forecasts recorded 2026-10-08T21:51  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
+  id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
+  109   Verbruggen     BHA  GK    4.5 a    -   3.1   3.6   3.2  1.00  SUN (A) 3
+  82    Kelleher       BRE  GK    5.0 a    -   2.8   3.5   4.5  1.00  AVL (A) 3
+  334   Muharemović    LEE  DEF   5.0 a    -   2.7   5.9   5.7  1.00  ARS (A) 5
+  8     Calafiori      ARS  DEF   5.9 a    -   4.2   4.9   5.0  1.00  LEE (H) 3
+  230   Branthwaite    EVE  DEF   5.5 a    -   4.3   6.5   5.9  1.00  HUL (A) 2
+  229   Tarkowski      EVE  DEF   6.2 a    -   6.2   6.6   5.8  1.00  HUL (A) 2
+  173   Thomas         COV  DEF   4.0 a    -   3.5   5.4   4.7  1.00  NEW (H) 3
+  12    Saka           ARS  MID   9.6 a    -   4.8   6.5   5.7  1.00  LEE (H) 3
+  427   Mbeumo         MUN  MID   7.9 a    -   4.9   6.6   5.1  1.00  TOT (H) 2
+  542   E.Le Fée       SUN  MID   5.7 a    -   3.4   5.3   4.6  1.00  BHA (H) 3
+  183   Rudoni         COV  MID   4.9 a  100   2.4   5.9   4.9  1.00  NEW (H) 3
+  290   Slater         HUL  MID   4.5 a    -   2.4   3.5   3.4  1.00  EVE (H) 3
+  411   Haaland        MCI  FWD  15.6 a    -   5.8   6.5   5.1  1.00  LIV (A) 4
+  249   Barry          EVE  FWD   5.7 a    -   3.3   5.3   4.6  1.00  HUL (A) 2
+  106   Thiago         BRE  FWD   7.8 a    -   3.0   5.3   4.3  1.00  AVL (A) 3
+  124   Groß           BHA  MID   5.9 a    -   6.2   4.9   4.3  1.00  SUN (A) 3
+  4     Gabriel        ARS  DEF   8.0 a    -   4.7   5.2   4.9  1.00  LEE (H) 3
+  379   Isak           LIV  FWD   9.1 d   75     -     -     -     -  MCI (H) 4              Thigh injury - 75% chance of playing
+
+TOP 12 PER POSITION BY OWN, GW6
+  id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
+  1     Raya           ARS  GK    6.1 a    -   4.2   3.5   3.8  1.00  LEE (H) 3
+  572   Tzolakis       HUL  GK    4.7 a    -   4.0   3.6   3.9  1.00  EVE (H) 3
+  226   Pickford       EVE  GK    5.5 a    -   3.6   5.0   4.6  1.00  HUL (A) 2
+  350   A.Becker       LIV  GK    5.5 a    -   3.4   3.4   3.3  1.00  MCI (H) 4
+  567   Horníček       NEW  GK    5.0 a    -   3.2   5.0   3.3  1.00  COV (A) 2
+  250   Leno           FUL  GK    4.5 a    -   3.2   5.0   2.8  1.00  IPS (A) 2
+  597   Suzuki         AVL  GK    5.0 a    -   3.2   3.5   2.4  1.00  BRE (H) 3
+  110   Rushworth      COV  GK    4.5 a    -   3.1   3.5   3.0  1.00  NEW (H) 3
+  109   Verbruggen     BHA  GK    4.5 a    -   3.1   3.6   3.2  1.00  SUN (A) 3
+  82    Kelleher       BRE  GK    5.0 a    -   2.8   3.5   4.5  1.00  AVL (A) 3
+  384   Donnarumma     MCI  GK    5.5 a    -   2.8   3.4   3.3  1.00  LIV (A) 4
+  412   Lammens        MUN  GK    4.9 a    -   2.6   5.0   3.4  1.00  TOT (H) 2
+  229   Tarkowski      EVE  DEF   6.2 a    -   6.2   6.6   5.8  1.00  HUL (A) 2
+  4     Gabriel        ARS  DEF   8.0 a    -   4.7   5.2   4.9  1.00  LEE (H) 3
+  449   Hall           NEW  DEF   5.3 a    -   4.6   7.0   4.8  1.00  COV (A) 2
+  230   Branthwaite    EVE  DEF   5.5 a    -   4.3   6.5   5.9  1.00  HUL (A) 2
+  391   Gvardiol       MCI  DEF   5.7 a    -   4.2   4.4   4.5  1.00  LIV (A) 4
+  115   De Cuyper      BHA  DEF   5.0 a    -   4.2   5.8   5.0  1.00  SUN (A) 3
+  8     Calafiori      ARS  DEF   5.9 a    -   4.2   4.9   5.0  1.00  LEE (H) 3
+  504   Vuskovic       BHA  DEF   5.0 a    -   4.0   5.1   4.3  1.00  SUN (A) 3
+  176   Dasilva        COV  DEF   4.0 a    -   4.0   4.6   4.0  1.00  NEW (H) 3
+  356   Virgil         LIV  DEF   6.5 a    -   3.6   5.2   4.4  1.00  MCI (H) 4
+  204   Mitchell       CRY  DEF   4.5 a    -   3.6   4.6   3.6  1.00  NFO (H) 3
+  388   Guéhi          MCI  DEF   6.0 a    -   3.6   4.8   4.7  1.00  LIV (A) 4
+  426   B.Fernandes    MUN  MID  11.9 a    -   6.3   6.5   5.2  1.00  TOT (H) 2
+  124   Groß           BHA  MID   5.9 a    -   6.2   4.9   4.3  1.00  SUN (A) 3
+  94    Schade         BRE  MID   6.2 a    -   5.2   4.9   4.2  1.00  AVL (A) 3
+  453   Barnes         NEW  MID   6.1 a    -   5.1   4.6   3.4  1.00  COV (A) 2
+  427   Mbeumo         MUN  MID   7.9 a    -   4.9   6.6   5.1  1.00  TOT (H) 2
+  480   Gibbs-White    NFO  MID   8.0 a  100   4.8   5.2   4.7  1.00  CRY (A) 3
+  12    Saka           ARS  MID   9.6 a    -   4.8   6.5   5.7  1.00  LEE (H) 3
+  428   Cunha          MUN  MID   7.9 a    -   4.8   4.7   3.7  1.00  TOT (H) 2
+  399   Cherki         MCI  MID   7.8 a    -   4.1   5.5   4.8  1.00  LIV (A) 4
+  286   Belloumi       HUL  MID   5.1 a    -   4.0   4.6   4.0  1.00  EVE (H) 3
+  40    Rogers         CHE  MID   7.8 a    -   3.9   5.1   4.4  1.00  BOU (H) 3
+  98    Janelt         BRE  MID   5.0 a    -   3.8   5.0   4.4  1.00  AVL (A) 3
+  411   Haaland        MCI  FWD  15.6 a    -   5.8   6.5   5.1  1.00  LIV (A) 4
+  138   Kostoulas      BHA  FWD   5.6 a    -   3.9   4.2   3.4  1.00  SUN (A) 3
+  464   Wissa          NEW  FWD   6.2 a    -   3.3   4.9   3.8  1.00  COV (A) 2
+  249   Barry          EVE  FWD   5.7 a    -   3.3   5.3   4.6  1.00  HUL (A) 2
+  401   Marmoush       TOT  FWD   7.0 a    -   3.2   3.8   2.8  1.00  MUN (A) 4
+  106   Thiago         BRE  FWD   7.8 a    -   3.0   5.3   4.3  1.00  AVL (A) 3
+  346   Calvert-Lewin  LEE  FWD   6.0 a    -   2.9   5.2   4.2  1.00  ARS (A) 5
+  316   Emersonn       IPS  FWD   5.5 a  100   2.8   4.7   3.8  1.00  FUL (H) 2
+  295   McBurnie       HUL  FWD   5.5 a    -   2.6   4.3   3.2  1.00  EVE (H) 3
+  166   N.Jackson      AVL  FWD   6.5 a    -   2.6   4.4   3.5  1.00  BRE (H) 3
+  79    Evanilson      BOU  FWD   6.0 a    -   2.5   4.0   3.2  1.00  CHE (A) 4
+  569   Gonzalo        FUL  FWD   6.0 a    -   2.3   5.1   4.1  1.00  IPS (A) 2

@@ -1,0 +1,74 @@
+ONE-MATCH CONCENTRATION TEST  2025/26  origins GW5-38
+  Pre-registered 2026-09-24 (CHANGELOG, item 8 F 2), run without change:
+    MID and FWD only; a player is in at origin t if he passes the usual gate
+    (45+ minutes over the last four training gameweeks) and his team has a
+    fixture in the horizon; whole population, blanks as 0. H = 1 and H = 6,
+    target = the sum of points over GW t..t+H-1, an origin used only when
+    t+H-1 <= 38. Metric = P(start) x fixtures in the horizon x rate, with
+    rate = raw (training xGI / minutes x 90, the live ordering rate), trim90
+    (best training gameweek removed, 4+ gameweeks with minutes) or med90
+    (median per-gameweek xGI/90 over 60+ minute training gameweeks); where a
+    variant is undefined the player keeps his raw rate. Rates unshrunk.
+    Tie-corrected Spearman with 1.96/sqrt(n-1) intervals, pooled by training
+    window. Paired difference v raw on the all-window rows: 95% percentile
+    interval of rho(variant) - rho(raw) over B = 2000 bootstrap resamples of
+    the rows, pairs kept together, seed 20260924.
+  Rule: a variant replaces raw for MID/FWD ordering only if at H = 6 its rho
+    exceeds raw's for MID and for FWD and its paired-difference interval
+    excludes zero for MID and for FWD; both qualifying, the larger MID + FWD
+    gain. Otherwise raw stays and conc remains a printed flag.
+
+==============================================================================
+H = 1   sum over GW t..t+0   origins GW5-38 (34)
+==============================================================================
+  training    pos       n            raw rho, 95%         trim90 rho, 95%          med90 rho, 95%
+  GW 4-7      MID     651   +0.247 +0.170..+0.323   +0.243 +0.166..+0.320   +0.228 +0.151..+0.305
+  GW 4-7      FWD     127   +0.467 +0.293..+0.642   +0.469 +0.294..+0.644   +0.451 +0.276..+0.626
+
+  GW 8-11     MID     610   +0.328 +0.249..+0.407   +0.334 +0.255..+0.414   +0.296 +0.217..+0.375
+  GW 8-11     FWD     141   +0.371 +0.206..+0.537   +0.330 +0.164..+0.496   +0.267 +0.101..+0.433
+
+  GW12-19     MID    1200   +0.230 +0.173..+0.286   +0.233 +0.177..+0.290   +0.223 +0.167..+0.280
+  GW12-19     FWD     283   +0.280 +0.163..+0.397   +0.288 +0.172..+0.405   +0.312 +0.195..+0.429
+
+  GW20-37     MID    2530   +0.268 +0.229..+0.307   +0.273 +0.234..+0.312   +0.256 +0.217..+0.295
+  GW20-37     FWD     663   +0.322 +0.246..+0.398   +0.323 +0.247..+0.399   +0.308 +0.232..+0.384
+
+  GW 4-37 all MID    4991   +0.261 +0.233..+0.289   +0.262 +0.235..+0.290   +0.248 +0.220..+0.275
+  GW 4-37 all FWD    1214   +0.334 +0.278..+0.390   +0.328 +0.272..+0.385   +0.319 +0.262..+0.375
+
+  paired difference v raw, all-window rows, B = 2000 bootstrap resamples, seed 20260924  (reported only):
+    MID  trim90  rho +0.262 v raw +0.261   delta +0.001   95% -0.003..+0.006   includes 0
+    MID  med90   rho +0.248 v raw +0.261   delta -0.013   95% -0.023..-0.003   excludes 0
+    FWD  trim90  rho +0.328 v raw +0.334   delta -0.006   95% -0.018..+0.006   includes 0
+    FWD  med90   rho +0.319 v raw +0.334   delta -0.015   95% -0.035..+0.003   includes 0
+
+==============================================================================
+H = 6   sum over GW t..t+5   origins GW5-33 (29)
+==============================================================================
+  training    pos       n            raw rho, 95%         trim90 rho, 95%          med90 rho, 95%
+  GW 4-7      MID     651   +0.394 +0.317..+0.470   +0.399 +0.322..+0.476   +0.377 +0.300..+0.454
+  GW 4-7      FWD     127   +0.468 +0.294..+0.643   +0.395 +0.220..+0.569   +0.369 +0.194..+0.543
+
+  GW 8-11     MID     610   +0.441 +0.362..+0.521   +0.452 +0.372..+0.531   +0.412 +0.333..+0.491
+  GW 8-11     FWD     141   +0.389 +0.223..+0.555   +0.368 +0.202..+0.533   +0.365 +0.199..+0.531
+
+  GW12-19     MID    1200   +0.290 +0.234..+0.347   +0.298 +0.242..+0.355   +0.288 +0.232..+0.345
+  GW12-19     FWD     283   +0.355 +0.238..+0.471   +0.367 +0.250..+0.484   +0.449 +0.332..+0.566
+
+  GW20-37     MID    1871   +0.367 +0.321..+0.412   +0.380 +0.334..+0.425   +0.357 +0.311..+0.402
+  GW20-37     FWD     484   +0.403 +0.314..+0.492   +0.424 +0.334..+0.513   +0.356 +0.267..+0.445
+
+  GW 4-37 all MID    4332   +0.353 +0.323..+0.382   +0.357 +0.327..+0.387   +0.345 +0.315..+0.375
+  GW 4-37 all FWD    1035   +0.391 +0.330..+0.452   +0.393 +0.332..+0.454   +0.379 +0.318..+0.440
+
+  paired difference v raw, all-window rows, B = 2000 bootstrap resamples, seed 20260924  (decides):
+    MID  trim90  rho +0.357 v raw +0.353   delta +0.004   95% -0.001..+0.009   includes 0
+    MID  med90   rho +0.345 v raw +0.353   delta -0.008   95% -0.018..+0.004   includes 0
+    FWD  trim90  rho +0.393 v raw +0.391   delta +0.003   95% -0.011..+0.016   includes 0
+    FWD  med90   rho +0.379 v raw +0.391   delta -0.012   95% -0.032..+0.008   includes 0
+
+RULE (pre-registered): a variant replaces raw for MID/FWD ordering only if at
+  H = 6 its rho exceeds raw's for MID and for FWD and its paired-difference
+  interval excludes zero for both; otherwise raw stays, conc remains a flag.
+VERDICT: raw stays - conc remains a printed flag

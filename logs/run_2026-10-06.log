@@ -1,0 +1,944 @@
+==== run 2026-10-06 UTC, started 2026-10-06 21:47:52 UTC ====
+working dir: /home/runner/work/FPL/FPL
+using: /opt/hostedtoolcache/Python/3.14.7/x64/bin/python
+RESTORED     fpl_export_gw3_2026-09-11.json -> fpl_export_gw3.json
+RESTORED     fpl_export_gw4_2026-09-17.json -> fpl_export_gw4.json
+RESTORED     fpl_export_gw5_2026-10-05.json -> fpl_export_gw5.json
+running tests ...
+test_clean_run_says_done_and_exits_zero (__main__.BatchRecordCheck.test_clean_run_says_done_and_exits_zero) ... skipped 'runs fpl_run.bat under cmd.exe'
+test_every_source_gets_one_line_and_a_silent_crash_is_caught (__main__.BatchRecordCheck.test_every_source_gets_one_line_and_a_silent_crash_is_caught) ... skipped 'runs fpl_run.bat under cmd.exe'
+test_blank_week_gives_no_forecast (__main__.BenchBoost.test_blank_week_gives_no_forecast) ... ok
+test_default_squad_is_my_fifteen_and_ids_override (__main__.BenchBoost.test_default_squad_is_my_fifteen_and_ids_override) ... ok
+test_double_counts_twice (__main__.BenchBoost.test_double_counts_twice) ... ok
+test_fixture_term_moves_gk_def_and_not_mid_fwd (__main__.BenchBoost.test_fixture_term_moves_gk_def_and_not_mid_fwd)
+Concede more in the past -> a worse clean-sheet probability. That ... ok
+test_flag_constant_matches_the_frozen_p1_definition (__main__.BenchBoost.test_flag_constant_matches_the_frozen_p1_definition) ... ok
+test_flag_is_the_frozen_inclusive_two_thirds (__main__.BenchBoost.test_flag_is_the_frozen_inclusive_two_thirds) ... ok
+test_fodder_cost_comes_out_of_the_xi_budget_when_it_binds (__main__.BenchBoost.test_fodder_cost_comes_out_of_the_xi_budget_when_it_binds)
+With 100m the synthetic pool never touches the ceiling; at 77m it ... ok
+test_fodder_xi_has_the_same_formation_and_lives_within_budget (__main__.BenchBoost.test_fodder_xi_has_the_same_formation_and_lives_within_budget) ... ok
+test_gk_def_at_fdr4_counts_only_gk_and_def (__main__.BenchBoost.test_gk_def_at_fdr4_counts_only_gk_and_def) ... ok
+test_section_prints_two_labelled_numbers_per_week (__main__.BenchBoost.test_section_prints_two_labelled_numbers_per_week) ... ok
+test_a_bench_player_is_never_compared_across_positions (__main__.BenchVsXI.test_a_bench_player_is_never_compared_across_positions) ... ok
+test_a_blank_xi_player_is_the_one_to_swap (__main__.BenchVsXI.test_a_blank_xi_player_is_the_one_to_swap) ... ok
+test_bench_player_above_the_lowest_xi_of_his_position_is_a_swap (__main__.BenchVsXI.test_bench_player_above_the_lowest_xi_of_his_position_is_a_swap) ... ok
+test_flag_line_names_xi_players_under_the_frozen_flag (__main__.BenchVsXI.test_flag_line_names_xi_players_under_the_frozen_flag) ... ok
+test_projections_are_one_unit_the_full_model (__main__.BenchVsXI.test_projections_are_one_unit_the_full_model) ... ok
+test_wildcard_appends_the_screen_for_the_drafted_fifteen (__main__.BoostOnDraft.test_wildcard_appends_the_screen_for_the_drafted_fifteen) ... ok
+test_blank_gameweek_gets_no_forecast (__main__.BottomUpModel.test_blank_gameweek_gets_no_forecast)
+A team with no fixture must be skipped, not given a default FDR. ... ok
+test_both_models_log_side_by_side (__main__.BottomUpModel.test_both_models_log_side_by_side) ... ok
+test_cs_rate_falls_back_when_sample_too_small (__main__.BottomUpModel.test_cs_rate_falls_back_when_sample_too_small) ... ok
+test_cs_rate_handles_no_results (__main__.BottomUpModel.test_cs_rate_handles_no_results) ... ok
+test_defcon_is_not_double_counted (__main__.BottomUpModel.test_defcon_is_not_double_counted)
+defcon_expectation already returns points; adding 2 pts of DEFCON ... ok
+test_defenders_gain_more_from_easy_fixtures_than_forwards (__main__.BottomUpModel.test_defenders_gain_more_from_easy_fixtures_than_forwards)
+Clean sheet value is 4 for a defender, 0 for a forward. Uses an ... ok
+test_double_gameweek_sums_both_fixtures (__main__.BottomUpModel.test_double_gameweek_sums_both_fixtures)
+The summing lives in record_projections, so the assertion must come ... ok
+test_flat_cs_table_means_fixtures_do_not_move_defenders (__main__.BottomUpModel.test_flat_cs_table_means_fixtures_do_not_move_defenders)
+Guards the failure mode the previous test exposed. ... ok
+test_injury_doubt_scales_it_down (__main__.BottomUpModel.test_injury_doubt_scales_it_down) ... ok
+test_missing_starts_field_falls_back_to_season (__main__.BottomUpModel.test_missing_starts_field_falls_back_to_season) ... ok
+test_non_starter_projects_to_zero (__main__.BottomUpModel.test_non_starter_projects_to_zero) ... ok
+test_start_probability_does_not_decay_over_the_season (__main__.BottomUpModel.test_start_probability_does_not_decay_over_the_season)
+starts_last4 caps at 4, so the denominator must cap at 4 too. ... ok
+test_xg_drives_goals_by_position_value (__main__.BottomUpModel.test_xg_drives_goals_by_position_value)
+Same xG is worth more to a defender (6) than a forward (4). ... ok
+test_xg_rate_uses_season_minutes_not_last_four (__main__.BottomUpModel.test_xg_rate_uses_season_minutes_not_last_four)
+xG is a season total. Dividing by a 4-week window inflates it once ... ok
+test_zero_recent_starts_is_not_treated_as_missing (__main__.BottomUpModel.test_zero_recent_starts_is_not_treated_as_missing)
+A player who has stopped starting must not fall back to season ... ok
+test_blank_and_double_gameweeks (__main__.BottomupSource.test_blank_and_double_gameweeks) ... ok
+test_logged_value_is_project_reliability (__main__.BottomupSource.test_logged_value_is_project_reliability) ... ok
+test_budget_is_team_value_alone (__main__.Budget.test_budget_is_team_value_alone) ... ok
+test_real_export_value_is_prices_plus_bank (__main__.Budget.test_real_export_value_is_prices_plus_bank)
+If a real export is sitting here: value - (sum of my 15's prices + ... ok
+test_both_adapters_emit_the_same_contract (__main__.CanonicalContract.test_both_adapters_emit_the_same_contract) ... ok
+test_check_canonical_rejects_a_renamed_field (__main__.CanonicalContract.test_check_canonical_rejects_a_renamed_field) ... ok
+test_export_without_ids_is_refused (__main__.CanonicalContract.test_export_without_ids_is_refused) ... ok
+test_arithmetic_on_five_games_with_one_spike (__main__.Concentration.test_arithmetic_on_five_games_with_one_spike) ... ok
+test_blanks_and_the_sixty_minute_gate (__main__.Concentration.test_blanks_and_the_sixty_minute_gate) ... ok
+test_columns_printed_in_the_shortlists_xi_and_squad_section (__main__.Concentration.test_columns_printed_in_the_shortlists_xi_and_squad_section) ... ok
+test_ordering_and_projection_ignore_the_variants (__main__.Concentration.test_ordering_and_projection_ignore_the_variants) ... ok
+test_an_undefined_variant_falls_back_to_raw (__main__.ConcentrationTest.test_an_undefined_variant_falls_back_to_raw) ... ok
+test_metrics_are_p_start_times_fixtures_times_rate_for_mid_fwd_only (__main__.ConcentrationTest.test_metrics_are_p_start_times_fixtures_times_rate_for_mid_fwd_only) ... ok
+test_paired_bootstrap_is_seeded_paired_and_finds_a_real_gain (__main__.ConcentrationTest.test_paired_bootstrap_is_seeded_paired_and_finds_a_real_gain) ... ok
+test_report_carries_both_horizons_the_pairs_and_the_verdict (__main__.ConcentrationTest.test_report_carries_both_horizons_the_pairs_and_the_verdict) ... ok
+test_rule_needs_both_positions_above_raw_with_intervals_excluding_zero (__main__.ConcentrationTest.test_rule_needs_both_positions_above_raw_with_intervals_excluding_zero) ... ok
+test_target_weeks_do_not_leak_and_incomplete_horizons_are_skipped (__main__.ConcentrationTest.test_target_weeks_do_not_leak_and_incomplete_horizons_are_skipped) ... ok
+test_best_xi_is_legal (__main__.Correctness.test_best_xi_is_legal) ... ok
+test_built_squad_respects_all_constraints (__main__.Correctness.test_built_squad_respects_all_constraints) ... ok
+test_free_transfer_estimate (__main__.Correctness.test_free_transfer_estimate) ... ok
+test_free_transfers_cap_at_five (__main__.Correctness.test_free_transfers_cap_at_five) ... ok
+test_identity_falls_back_without_entry_id (__main__.Correctness.test_identity_falls_back_without_entry_id) ... ok
+test_identity_uses_entry_id (__main__.Correctness.test_identity_uses_entry_id) ... ok
+test_projection_is_shrunk_not_raw (__main__.Correctness.test_projection_is_shrunk_not_raw)
+A three-game hot streak must not project at its raw rate. ... ok
+test_ticker_has_one_row_per_gameweek (__main__.Correctness.test_ticker_has_one_row_per_gameweek) ... ok
+test_arbitrage_without_threat (__main__.Degradation.test_arbitrage_without_threat) ... ok
+test_consistency_needs_gw_rows (__main__.Degradation.test_consistency_needs_gw_rows) ... ok
+test_empty_standings_does_not_crash (__main__.Degradation.test_empty_standings_does_not_crash) ... ok
+test_fdr_handles_null_scores (__main__.Degradation.test_fdr_handles_null_scores)
+Postponed fixtures come back with null scores and must be skipped. ... ok
+test_missing_all_players (__main__.Degradation.test_missing_all_players) ... ok
+test_missing_fixtures_played_fdr (__main__.Degradation.test_missing_fixtures_played_fdr) ... ok
+test_missing_gw_rows_backtest (__main__.Degradation.test_missing_gw_rows_backtest) ... ok
+test_missing_gw_rows_defcon (__main__.Degradation.test_missing_gw_rows_defcon) ... ok
+test_personal_prior_overrides_positional (__main__.Degradation.test_personal_prior_overrides_positional)
+A known player must be anchored to his own history, not the median. ... ok
+test_personal_priors_empty_without_history (__main__.Degradation.test_personal_priors_empty_without_history) ... ok
+test_personal_priors_read_history (__main__.Degradation.test_personal_priors_read_history) ... ok
+test_same_gameweek_diff_warns (__main__.Degradation.test_same_gameweek_diff_warns) ... ok
+test_sensitivity_needs_per_match_fdr (__main__.Degradation.test_sensitivity_needs_per_match_fdr) ... ok
+test_single_gameweek_backtest_declines (__main__.Degradation.test_single_gameweek_backtest_declines) ... ok
+test_captain_counts_two_bench_zero_triple_captain_two (__main__.EffectiveOwnership.test_captain_counts_two_bench_zero_triple_captain_two) ... ok
+test_captain_cover_is_mid_fwd_in_my_xi_by_projection (__main__.EffectiveOwnership.test_captain_cover_is_mid_fwd_in_my_xi_by_projection) ... ok
+test_net_is_mine_minus_theirs_per_point (__main__.EffectiveOwnership.test_net_is_mine_minus_theirs_per_point) ... ok
+test_per_rival_swing_is_multiplier_gap_times_the_full_projection (__main__.EffectiveOwnership.test_per_rival_swing_is_multiplier_gap_times_the_full_projection) ... ok
+test_double_gameweek_exports_one_row_per_player (__main__.ExportGrain.test_double_gameweek_exports_one_row_per_player)
+The fixtures join fanned a double out to two rows, each carrying the ... /home/runner/work/FPL/FPL/test_fpl.py:1248: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_real_export_if_present (__main__.ExportSchema.test_real_export_if_present)
+If a real export is sitting here, check it against the same contract. ... /opt/hostedtoolcache/Python/3.14.7/x64/lib/python3.14/json/decoder.py:361: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f5481647e20>
+  obj, end = self.scan_once(s, idx)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_synthetic_export_has_required_keys (__main__.ExportSchema.test_synthetic_export_has_required_keys) ... ok
+test_last_four_form_columns_keep_their_window (__main__.ExportWindow.test_last_four_form_columns_keep_their_window) ... /home/runner/work/FPL/FPL/test_fpl.py:1932: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_rows_and_fixture_flags_cover_the_whole_season (__main__.ExportWindow.test_rows_and_fixture_flags_cover_the_whole_season) ... ok
+test_compare_reports_missing_file (__main__.ExternalProjections.test_compare_reports_missing_file) ... ok
+test_compare_warns_on_poor_match_rate (__main__.ExternalProjections.test_compare_warns_on_poor_match_rate) ... ok
+test_defcon_correction_recovers_missing_points (__main__.ExternalProjections.test_defcon_correction_recovers_missing_points)
+A projection that is perfect except for DEFCON must improve. ... ok
+test_defcon_expectation_bounds (__main__.ExternalProjections.test_defcon_expectation_bounds)
+Expected DEFCON points must sit between 0 and 2 per start. ... ok
+test_defcon_expectation_zero_for_keepers_and_forwards (__main__.ExternalProjections.test_defcon_expectation_zero_for_keepers_and_forwards) ... ok
+test_reads_id_and_xpts (__main__.ExternalProjections.test_reads_id_and_xpts) ... ok
+test_reads_name_and_alternative_header (__main__.ExternalProjections.test_reads_name_and_alternative_header) ... ok
+test_rejects_file_without_forecast_column (__main__.ExternalProjections.test_rejects_file_without_forecast_column) ... ok
+test_skips_unparseable_rows (__main__.ExternalProjections.test_skips_unparseable_rows) ... ok
+test_backtest_keeps_benched_players_and_drops_blanks (__main__.Grading.test_backtest_keeps_benched_players_and_drops_blanks) ... ok
+test_benched_player_is_graded_as_zero (__main__.Grading.test_benched_player_is_graded_as_zero) ... ok
+test_players_sharing_a_web_name_are_graded_separately (__main__.Grading.test_players_sharing_a_web_name_are_graded_separately)
+17 web_names are shared this season. Keyed by name, both players' ... ok
+test_true_blank_is_not_graded (__main__.Grading.test_true_blank_is_not_graded) ... ok
+test_dedup_is_loud_and_names_the_player (__main__.HistoricalAdapter.test_dedup_is_loud_and_names_the_player)
+A silent de-dup that started dropping real rows after an upstream ... ok
+test_double_gameweek_survives_deduplication (__main__.HistoricalAdapter.test_double_gameweek_survives_deduplication)
+(element, round) would have deleted it; (element, fixture) keeps it. ... ok
+test_duplicate_row_is_not_counted_twice (__main__.HistoricalAdapter.test_duplicate_row_is_not_counted_twice) ... ok
+test_missing_file_stops_rather_than_substituting (__main__.HistoricalAdapter.test_missing_file_stops_rather_than_substituting) ... ok
+test_double_gameweek_counts_twice (__main__.HorizonTest.test_double_gameweek_counts_twice) ... ok
+test_h1_reproduces_the_single_week_backtest (__main__.HorizonTest.test_h1_reproduces_the_single_week_backtest) ... ok
+test_incomplete_horizon_is_skipped (__main__.HorizonTest.test_incomplete_horizon_is_skipped) ... ok
+test_report_prints_both_columns_with_intervals_for_every_h_and_position (__main__.HorizonTest.test_report_prints_both_columns_with_intervals_for_every_h_and_position) ... ok
+test_sums_fixtures_counts_blanks_as_zero_and_excludes_no_fixture_teams (__main__.HorizonTest.test_sums_fixtures_counts_blanks_as_zero_and_excludes_no_fixture_teams) ... ok
+test_target_weeks_do_not_leak_into_predictions (__main__.HorizonTest.test_target_weeks_do_not_leak_into_predictions) ... ok
+test_one_entry_league_does_not_crash_ownership (__main__.Hygiene.test_one_entry_league_does_not_crash_ownership) ... ok
+test_all_four_sources_log_side_by_side (__main__.MinutesBaseline.test_all_four_sources_log_side_by_side) ... ok
+test_blank_gameweek_gets_no_baseline_forecast (__main__.MinutesBaseline.test_blank_gameweek_gets_no_baseline_forecast) ... /home/runner/work/FPL/FPL/fpl_edge.py:2612: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f5481647e20>
+  def record_status(d, horizon, source="own", proj_path=None, path=None):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:2612: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f5481646a70>
+  def record_status(d, horizon, source="own", proj_path=None, path=None):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:2612: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f548177cd60>
+  def record_status(d, horizon, source="own", proj_path=None, path=None):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:2612: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f548177dd50>
+  def record_status(d, horizon, source="own", proj_path=None, path=None):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:2612: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f548177e200>
+  def record_status(d, horizon, source="own", proj_path=None, path=None):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_double_gameweek_counts_twice (__main__.MinutesBaseline.test_double_gameweek_counts_twice) ... ok
+test_injury_doubt_scales_it (__main__.MinutesBaseline.test_injury_doubt_scales_it) ... ok
+test_logged_value_is_start_probability_and_nothing_else (__main__.MinutesBaseline.test_logged_value_is_start_probability_and_nothing_else) ... ok
+test_minutes_row_shows_rho_only (__main__.MinutesIsAProbability.test_minutes_row_shows_rho_only) ... ok
+test_other_sources_still_print_mae (__main__.MinutesIsAProbability.test_other_sources_still_print_mae) ... ok
+test_a_second_run_the_same_day_appends_to_the_log (__main__.NightlyRunner.test_a_second_run_the_same_day_appends_to_the_log) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmptpqbpc48/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_silent_record_crash_is_caught_and_the_run_is_red (__main__.NightlyRunner.test_a_silent_record_crash_is_caught_and_the_run_is_red) ... /home/runner/work/FPL/FPL/fpl_nightly.py:139: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpy8_ohs0y/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  lines = (open(status, encoding="utf-8").read().splitlines()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpy8_ohs0y/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_bat_and_nightly_write_the_same_forecasts_and_report (__main__.NightlyRunner.test_bat_and_nightly_write_the_same_forecasts_and_report) ... skipped 'runs fpl_run.bat under cmd.exe'
+test_clean_run_logs_reports_archives_and_exits_zero (__main__.NightlyRunner.test_clean_run_logs_reports_archives_and_exits_zero) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpmm_047sb/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_fresh_checkout_restores_the_newest_dated_export_per_gameweek (__main__.NightlyRunner.test_fresh_checkout_restores_the_newest_dated_export_per_gameweek) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp99n3vymt/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_no_export_anywhere_fails_the_archive (__main__.NightlyRunner.test_no_export_anywhere_fails_the_archive) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpwwuj_p4y/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_red_tests_block_the_record_but_not_the_report (__main__.NightlyRunner.test_red_tests_block_the_record_but_not_the_report) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp3btgd4gb/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_report_failure_is_red (__main__.NightlyRunner.test_report_failure_is_red) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp7dcdbt9l/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_sync_failure_continues_on_existing_data_and_is_red (__main__.NightlyRunner.test_sync_failure_continues_on_existing_data_and_is_red) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpbtaxr_aw/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_real_record_and_report_need_no_database (__main__.NightlyRunner.test_the_real_record_and_report_need_no_database) ... /home/runner/work/FPL/FPL/fpl_nightly.py:159: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp26xfcpc_/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_ignore_and_attribute_rules_fit_two_writers (__main__.NightlyWorkflow.test_ignore_and_attribute_rules_fit_two_writers) ... ok
+test_outputs_are_committed_back_even_from_a_red_run (__main__.NightlyWorkflow.test_outputs_are_committed_back_even_from_a_red_run) ... ok
+test_requirements_install_nothing (__main__.NightlyWorkflow.test_requirements_install_nothing) ... ok
+test_schedule_runner_and_steps (__main__.NightlyWorkflow.test_schedule_runner_and_steps) ... ok
+test_own_model_skips_a_blank (__main__.OwnModelAtGW18.test_own_model_skips_a_blank) ... ok
+test_own_model_sums_a_double (__main__.OwnModelAtGW18.test_own_model_sums_a_double) ... ok
+test_a_screen_pointing_the_wrong_way_is_a_fail_not_unproven (__main__.P1Evaluation.test_a_screen_pointing_the_wrong_way_is_a_fail_not_unproven) ... ok
+test_benched_is_a_blank_but_a_blank_team_drops_the_player (__main__.P1Evaluation.test_benched_is_a_blank_but_a_blank_team_drops_the_player) ... ok
+test_boundary_is_inclusive (__main__.P1Evaluation.test_boundary_is_inclusive) ... ok
+test_interval_does_not_collapse_on_empty_cells (__main__.P1Evaluation.test_interval_does_not_collapse_on_empty_cells)
+The normal approximation gives 0 +- 0 for 0/20 vs 0/30: certainty ... ok
+test_newcombe_matches_the_published_example (__main__.P1Evaluation.test_newcombe_matches_the_published_example) ... ok
+test_no_prior_minutes_is_dropped_not_read_as_zero (__main__.P1Evaluation.test_no_prior_minutes_is_dropped_not_read_as_zero) ... ok
+test_post_export_without_ids_is_refused (__main__.P1Evaluation.test_post_export_without_ids_is_refused) ... ok
+test_predictor_comes_from_gw1_3_only (__main__.P1Evaluation.test_predictor_comes_from_gw1_3_only)
+The GW5-time window spans GW1-4 and contains GW4's outcome. ... ok
+test_the_60_minute_substitute_is_counted_as_a_cost (__main__.P1Evaluation.test_the_60_minute_substitute_is_counted_as_a_cost)
+Flagged at 180 (60 a game), never blanks, never plays every minute. ... ok
+test_thin_cells_and_the_power_caveat_are_printed (__main__.P1Evaluation.test_thin_cells_and_the_power_caveat_are_printed) ... ok
+test_calibration_grades_once_results_exist (__main__.ProjectionLog.test_calibration_grades_once_results_exist) ... ok
+test_calibration_reports_pending_before_results (__main__.ProjectionLog.test_calibration_reports_pending_before_results) ... ok
+test_empty_log_is_not_an_error (__main__.ProjectionLog.test_empty_log_is_not_an_error) ... ok
+test_records_before_deadline (__main__.ProjectionLog.test_records_before_deadline) ... ok
+test_refuses_after_deadline (__main__.ProjectionLog.test_refuses_after_deadline) ... ok
+test_rerun_replaces_rather_than_duplicates (__main__.ProjectionLog.test_rerun_replaces_rather_than_duplicates) ... ok
+test_sources_do_not_collide (__main__.ProjectionLog.test_sources_do_not_collide) ... ok
+test_rho_does_not_depend_on_row_order (__main__.RankCorrelation.test_rho_does_not_depend_on_row_order)
+Ties broken by input order let the export's points-DESC row order ... ok
+test_tied_values_share_their_average_rank (__main__.RankCorrelation.test_tied_values_share_their_average_rank) ... ok
+test_verdict_reads_the_interval_not_just_the_size (__main__.RankCorrelation.test_verdict_reads_the_interval_not_just_the_size)
++0.151 on 224 players was labelled 'noise' though its interval ... ok
+test_a_write_that_dies_halfway_leaves_the_old_log_intact (__main__.RecordResilience.test_a_write_that_dies_halfway_leaves_the_old_log_intact) ... skipped 'reproduces a Windows file lock'
+test_cli_failure_is_one_visible_line_and_a_nonzero_exit (__main__.RecordResilience.test_cli_failure_is_one_visible_line_and_a_nonzero_exit) ... skipped 'reproduces a Windows file lock'
+test_cli_success_line_carries_the_count (__main__.RecordResilience.test_cli_success_line_carries_the_count) ... skipped 'reproduces a Windows file lock'
+test_deadline_passed_is_ok_not_a_failure (__main__.RecordResilience.test_deadline_passed_is_ok_not_a_failure)
+It happens after every deadline; crying wolf nightly teaches you to ... skipped 'reproduces a Windows file lock'
+test_lock_released_during_a_wait_is_recovered (__main__.RecordResilience.test_lock_released_during_a_wait_is_recovered) ... skipped 'reproduces a Windows file lock'
+test_locked_log_is_retried_three_times_then_fails_visibly (__main__.RecordResilience.test_locked_log_is_retried_three_times_then_fails_visibly) ... skipped 'reproduces a Windows file lock'
+test_zero_rows_with_the_deadline_open_is_a_failure (__main__.RecordResilience.test_zero_rows_with_the_deadline_open_is_a_failure) ... skipped 'reproduces a Windows file lock'
+test_backtest_ignores_future_fixture_difficulty (__main__.Regressions.test_backtest_ignores_future_fixture_difficulty)
+Behavioural, not textual: changing only the FORWARD ticker must not ... ok
+test_backtest_uses_the_tested_gameweeks_own_difficulty (__main__.Regressions.test_backtest_uses_the_tested_gameweeks_own_difficulty)
+Changing the FDR attached to the target gameweek must move the model. ... ok
+test_blank_gameweek_is_labelled_not_mislabelled (__main__.Regressions.test_blank_gameweek_is_labelled_not_mislabelled)
+nextfx used to show a team's GW+2 fixture as if it were GW+1. ... ok
+test_diff_with_no_previous_export_still_reports (__main__.Regressions.test_diff_with_no_previous_export_still_reports)
+The report came out empty when --diff found nothing to compare. ... ok
+test_starts_last4_disagreement_is_detectable (__main__.Regressions.test_starts_last4_disagreement_is_detectable)
+starts_last4 was silently zero for un-refetched gameweeks. ... ok
+test_unicode_survives_a_cp1252_stream (__main__.Regressions.test_unicode_survives_a_cp1252_stream)
+A cp1252 console killed the whole run on a player named Muharemović. ... ok
+test_constant_metric_is_undefined_not_zero (__main__.Reliability.test_constant_metric_is_undefined_not_zero) ... ok
+test_minutes_is_not_measured_per_90 (__main__.Reliability.test_minutes_is_not_measured_per_90)
+Per 90 it divides minutes by minutes: the same constant for everyone. ... ok
+test_minutes_population_is_an_explicit_choice (__main__.Reliability.test_minutes_population_is_an_explicit_choice)
+Never-featuring players are a block of identical zeros that agrees ... ok
+test_spearman_brown_lifts_the_half_correlation (__main__.Reliability.test_spearman_brown_lifts_the_half_correlation) ... ok
+test_split_is_odd_even_not_first_half_second_half (__main__.Reliability.test_split_is_odd_even_not_first_half_second_half)
+Half the players improve after GW4 and half decline, by the same ... ok
+test_ablation_starts_from_p_start_alone (__main__.ReliabilityModel.test_ablation_starts_from_p_start_alone) ... ok
+test_blank_is_none_and_double_is_summed (__main__.ReliabilityModel.test_blank_is_none_and_double_is_summed) ... ok
+test_clean_sheet_is_poisson_on_the_opponent_and_zero_for_forwards (__main__.ReliabilityModel.test_clean_sheet_is_poisson_on_the_opponent_and_zero_for_forwards) ... ok
+test_defcon_is_logistic_on_the_threshold_and_absent_for_gk_and_fwd (__main__.ReliabilityModel.test_defcon_is_logistic_on_the_threshold_and_absent_for_gk_and_fwd) ... ok
+test_goal_value_depends_on_position (__main__.ReliabilityModel.test_goal_value_depends_on_position)
+Same xGI: a defender's goal is worth 6, a forward's 4. ... ok
+test_model_has_no_points_term (__main__.ReliabilityModel.test_model_has_no_points_term) ... ok
+test_never_starter_projects_to_zero (__main__.ReliabilityModel.test_never_starter_projects_to_zero) ... ok
+test_shrinkage_uses_the_measured_weight (__main__.ReliabilityModel.test_shrinkage_uses_the_measured_weight)
+Weight 0: everyone in the position sits on the prior. Weight 1: raw. ... ok
+test_interval_is_capped_at_one (__main__.ReliabilityTable.test_interval_is_capped_at_one) ... ok
+test_brief_states_the_limits_of_rest_days (__main__.RestDays.test_brief_states_the_limits_of_rest_days) ... ok
+test_rest_counts_from_the_previous_pl_kickoff (__main__.RestDays.test_rest_counts_from_the_previous_pl_kickoff) ... ok
+test_short_turnaround_is_measured (__main__.RestDays.test_short_turnaround_is_measured) ... ok
+test_benched_is_graded_as_zero_and_a_blank_team_is_dropped (__main__.RollingOrigin.test_benched_is_graded_as_zero_and_a_blank_team_is_dropped) ... ok
+test_every_baseline_and_ablation_stage_is_present (__main__.RollingOrigin.test_every_baseline_and_ablation_stage_is_present) ... ok
+test_target_week_outcomes_do_not_change_predictions (__main__.RollingOrigin.test_target_week_outcomes_do_not_change_predictions) ... ok
+test_data_checked_zero_blocks_even_when_every_match_is_finished (__main__.SettledGuard.test_data_checked_zero_blocks_even_when_every_match_is_finished)
+Observed on GW5: fixtures 10/10 finished, event finished = 0 and ... ok
+test_definitions_are_printed_with_the_numbers (__main__.SettledGuard.test_definitions_are_printed_with_the_numbers) ... ok
+test_export_without_flags_is_refused_not_trusted (__main__.SettledGuard.test_export_without_flags_is_refused_not_trusted) ... ok
+test_other_gameweeks_are_still_graded (__main__.SettledGuard.test_other_gameweeks_are_still_graded) ... ok
+test_settled_gameweek_is_graded (__main__.SettledGuard.test_settled_gameweek_is_graded) ... ok
+test_starters_column_counts_only_sixty_minute_players (__main__.SettledGuard.test_starters_column_counts_only_sixty_minute_players) ... ok
+test_unfinished_fixture_blocks_grading_and_is_named (__main__.SettledGuard.test_unfinished_fixture_blocks_grading_and_is_named) ... ok
+test_a_missing_file_is_a_visible_failure (__main__.Shipping.test_a_missing_file_is_a_visible_failure) ... /home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp11gc4g8z/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp11gc4g8z/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_archive_keeps_every_day_and_leaves_the_live_export (__main__.Shipping.test_archive_keeps_every_day_and_leaves_the_live_export) ... /home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp15r6dmm7/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp15r6dmm7/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2045: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp15r6dmm7/work/fpl_export_gw5.json' mode='w' encoding='UTF-8'>
+  open(live, "w").write(body)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2049: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp15r6dmm7/archive/fpl_export_gw5_2026-09-20.json' mode='r' encoding='UTF-8'>
+  self.assertEqual(open(os.path.join(arch, "fpl_export_gw5_2026-09-20.json")).read(),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2051: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp15r6dmm7/work/fpl_export_gw5.json' mode='r' encoding='UTF-8'>
+  self.assertEqual(open(live).read(), "monday")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_backup_keeps_the_last_seven (__main__.Shipping.test_backup_keeps_the_last_seven) ... /home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp5y2otz1a/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp5y2otz1a/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_every_file_lands_on_drive_and_gets_a_result_line (__main__.Shipping.test_every_file_lands_on_drive_and_gets_a_result_line) ... /home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp1v7pg4wy/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp1v7pg4wy/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_database_is_never_shipped (__main__.Shipping.test_the_database_is_never_shipped) ... /home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp_6mj_5dz/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp_6mj_5dz/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2030: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp_6mj_5dz/work/fpl.sqlite' mode='w' encoding='UTF-8'>
+  open(db, "w").write("x")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_unmounted_drive_holds_in_outbox_and_the_next_run_delivers (__main__.Shipping.test_unmounted_drive_holds_in_outbox_and_the_next_run_delivers) ... /home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpqreyanho/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:1993: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpqreyanho/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2019: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpqreyanho/work/fpl_2026-09-22.txt' mode='w' encoding='UTF-8'>
+  open(late, "w").write("report")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_all_sections_produce_output (__main__.Smoke.test_all_sections_produce_output) ... ok
+test_no_section_is_silent_in_full_report (__main__.Smoke.test_no_section_is_silent_in_full_report) ... ok
+test_locked_log_blocks_recording_rather_than_clobbering_the_tmp (__main__.StrandedTmp.test_locked_log_blocks_recording_rather_than_clobbering_the_tmp) ... skipped 'reproduces a Windows file lock'
+test_newer_tmp_is_promoted_before_a_post_deadline_record (__main__.StrandedTmp.test_newer_tmp_is_promoted_before_a_post_deadline_record) ... ok
+test_older_tmp_is_left_alone (__main__.StrandedTmp.test_older_tmp_is_left_alone) ... ok
+test_promotion_happens_before_a_pre_deadline_record_too (__main__.StrandedTmp.test_promotion_happens_before_a_pre_deadline_record_too) ... ok
+test_truncated_tmp_is_never_promoted_and_never_deleted (__main__.StrandedTmp.test_truncated_tmp_is_never_promoted_and_never_deleted) ... /home/runner/work/FPL/FPL/test_fpl.py:2303: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp4zr9zt8g/projection_log.csv.tmp' mode='r' encoding='utf-8'>
+  data = open(self.stranded, encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2305: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp4zr9zt8g/projection_log.csv.tmp' mode='w' encoding='utf-8'>
+  open(self.stranded, "w", encoding="utf-8", newline="").write(data[:at])
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_bootstrap_stores_data_checked_separately_from_finished (__main__.SyncExportsSettledFlags.test_bootstrap_stores_data_checked_separately_from_finished) ... /home/runner/work/FPL/FPL/test_fpl.py:1890: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_export_carries_data_checked_and_unfinished_fixtures (__main__.SyncExportsSettledFlags.test_export_carries_data_checked_and_unfinished_fixtures) ... /home/runner/work/FPL/FPL/test_fpl.py:1857: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_migration_adds_data_checked_to_an_old_database (__main__.SyncExportsSettledFlags.test_migration_adds_data_checked_to_an_old_database) ... /home/runner/work/FPL/FPL/test_fpl.py:1909: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_clean_sync_exits_zero (__main__.SyncNetwork.test_a_clean_sync_exits_zero) ... /home/runner/work/FPL/FPL/test_fpl.py:3521: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_partial_sync_still_exports_and_exits_nonzero (__main__.SyncNetwork.test_a_partial_sync_still_exports_and_exits_nonzero) ... ok
+test_a_request_that_never_succeeds_gets_three_retries_and_is_counted (__main__.SyncNetwork.test_a_request_that_never_succeeds_gets_three_retries_and_is_counted) ... ok
+test_every_endpoint_is_public_no_login_needed (__main__.SyncNetwork.test_every_endpoint_is_public_no_login_needed) ... /home/runner/work/FPL/FPL/test_fpl.py:3631: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_two_failures_then_success_backs_off_two_then_four_seconds (__main__.SyncNetwork.test_two_failures_then_success_backs_off_two_then_four_seconds) ... ok
+test_user_agent_is_a_browser_not_a_script (__main__.SyncNetwork.test_user_agent_is_a_browser_not_a_script) ... ok
+/opt/hostedtoolcache/Python/3.14.7/x64/lib/python3.14/ast.py:386: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f548177cd60>
+  def walk(node):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/opt/hostedtoolcache/Python/3.14.7/x64/lib/python3.14/ast.py:386: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f548177e200>
+  def walk(node):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/opt/hostedtoolcache/Python/3.14.7/x64/lib/python3.14/ast.py:386: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f548177dd50>
+  def walk(node):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+test_every_export_query_executes (__main__.SyncSQL.test_every_export_query_executes) ... ok
+test_found_the_queries (__main__.SyncSQL.test_found_the_queries) ... ok
+test_insert_arity_matches_schema (__main__.SyncSQL.test_insert_arity_matches_schema)
+INSERT ... VALUES (?,?,...) must match the real column count. ... ok
+test_migration_is_idempotent (__main__.SyncSQL.test_migration_is_idempotent) ... ok
+test_a_defender_with_the_top_sum_is_never_captain (__main__.WildcardCrossPosition.test_a_defender_with_the_top_sum_is_never_captain) ... ok
+test_a_formation_the_sums_would_not_choose_is_honoured (__main__.WildcardCrossPosition.test_a_formation_the_sums_would_not_choose_is_honoured) ... ok
+test_bench_is_the_cheapest_who_pass_layer_one_with_the_fixture_tiebreak (__main__.WildcardCrossPosition.test_bench_is_the_cheapest_who_pass_layer_one_with_the_fixture_tiebreak) ... ok
+test_cli_formation_and_split_reach_the_section (__main__.WildcardCrossPosition.test_cli_formation_and_split_reach_the_section) ... ok
+test_split_parameter_is_scaled_to_the_budget_and_moves_the_money (__main__.WildcardCrossPosition.test_split_parameter_is_scaled_to_the_budget_and_moves_the_money) ... ok
+test_the_fifteen_sums_are_one_unit_the_full_model (__main__.WildcardCrossPosition.test_the_fifteen_sums_are_one_unit_the_full_model) ... ok
+test_layer_one_excludes_the_frozen_flag_and_the_unavailable (__main__.WildcardThreeLayer.test_layer_one_excludes_the_frozen_flag_and_the_unavailable) ... ok
+test_mid_ordering_is_expected_appearances_then_xgi_not_points (__main__.WildcardThreeLayer.test_mid_ordering_is_expected_appearances_then_xgi_not_points) ... ok
+test_mid_ties_on_appearances_break_on_xgi (__main__.WildcardThreeLayer.test_mid_ties_on_appearances_break_on_xgi) ... ok
+test_output_has_xi_captain_bench_sums_and_bench_fixtures (__main__.WildcardThreeLayer.test_output_has_xi_captain_bench_sums_and_bench_fixtures) ... ok
+test_roles_admit_but_never_rank (__main__.WildcardThreeLayer.test_roles_admit_but_never_rank)
+A three-role midfielder with the lower metric sits below a no-role ... ok
+test_split_is_the_current_squad_shape_not_a_global_vpm (__main__.WildcardThreeLayer.test_split_is_the_current_squad_shape_not_a_global_vpm) ... ok
+test_squad_is_legal_within_budget_and_clubs (__main__.WildcardThreeLayer.test_squad_is_legal_within_budget_and_clubs) ... ok
+test_the_build_takes_the_top_of_the_list_not_the_value_per_million_pick (__main__.WildcardThreeLayer.test_the_build_takes_the_top_of_the_list_not_the_value_per_million_pick)
+The dearest defender, given the best projection in his position, ... ok
+
+----------------------------------------------------------------------
+Ran 228 tests in 2.962s
+
+OK (skipped=11)
+syncing FPL API ...
+bootstrap-static ...
+fixtures ...
+league standings ...
+entry 881799 ...
+entry 5826302 ...
+entry 18931 ...
+entry 2322726 ...
+entry 3073318 ...
+entry 4866471 ...
+entry 8690100 ...
+
+exported -> fpl_export_gw5.json  (upload this file to Claude)
+recording forecasts for next GW ...
+[reading fpl_export_gw5.json]
+
+  recorded 258 forecasts for GW6 as 'own' (3 days, 12:11:52.096676 before deadline)
+RECORD OK own 258
+[reading fpl_export_gw5.json]
+
+  recorded 240 forecasts for GW6 as 'xg' (3 days, 12:11:51.955976 before deadline)
+RECORD OK xg 240
+[reading fpl_export_gw5.json]
+
+  recorded 240 forecasts for GW6 as 'minutes' (3 days, 12:11:51.805471 before deadline)
+RECORD OK minutes 240
+[reading fpl_export_gw5.json]
+
+  recorded 240 forecasts for GW6 as 'bottomup' (3 days, 12:11:51.643302 before deadline)
+RECORD OK bottomup 240
+building report ...
+[reading fpl_export_gw5.json]
+
+[diffing against fpl_export_gw4.json]
+
+==============================================================================
+DIFF  GW4 -> GW5
+==============================================================================
+
+  TABLE
+   Bruno Dos Tres         1( =)   362 (+39)  val 101.3 (+0.3)
+   Revelstoke FC          2( =)   353 (+35)  val 101.1 (+0.4)
+   ReturnOfTheDjedi FC    3( =)   341 (+31)  val 101.1 (+0.5)
+   Skori FC               4( =)   337 (+36)  val 100.9 (+0.3)
+>> 1. FC Kiripolcz        5( =)   328 (+60)  val 100.3 (-0.1)
+   No More Mr. Rice Guy   6( =)   318 (+50)  val 100.5 (+0.2)
+   PyroNeniZlocin         7( =)   297 (+61)  val 100.1 (+0.1)
+
+  YOUR SQUAD: price moves
+    B.Fernandes    MUN   £12.0 -> £11.9  (-0.1)
+    Barry          EVE   £5.6 -> £5.7  (+0.1)
+    Calafiori      ARS   £5.8 -> £5.9  (+0.1)
+    Groß           BHA   £5.7 -> £5.9  (+0.2)
+    Haaland        MCI   £15.5 -> £15.6  (+0.1)
+    Ndiaye         MCI   £5.9 -> £5.8  (-0.1)
+    Shaw           MUN   £4.4 -> £4.3  (-0.1)
+    Szoboszlai     LIV   £7.0 -> £6.9  (-0.1)
+
+  NEW FLAGS (owned by anyone in the league)
+    !! Van Hecke      TOT  d 75%  Foot injury - 75% chance of playing
+    !! Konsa          ARS  d 75%  Unspecified injury - 75% chance of playing
+    !! James          CHE  d 75%  Hamstring injury - 75% chance of playing
+    !! Semenyo        MCI  d 75%  Ankle injury - 75% chance of playing
+    !! Palmer         CHE  d 75%  Muscular injury - 75% chance of playing
+    !! Rice           ARS  d 75%  Unspecified injury - 75% chance of playing
+    !! Tzolis         ARS  d 75%  Hamstring injury - 75% chance of playing
+    !! Isak           LIV  d 75%  Thigh injury - 75% chance of playing
+
+  FORM MOVERS  (last-4 points, biggest gains, 60+ mins)
+    Thomas         COV  £  4.0 L4  21 (+19)  own   8.5%
+    Dasilva        COV  £  4.0 L4  19 (+19)  own   0.7%
+    Schuster       BRE  £  4.5 L4  21 (+14)  own   0.3%
+    Kamara         AVL  £  5.0 L4  13 (+13)  own   0.3%
+    Manzambi       AVL  £  5.9 L4  14 (+13)  own   0.4%
+    Groß           BHA  £  5.9 L4  45 (+12)  own  29.7% *YOURS*
+    Rushworth      COV  £  4.5 L4  15 (+10)  own   0.8%
+    Hall           NEW  £  5.3 L4  28 (+10)  own  17.6%
+    Buendía        AVL  £  5.9 L4  19 (+10)  own   1.0%
+    Anthony        BRE  £  5.9 L4  14 (+9)  own   0.2%
+
+  CHIPS PLAYED SINCE
+    ReturnOfTheDjedi FC    WC GW5
+
+==============================================================================
+LEAGUE  (after GW5)
+==============================================================================
+   team                     GW   tot   gap    val bench  chips left (1st half)
+   Bruno Dos Tres           39   362     0  101.3    13  WC FH
+   Revelstoke FC            35   353    -9  101.1    23  WC FH BB
+   ReturnOfTheDjedi FC      31   341   -21  101.1    15  FH
+   Skori FC                 36   337   -25  100.9    10  WC FH TC
+>> 1. FC Kiripolcz          60   328   -34  100.3    11  WC FH BB TC
+   No More Mr. Rice Guy     50   318   -44  100.5    17  WC FH BB TC
+   PyroNeniZlocin           61   297   -65  100.1     2  WC FH BB
+
+==============================================================================
+MINI-LEAGUE OWNERSHIP
+==============================================================================
+
+  YOU DON'T OWN, THEY DO   (forward-looking: every point is a loss)
+  player         team pos      £  rivals  gap/pt
+  João Pedro     CHE  FWD    7.7    4/6   -0.67
+  Gvardiol       MCI  DEF    5.7    4/6   -0.67
+  Rogers         CHE  MID    7.7    4/6   -0.67
+  Calvert-Lewin  LEE  FWD    6.0    3/6   -0.50
+  Muharemović    LEE  DEF    5.0    2/6   -0.33
+  Gibbs-White    NFO  MID    8.0    2/6   -0.33
+  Konsa          ARS  DEF    4.6    2/6   -0.33
+  De Cuyper      BHA  DEF    5.0    2/6   -0.33
+  Maguire        MUN  DEF    4.8    2/6   -0.33
+  Saka           ARS  MID    9.6    2/6   -0.33
+  Raya           ARS  GK     6.1    2/6   -0.33
+  Van Hecke      TOT  DEF    4.9    1/6   -0.17
+
+  YOU OWN, THEY MOSTLY DON'T   (your differentials)
+  player         team pos      £  rivals  gap/pt
+  Virgil         LIV  DEF    6.5    0/6   +1.00
+  Mitchell       CRY  DEF    4.5    0/6   +1.00
+  Barry          EVE  FWD    5.7    0/6   +1.00
+  Slater         HUL  MID    4.5    0/6   +1.00
+  Shaw           MUN  DEF    4.3    0/6   +1.00
+  Verbruggen     BHA  GK     4.5    1/6   +0.83
+  Wissa          NEW  FWD    6.2    1/6   +0.83
+  Ndiaye         MCI  MID    5.8    1/6   +0.83
+  N.Williams     NFO  DEF    5.0    2/6   +0.67
+  B.Fernandes    MUN  MID   11.9    2/6   +0.67
+  Szoboszlai     LIV  MID    6.9    2/6   +0.67
+  Groß           BHA  MID    5.9    3/6   +0.50
+
+  CAPTAINCY EFFECT IN GW5   (historical - not a transfer signal)
+  player         team   mult gap  note
+  Kinsky         TOT       -0.33  
+  Ndiaye         MCI       -0.17  
+  B.Fernandes    MUN       +0.50  
+  Haaland        MCI       +0.50  
+  N.Williams     NFO       +0.67  
+  Szoboszlai     LIV       +0.67  
+  Groß           BHA       +0.83  
+  Wissa          NEW       +0.83  
+  Verbruggen     BHA       +1.00  
+  Virgil         LIV       +1.00  
+  Mitchell       CRY       +1.00  
+  Barry          EVE       +1.00  
+
+  EFFECTIVE OWNERSHIP WITH CAPTAINCY   (rival picks as of GW5; captain = 2, bench = 0, TC = 2)
+  THEIR STAKES YOU DON'T MATCH   (net/pt < 0: every point he scores costs you)
+  player         team pos  mine    EO  start  capt  net/pt
+  Gvardiol       MCI  DEF     0  0.67   4/6    0/6    -0.67
+  Rogers         CHE  MID     0  0.67   4/6    0/6    -0.67
+  Gibbs-White    NFO  MID     0  0.50   2/6    1/6    -0.50
+  Calvert-Lewin  LEE  FWD     0  0.50   3/6    0/6    -0.50
+  Kinsky         TOT  GK      0  0.33   2/6    0/6    -0.33
+  Muharemović    LEE  DEF     0  0.33   2/6    0/6    -0.33
+  Saka           ARS  MID     0  0.33   2/6    0/6    -0.33
+  Raya           ARS  GK      0  0.33   2/6    0/6    -0.33
+  Ndiaye         MCI  MID     0  0.17   1/6    0/6    -0.17
+  Van Hecke      TOT  DEF     0  0.17   1/6    0/6    -0.17
+  M.Sangaré      BRE  MID     0  0.17   1/6    0/6    -0.17
+  Palmer         CHE  MID     0  0.17   1/6    0/6    -0.17
+  YOUR STAKES THEY DON'T MATCH   (net/pt > 0: every point gains on the average rival)
+  player         team pos  mine    EO  start  capt  net/pt
+  Verbruggen     BHA  GK      1  0.00   0/6    0/6    +1.00
+  Virgil         LIV  DEF     1  0.00   0/6    0/6    +1.00
+  Mitchell       CRY  DEF     1  0.00   0/6    0/6    +1.00
+  Barry          EVE  FWD     1  0.00   0/6    0/6    +1.00
+  Groß           BHA  MID     1  0.17   1/6    0/6    +0.83
+  Wissa          NEW  FWD     1  0.17   1/6    0/6    +0.83
+  N.Williams     NFO  DEF     1  0.33   2/6    0/6    +0.67
+  Szoboszlai     LIV  MID     1  0.33   2/6    0/6    +0.67
+  Haaland        MCI  FWD     2  1.50   5/6    4/6    +0.50
+  B.Fernandes    MUN  MID     1  0.50   2/6    1/6    +0.50
+
+  PER RIVAL, GW6   (projected: full model, all terms, one unit; picks as of GW5; blanks 0)
+  rival                 their captain    swing  shared  yours  theirs
+  ReturnOfTheDjedi FC   Gibbs-White       -2.0    18.8   34.7    36.7
+  Revelstoke FC         Haaland           +1.0    24.5   29.1    28.1
+  No More Mr. Rice Guy  Haaland           +1.8    29.0   24.5    22.7
+  Skori FC              B.Fernandes       +3.9    10.2   43.3    39.4
+  Bruno Dos Tres        Haaland           +5.2    15.2   38.3    33.1
+  PyroNeniZlocin        Haaland           +8.2    15.2   38.3    30.1
+
+  CAPTAIN COVER, GW6   (MID/FWD in your XI by projection; stake/pt = 2 - EO if captained)
+  candidate      team   proj    EO  capt  stake/pt
+  B.Fernandes    MUN    5.17  0.50   1/6      +1.50
+  Haaland        MCI    5.11  1.50   4/6      +0.50
+  Barry          EVE    4.57  0.00   0/6      +2.00
+  Szoboszlai     LIV    4.30  0.33   0/6      +1.67
+  Groß           BHA    4.29  0.17   0/6      +1.83
+  Wissa          NEW    3.76  0.17   0/6      +1.83
+  the expected value of a captaincy is its projection alone; EO changes the variance
+  of your rank, not the expectation: the field's captain covers, a differential swings.
+
+  gap/pt = net points gained on the average rival per point that player
+  scores. Ownership gap is what transfers change. The captaincy block
+  reflects one past gameweek only; the EO blocks carry it forward.
+
+==============================================================================
+YOUR SQUAD  (form, flags, next 6 fixtures)
+==============================================================================
+        player         team     £    pts     L4  mins     fdr  xGI/90  conc trim90  med90  fixtures
+XI  GK  Verbruggen     BHA    4.5 pts 23 L4: 17 m 360 fdr 3.2    0.04 1.00!   0.00   0.00  SUNA3 CRYH2 LIVA4 MCIA5 BREH3 HULA2
+XI  DEF Virgil         LIV    6.5 pts 25 L4: 23 m 360 fdr 3.5    0.07 0.79!   0.02   0.02  MCIH4 BREA3 BHAH3 ARSH4 CRYA3 MUNH4
+XI  DEF Calafiori      ARS    5.9 pts 29 L4: 20 m 336 fdr 3.0    0.28 0.44    0.20   0.15  LEEH3 NFOA3 EVEH3 LIVA4 HULH2 NEWA3
+XI  DEF Mitchell       CRY    4.5 pts 24 L4: 23 m 329 fdr 3.2    0.22 0.65!   0.09   0.07  NFOH3 BHAA4 NEWH3 TOTA3 LIVH4 COVA2
+XI  DEF N.Williams     NFO    5.0 pts 19 L4: 17 m 360 fdr 3.2    0.20 0.35    0.17   0.27  CRYA3 ARSH4 IPSA2 BREA3 MCIH4 BOUA3
+XI  MID B.Fernandes    MUN   11.9 pts 31 L4: 29 m 360 fdr 3.2    0.78 0.64!   0.34   0.36  TOTH2 LEEA3 BOUH3 CHEA4 AVLH3 LIVA4
+XI  MID Szoboszlai     LIV    6.9 pts 20 L4: 12 m 350 fdr 3.5    0.46 0.50!   0.29   0.33  MCIH4 BREA3 BHAH3 ARSH4 CRYA3 MUNH4
+XI  MID Groß           BHA    5.9 pts 47 L4: 45 m 360 fdr 3.2    0.53 0.38    0.40   0.36  SUNA3 CRYH2 LIVA4 MCIA5 BREH3 HULA2
+XI  FWD Haaland        MCI   15.6 pts 39 L4: 37 m 360 fdr 2.8    0.99 0.31    0.85   0.88  LIVA4 IPSH2 AVLA3 BHAH3 NFOA3 FULH2
+XI  FWD Barry          EVE    5.7 pts 20 L4: 12 m 339 fdr 3.2    0.79 0.41    0.56   0.62  HULA2 CHEH4 ARSA5 NEWA3 COVH2 BREA3
+XI  FWD Wissa          NEW    6.2 pts 15 L4: 11 m 351 fdr 3.0    0.49 0.43    0.35   0.39  COVA2 AVLH3 CRYA3 EVEH3 FULA3 ARSH4
+BEN GK  Kinsky         TOT    4.5 pts 18 L4: 16 m 360 fdr 2.8    0.00     -   0.00   0.00  MUNA4 COVH2 CHEA4 CRYH2 LEEA3 IPSH2
+BEN MID Ndiaye         MCI    5.8 pts 22 L4: 13 m 295 fdr 2.8    0.22 0.58!   0.12   0.19  LIVA4 IPSH2 AVLA3 BHAH3 NFOA3 FULH2
+BEN MID Slater         HUL    4.5 pts 15 L4:  9 m 347 fdr 3.2    0.16 0.55!   0.09   0.14  EVEH3 FULA3 BREH3 IPSH2 ARSA5 BHAH3
+BEN DEF Shaw           MUN    4.3 pts  9 L4:  8 m 245 fdr 3.2    0.16 0.43    0.13   0.17  TOTH2 LEEA3 BOUH3 CHEA4 AVLH3 LIVA4
+    xGI/90 = season xGI per 90; conc = best game's share of it ('!' at 0.50+);
+    trim90 = without that game (4+ games); med90 = median per-game rate over 60+ minute
+    games. Printed for a human eye - nothing orders or projects on them.
+
+  BENCH vs XI  GW6   proj = full model, all terms (one unit); each bench player
+  against the lowest-projecting XI player of his own position. Same-position swaps
+  only - the formation is not chosen on the sums. Picks as of the last deadline.
+    bench                proj P(st) share   lowest XI            proj P(st) share  delta  verdict
+    GK  Kinsky           2.47  1.00  1.00   GK  Verbruggen       3.25  1.00  1.00  -0.78  hold
+    MID Ndiaye           2.84  0.75  0.82   MID Groß             4.29  1.00  1.00  -1.45  hold
+    MID Slater           3.42  1.00  0.96   MID Groß             4.29  1.00  1.00  -0.87  hold
+    DEF Shaw             3.29  0.75  0.68   DEF Mitchell         3.59  1.00  0.91  -0.30  hold
+    XI under the frozen flag (minutes share <= 0.667): none
+
+==============================================================================
+FIXTURE TICKER  (next 6, sorted by average difficulty)
+==============================================================================
+  COV   2.67     NEW (H)3    TOT (A)3    FUL (H)2    SUN (H)3    EVE (A)3    CRY (H)2
+  FUL   2.83     IPS (A)2    HUL (H)2    COV (A)2    AVL (A)3    NEW (H)3    MCI (A)5
+  TOT   2.83     MUN (A)4    COV (H)2    CHE (A)4    CRY (H)2    LEE (A)3    IPS (H)2
+  MCI   2.83     LIV (A)4    IPS (H)2    AVL (A)3    BHA (H)3    NFO (A)3    FUL (H)2
+  ARS   3.00     LEE (H)3    NFO (A)3    EVE (H)3    LIV (A)4    HUL (H)2    NEW (A)3
+  CHE   3.00     BOU (H)3    EVE (A)3    TOT (H)2    MUN (H)4    SUN (A)3    LEE (H)3
+  IPS   3.00     FUL (H)2    MCI (A)5    NFO (H)3    HUL (A)2    BOU (H)3    TOT (A)3
+  SUN   3.00     BHA (H)3    BOU (A)3    LEE (H)3    COV (A)2    CHE (H)4    AVL (A)3
+  NEW   3.00     COV (A)2    AVL (H)3    CRY (A)3    EVE (H)3    FUL (A)3    ARS (H)4
+  AVL   3.17     BRE (H)3    NEW (A)3    MCI (H)4    FUL (H)2    MUN (A)4    SUN (H)3
+  BRE   3.17     AVL (A)3    LIV (H)4    HUL (A)2    NFO (H)3    BHA (A)4    EVE (H)3
+  BOU   3.17     CHE (A)4    SUN (H)3    MUN (A)4    LEE (H)3    IPS (A)2    NFO (H)3
+  BHA   3.17     SUN (A)3    CRY (H)2    LIV (A)4    MCI (A)5    BRE (H)3    HUL (A)2
+  MUN   3.17     TOT (H)2    LEE (A)3    BOU (H)3    CHE (A)4    AVL (H)3    LIV (A)4
+  CRY   3.17     NFO (H)3    BHA (A)4    NEW (H)3    TOT (A)3    LIV (H)4    COV (A)2
+  NFO   3.17     CRY (A)3    ARS (H)4    IPS (A)2    BRE (A)3    MCI (H)4    BOU (A)3
+  HUL   3.17     EVE (H)3    FUL (A)3    BRE (H)3    IPS (H)2    ARS (A)5    BHA (H)3
+  EVE   3.17     HUL (A)2    CHE (H)4    ARS (A)5    NEW (A)3    COV (H)2    BRE (A)3
+  LEE   3.50     ARS (A)5    MUN (H)4    SUN (A)3    BOU (A)3    TOT (H)2    CHE (A)4
+  LIV   3.50     MCI (H)4    BRE (A)3    BHA (H)3    ARS (H)4    CRY (A)3    MUN (H)4
+
+==============================================================================
+DEFCON RATE  (per 90 vs threshold: DEF 10, MID 12)
+==============================================================================
+
+  DEF (threshold 10/match)
+    player         team     £     /90  margin     hit     per game   own%
+    Pinnock        COV    4.5    14.0    +4.0     3/3     13 10 19    0.1
+    Fofana         CHE    5.0    13.6    +3.6     2/4    9 17 6 15    0.2
+    Schuster       BRE    4.5    13.5    +3.5     3/3     10 12 16    0.3
+    Muharemović    LEE    5.0    12.8    +2.8     3/5 7 19 13 11 8    4.3
+    Mendy          HUL    4.1    12.6    +2.6     2/2        13 10    6.2
+    Botman         NEW    5.0    12.2    +2.2     3/5 10 5 9 17 18    0.7
+    Mukiele        SUN    5.4    12.0    +2.0     2/4    19 14 6 9    1.9
+    Milenković     NFO    5.4    12.0    +2.0     2/3      7 13 11    1.0
+    Branthwaite    EVE    5.5    11.5    +1.5     3/5 8 12 11 9 14    2.5
+    Affengruber    FUL    4.5    11.5    +1.5     2/2        12 11    0.1
+    Lacroix        CHE    5.9    11.5    +1.5     3/4   12 9 11 12    6.8
+    Hill           BOU    5.5    11.0    +1.0     3/5 6 12 6 11 15    0.8
+    Thomas         COV    4.0    10.9    +0.9     3/6 10 9 12 8 13 3    8.5
+    Silva          BOU    5.0    10.8    +0.8     4/5 13 10 8 10 15    0.4
+    Tarkowski      EVE    6.2    10.5    +0.5     3/5 9 10 12 8 12   16.8
+
+  MID (threshold 12/match)
+    player         team     £     /90  margin     hit     per game   own%
+    Bentancur      TOT    5.5    15.2    +3.2     2/4  11 17 10 17    0.2
+    Mainoo         MUN    5.5    15.0    +3.0     4/4  15 15 13 12    1.5
+    Palacios       IPS    5.0    14.4    +2.4     2/6 4 9 0 19 13 6    0.1
+    Charles        FUL    5.0    13.8    +1.8     2/3     11 17 13    0.1
+    Adams          BOU    5.0    13.0    +1.0     2/3     12 10 13    0.3
+    M.Sangaré      BRE    5.6    12.8    +0.8     3/3     13 14 13    9.8
+    Janelt         BRE    5.0    12.8    +0.8     3/5 13 10 12 20 9    2.5
+    Garner         EVE    6.0    12.5    +0.5     1/4    10 8 17 9    0.2
+    Scott          BOU    6.1    12.4    +0.4     2/5 11 15 11 15 8    5.6
+    Anderson       MCI    6.3    12.3    +0.3     2/5 6 14 11 14 9    4.0
+    Mac Allister   LIV    5.4    12.3    +0.3     1/3     10 11 13    1.3
+    Schlager       NFO    5.0    12.0    +0.0     2/4   15 10 16 7    0.1
+    Ampadu         LEE    5.4    11.8    -0.2     3/5 13 10 11 12 14    0.9
+    Stach          LEE    6.0    11.6    -0.4     3/5 16 16 6 11 13    2.5
+    L.Miley        NEW    5.5    10.9    -1.1     2/5 13 9 4 10 16    0.1
+
+  hit = gameweeks at or above the threshold, out of starts.
+  per game = raw actions per gameweek, oldest first. A player at 10.0/90
+  who went 4-16-10 is a coin flip; one who went 10-10-10 is an asset.
+
+==============================================================================
+FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
+==============================================================================
+
+  GK
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Tzolakis       HUL    4.7   24    5.11  3.17   4.68   12.9
+    Raya           ARS    6.1   24    3.93  3.00   3.93   42.3
+    Rushworth      COV    4.5   15    3.33  2.67   3.89    0.8
+    Leno           FUL    4.5   16    3.56  2.83   3.85    3.4
+    Kinsky         TOT    4.5   16    3.56  2.83   3.85   17.1
+    Verbruggen     BHA    4.5   17    3.78  3.17   3.46   21.6
+    A.Becker       LIV    5.5   25    4.55  3.50   3.41    4.2
+    Donnarumma     MCI    5.5   16    2.91  2.83   3.15    7.6
+    Pickford       EVE    5.5   18    3.27  3.17   3.00    9.2
+    Suzuki         AVL    5.0   16    3.20  3.17   2.93    1.9
+    Trafford       LEE    5.0   19    3.80  3.50   2.85    5.5
+    Horníček       NEW    5.0   13    2.60  3.00   2.60    1.5
+
+  DEF
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Thomas         COV    4.0   21    5.25  2.67   6.12    8.5
+    Bogle          LEE    4.6   36    7.83  3.50   5.87    7.4
+    Davis          IPS    4.0   23    5.75  3.00   5.75    7.0
+    Dasilva        COV    4.0   19    4.75  2.67   5.54    0.7
+    Tarkowski      EVE    6.2   37    5.97  3.17   5.47   16.8
+    Gvardiol       MCI    5.7   28    4.91  2.83   5.32   26.9
+    Hall           NEW    5.3   28    5.28  3.00   5.28   17.6
+    Vuskovic       BHA    5.0   26    5.20  3.17   4.77    3.8
+    Mitchell       CRY    4.5   23    5.11  3.17   4.69    6.1
+    Schuster       BRE    4.5   21    4.67  3.17   4.28    0.3
+    Maitland-Niles EVE    4.5   21    4.67  3.17   4.28    1.4
+    Giles          HUL    4.0   18    4.50  3.17   4.12    2.9
+
+  MID
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Groß           BHA    5.9   45    7.63  3.17   6.99   29.7
+    Schade         BRE    6.2   36    5.81  3.17   5.32   12.1
+    Belloumi       HUL    5.1   28    5.49  3.17   5.03    5.3
+    Barnes         NEW    6.1   26    4.26  3.00   4.26    5.9
+    Yalcouyé       BHA    4.5   19    4.22  3.17   3.87    4.0
+    Cherki         MCI    7.8   26    3.33  2.83   3.61   28.4
+    Janelt         BRE    5.0   19    3.80  3.17   3.48    2.5
+    King           FUL    5.5   17    3.09  2.83   3.35    2.9
+    Gomez          BHA    5.0   18    3.60  3.17   3.30    3.9
+    Kamada         CRY    5.0   18    3.60  3.17   3.30    0.5
+    Willock        NEW    5.0   16    3.20  3.00   3.20    0.6
+    Tavernier      BOU    6.1   21    3.44  3.17   3.16    6.8
+
+  FWD
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Kostoulas      BHA    5.6   27    4.82  3.17   4.42    4.6
+    Emersonn       IPS    5.5   17    3.09  3.00   3.09    3.7
+    Calvert-Lewin  LEE    6.0   21    3.50  3.50   2.62   24.7
+    Haaland        MCI   15.6   37    2.37  2.83   2.57   73.9
+    Evanilson      BOU    6.0   14    2.33  3.17   2.14    3.2
+    Strand Larsen  CRY    6.0   13    2.17  3.17   1.99    0.7
+    Barry          EVE    5.7   12    2.11  3.17   1.93    8.3
+    Wissa          NEW    6.2   11    1.77  3.00   1.77   18.7
+    Thomas-Asante  COV    5.0    7    1.40  2.67   1.63    0.8
+    Igor Jesus     NFO    5.8   10    1.72  3.17   1.58    2.6
+    Delap          NFO    5.6    9    1.61  3.17   1.47    2.7
+    Gonzalo        FUL    6.0    8    1.33  2.83   1.44    4.2
+
+==============================================================================
+BENCH AUDIT
+==============================================================================
+>> 1. FC Kiripolcz        bench=  9  best benched Ndiaye      ( 5)  worst XI Wissa       ( 0)  perfect-XI gain +5
+   Bruno Dos Tres         bench=  7  best benched De Cuyper   ( 6)  worst XI M.Sangaré   ( 0)  perfect-XI gain +6
+   No More Mr. Rice Guy   bench= 11  best benched Thomas      ( 9)  worst XI Calafiori   ( 1)  perfect-XI gain +8
+   PyroNeniZlocin         bench=  0  best benched Kusi-Asare  ( 0)  worst XI Furo        ( 0)  perfect-XI gain +0
+   ReturnOfTheDjedi FC    bench= 15  best benched Groß        (14)  worst XI Wissa       ( 0)  perfect-XI gain +14
+   Revelstoke FC          bench= 20  best benched Groß        (14)  worst XI Calafiori   ( 1)  perfect-XI gain +13
+   Skori FC               bench=  8  best benched De Cuyper   ( 6)  worst XI Calafiori   ( 1)  perfect-XI gain +5
+
+==============================================================================
+FDR AUDIT  (rating vs result, all finished fixtures)
+==============================================================================
+
+  50 matches, 100 team-performances
+
+   FDR    n  goals for  conceded  clean sheets  win rate
+     2   22       1.50      0.77          59%       50%
+     3   50       1.48      1.40          24%       36%
+     4   23       1.26      1.78          22%       22%
+     5    5       1.00      2.60           0%        0%
+
+  easy (FDR<=2) vs hard (FDR>=4)
+    goals scored   1.50  vs  1.21   gap +0.29
+    clean sheets    59%  vs   18%   gap +41%
+    The rating is barely separating attacking output. Weight it lightly.
+
+  BIGGEST UPSETS  (favourite by 2+ difficulty points, lost or drew)
+    GW1  HUL 2-0 MUN   MUN was favoured by 2
+    GW4  CHE 2-2 HUL   CHE was favoured by 2
+    GW4  LIV 0-0 FUL   LIV was favoured by 2
+
+==============================================================================
+FIXTURE SENSITIVITY  (per player-match, with 95% intervals)
+==============================================================================
+
+  1039 player-matches of 60+ minutes
+
+            easy FDR<=2     hard FDR>=4     gap        95% interval  verdict
+  GK       5.36 (n= 22)    2.75 (n= 28)    2.61       0.95 to 4.28    REAL
+  DEF      5.14 (n= 88)    2.86 (n=118)    2.28       1.37 to 3.19    REAL
+  MID      4.70 (n= 93)    3.37 (n=121)    1.33       0.43 to 2.22    REAL
+  FWD      4.38 (n= 21)    3.89 (n= 27)    0.49      -1.71 to 2.69    noise
+
+  CHASING EASY vs AVOIDING HARD
+    GK    FDR2 over FDR3  +1.92 (+-1.59)    FDR3 over FDR4+  +0.69 (+-1.23)
+    DEF   FDR2 over FDR3  +1.36 (+-0.83)    FDR3 over FDR4+  +0.92 (+-0.75)
+    MID   FDR2 over FDR3  +0.70 (+-0.86)    FDR3 over FDR4+  +0.63 (+-0.64)
+    FWD   FDR2 over FDR3  +0.40 (+-1.97)    FDR3 over FDR4+  +0.09 (+-1.65)
+
+  HOME vs AWAY
+    GK    gap -0.34  +-1.18   noise
+    DEF   gap +0.37  +-0.66   noise
+    MID   gap +0.25  +-0.60   noise
+    FWD   gap +0.04  +-1.45   noise
+
+  Only rows marked REAL survive the sample size. Everything else is
+  a difference this data cannot distinguish from chance - do not spend
+  transfers on it. Re-run as gameweeks accumulate and the intervals
+  will narrow.
+  Currently real: GK, DEF, MID.
+
+==============================================================================
+POSITION ARBITRAGE  (the scoring system is wrong about these players)
+==============================================================================
+
+  A defender who plays forward earns 6 for a goal AND 4 for a clean
+  sheet. FPL fixes position in July and rarely changes it.
+
+  DEFENDERS with attacking output
+    player         team     £  xG+xA/90  DEFCON/90   own%   fdr
+    De Cuyper      BHA    5.0      0.47        3.1   28.1  3.17
+    Davis          IPS    4.0      0.41        4.2    7.0  3.00
+    Bogle          LEE    4.6      0.36        4.3    7.4  3.50
+    Kayode         BRE    4.6      0.30        4.9    7.6  3.17
+    Muñoz          NFO    5.4      0.28        4.9    5.7  3.17
+    Calafiori      ARS    5.9      0.28        3.5   50.5  3.00
+    Guéhi          MCI    6.0      0.27        6.2   18.1  2.83
+    Mukiele        SUN    5.4      0.26       12.0    1.9  3.00
+
+  MIDFIELDERS carrying defensive load (DEFCON + goals)
+    player         team     £  xG+xA/90  DEFCON/90   own%   fdr
+    Saka           ARS    9.6      0.91        6.2   14.2  3.00
+    Rudoni         COV    4.9      0.62        9.4    0.1  2.67
+    M.Sangaré      BRE    5.6      0.30       12.8    9.8  3.17
+    Yalcouyé       BHA    4.5      0.73        7.4    4.0  3.17
+    Tavernier      BOU    6.1      0.56        9.2    6.8  3.17
+    Bentancur      TOT    5.5      0.03       15.2    0.2  2.83
+    Janelt         BRE    5.0      0.19       12.8    2.5  3.17
+    B.Fernandes    MUN   11.9      0.78        5.8   38.4  3.17
+
+  CHANCE QUALITY vs FINISHING  (threat is FPL's shot-danger index)
+  High threat, few returns = chances are coming, goals have not.
+
+    player         team     £  threat/90   G+A   xG+xA   own%
+    Saka           ARS    9.6       51.9     3    4.20   14.2
+    Haaland        MCI   15.6       51.6     5    4.95   73.9
+    Barry          EVE    5.7       44.7     2    3.65    8.3
+    Yalcouyé       BHA    4.5       42.3     2    1.91    4.0
+    King           FUL    5.5       37.9     2    2.00    2.9
+    Sávio          TOT    6.5       36.0     0    1.11    0.6
+    Igor Jesus     NFO    5.8       35.0     1    1.33    2.6
+    Calvert-Lewin  LEE    6.0       32.9     3    3.08   24.7
+    Kostoulas      BHA    5.6       32.4     5    1.41    4.6
+    Schade         BRE    6.2       32.2     5    1.84   12.1
+
+==============================================================================
+CONSISTENCY  (delivery pattern, not total)
+==============================================================================
+
+  209 players with 3+ full appearances, 140 averaging 3.0+
+
+  METRONOMES  (good average, small swing - captain and bench-boost picks)
+    player         team pos   mean  swing floor blanks   per game
+    Schlager       NFO  MID    3.0    0.8     2      1   4 3 3 2
+    Araujo         LIV  DEF    7.0    1.0     6      0   8 6 7
+    Timber         CRY  MID    3.0    1.0     2      1   2 4 3
+    Adams          BOU  MID    3.3    1.2     2      1   4 2 4
+    Anderson       MCI  MID    3.0    1.2     2      2   2 3 3 5 2
+    Belloumi       HUL  MID    4.5    1.3     3      0   3 6 5 4
+    Bentancur      TOT  MID    3.5    1.3     2      1   2 5 3 4
+    Muharemović    LEE  DEF    5.4    1.3     4      0   6 4 4 7 6
+    Rudoni         COV  MID    3.0    1.4     2      2   3 2 2 5
+    Evanilson      BOU  FWD    3.6    1.5     2      2   4 5 2 5 2
+
+  LOTTERY TICKETS  (same average, huge swing - differentials, not anchors)
+    B.Fernandes    MUN  MID    6.2    9.4     2      4   2 23 2 2 2
+    Groß           BHA  MID    9.4    7.4     1      2   2 13 1 17 14
+    Brobbey        SUN  FWD    4.8    6.8     1      4   2 2 2 1 17
+    De Cuyper      BHA  DEF    7.6    6.6     0      1   17 0 4 11 6
+    Mitchell       CRY  DEF    4.8    6.3     0      3   1 0 15 1 7
+    Dasilva        COV  DEF    4.0    6.2     0      4   1 2 2 0 15
+    Schuster       BRE  DEF    7.0    6.1     3      0   4 3 14
+    Semenyo        MCI  MID    6.6    6.0     2      1   2 5 6 3 17
+
+  YOUR SQUAD
+    Groß           BHA  MID    9.4    7.4     1      2   2 13 1 17 14  volatile
+    Haaland        MCI  FWD    7.8    4.1     2      1   2 13 9 9 6  volatile
+    B.Fernandes    MUN  MID    6.2    9.4     2      4   2 23 2 2 2  volatile
+    Calafiori      ARS  DEF    5.8    4.3     1      2   9 11 2 6 1  volatile
+    Ndiaye         MCI  MID    5.2    2.6     3      0   9 4 3 5
+    Virgil         LIV  DEF    5.0    3.3     1      2   2 1 6 8 8
+    Mitchell       CRY  DEF    4.8    6.3     0      3   1 0 15 1 7  volatile
+    Verbruggen     BHA  GK     4.6    3.1     0      1   6 0 3 8 6
+    Barry          EVE  FWD    4.0    2.8     2      3   8 2 2 2 6
+    Szoboszlai     LIV  MID    4.0    2.3     2      1   8 4 3 3 2
+    N.Williams     NFO  DEF    3.8    2.5     2      3   2 6 7 2 2
+    Kinsky         TOT  GK     3.6    2.7     1      3   2 1 6 7 2
+    Slater         HUL  MID    3.0    1.7     2      3   6 2 3 2 2  steady
+    Wissa          NEW  FWD    3.0    3.2     0      3   4 8 1 2 0
+    Shaw           MUN  DEF    2.2    1.3     1      3   1 2 4 2
+
+  swing is the standard deviation of gameweek scores. Three matches is
+  far too few to trust an individual figure - read it again at GW8.
+
+[written to reports/fpl_2026-10-06.txt]
+record summary:
+RECORD OK own 258
+RECORD OK xg 240
+RECORD OK minutes 240
+RECORD OK bottomup 240
+archiving the export ...
+ARCHIVE OK   fpl_export_gw5.json -> exports/fpl_export_gw5_2026-10-06.json
+Done. Report: reports/fpl_2026-10-06.txt

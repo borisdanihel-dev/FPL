@@ -1,0 +1,35 @@
+[reading fpl_export_gw5.json]
+
+==============================================================================
+YOUR SQUAD  (form, flags, next 6 fixtures)
+==============================================================================
+        player         team     £    pts     L4  mins     fdr  xGI/90  conc trim90  med90  fixtures
+XI  GK  Verbruggen     BHA    4.5 pts 23 L4: 17 m 360 fdr 3.3    0.04 1.00!   0.00   0.00  SUNA3 CRYH3 LIVA4 MCIA5 BREH3 HULA2
+XI  DEF Virgil         LIV    6.5 pts 25 L4: 23 m 360 fdr 3.3    0.07 0.79!   0.02   0.02  MCIH4 BREA3 BHAH2 ARSH4 CRYA3 MUNH4
+XI  DEF Calafiori      ARS    5.8 pts 29 L4: 20 m 336 fdr 2.8    0.28 0.44    0.20   0.15  LEEH2 NFOA3 EVEH3 LIVA4 HULH2 NEWA3
+XI  DEF Mitchell       CRY    4.5 pts 24 L4: 23 m 329 fdr 2.8    0.22 0.65!   0.09   0.07  NFOH3 BHAA3 NEWH2 TOTA3 LIVH4 COVA2
+XI  DEF N.Williams     NFO    5.0 pts 19 L4: 17 m 360 fdr 3.2    0.20 0.35    0.17   0.27  CRYA3 ARSH4 IPSA2 BREA3 MCIH4 BOUA3
+XI  MID B.Fernandes    MUN   11.9 pts 31 L4: 29 m 360 fdr 3.3    0.78 0.64!   0.34   0.36  TOTH3 LEEA3 BOUH3 CHEA4 AVLH3 LIVA4
+XI  MID Szoboszlai     LIV    7.0 pts 20 L4: 12 m 350 fdr 3.3    0.46 0.50!   0.29   0.33  MCIH4 BREA3 BHAH2 ARSH4 CRYA3 MUNH4
+XI  MID Groß           BHA    5.8 pts 47 L4: 45 m 360 fdr 3.3    0.53 0.38    0.40   0.36  SUNA3 CRYH3 LIVA4 MCIA5 BREH3 HULA2
+XI  FWD Haaland        MCI   15.6 pts 39 L4: 37 m 360 fdr 2.8    0.99 0.31    0.85   0.88  LIVA4 IPSH2 AVLA4 BHAH2 NFOA3 FULH2
+XI  FWD Barry          EVE    5.6 pts 20 L4: 12 m 339 fdr 3.2    0.79 0.41    0.56   0.62  HULA2 CHEH4 ARSA5 NEWA3 COVH2 BREA3
+XI  FWD Wissa          NEW    6.2 pts 15 L4: 11 m 351 fdr 3.0    0.49 0.43    0.35   0.39  COVA2 AVLH3 CRYA3 EVEH3 FULA3 ARSH4
+BEN GK  Kinsky         TOT    4.5 pts 18 L4: 16 m 360 fdr 3.0    0.00     -   0.00   0.00  MUNA4 COVH2 CHEA4 CRYH3 LEEA3 IPSH2
+BEN MID Ndiaye         MCI    5.8 pts 22 L4: 13 m 295 fdr 2.8    0.22 0.58!   0.12   0.19  LIVA4 IPSH2 AVLA4 BHAH2 NFOA3 FULH2
+BEN MID Slater         HUL    4.5 pts 15 L4:  9 m 347 fdr 3.0    0.16 0.55!   0.09   0.14  EVEH3 FULA3 BREH3 IPSH2 ARSA5 BHAH2
+BEN DEF Shaw           MUN    4.3 pts  9 L4:  8 m 245 fdr 3.3    0.16 0.43    0.13   0.17  TOTH3 LEEA3 BOUH3 CHEA4 AVLH3 LIVA4
+    xGI/90 = season xGI per 90; conc = best game's share of it ('!' at 0.50+);
+    trim90 = without that game (4+ games); med90 = median per-game rate over 60+ minute
+    games. Printed for a human eye - nothing orders or projects on them.
+
+  BENCH vs XI  GW6   proj = full model, all terms (one unit); each bench player
+  against the lowest-projecting XI player of his own position. Same-position swaps
+  only - the formation is not chosen on the sums. Picks as of the last deadline.
+    bench                proj P(st) share   lowest XI            proj P(st) share  delta  verdict
+    GK  Kinsky           2.47  1.00  1.00   GK  Verbruggen       3.25  1.00  1.00  -0.78  hold
+    MID Ndiaye           2.84  0.75  0.82   MID Groß             4.29  1.00  1.00  -1.45  hold
+    MID Slater           3.42  1.00  0.96   MID Groß             4.29  1.00  1.00  -0.87  hold
+    DEF Shaw             3.29  0.75  0.68   DEF Mitchell         3.59  1.00  0.91  -0.30  hold
+    XI under the frozen flag (minutes share <= 0.667): none
+

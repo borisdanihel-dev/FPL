@@ -1,0 +1,103 @@
+[reading fpl_export_gw5.json]
+
+==============================================================================
+MINI-LEAGUE OWNERSHIP
+==============================================================================
+
+  YOU DON'T OWN, THEY DO   (forward-looking: every point is a loss)
+  player         team pos      £  rivals  gap/pt
+  João Pedro     CHE  FWD    7.7    4/6   -0.67
+  Gvardiol       MCI  DEF    5.7    4/6   -0.67
+  Rogers         CHE  MID    7.7    4/6   -0.67
+  Calvert-Lewin  LEE  FWD    6.0    3/6   -0.50
+  Muharemović    LEE  DEF    5.0    2/6   -0.33
+  Gibbs-White    NFO  MID    8.0    2/6   -0.33
+  Konsa          ARS  DEF    4.6    2/6   -0.33
+  De Cuyper      BHA  DEF    4.9    2/6   -0.33
+  Maguire        MUN  DEF    4.8    2/6   -0.33
+  Saka           ARS  MID    9.5    2/6   -0.33
+  Raya           ARS  GK     6.1    2/6   -0.33
+  Van Hecke      TOT  DEF    4.9    1/6   -0.17
+
+  YOU OWN, THEY MOSTLY DON'T   (your differentials)
+  player         team pos      £  rivals  gap/pt
+  Virgil         LIV  DEF    6.5    0/6   +1.00
+  Mitchell       CRY  DEF    4.5    0/6   +1.00
+  Barry          EVE  FWD    5.6    0/6   +1.00
+  Slater         HUL  MID    4.5    0/6   +1.00
+  Shaw           MUN  DEF    4.3    0/6   +1.00
+  Verbruggen     BHA  GK     4.5    1/6   +0.83
+  Wissa          NEW  FWD    6.2    1/6   +0.83
+  Ndiaye         MCI  MID    5.8    1/6   +0.83
+  N.Williams     NFO  DEF    5.0    2/6   +0.67
+  B.Fernandes    MUN  MID   11.9    2/6   +0.67
+  Szoboszlai     LIV  MID    7.0    2/6   +0.67
+  Groß           BHA  MID    5.8    3/6   +0.50
+
+  CAPTAINCY EFFECT IN GW5   (historical - not a transfer signal)
+  player         team   mult gap  note
+  Kinsky         TOT       -0.33  
+  Ndiaye         MCI       -0.17  
+  B.Fernandes    MUN       +0.50  
+  Haaland        MCI       +0.50  
+  N.Williams     NFO       +0.67  
+  Szoboszlai     LIV       +0.67  
+  Groß           BHA       +0.83  
+  Wissa          NEW       +0.83  
+  Verbruggen     BHA       +1.00  
+  Virgil         LIV       +1.00  
+  Mitchell       CRY       +1.00  
+  Barry          EVE       +1.00  
+
+  EFFECTIVE OWNERSHIP WITH CAPTAINCY   (rival picks as of GW5; captain = 2, bench = 0, TC = 2)
+  THEIR STAKES YOU DON'T MATCH   (net/pt < 0: every point he scores costs you)
+  player         team pos  mine    EO  start  capt  net/pt
+  Gvardiol       MCI  DEF     0  0.67   4/6    0/6    -0.67
+  Rogers         CHE  MID     0  0.67   4/6    0/6    -0.67
+  Gibbs-White    NFO  MID     0  0.50   2/6    1/6    -0.50
+  Calvert-Lewin  LEE  FWD     0  0.50   3/6    0/6    -0.50
+  Kinsky         TOT  GK      0  0.33   2/6    0/6    -0.33
+  Muharemović    LEE  DEF     0  0.33   2/6    0/6    -0.33
+  Saka           ARS  MID     0  0.33   2/6    0/6    -0.33
+  Raya           ARS  GK      0  0.33   2/6    0/6    -0.33
+  Ndiaye         MCI  MID     0  0.17   1/6    0/6    -0.17
+  Van Hecke      TOT  DEF     0  0.17   1/6    0/6    -0.17
+  M.Sangaré      BRE  MID     0  0.17   1/6    0/6    -0.17
+  Palmer         CHE  MID     0  0.17   1/6    0/6    -0.17
+  YOUR STAKES THEY DON'T MATCH   (net/pt > 0: every point gains on the average rival)
+  player         team pos  mine    EO  start  capt  net/pt
+  Verbruggen     BHA  GK      1  0.00   0/6    0/6    +1.00
+  Virgil         LIV  DEF     1  0.00   0/6    0/6    +1.00
+  Mitchell       CRY  DEF     1  0.00   0/6    0/6    +1.00
+  Barry          EVE  FWD     1  0.00   0/6    0/6    +1.00
+  Groß           BHA  MID     1  0.17   1/6    0/6    +0.83
+  Wissa          NEW  FWD     1  0.17   1/6    0/6    +0.83
+  N.Williams     NFO  DEF     1  0.33   2/6    0/6    +0.67
+  Szoboszlai     LIV  MID     1  0.33   2/6    0/6    +0.67
+  Haaland        MCI  FWD     2  1.50   5/6    4/6    +0.50
+  B.Fernandes    MUN  MID     1  0.50   2/6    1/6    +0.50
+
+  PER RIVAL, GW6   (projected: full model, all terms, one unit; picks as of GW5; blanks 0)
+  rival                 their captain    swing  shared  yours  theirs
+  ReturnOfTheDjedi FC   Gibbs-White       -2.0    18.8   34.7    36.7
+  Revelstoke FC         Haaland           +1.0    24.5   29.1    28.1
+  No More Mr. Rice Guy  Haaland           +1.8    29.0   24.5    22.7
+  Skori FC              B.Fernandes       +1.9    10.2   43.3    41.4
+  Bruno Dos Tres        Haaland           +4.2    15.2   38.3    34.1
+  PyroNeniZlocin        Haaland           +7.3    15.2   38.3    31.0
+
+  CAPTAIN COVER, GW6   (MID/FWD in your XI by projection; stake/pt = 2 - EO if captained)
+  candidate      team   proj    EO  capt  stake/pt
+  B.Fernandes    MUN    5.17  0.50   1/6      +1.50
+  Haaland        MCI    5.11  1.50   4/6      +0.50
+  Barry          EVE    4.57  0.00   0/6      +2.00
+  Szoboszlai     LIV    4.30  0.33   0/6      +1.67
+  Groß           BHA    4.29  0.17   0/6      +1.83
+  Wissa          NEW    3.76  0.17   0/6      +1.83
+  the expected value of a captaincy is its projection alone; EO changes the variance
+  of your rank, not the expectation: the field's captain covers, a differential swings.
+
+  gap/pt = net points gained on the average rival per point that player
+  scores. Ownership gap is what transfers change. The captaincy block
+  reflects one past gameweek only; the EO blocks carry it forward.
+
