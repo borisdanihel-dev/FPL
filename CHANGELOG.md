@@ -2576,3 +2576,92 @@ without sign-in. The `data` path is confirmed after the migration.
 
 Report: `worklog/cc_2026-10-17_S1.md`. Verifier: not yet run; it runs after the
 migration.
+
+---
+
+## 2026-10-17/18 — S1 done: data safety (D1); generated data moves to the `data` branch
+
+**Rulings.** `prereg/S1.md` holds them verbatim, each appended before the
+changes it governs:
+- the original (`3318b08`);
+- Amendment 1 (`a2bd8ef`): key patterns, gate tables, `fpl.sql`, the hook,
+  `FPL_DATA_DIR`, `secret-scan.yml`;
+- Amendment 2 (`12fa064`): the pre-check findings, `--restore`, the
+  projection-log gate, runtime fakes, the 9d wording and timing, the migration
+  order, `force_backup`;
+- Amendment 3 (`6fc54b8`): the gitleaks finding, masking, the weekly scan, the
+  runner pin.
+
+**What changed.**
+- `fpl_gate.py`:
+  - integrity check;
+  - missing tables;
+  - new tables only from `EXPECTED_TABLES`;
+  - all 13 sync tables grow-only;
+  - past-deadline forecasts frozen;
+  - the full `fpl.sql` dump;
+  - the staged-secret scan, `.gz`-aware and loud.
+- `fpl_publish.py`: gate, add, scan, commit, then push to `data` with fetch +
+  rebase + push and 3 retries with jitter, never forced.
+- `fpl_prepush.py`: the hook. It allows deletions on master and runs by its
+  full path, because worktrees share hooks.
+- `fpl_nightly.py`:
+  - code and data apart via `FPL_DATA_DIR`;
+  - `.json.gz` exports, byte-stable;
+  - `--restore`;
+  - on one date the `.gz` beats the `.json`.
+- `fpl_sync.py`: logs the API path only.
+- `nightly.yml`:
+  - the `data` checkout;
+  - publish;
+  - the Sunday or forced release backup (keeps 8);
+  - least privilege;
+  - concurrency `nightly-data`;
+  - `runs-on: ubuntu-24.04`.
+- `secret-scan.yml`: gitleaks-action pinned to a full SHA; push, a Sunday
+  04:23 UTC full scan of all branches, and dispatch.
+- `.gitleaksignore`: one exact fingerprint.
+- `tools/migrate_data_branch.py`.
+- `CLAUDE.md`: the data-branch section, the local commands, the 9d timing, the
+  masking rule.
+
+**Measured.**
+- **Tests:** 253 → 308, green in CRLF, LF and against real data (0 skips).
+- **Mutations:** every one red, then green when restored: gate 13, publish 7,
+  pre-push 7, Amendment 2 10; the final verifier's 24.
+- **Rehearsals:** four migration rehearsals against bare origins.
+- **A bug found in rehearsal:** worktrees share the hook, so the
+  toplevel-relative hook path broke every push from the data worktree. Fixed
+  and test-pinned.
+- **Recording path unchanged:** frozen-time logs are byte-identical between
+  the old and new layouts, and match the dispatch's rows (|Δ| = 0).
+
+**Migration, 17 Oct 21:58–21:59 UTC,** after "nightly 2026-10-17" (`26f543a`)
+landed:
+- tag `pre-data-branch` on `26f543a`;
+- code commit `dddcb92`, blob-identical to the pre-checked branch, not a
+  merge;
+- orphan `data` `eeeede6`: 103 files with the same blobs and sha256; all 13
+  table counts identical (`price_history` 25,214); 4,679 log rows;
+  `integrity_check` ok before and after;
+- migration commit `57abbf1`, 103 deletions only.
+
+**Proof dispatch** (run 39073502058, `force_backup` ticked): green.
+- One `data` commit (`e84bee6`), with `fpl.sql` (rebuilds row for row) and the
+  `.json.gz`.
+- Master untouched.
+- 0 duplicate forecast keys, and every past-deadline row identical.
+- Release `backup-2026-10-17` with both files, digests equal to the commit.
+- The `data` raw URLs return HTTP 200 with no sign-in.
+
+**gitleaks.**
+- Push runs green.
+- The full-history scans found one item: `generic-api-key` at
+  `ea7acaa:worklog/verify_S1_pre.md:281`, value `f00d...`. It is the old test's
+  hand-written dummy, quoted by the first pre-check; allowlisted by exact
+  fingerprint (A3).
+- The re-scan was green.
+
+**Verifier:** pre-check 1 FAIL (F1–F3), pre-check 2 PASS, final **PASS**
+(`worklog/verify_S1.md`). Write guard after each: only the verifier's file
+changed. Report: `worklog/cc_2026-10-18_S1.md`.
