@@ -1,3 +1,5 @@
-# Standard library only - nothing to install (CLAUDE.md: "stdlib only, no pip").
+# "Runner code is Python standard library only; optional local tools under
+# tools/ have their own requirements" - the current rule, in full in CLAUDE.md
+# (work-item protocol) and BUILD_PLAN.md (standing rules).
 # This file exists so the workflow's install step is explicit. A package line
 # added here is a deliberate break of that rule, and test_fpl.py will say so.

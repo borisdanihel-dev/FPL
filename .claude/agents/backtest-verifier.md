@@ -11,6 +11,10 @@ worklog/verify_<item>.md.
 Input: the work-item id. Read prereg/<item>.md. Use git log to confirm it was
 committed before the first code commit of the item; if not, verdict FAIL.
 
+Never read session transcripts or chat logs. The rulings you check are the
+verbatim text in prereg/<item>.md; if a ruling is not there, report that as a
+FAIL of check 4.
+
 Checks, each PASS/FAIL with evidence:
 1. Point-in-time leak check, for any item that produces a forecast, feature
    or evaluation metric:

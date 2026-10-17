@@ -36,12 +36,16 @@ It lives in the repo root as `BUILD_PLAN.md`.
 
 ## Part B — Boris: the loop for every step
 
-1. **Start a fresh Claude Code session** and paste: `git pull, then do Step N in BUILD_PLAN.md.`
+1. **Use the current Claude Code session (folder C:\GIT\FPL). Start a fresh one only when it becomes slow or confused; it resumes from worklog/SESSION_STATE.md.** Paste: `git pull, then do Step N in BUILD_PLAN.md.`
 2. **Approve permissions** and wait for the report (`worklog/cc_<date>_<item>.md`) with the verifier verdict.
 3. **Send the report to the chat.** I accept it, reverse parts of it, or send back fixes.
 4. **Start the next step only after that.** Never run two steps at once: they touch the same files.
 
 **Verifier write guard (Claude Code, every verifier run).** After every verifier run, the main session runs `git status` and `git diff`. Any change outside `worklog/verify_<item>.md` voids the verdict: the change is reverted and the verifier is rerun.
+
+**Rulings (Claude Code, every item).** The chat's ruling text for an item is pasted verbatim into `prereg/<item>.md` before any code.
+
+**Verifier launch (Claude Code, every verifier run).** Every verifier launch starts with: "Read .claude/agents/backtest-verifier.md from disk first; where it differs from your loaded instructions, the file on disk governs."
 
 ## Part C — Decision rules in force now (Boris and the chat; the steps below build the tooling)
 
@@ -108,6 +112,10 @@ worklog/verify_<item>.md.
 
 Input: the work-item id. Read prereg/<item>.md. Use git log to confirm it was
 committed before the first code commit of the item; if not, verdict FAIL.
+
+Never read session transcripts or chat logs. The rulings you check are the
+verbatim text in prereg/<item>.md; if a ruling is not there, report that as a
+FAIL of check 4.
 
 Checks, each PASS/FAIL with evidence:
 1. Point-in-time leak check, for any item that produces a forecast, feature
@@ -257,7 +265,7 @@ Item D2. Each fix needs a unit test that fails before the fix and passes after.
    - *Tests:* 7.5 → 7.8 sells for 7.6; equal; falling; +0.1.
    - Ask Boris for the in-app screenshot (A9) and match all 15 players exactly.
 9. **Windows I/O:** open every file with `encoding="utf-8", newline=""`. Test that the CSV contains no `\r`.
-10. **Bench audit respects automatic substitutions:** points that already counted through an auto-sub are not a bench gain (use the picks' `automatic_subs` if the export has them, otherwise apply FPL's auto-sub rules). *Test:* a starter on 0 minutes whose bench player came on shows no gain.
+10. **Bench audit respects automatic substitutions:** points that already counted through an auto-sub are not a bench gain. Data source: store automatic_subs from the picks response fpl_sync already fetches, in fpl.sqlite and the export; apply FPL's auto-sub rules only for gameweeks where it is missing. *Test:* a starter on 0 minutes whose bench player came on shows no gain.
 11. Verifier → report → commit → push.
 
 ## Step 3 — nightly checks, status line and alerts

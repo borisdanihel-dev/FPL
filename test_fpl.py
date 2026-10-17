@@ -3907,6 +3907,12 @@ class NightlyWorkflow(unittest.TestCase):
         self.assertTrue(lines and all(l.startswith("#") for l in lines),
                         "stdlib only: a package line was added to requirements.txt")
 
+    def test_requirements_quote_the_current_rule(self):
+        text = " ".join(l.lstrip("#").strip() for l in self._read("requirements.txt").splitlines())
+        self.assertIn('"Runner code is Python standard library only; optional local tools '
+                      'under tools/ have their own requirements"', text,
+                      "S0c: requirements.txt must quote the current stdlib rule")
+
     def test_ignore_and_attribute_rules_fit_two_writers(self):
         ignore = [l.strip() for l in self._read(".gitignore").splitlines()
                   if l.strip() and not l.startswith("#")]
@@ -4370,6 +4376,36 @@ class BenchAudit(unittest.TestCase):
         out = run("bench", d)
         for line in (l for l in out.splitlines() if "perfect-XI gain" in l):
             self.assertIn("keeper -", line)
+
+
+class VerifierAgent(unittest.TestCase):
+    """S0c: BUILD_PLAN.md states the agent's exact content, so its fenced
+    "Verifier agent" block and .claude/agents/backtest-verifier.md must be
+    byte-identical. Compared as git stores them (LF): `* text=auto` lets a
+    checkout write either file with CRLF, which is not a content change."""
+
+    @staticmethod
+    def _bytes(*parts):
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, *parts), "rb") as fh:
+            return fh.read().replace(b"\r\n", b"\n")
+
+    def test_the_plan_block_is_the_agent_file(self):
+        lines = self._bytes("BUILD_PLAN.md").split(b"\n")
+        head = lines.index(b"## Verifier agent (created in Step 0)")
+        start = lines.index(b"```markdown", head) + 1
+        end = lines.index(b"```", start)
+        block = b"\n".join(lines[start:end]) + b"\n"
+        agent = self._bytes(".claude", "agents", "backtest-verifier.md")
+        self.assertGreater(len(agent), 1000)
+        self.assertEqual(block, agent,
+                         "the verifier block in BUILD_PLAN.md and the agent file differ")
+
+    def test_the_agent_reads_rulings_from_the_prereg_only(self):
+        agent = " ".join(self._bytes(".claude", "agents", "backtest-verifier.md").decode().split())
+        self.assertIn("Never read session transcripts or chat logs. The rulings you check are "
+                      "the verbatim text in prereg/<item>.md; if a ruling is not there, report "
+                      "that as a FAIL of check 4.", agent)
 
 
 class Hygiene(unittest.TestCase):
