@@ -9,7 +9,7 @@ file, then waits for the next instruction.
   Waiting for Boris.
   - Data lives on `data`; the local worktree is `C:\GIT\FPL-data`. The local
     command pattern is in `CLAUDE.md`, and starts with
-    `python C:\GIT\FPLpl_nightly.py --restore`.
+    `python C:\GIT\FPL\fpl_nightly.py --restore`.
   - The pre-push hook is installed in `C:\GIT\FPL`.
   - The local branch `scratch/s1-wip` (`b738e6d`, never pushed) remains;
     see decision 5.
