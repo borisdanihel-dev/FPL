@@ -25,7 +25,7 @@ It lives in the repo root as `BUILD_PLAN.md`.
 
 - [x] **A6.** Odds API key added as repository secret `ODDS_API_KEY` (17 Oct).
 - [x] **A2.** `BUILD_PLAN.md` is in the repo root.
-- [ ] **A1.** On the PC, open Claude Code in `C:\Users\Boris\Documents\FPL`.
+- [ ] **A1.** On the PC, open Claude Code in `C:\GIT\FPL`.
 - [ ] **A3.** Paste the Step 0 line and approve the permission prompts.
 - [ ] **A4.** After Step 0, close Claude Code and start a fresh session, so the verifier agent loads.
 - [ ] **A5.** Send the Step 0 report to the chat.
@@ -180,22 +180,22 @@ Item D1. Acceptance tests are listed per point.
 4. **Data branch.** Create an orphan branch `data`.
    - **What moves where:**
      - On `data`, all generated data: `fpl.sqlite`, `prices.sql`, `exports/` (new exports gzipped as `.json.gz`), `reports/`, `logs/`, `projection_log.csv` and the watch files.
-     - On `main`: code, docs, `watchlist.txt`, `prereg/`, `worklog/` and the changelog.
+     - On `master`: code, docs, `watchlist.txt`, `prereg/`, `worklog/` and the changelog.
    - **Migration:**
      - The first `data` commit holds the current data files.
-     - One commit on `main` then removes them (history stays).
-     - Add the data paths to `main`'s `.gitignore`.
+     - One commit on `master` then removes them (history stays).
+     - Add the data paths to `master`'s `.gitignore`.
    - **Runner:**
-     - Check out `main` for code and `data` into `./data`.
+     - Check out `master` for code and `data` into `./data`.
      - All scripts read and write through one `DATA_DIR` setting.
      - Commit and push to `data` only.
-   - **Local:** `git worktree add ../FPL-data data`, documented in `CLAUDE.md`; local `DATA_DIR` points there.
-   - **Prove it:** one manual dispatch writes only to `data`, `main` is unchanged, and the tests are green. Put the new raw URL pattern in the report, e.g. `https://raw.githubusercontent.com/borisdanihel-dev/FPL/data/reports/watch_<date>.txt`.
+   - **Local:** `git worktree add C:\GIT\FPL-data data`, documented in `CLAUDE.md`; local `DATA_DIR` points there.
+   - **Prove it:** one manual dispatch writes only to `data`, `master` is unchanged, and the tests are green. Put the new raw URL pattern in the report, e.g. `https://raw.githubusercontent.com/borisdanihel-dev/FPL/data/reports/watch_<date>.txt`.
 5. **Push safety:**
    - `concurrency: {group: nightly-data, cancel-in-progress: false}`;
    - push = fetch + rebase + push, with up to 3 retries and jitter;
    - `.gitattributes`: `*.sqlite binary`;
-   - a pre-push hook (with an install script) that rejects commits to `main` touching data paths.
+   - a pre-push hook (with an install script) that rejects commits to `master` touching data paths.
 6. **Secret hygiene:**
    - Fail the commit if the key value, or any `apiKey=` string, appears in staged files.
    - Never log full request URLs.

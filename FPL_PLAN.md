@@ -8,7 +8,7 @@ fixtures, so re-check inside the app on the day.
 
 ## Commands
 
-Run from `C:\Users\Boris\Documents\FPL`
+Run from `C:\GIT\FPL`
 
 | Command | When |
 |---|---|

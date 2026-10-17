@@ -2,7 +2,7 @@
 
 Owner: Boris (FPL entry 3073318, "1. FC Kiripolcz"), mini-league 455565
 ("VAR Wars: Revenge of the Ref", 7 teams). Season 2026/27. Working dir on
-Windows: `C:\Users\Boris\Documents\FPL`. Python 3.14. Prague timezone (CEST/CET).
+Windows: `C:\GIT\FPL`. Python 3.14. Prague timezone (CEST/CET).
 
 ## What this project is
 

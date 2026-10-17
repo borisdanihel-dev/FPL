@@ -3,8 +3,12 @@
 A local Fantasy Premier League decision tool for Boris (entry 3073318, "1. FC
 Kiripolcz", 7-man league 455565, season 2026/27). `fpl_sync.py` pulls the FPL
 API into `fpl.sqlite` and exports `fpl_export_gwN.json`; `fpl_edge.py` reports
-and records point-in-time forecasts to `projection_log.csv`; `fpl_run.bat` runs
-nightly at 23:55 (tests → sync → record → report → archive/backup/ship).
+and records point-in-time forecasts to `projection_log.csv`. The repo lives at
+`C:\GIT\FPL` (github.com/borisdanihel-dev/FPL, branch `master`). The only
+nightly writer is the GitHub Actions workflow `nightly` (21:40 UTC: tests →
+sync → record → watch file → report, committed back). `fpl_run.bat` and the
+`FPL_SYnc` scheduled task are retired and must not be run. Do `git pull`
+before any local session.
 Windows, Python 3.14. The measured findings are the product; the code serves them.
 
 ## Standing rules
@@ -12,8 +16,8 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
 - **Never fabricate.** A missing input is reported and the work stops; nothing
   is substituted. Every correlation is printed with its interval.
 - **Point-in-time.** Forecasts are recorded before the deadline or not at all.
-  Never open `projection_log.csv` in Excel — it locks the file; open the copy
-  in `G:\My Drive\FPL\`.
+  Never open `projection_log.csv` in Excel — it locks the file; read it on
+  GitHub, or copy it first.
 - **Lockdown guard.** A gameweek is graded only when its event has
   `data_checked = 1` and every fixture has `finished = 1`. Provisional grades
   are never recorded. Run `p1_eval.py` only after `--section calibration`
