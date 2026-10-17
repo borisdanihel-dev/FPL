@@ -22,11 +22,16 @@ file, then waits for the next instruction.
     - Release `backup-2026-10-17` holds 2 assets.
     - Both `data` raw URLs return HTTP 200 without sign-in.
   - **Secret scan:** the push-triggered runs were green. Both full-history
-    dispatches (runs 39073872326 and 39073916594) failed with "Leaks
-    detected". Their findings are in the job summaries and the SARIF
-    artifacts, which need a signed-in user. **Waiting for Boris** to share the
-    job summaries (the action redacts values), and to confirm which branch
-    each run scanned.
+    dispatches (runs 39073872326 and 39073916594) failed, each with the **same
+    single finding**:
+    - `generic-api-key` in `ea7acaa`, `worklog/verify_S1_pre.md` line 281;
+    - this is the first pre-check's quoted dummy test fixture (O8), not a key.
+  - **Both runs scanned `master` and `data` together.** gitleaks 8.24.3 (the
+    pinned action's version) runs `git log --full-history --all` when given
+    no log options, and `fetch-depth: 0` fetches every branch. `ea7acaa` is
+    not in `data`, so **`data` is clean**. The `branch` input changes only
+    the checkout, not the coverage.
+  - **Stopped by 9e:** waiting for the chat's ruling on that finding.
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE.md`). Before it: `eb3ef1e`.
 - **Open decisions for the chat:**
@@ -34,10 +39,17 @@ file, then waits for the next instruction.
      and the nightly's pushes start no workflow. Each data commit is checked
      by `fpl_gate.py --secrets` before it is made; a full gitleaks scan of
      `data` is a manual run with branch = data.
-  2. The first pre-check's report (`worklog/verify_S1_pre.md`, in history
-     since `ea7acaa`) quotes the old dummy test fixtures, which are key-like
-     strings. Accept them, allowlist them for gitleaks, or redact the current
-     copy (history stays)?
+  2. The gitleaks finding (O8, above). Options:
+     - a `.gitleaksignore` entry for exactly that commit, file, rule and line
+       (recommended);
+     - accept red full-history scans;
+     - redact the current copy of the report (history keeps the string).
+  3. Drop the now-redundant `branch` input of secret-scan.yml, or keep it?
+  4. Runner warnings in tonight's runs:
+     - `actions/checkout@v4` targets Node 20 and is being forced onto Node 24
+       (`setup-python@v5` too);
+     - `ubuntu-latest` moves to Ubuntu 26 from 19 Oct.
+     Bump the action versions as a follow-up item?
 - **Next item:** finish S1. Then Step 2 (D2), when Boris says so.
 - **Runner freeze window (9d):** not active. Runner-path changes are never
   pushed between 21:00 UTC and the end of that night's nightly run, nor within
