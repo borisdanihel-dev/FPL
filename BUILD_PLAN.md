@@ -12,7 +12,7 @@ It lives in the repo root as `BUILD_PLAN.md`.
 
 ## Standing rules for Claude Code (every step)
 
-- **One step per session.** Stop after the step's report and do not start the next step until Boris says so.
+- **One item at a time: stop after each item is pushed and wait for Boris (Session operating mode a).**
 - **Runner code is Python standard library only.** Optional local tools (e.g. a MILP solver) live under `tools/`, with their own requirements file, and the nightly runner never imports them.
 - **Never edit frozen models in place.** A new or changed model is recorded to the projection log under a **new source name**. It replaces nothing until its pre-registered test passes and Boris accepts it in chat.
 - **Work-item protocol** (set up in Step 0): prereg first → implement → tests → `backtest-verifier` → report in `worklog/` → changelog → commit and push. A FAIL verdict means the step is not done.

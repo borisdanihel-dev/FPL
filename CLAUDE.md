@@ -32,8 +32,7 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   measured in `CHANGELOG.md`, not just what was done.
 
 ## Work-item protocol (BUILD_PLAN.md, from Step 0)
-- **One step per session.** Stop after the step's report; do not start the
-  next step until Boris says so.
+- **One item at a time: stop after each item is pushed and wait for Boris (Session operating mode a).**
 - **Runner code is Python standard library only.** Optional local tools (e.g.
   a MILP solver) live under `tools/`, with their own requirements file, and
   the nightly runner never imports them.
@@ -65,7 +64,7 @@ b. Each item: git pull; tree clean; the newest logs/run_<date>.log is from the l
 
 c. Text Boris pastes that starts with "RULING <item>:" is the chat's ruling. Paste it verbatim into prereg/<item>.md. Do not paraphrase or extend it.
 
-d. Runner freeze: changes to the runner path (.github/workflows, fpl_nightly.py, fpl_sync.py, the record step) are pushed before 23:00 Prague and never within 30 hours before the next FPL deadline (deadline_time in the newest export). If an item would land in that window, stop and say so.
+d. Runner freeze: changes to the runner path (.github/workflows, fpl_nightly.py, fpl_sync.py, the record step) are pushed before 23:00 Prague and never within 30 hours before the next FPL deadline (events.deadline_time in fpl.sqlite). If an item would land in that window, stop and say so.
 
 e. Stop and ask, changing nothing further, when: the plan and the code disagree; a test cannot be shown red before the fix; the verifier FAILs or WARNs; a decision is not covered by the plan or a ruling; anything would touch secrets, force-push, rewrite history, or delete anything except your own scratch branches.
 

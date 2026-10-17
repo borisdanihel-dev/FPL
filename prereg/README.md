@@ -19,5 +19,7 @@ A descriptive or data-pipeline item has no pass/fail metric: its prereg lists
 the acceptance tests instead, and the verifier runs checks 1, 2, 5, 6 and 7
 plus those tests.
 
+A ruling-only prereg is acceptable for setup and docs items if it lists acceptance tests. Any item that produces a forecast, feature or evaluation metric fills every template row.
+
 The full protocol is in `BUILD_PLAN.md` ("Standing rules") and `CLAUDE.md`
 ("Work-item protocol").
