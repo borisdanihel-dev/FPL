@@ -2514,3 +2514,65 @@ within 1e-9 of the nightly's committed rows.
 the read-from-disk sentence; no WARN. Write guard: `git status` showed only
 `?? worklog/verify_S0c.md`, `git diff` empty, state snapshot identical.
 Report: `worklog/cc_2026-10-17_S0c.md`.
+
+---
+
+## 2026-10-17 — S1: Part 0 done; D1 built and rehearsed, stopped before the migration (ruling point 8)
+
+`3318b08` prereg (ruling verbatim, every template row filled), `53383fd` Part 0.
+
+**Part 0 (docs):**
+- 9d's deadline source is now `events.deadline_time` in `fpl.sqlite`.
+- "One step per session" is replaced in `CLAUDE.md` and in the `BUILD_PLAN.md`
+  standing rules by "One item at a time: stop after each item is pushed and
+  wait for Boris (Session operating mode a)." The whole rule is replaced,
+  including its old second sentence.
+- `prereg/README.md` gains the ruling-only prereg rule.
+
+**D1, not pushed.** It sits on the local branch `scratch/s1-wip` (`ca8821c`).
+`master`, the workflow and the nightly are unchanged. Why it stopped: the proof
+dispatch needs Boris (no `gh` here), gitleaks needs a download permission, and
+two decisions were not covered by the plan, all before 23:00 Prague.
+
+**Built:**
+- `fpl_gate.py`: the integrity gate, the `prices.sql` dump and the
+  staged-secret scan.
+- `fpl_publish.py`: commits to `data`, with fetch + rebase + push and 3
+  retries with jitter, never forced.
+- `fpl_prepush.py`: the hook.
+- `fpl_nightly.py`: code and data apart (`FPL_DATA_DIR`) and `.json.gz`
+  exports.
+- `fpl_sync.py`: logs the API path, never the full request URL.
+- The workflow: the `data` checkout, the publish step, the Sunday backup to
+  releases with the last 8 kept, `permissions: {}` with `contents: write` on
+  the one job, and concurrency group `nightly-data`.
+- `master`'s `.gitignore`.
+- `tools/migrate_data_branch.py`.
+
+**Measured:**
+- **Tests:** 253 → 281 on the branch, green.
+- **Mutations:** each one red, then green when restored. Gate 9/9 (one
+  needed a new test: a database that reads fine but fails `integrity_check`,
+  made by pointing an index at the wrong column). Pre-push 6/6, publish 7/7,
+  sync URL logging 1/1.
+- **Rehearsal migration from `53383fd`:** 99 files moved with identical git
+  blobs, identical sha256 of the stored bytes and identical sha256 of the
+  checked-out bytes. 13 tables with identical row counts (`price_history`
+  24,547). `projection_log.csv` 3,624 rows. `integrity_check` ok before and
+  after.
+- **Rehearsal nightly:** code and data apart, live sync, exit 0 in 47 s, 280
+  tests with 0 skips.
+- **Rehearsal publish:** `price_history` 24,547 → 25,214 rows (+667, one
+  night). A single commit of 7 files went to a scratch remote. Nothing outside
+  the data folder changed.
+- **Full dump:** 2.0 MB, about 34,000 lines, 0.08 s.
+
+**Ruling point 5:** `--record` replaces by (source, gameweek)
+(`test_rerun_replaces_rather_than_duplicates`), so a same-day dispatch adds no
+rows.
+
+**Ruling point 7:** the raw URL on today's path (`master`) returned HTTP 200
+without sign-in. The `data` path is confirmed after the migration.
+
+Report: `worklog/cc_2026-10-17_S1.md`. Verifier: not yet run; it runs after the
+migration.
