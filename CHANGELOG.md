@@ -2327,3 +2327,51 @@ metric; the flags at 8.0 and 8.01, at 2 and 3 not `a`, a fifteen that blanks
 and three doubtful starters counted exactly; the table in the section, in the watch file and
 in the nightly report written by `main`. 21 mutations each red — own ignored, no bottomup fallback, five weeks instead of six, the club limit ignored, the bench's clubs not counted, the bench's cost not deducted, club-free pruning, one formation only, branching on one member of the club, the dearest bench, injured players admitted, the minutes gate dropped, the gap's sign flipped, a gap of exactly 8 flagged, threshold 9, counting players who are status a, needing four not three, our XI from our worst players, the section left out of the nightly report, the watch block dropped. Three survived the first round - nothing put an attractive player outside the gate in front of the solver, and nothing pinned the exact count - and the gate test and an exact count were added. GW7 regenerated from the same export under both codes: 1,071 of 1,071 rows identical on source, event, player and predicted; the
 nightly report is byte-identical apart from the new 1,808-byte section.
+
+---
+
+## 2026-10-17 — Step 0 (item S0): work-item protocol, verifier, small fixes (`037b7dd`, `5828d1e`)
+
+Before Step 0, one docs-only commit (`07d10a1`, "docs: repo moved to
+C:\GIT\FPL; branch is master"): the repo's path in `BUILD_PLAN.md` (A1),
+`FPL_PLAN.md` and `CLAUDE_fable chat.md`; `main` → `master` in Step 1 and the
+worktree at `C:\GIT\FPL-data`; `CLAUDE.md` names GitHub Actions `nightly`
+(21:40 UTC) as the only nightly writer, `fpl_run.bat` and the `FPL_SYnc` task
+as retired, `git pull` before any local session, and "read it on GitHub, or
+copy it first" for `projection_log.csv`. `fpl_ship.py` and `fpl_run.bat` are
+unchanged: their `G:\My Drive` path matters only for the retired local batch.
+246 tests before and after.
+
+**Protocol (`037b7dd`).** `.claude/agents/backtest-verifier.md`, byte-identical
+to the plan's block; `prereg/README.md` and `prereg/TEMPLATE.md` (the fields
+Step 0 lists, plus acceptance tests for descriptive and data-pipeline items);
+`worklog/`; a "Work-item protocol" section in `CLAUDE.md` with the plan's
+standing rules. `prereg/S0.md` was committed with them, before any S0 code.
+
+**(a) watchlist (`5828d1e`).** E.Le Fée (542) out; João Pedro in — id **165**
+(CHE, FWD, £7.8m), looked up by web_name and team in the 16 Oct export — in
+the same place; De Cuyper (115, BHA, DEF) added at the end. The test that pins
+the repository's watchlist pins the new list.
+
+**(b) bench audit (`5828d1e`).** The "perfect-XI gain" counted only the best
+bench outfielder for the worst XI outfielder; it now adds the keeper swap —
+the bench keeper for the starting keeper, when he scored more — and prints it
+(`keeper <name> +n`; `-` when a squad has no bench keeper). GW6, 16 Oct
+export, our line was `perfect-XI gain +5` and is now:
+
+```
+>> 1. FC Kiripolcz        bench= 13  best benched Rudoni      ( 7)  worst XI E.Le Fée    ( 2)  keeper Verbruggen  +7   perfect-XI gain +12
+```
+
+Verified: 4 tests, suite **246 → 250**, all four red before the fix and
+green after; 6 mutations each red — the keeper swap left out of the total, a
+worse bench keeper subtracting, the starting keeper named, the keeper taken
+off the bench, E.Le Fée back in the watchlist, De Cuyper dropped. Recording
+path unchanged: 1,050 of 1,050 GW7 rows identical under both codes (my run, deadline guard moved for both); the verifier, with the clock frozen at the 16 Oct nightly's own made_at, regenerated a log byte-identical to the committed projection_log.csv under both codes — GW7's deadline (10:00 UTC today) had passed, so
+the deadline guard was moved identically for both codes to compare the
+computation.
+
+**Verifier smoke test (Step 0.6).** On a scratch branch, `prereg/SMOKE.md`
+then `toy_eval.py`, which ranks gameweek g by gameweek g's own points (mean
+per-gameweek Spearman 1.000000 over GW2–38). The verifier (run as a general-purpose agent following `.claude/agents/backtest-verifier.md`; the named agent loads only in a session started in `C:\GIT\FPL`) gave **FAIL, check 1 failing**, as Step 0.6 requires — feature and target the same object, all 29,065 feature rows after deadline(g) — and also failed checks 4 and 6 (no bootstrap, no tests). Its leak probe fell only to 0.708, not toward zero: whole-population points are autocorrelated, so the probe as worded cannot confirm itself on that filter. `worklog/verify_SMOKE.md`. The branch was
+deleted unmerged. The verifier on S0 itself: **PASS** — prereg order, checks 1, 2, 5, 6, 7 and the six acceptance tests (`worklog/verify_S0.md`); it notes that the bench audit ignores automatic substitutions (pre-existing, not hit in GW6). Report: `worklog/cc_2026-10-17_S0.md`.
