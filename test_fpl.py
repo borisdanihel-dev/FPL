@@ -14,6 +14,7 @@ import json
 import math
 import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -26,6 +27,9 @@ import p1_eval as P1                                            # noqa: E402
 import fpl_hist as H                                            # noqa: E402
 import fpl_ship as SHIP                                         # noqa: E402
 import fpl_nightly as N                                         # noqa: E402
+import fpl_gate as G                                            # noqa: E402
+import fpl_prepush as PP                                        # noqa: E402
+import fpl_publish as PUB                                       # noqa: E402
 
 TEAMS = ["ARS", "BHA", "CHE", "CRY", "HUL", "LIV", "MCI", "MUN", "NEW", "NFO"]
 ENTRIES = ["My Team", "Rival A", "Rival B", "Rival C"]
@@ -864,8 +868,9 @@ class ExportSchema(unittest.TestCase):
             self.assertIn(k, d)
 
     def test_real_export_if_present(self):
-        """If a real export is sitting here, check it against the same contract."""
-        path = E.newest_export(".")
+        """If a real export is sitting here (or in FPL_DATA_DIR, as on the
+        runner), check it against the same contract."""
+        path = E.newest_export(os.environ.get("FPL_DATA_DIR") or ".")
         if not path:
             self.skipTest("no real export in this folder")
         with open(path, encoding="utf-8") as f:
@@ -2595,7 +2600,7 @@ class Budget(unittest.TestCase):
         and in particular far smaller than the bank, which value + bank would
         count twice."""
         here = os.path.dirname(os.path.abspath(__file__))
-        path = E.newest_export(here)
+        path = E.newest_export(os.environ.get("FPL_DATA_DIR") or here)
         if not path:
             self.skipTest("no real export in this folder")
         d = E.load(path)
@@ -3577,6 +3582,23 @@ class SyncNetwork(unittest.TestCase):
         self.assertEqual(ns["FAILED"], [self.API + "fixtures/"])
         self.assertIn("! failed", buf.getvalue())
 
+    def test_the_log_names_the_path_never_the_full_url(self):
+        """D1 (Step 1.6): never log a full request URL - from Step 5 one may
+        carry a key."""
+        ns = self._ns()
+
+        def opener(req, timeout=30):
+            raise OSError("HTTP Error 503")
+
+        ns["_urlopen"] = opener
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ns["get"]("entry/3073318/event/6/picks/")
+        out = buf.getvalue()
+        self.assertIn("retry 1/3 in 2s - entry/3073318/event/6/picks/: HTTP Error 503", out)
+        self.assertIn("! failed entry/3073318/event/6/picks/", out)
+        self.assertNotIn("http", out.lower().replace("http error", ""))
+
     def _main(self, fixtures_fail):
         ns = self._ns(full=True)
         boot = {"teams": [], "elements": [], "events": [
@@ -3666,6 +3688,12 @@ class NightlyRunner(unittest.TestCase):
         with open(path, encoding="utf-8") as fh:
             return fh.read()
 
+    @staticmethod
+    def _gunzip(path):
+        import gzip
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            return fh.read()
+
     def _world(self, mode="clean", tests=0, sync=0, export=True, edge=None):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, True)
@@ -3704,8 +3732,9 @@ class NightlyRunner(unittest.TestCase):
         self.assertEqual(order, sorted(order), "the steps ran out of order")
         self.assertIn("sync ran", log)
         self.assertIn("EDGE --diff --out " + os.path.join("reports", f"fpl_{self.STAMP}.txt"), log)
-        dated = os.path.join(tmp, "exports", f"fpl_export_gw3_{self.STAMP}.json")
-        self.assertEqual(self._get(dated), "{}", "tonight's export was not kept under its date")
+        dated = os.path.join(tmp, "exports", f"fpl_export_gw3_{self.STAMP}.json.gz")
+        self.assertEqual(self._gunzip(dated), "{}", "tonight's export was not kept under its date")
+        self.assertFalse(os.path.exists(dated[:-3]), "new exports are archived gzipped only")
         self.assertTrue(log[-1].startswith("Done"), log[-3:])
         self.assertEqual(log, console, "the console and the committed log differ")
         for local_only in ("archive", "backup", "outbox"):
@@ -3788,19 +3817,170 @@ class NightlyRunner(unittest.TestCase):
                            ("fpl_export_gw5_2026-10-04.json", "new five"),
                            ("fpl_export_gw5.json", "not dated"), ("notes.txt", "x")):
             self._put(os.path.join(tmp, "exports", name), body)
+        src = os.path.join(tmp, "src")
+        os.makedirs(src)
+        self._put(os.path.join(src, "fpl_export_gw6.json"), "six gz")
+        N.archive_export_gz(os.path.join(src, "fpl_export_gw6.json"), os.path.join(tmp, "exports"),
+                            "2026-10-04")
         code, log, _ = self._run(tmp)
         self.assertEqual(code, 0, log)
         self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw4.json")), "four")
         self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw5.json")), "new five")
+        self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw6.json")), "six gz",
+                         "a gzipped dated export was not restored")
         self.assertLess(
             log.index("RESTORED     fpl_export_gw5_2026-10-04.json -> fpl_export_gw5.json"),
             log.index("running tests ..."), "the working exports must be back before any step")
-        self.assertEqual(self._get(os.path.join(tmp, "exports", f"fpl_export_gw5_{self.STAMP}.json")),
-                         "new five")
+        self.assertEqual(self._gunzip(os.path.join(tmp, "exports", f"fpl_export_gw6_{self.STAMP}.json.gz")),
+                         "six gz")
         self._put(os.path.join(tmp, "fpl_export_gw5.json"), "synced tonight")
         self.assertEqual(N.restore_exports(tmp, lambda line: None), [])
         self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw5.json")), "synced tonight",
                          "a working export already in place was overwritten")
+
+    def test_code_and_data_live_apart(self):
+        code_dir = self._world(export=False)
+        self._put(os.path.join(code_dir, "watchlist.txt"), "109\n")
+        data = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, data, True)
+        self._put(os.path.join(data, "fpl_export_gw3.json"), "{}")
+        self._put(os.path.join(data, "MODE"), "clean")
+        code = N.nightly(root=code_dir, data=data, stamp=self.STAMP, echo=lambda line: None)
+        log = self._get(os.path.join(data, "logs", f"run_{self.STAMP}.log"))
+        self.assertEqual(code, 0, log)
+        self.assertIn(f"data dir: {os.path.abspath(data)}", log)
+        for d in ("logs", "reports", "exports"):
+            self.assertFalse(os.path.exists(os.path.join(code_dir, d)), f"{d}/ was written next to the code")
+        self.assertEqual(self._get(os.path.join(data, "reports", f"watch_{self.STAMP}.txt")), "WATCH STUB\n")
+        self.assertEqual(self._gunzip(os.path.join(data, "exports", f"fpl_export_gw3_{self.STAMP}.json.gz")),
+                         "{}")
+        self.assertEqual(sorted(os.listdir(code_dir)),
+                         ["MODE", "fpl_edge.py", "fpl_sync.py", "test_fpl.py", "watchlist.txt"])
+
+    def test_the_data_dir_comes_from_fpl_data_dir(self):
+        seen, real = [], N.nightly
+        N.nightly = lambda **k: seen.append(k) or 0
+        old = os.environ.get("FPL_DATA_DIR")
+        try:
+            for value in ("/srv/data", ""):
+                os.environ["FPL_DATA_DIR"] = value
+                with self.assertRaises(SystemExit):
+                    N.main([])
+        finally:
+            N.nightly = real
+            if old is None:
+                os.environ.pop("FPL_DATA_DIR", None)
+            else:
+                os.environ["FPL_DATA_DIR"] = old
+        here = os.path.dirname(os.path.abspath(N.__file__))
+        self.assertEqual(seen, [{"root": here, "data": "/srv/data"}, {"root": here, "data": None}])
+
+    def _data_repo(self):
+        """A data folder as `git worktree add ... data` gives it: the data
+        branch's .gitignore, dated exports committed, no working export."""
+        data = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, data, True)
+        git = lambda *a: subprocess.run(["git", "-C", data, "-c", "user.name=t", "-c", "user.email=t@t",
+                                         "-c", "core.autocrlf=false", *a], check=True,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
+        git("init", "-q")
+        self._put(os.path.join(data, ".gitignore"), "/fpl_export_gw*.json\n")
+        os.makedirs(os.path.join(data, "exports"))
+        self._put(os.path.join(data, "exports", "fpl_export_gw5_2026-10-01.json"), "old five")
+        self._put(os.path.join(data, "exports", "fpl_export_gw6_2026-10-04.json"), "six")
+        src = os.path.join(data, "src")
+        os.makedirs(src)
+        self._put(os.path.join(src, "fpl_export_gw5.json"), "new five")
+        N.archive_export_gz(os.path.join(src, "fpl_export_gw5.json"), os.path.join(data, "exports"),
+                            "2026-10-04")
+        shutil.rmtree(src)
+        git("add", "-A")
+        git("commit", "-q", "-m", "data")
+        return data, git
+
+    def test_restore_writes_only_the_working_exports_and_commits_nothing(self):
+        """S1 amendment 2, point 2: --restore reuses the nightly's restore step."""
+        data, git = self._data_repo()
+        code_dir = self._world(export=False)
+        head, before = git("rev-parse", "HEAD").stdout, set(os.listdir(data))
+        lines = []
+        self.assertEqual(N.restore_only(data, code_dir, lines.append), 0, lines)
+        self.assertEqual(self._get(os.path.join(data, "fpl_export_gw5.json")), "new five")
+        self.assertEqual(self._get(os.path.join(data, "fpl_export_gw6.json")), "six")
+        self.assertEqual(set(os.listdir(data)) - before, {"fpl_export_gw5.json", "fpl_export_gw6.json"})
+        self.assertEqual(git("rev-parse", "HEAD").stdout, head, "--restore committed")
+        self.assertEqual(git("status", "--porcelain").stdout, "", "--restore left a tracked change")
+        self.assertEqual(sorted(os.listdir(code_dir)), ["MODE", "fpl_edge.py", "fpl_sync.py", "test_fpl.py"])
+        self.assertTrue(lines[-1].startswith("RESTORE OK   2 working export(s)"), lines)
+
+    def test_restore_replaces_a_stale_working_export_and_then_does_nothing(self):
+        data, _ = self._data_repo()
+        code_dir = self._world(export=False)
+        self._put(os.path.join(data, "fpl_export_gw5.json"), "yesterday")
+        lines = []
+        self.assertEqual(N.restore_only(data, code_dir, lines.append), 0)
+        self.assertEqual(self._get(os.path.join(data, "fpl_export_gw5.json")), "new five")
+        lines.clear()
+        self.assertEqual(N.restore_only(data, code_dir, lines.append), 0)
+        self.assertEqual(lines, [f"RESTORE OK   0 working export(s) written in {os.path.abspath(data)}; "
+                                 f"the others were already current"])
+
+    def test_restore_refuses_the_code_folder_and_a_folder_without_exports(self):
+        code_dir = self._world(export=False)
+        lines = []
+        self.assertEqual(N.restore_only(code_dir, code_dir, lines.append), 1)
+        self.assertIn("is the code folder", lines[-1])
+        empty = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, empty, True)
+        self.assertEqual(N.restore_only(empty, code_dir, lines.append), 1)
+        self.assertIn("RESTORE FAILED: no dated exports", lines[-1])
+
+    def test_restore_takes_fpl_data_dir_else_the_current_folder(self):
+        seen, real = [], N.restore_only
+        N.restore_only = lambda data, code, say=print: seen.append((data, code)) or 0
+        old = os.environ.get("FPL_DATA_DIR")
+        try:
+            for value in ("/srv/data", ""):
+                os.environ["FPL_DATA_DIR"] = value
+                with self.assertRaises(SystemExit):
+                    N.main(["--restore"])
+        finally:
+            N.restore_only = real
+            if old is None:
+                os.environ.pop("FPL_DATA_DIR", None)
+            else:
+                os.environ["FPL_DATA_DIR"] = old
+        here = os.path.dirname(os.path.abspath(N.__file__))
+        self.assertEqual(seen, [("/srv/data", here), (os.getcwd(), here)])
+
+    def test_on_one_date_the_gzipped_export_wins(self):
+        """Second pre-check O2: an old-layout .json and a new-layout .json.gz of
+        one gameweek on one UTC date (the night of the migration): the .gz is
+        the later run, whatever order the folder lists them in."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.makedirs(os.path.join(tmp, "exports"))
+        self._put(os.path.join(tmp, "exports", "fpl_export_gw7_2026-10-17.json"), "old layout")
+        src = os.path.join(tmp, "src")
+        os.makedirs(src)
+        self._put(os.path.join(src, "fpl_export_gw7.json"), "new layout")
+        N.archive_export_gz(os.path.join(src, "fpl_export_gw7.json"), os.path.join(tmp, "exports"),
+                            "2026-10-17")
+        N.restore_exports(tmp, lambda line: None)
+        self.assertEqual(self._get(os.path.join(tmp, "fpl_export_gw7.json")), "new layout")
+
+    def test_the_gzipped_archive_is_byte_stable(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        self._put(os.path.join(tmp, "fpl_export_gw7.json"), '{"x": "Groß"}')
+        a = N.archive_export_gz(os.path.join(tmp, "fpl_export_gw7.json"), os.path.join(tmp, "a"), "s")
+        b = N.archive_export_gz(os.path.join(tmp, "fpl_export_gw7.json"), os.path.join(tmp, "b"), "s")
+        with open(a, "rb") as fa, open(b, "rb") as fb:
+            ga = fa.read()
+            self.assertEqual(ga, fb.read(), "the same export gave different bytes")
+        self.assertEqual(ga[3], 0, "the gzip header carries a file name or other flags")
+        self.assertEqual(ga[4:8], b"\0\0\0\0", "the gzip header carries a time")
+        self.assertEqual(self._gunzip(a), '{"x": "Groß"}')
 
     def test_no_export_anywhere_fails_the_archive(self):
         code, log, _ = self._run(self._world(export=False))
@@ -3890,17 +4070,62 @@ class NightlyWorkflow(unittest.TestCase):
         for foreign in ("\\", "My Drive", "outbox", "fpl_ship", "fpl_run.bat", "secrets."):
             self.assertNotIn(foreign, code, f"{foreign!r} has no place on the runner")
 
-    def test_outputs_are_committed_back_even_from_a_red_run(self):
+    def test_code_from_master_data_from_the_data_branch(self):
+        """D1 (Step 1.4): master checked out for code, data into ./data, and
+        the one DATA_DIR setting pointing there for the run."""
         y = self._read(".github", "workflows", "nightly.yml")
-        self.assertIn("contents: write", y)
-        commit = y[y.index("Commit outputs back"):]
+        self.assertIn("        with:\n          ref: data\n          path: data\n", y)
+        self.assertIn("          FPL_DATA_DIR: data\n        run: python fpl_nightly.py", y)
+        self.assertLess(y.index("path: data"), y.index("run: python fpl_nightly.py"))
+
+    def test_outputs_go_to_the_data_branch_even_from_a_red_run(self):
+        """D1 (Step 1.1, 1.5): the run commits and pushes only through
+        fpl_publish.py - the gate, the secret scan, fetch + rebase + push."""
+        y = self._read(".github", "workflows", "nightly.yml")
+        commit = y[y.index("name: Commit outputs to the data branch"):y.index("name: Weekly backup")]
         self.assertIn("if: always()", commit)
-        add = next(l for l in commit.splitlines() if l.strip().startswith("git add "))
-        self.assertEqual(set(add.split()[2:]),
-                         {"projection_log.csv", "fpl.sqlite", "exports", "logs", "reports"})
-        self.assertIn('git commit -m "nightly $(date -u +%F) [skip ci]"', commit)
-        self.assertIn("git push", commit)
-        self.assertLess(y.index("run: python fpl_nightly.py"), y.index("git add "))
+        self.assertIn("python fpl_publish.py data", commit)
+        self.assertLess(y.index("run: python fpl_nightly.py"), y.index("python fpl_publish.py data"))
+        code = "\n".join(l for l in y.splitlines() if not l.strip().startswith("#"))
+        for banned in ("git add", "git commit", "git push", "--force"):
+            self.assertNotIn(banned, code, f"{banned!r}: only fpl_publish.py commits and pushes")
+
+    def test_a_dispatch_can_force_the_backup(self):
+        """S1 amendment 2, point 8: workflow_dispatch input force_backup,
+        boolean, default false; the proof dispatch ticks it."""
+        y = self._read(".github", "workflows", "nightly.yml")
+        self.assertIn("  workflow_dispatch:\n    inputs:\n      force_backup:\n", y)
+        block = y[y.index("      force_backup:"):y.index("\npermissions:")]
+        self.assertIn("        type: boolean\n", block)
+        self.assertIn("        default: false\n", block)
+
+    def test_push_safety_and_least_privilege(self):
+        """D1 (Step 1.5, 1.6): one concurrency group, never cancelled; write
+        access for the pushing job only; triggers schedule and dispatch only."""
+        y = self._read(".github", "workflows", "nightly.yml")
+        self.assertIn("concurrency:\n  group: nightly-data\n  cancel-in-progress: false", y)
+        top = y[:y.index("jobs:")]
+        self.assertIn("\npermissions: {}", top)
+        self.assertNotIn("contents: write", top)
+        self.assertEqual(y.count("contents: write"), 1)
+        on = y[y.index("\non:\n") + 5:y.index("\npermissions:")]
+        triggers = [l.strip().rstrip(":") for l in on.splitlines()
+                    if l.startswith("  ") and not l.startswith("   ") and l.strip()]
+        self.assertEqual(triggers, ["schedule", "workflow_dispatch"])
+
+    def test_weekly_backup_on_sundays_keeps_the_last_eight(self):
+        """D1 (Step 1.3): fpl.sqlite and fpl.sql as release assets, Sundays,
+        only after a successful publish; backup-* releases beyond 8 deleted."""
+        y = self._read(".github", "workflows", "nightly.yml")
+        b = y[y.index("name: Weekly backup"):]
+        self.assertIn("if: always() && steps.publish.outcome == 'success'", b)
+        self.assertIn("GH_TOKEN: ${{ github.token }}", b)
+        self.assertIn('if [ "$FORCE_BACKUP" != "true" ] && [ "$(date -u +%u)" != 7 ]; then', b)
+        self.assertIn("FORCE_BACKUP: ${{ inputs.force_backup }}", b)
+        self.assertIn('tag="backup-$(date -u +%F)"', b)
+        self.assertIn('gh release create "$tag" data/fpl.sqlite data/fpl.sql --target data', b)
+        self.assertIn("grep '^backup-' | sort -r | tail -n +9", b)
+        self.assertIn('gh release delete "$old" --yes --cleanup-tag', b)
 
     def test_requirements_install_nothing(self):
         lines = [l.strip() for l in self._read("requirements.txt").splitlines() if l.strip()]
@@ -3913,17 +4138,37 @@ class NightlyWorkflow(unittest.TestCase):
                       'under tools/ have their own requirements"', text,
                       "S0c: requirements.txt must quote the current stdlib rule")
 
-    def test_ignore_and_attribute_rules_fit_two_writers(self):
+    def test_secret_scan_runs_the_pinned_gitleaks_action(self):
+        """D1 (Step 1.6; S1 amendment 1, point 6): the official gitleaks action,
+        pinned to a full commit SHA, on every push to master or data and on a
+        manual dispatch (full history: fetch-depth 0). Read-only, no secrets."""
+        import re
+        y = self._read(".github", "workflows", "secret-scan.yml")
+        code = "\n".join(l.split(" #")[0].rstrip() for l in y.splitlines()
+                         if not l.strip().startswith("#"))
+        uses = re.findall(r"uses: (\S+)", code)
+        gitleaks = [u for u in uses if u.startswith("gitleaks/gitleaks-action@")]
+        self.assertEqual(len(gitleaks), 1)
+        self.assertRegex(gitleaks[0], r"^gitleaks/gitleaks-action@[0-9a-f]{40}$")
+        self.assertIn("on:\n  push:\n    branches: [master, data]\n  workflow_dispatch:\n", code)
+        self.assertIn("fetch-depth: 0", code)
+        self.assertIn("permissions:\n  contents: read\n", code)
+        # data holds no workflow, so it is scanned by a dispatch that checks it out
+        self.assertIn("      branch:\n", code)
+        self.assertIn("        options: [master, data]\n        default: master\n", code)
+        self.assertIn("          ref: ${{ inputs.branch || github.ref }}\n", code)
+        for banned in ("write", "secrets.", "GITLEAKS_LICENSE", "pull_request"):
+            self.assertNotIn(banned, code)
+
+    def test_master_ignores_every_data_path(self):
+        """D1 (Step 1.4): generated data lives on the data branch only; master
+        ignores all of it, anchored to the root."""
         ignore = [l.strip() for l in self._read(".gitignore").splitlines()
                   if l.strip() and not l.startswith("#")]
-        self.assertNotIn("fpl.sqlite", ignore,
-                         "the database holds the only price history: it must be committed")
-        self.assertIn("/fpl_export_gw*.json", ignore)
-        self.assertNotIn("fpl_export_gw*.json", ignore, "unanchored, this ignores exports/ too")
-        for tracked in ("reports/", "exports/", "logs/", "projection_log.csv"):
-            self.assertNotIn(tracked, ignore)
-        for local in ("archive/", "backup/", "outbox/", "projection_log.csv.tmp",
-                      "reports/run_*.log"):
+        for data_path in ("/data/", "/fpl.sqlite", "/fpl.sql", "/projection_log.csv",
+                          "/exports/", "/reports/", "/logs/", "/fpl_export_gw*.json"):
+            self.assertIn(data_path, ignore)
+        for local in ("archive/", "backup/", "outbox/", "projection_log.csv.tmp"):
             self.assertIn(local, ignore)
         attrs = self._read(".gitattributes").splitlines()
         self.assertIn("projection_log.csv text eol=crlf", attrs)
@@ -4406,6 +4651,608 @@ class VerifierAgent(unittest.TestCase):
         self.assertIn("Never read session transcripts or chat logs. The rulings you check are "
                       "the verbatim text in prereg/<item>.md; if a ruling is not there, report "
                       "that as a FAIL of check 4.", agent)
+
+
+class DataGate(unittest.TestCase):
+    """D1 (Step 1.1, 1.2, 1.6; S1 amendments 1 and 2): the gate before every
+    runner commit, the text dump, and the staged-secret scan - each against a
+    real git repository in a temp folder, because the gate reads the last
+    commit with git show. Fake keys are assembled at runtime and never shown,
+    so no key-like literal sits in this file or in its output."""
+
+    LOG_HEAD = "made_at,source,event,player_id,web_name,predicted"
+    PAST, FUTURE = "2026-08-15T10:00:00Z", "2099-01-01T10:00:00Z"
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.db = os.path.join(self.tmp, "fpl.sqlite")
+        self._git("init", "-q")
+        con = sqlite3.connect(self.db)
+        con.executescript(
+            "CREATE TABLE price_history (player_id INTEGER, date TEXT, price REAL);"
+            "CREATE TABLE players (id INTEGER PRIMARY KEY, web_name TEXT, news TEXT);"
+            "CREATE TABLE events (id INTEGER PRIMARY KEY, deadline_time TEXT);")
+        con.executemany("INSERT INTO price_history VALUES (?,?,?)",
+                        [(i, "2026-10-16", 4.5 + i / 10) for i in range(50)])
+        con.executemany("INSERT INTO players VALUES (?,?,?)",
+                        [(1, "Groß", "Knock - 50% chance\nreturn date unknown"), (2, "O'Brien", "")])
+        con.executemany("INSERT INTO events VALUES (?,?)",
+                        [(1, self.PAST), (3, self.PAST), (8, self.FUTURE)])
+        con.commit()
+        con.close()
+        self._log(["2026-08-14T21:40:00+00:00,own,1,10,Saka,5.1",
+                   "2026-08-14T21:40:00+00:00,own,1,11,Rice,4.2",
+                   "2026-10-16T22:02:00+00:00,own,8,10,Saka,5.6",
+                   "2026-10-16T22:02:00+00:00,own,8,11,Rice,4.0"])
+        self._commit()
+
+    def _git(self, *args):
+        return subprocess.run(["git", "-C", self.tmp, "-c", "user.name=t", "-c", "user.email=t@t",
+                               "-c", "core.autocrlf=false", *args], check=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    def _commit(self):
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", "night")
+
+    def _log(self, rows, eol="\n"):
+        with open(os.path.join(self.tmp, "projection_log.csv"), "w", encoding="utf-8", newline="") as fh:
+            fh.write(eol.join([self.LOG_HEAD] + rows) + eol)
+
+    def _sql(self, script):
+        con = sqlite3.connect(self.db)
+        con.executescript(script)
+        con.commit()
+        con.close()
+
+    def _gate(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = G.main([self.tmp])
+        return code, out.getvalue()
+
+    # --- the database --------------------------------------------------------
+
+    def test_a_good_night_passes_and_writes_the_dump(self):
+        self._sql("INSERT INTO price_history VALUES (1, '2026-10-17', 4.7);")
+        code, out = self._gate()
+        self.assertEqual(code, 0, out)
+        self.assertIn("GATE OK", out)
+        self.assertTrue(os.path.exists(os.path.join(self.tmp, "fpl.sql")))
+
+    def test_a_truncated_database_is_rejected_and_nothing_is_dumped(self):
+        size = os.path.getsize(self.db)
+        with open(self.db, "r+b") as fh:
+            fh.truncate(size // 2)
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("GATE FAIL", out)
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, "fpl.sql")))
+
+    def test_a_database_that_reads_but_fails_integrity_check_is_rejected(self):
+        # every query still works; only PRAGMA integrity_check sees the index
+        # no longer matches its table
+        self._sql("CREATE INDEX ph_date ON price_history(date);")
+        con = sqlite3.connect(self.db)
+        con.execute("PRAGMA writable_schema=ON")
+        con.execute("UPDATE sqlite_master SET sql='CREATE INDEX ph_date ON "
+                    "price_history(player_id)' WHERE name='ph_date'")
+        con.commit()
+        con.close()
+        self.assertEqual(G.table_counts(self.db)["price_history"], 50)
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("PRAGMA integrity_check: row 1 missing from index ph_date", out)
+
+    def test_fewer_price_rows_than_the_last_commit_is_rejected(self):
+        self._sql("DELETE FROM price_history WHERE player_id < 3;")
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("price_history rows fell from 50 to 47", out)
+
+    def test_emptying_any_grow_only_table_is_rejected(self):
+        self._sql("DELETE FROM players;")
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("players rows fell from 2 to 0", out)
+
+    def test_a_missing_table_is_rejected(self):
+        self._sql("DROP TABLE players;")
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("tables missing since the last commit: ['players']", out)
+
+    def test_a_new_table_outside_the_expected_list_is_rejected(self):
+        self._sql("CREATE TABLE extra (x INTEGER);")
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("new tables not in EXPECTED_TABLES: ['extra']", out)
+
+    def test_a_new_table_in_the_expected_list_passes(self):
+        self._sql("CREATE TABLE transfers (entry_id INTEGER, event INTEGER);")
+        code, out = self._gate()
+        self.assertEqual(code, 0, out)
+
+    def test_no_database_in_the_last_commit_is_rejected(self):
+        self._git("rm", "-q", "--cached", "fpl.sqlite")
+        self._git("commit", "-q", "-m", "gone")
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("no fpl.sqlite in the last commit", out)
+
+    def test_the_expected_list_is_exactly_the_sync_schema(self):
+        import re
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "fpl_sync.py"), encoding="utf-8") as fh:
+            created = set(re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", fh.read()))
+        self.assertEqual(created, set(G.EXPECTED_TABLES),
+                         "fpl_sync.py's schema and fpl_gate.EXPECTED_TABLES differ: update both together")
+
+    def test_grow_only_holds_exactly_the_tables_the_sync_never_deletes_from(self):
+        """S1 amendment 2, point 3: a table is grow-only only if fpl_sync.py
+        never deletes from it. The evidence, from the source: no DELETE, DROP,
+        TRUNCATE or VACUUM; every write is INSERT OR REPLACE into a table whose
+        only uniqueness constraint is its primary key (so a replace removes at
+        most the one row it collides with)."""
+        import re
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "fpl_sync.py"), encoding="utf-8") as fh:
+            src = fh.read()
+        self.assertIsNone(re.search(r"(?i)\b(delete\s+from|drop\s+table|truncate|vacuum)\b", src))
+        writes = re.findall(r"INSERT(?: OR (\w+))? INTO (\w+)", src)
+        self.assertEqual({t for _, t in writes}, set(G.EXPECTED_TABLES))
+        self.assertEqual({mode for mode, _ in writes}, {"REPLACE"})
+        for name, body in re.findall(r"CREATE TABLE IF NOT EXISTS (\w+) \((.*?)\);", src, re.S):
+            self.assertNotIn("UNIQUE", body.upper(), name)
+            self.assertEqual(body.upper().count("PRIMARY KEY"), 1, name)
+        self.assertEqual(set(G.GROW_ONLY), set(G.EXPECTED_TABLES))
+
+    def test_the_real_database_has_only_expected_tables(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        db = os.path.join(os.environ.get("FPL_DATA_DIR") or here, "fpl.sqlite")
+        if not os.path.exists(db):
+            self.skipTest("no real fpl.sqlite here or in FPL_DATA_DIR")
+        self.assertLessEqual(set(G.table_counts(db)), set(G.EXPECTED_TABLES))
+
+    def test_the_dump_rebuilds_the_database_row_for_row(self):
+        self.assertEqual(self._gate()[0], 0)
+        dump = os.path.join(self.tmp, "fpl.sql")
+        with open(dump, "rb") as fh:
+            self.assertNotIn(b"\r", fh.read(), "the dump must be LF-only")
+        rebuilt = os.path.join(self.tmp, "rebuilt.sqlite")
+        con = sqlite3.connect(rebuilt)
+        with open(dump, encoding="utf-8", newline="") as fh:
+            con.executescript(fh.read())
+        con.close()
+        self.assertEqual(G.table_counts(rebuilt), G.table_counts(self.db))
+        con = sqlite3.connect(rebuilt)
+        self.assertEqual(con.execute("SELECT news FROM players WHERE id=1").fetchone()[0],
+                         "Knock - 50% chance\nreturn date unknown")
+        con.close()
+
+    # --- the projection log (S1 amendment 2, point 3) ------------------------
+
+    def test_a_changed_frozen_forecast_is_rejected(self):
+        self._log(["2026-08-14T21:40:00+00:00,own,1,10,Saka,5.9",
+                   "2026-08-14T21:40:00+00:00,own,1,11,Rice,4.2",
+                   "2026-10-16T22:02:00+00:00,own,8,10,Saka,5.6",
+                   "2026-10-16T22:02:00+00:00,own,8,11,Rice,4.0"])
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("GW1 is past its deadline and its rows changed (1 missing or changed, 1 added)", out)
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, "fpl.sql")))
+
+    def test_a_missing_frozen_forecast_is_rejected(self):
+        self._log(["2026-08-14T21:40:00+00:00,own,1,11,Rice,4.2",
+                   "2026-10-16T22:02:00+00:00,own,8,10,Saka,5.6",
+                   "2026-10-16T22:02:00+00:00,own,8,11,Rice,4.0"])
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("GW1 is past its deadline and its rows changed (1 missing or changed, 0 added)", out)
+
+    def test_a_forecast_added_after_the_deadline_is_rejected(self):
+        self._log(["2026-08-14T21:40:00+00:00,own,1,10,Saka,5.1",
+                   "2026-08-14T21:40:00+00:00,own,1,11,Rice,4.2",
+                   "2026-10-17T21:40:00+00:00,xg,1,10,Saka,4.4",
+                   "2026-10-16T22:02:00+00:00,own,8,10,Saka,5.6",
+                   "2026-10-16T22:02:00+00:00,own,8,11,Rice,4.0"])
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("GW1 is past its deadline and its rows changed (0 missing or changed, 1 added)", out)
+
+    def test_a_new_block_for_a_past_gameweek_is_rejected(self):
+        # GW3's deadline has passed and the last commit holds no GW3 rows
+        self._log(["2026-08-14T21:40:00+00:00,own,1,10,Saka,5.1",
+                   "2026-08-14T21:40:00+00:00,own,1,11,Rice,4.2",
+                   "2026-10-17T21:40:00+00:00,own,3,10,Saka,6.0",
+                   "2026-10-16T22:02:00+00:00,own,8,10,Saka,5.6",
+                   "2026-10-16T22:02:00+00:00,own,8,11,Rice,4.0"])
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("GW3 is past its deadline and its rows changed (0 missing or changed, 1 added)", out)
+
+    def test_the_migration_writes_the_data_branch_attributes(self):
+        """S1 amendment 2, point 6: *.sqlite binary; the dump without EOL
+        conversion; the log CRLF; working exports ignored. Read as text: the
+        runner never imports tools/."""
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "tools", "migrate_data_branch.py"), encoding="utf-8") as fh:
+            src = fh.read()
+        attrs = src[src.index('DATA_GITATTRIBUTES = """'):].split('"""')[1].splitlines()
+        ignore = src[src.index('DATA_GITIGNORE = """'):].split('"""')[1].splitlines()
+        for line in ("*.sqlite binary", "*.gz binary", "fpl.sql -text",
+                     "projection_log.csv text eol=crlf"):
+            self.assertIn(line, attrs)
+        self.assertIn("/fpl_export_gw*.json", ignore)
+
+    def test_a_gameweek_before_its_deadline_may_be_rewritten(self):
+        # --record replaces a gameweek's block: fewer players, new values, new time
+        self._log(["2026-08-14T21:40:00+00:00,own,1,10,Saka,5.1",
+                   "2026-08-14T21:40:00+00:00,own,1,11,Rice,4.2",
+                   "2026-10-17T21:40:00+00:00,own,8,10,Saka,5.8"])
+        code, out = self._gate()
+        self.assertEqual(code, 0, out)
+
+    def test_a_crlf_checkout_of_the_same_log_passes(self):
+        self._log(["2026-08-14T21:40:00+00:00,own,1,10,Saka,5.1",
+                   "2026-08-14T21:40:00+00:00,own,1,11,Rice,4.2",
+                   "2026-10-16T22:02:00+00:00,own,8,10,Saka,5.6",
+                   "2026-10-16T22:02:00+00:00,own,8,11,Rice,4.0"], eol="\r\n")
+        code, out = self._gate()
+        self.assertEqual(code, 0, out)
+
+    def test_no_log_in_the_last_commit_or_now_is_rejected(self):
+        os.remove(os.path.join(self.tmp, "projection_log.csv"))
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("projection_log.csv is missing", out)
+        self._git("rm", "-q", "--cached", "projection_log.csv")
+        self._git("commit", "-q", "-m", "gone")
+        self._log([])
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("no projection_log.csv in the last commit", out)
+
+    def test_a_logged_gameweek_without_a_deadline_is_rejected(self):
+        self._sql("DELETE FROM events WHERE id = 8;")
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", "events trimmed")      # the last commit has 1 event too
+        code, out = self._gate()
+        self.assertEqual(code, 1, out)
+        self.assertIn("GW8 has no deadline in events - cannot check it", out)
+
+    # --- the staged-secret scan (S1 amendments 1 and 2) ----------------------
+
+    @staticmethod
+    def _token():
+        import secrets
+        return secrets.token_hex(16)
+
+    @staticmethod
+    def _pair(word):
+        return word + "=" + "x" * 3
+
+    WORDS = ("api" + "Key", "API" + "_KEY", "api" + "key", "Api" + "_Key")
+
+    def _secrets(self, key=""):
+        out = io.StringIO()
+        old = {k: os.environ.pop(k, None) for k in ("GITHUB_ACTIONS", "ODDS_API_KEY")}
+        try:
+            if key:
+                os.environ["ODDS_API_KEY"] = key
+            with redirect_stdout(out):
+                code = G.main(["--secrets", self.tmp])
+        finally:
+            for k, v in old.items():
+                os.environ.pop(k, None)
+                if v is not None:
+                    os.environ[k] = v
+        return code, out.getvalue()
+
+    def _stage(self, name, body, gz=False):
+        import gzip
+        path = os.path.join(self.tmp, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with (gzip.open(path, "wb") if gz else open(path, "wb")) as fh:
+            fh.write(body.encode("utf-8"))
+        self._git("add", name)
+
+    def test_clean_staged_files_pass_the_secret_scan(self):
+        self._stage("report.txt", "nothing to see\n")
+        self._stage("exports/fpl_export_gw9_2026-10-18.json.gz", '{"news": "fit"}', gz=True)
+        self.assertEqual(self._secrets(self._token())[0], 0)
+
+    def test_every_key_pattern_in_any_case_fails_the_commit(self):
+        for i, word in enumerate(self.WORDS):
+            with self.subTest(pattern=i):
+                self._stage("cfg.txt", "GET /odds?" + self._pair(word) + "\n")
+                code, out = self._secrets()
+                self.assertEqual(code, 1, "a key pattern passed the scan")
+                self.assertTrue("SECRET FAIL  cfg.txt" in out, "the hit does not name the file")
+
+    def test_the_key_value_fails_the_commit_and_is_never_printed(self):
+        key = self._token()
+        self._stage("report.txt", "header " + key + " footer\n")
+        code, out = self._secrets(key)
+        self.assertEqual(code, 1, "the key value passed the scan")
+        self.assertTrue("report.txt" in out, "the hit does not name the file")
+        self.assertFalse(key in out, "the key value was printed")
+
+    def test_a_key_inside_a_gzipped_export_fails_the_commit(self):
+        """S1 amendment 2, point 1: the scan reads .gz files decompressed."""
+        name, key = "exports/fpl_export_gw9_2026-10-18.json.gz", self._token()
+        for i, (body, env) in enumerate((('{"u": "' + self._pair(self.WORDS[0]) + '"}', ""),
+                                         ('{"u": "' + key + '"}', key))):
+            with self.subTest(case=i):
+                self._stage(name, body, gz=True)
+                code, out = self._secrets(env)
+                self.assertEqual(code, 1, "a key inside a .gz passed the scan")
+                self.assertTrue("SECRET FAIL  " + name in out, "the hit does not name the file")
+                self.assertFalse(key in out, "the key value was printed")
+
+    def test_a_gz_that_cannot_be_read_fails_the_commit(self):
+        self._stage("exports/broken.json.gz", "not gzip at all")
+        code, out = self._secrets()
+        self.assertEqual(code, 1, "an unreadable .gz passed the scan")
+        self.assertTrue("SECRET FAIL  exports/broken.json.gz" in out)
+
+    def test_a_secret_hit_fails_loudly_on_the_runner(self):
+        self._stage("cfg.txt", self._pair(self.WORDS[1]) + "\n")
+        out = io.StringIO()
+        old = os.environ.get("GITHUB_ACTIONS")
+        os.environ["GITHUB_ACTIONS"] = "true"
+        try:
+            with redirect_stdout(out):
+                code = G.main(["--secrets", self.tmp])
+        finally:
+            os.environ.pop("GITHUB_ACTIONS", None)
+            if old is not None:
+                os.environ["GITHUB_ACTIONS"] = old
+        self.assertEqual(code, 1)
+        self.assertTrue("::error title=Secret scan blocked the commit::" in out.getvalue())
+        self.assertTrue("NOTHING COMMITTED TONIGHT" in out.getvalue())
+
+
+class Publish(unittest.TestCase):
+    """D1 (Step 1.1, 1.5, 1.6): the runner's commit to the data branch - the
+    gate first, the secret scan on what is staged, then fetch + rebase + push
+    with retries, never forced. A bare repository in a temp folder is origin."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.remote = os.path.join(self.tmp, "remote.git")
+        subprocess.run(["git", "init", "-q", "--bare", self.remote], check=True)
+        seed = self._clone_new("seed")
+        con = sqlite3.connect(os.path.join(seed, "fpl.sqlite"))
+        con.executescript("CREATE TABLE price_history (player_id INTEGER, date TEXT, price REAL);"
+                          "CREATE TABLE events (id INTEGER PRIMARY KEY, deadline_time TEXT);")
+        con.executemany("INSERT INTO price_history VALUES (?,?,?)", [(i, "2026-10-16", 5.0) for i in range(20)])
+        con.execute("INSERT INTO events VALUES (8, '2099-01-01T10:00:00Z')")
+        con.commit()
+        con.close()
+        self._put(seed, "projection_log.csv", "made_at,source,event,player_id,web_name,predicted" + chr(10))
+        self._put(seed, ".gitignore", "/fpl_export_gw*.json\nreports/record_status.tmp\n")
+        self._git(seed, "add", "-A")
+        self._git(seed, "commit", "-q", "-m", "first data commit")
+        self._git(seed, "push", "-q", "origin", "HEAD:refs/heads/data")
+        self.run_dir = self._clone("runner")
+
+    def _git(self, repo, *args):
+        r = subprocess.run(["git", "-C", repo, "-c", "core.autocrlf=false", *args],
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
+        return r
+
+    def _ident(self, repo):
+        self._git(repo, "config", "user.name", "t")
+        self._git(repo, "config", "user.email", "t@t")
+
+    def _clone_new(self, name):
+        path = os.path.join(self.tmp, name)
+        subprocess.run(["git", "init", "-q", path], check=True)
+        self._git(path, "remote", "add", "origin", self.remote)
+        self._ident(path)
+        return path
+
+    def _clone(self, name):
+        path = os.path.join(self.tmp, name)
+        subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", "data",
+                        "file://" + self.remote.replace("\\", "/"), path], check=True)
+        self._ident(path)
+        return path
+
+    @staticmethod
+    def _put(repo, name, body):
+        path = os.path.join(repo, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write(body)
+
+    def _add_prices(self, repo, n=5):
+        con = sqlite3.connect(os.path.join(repo, "fpl.sqlite"))
+        con.executemany("INSERT INTO price_history VALUES (?,?,?)",
+                        [(i, "2026-10-17", 5.1) for i in range(n)])
+        con.commit()
+        con.close()
+
+    def _publish(self):
+        out, lines = io.StringIO(), []
+        with redirect_stdout(out):
+            code = PUB.main([self.run_dir], sleep=lambda s: None, say=lines.append)
+        return code, out.getvalue() + "\n".join(lines)
+
+    def _remote_files(self):
+        r = self._git(self.remote, "ls-tree", "-r", "--name-only", "data")
+        return sorted(r.stdout.split())
+
+    def _remote_head(self):
+        return self._git(self.remote, "rev-parse", "data").stdout.strip()
+
+    def test_a_good_night_is_committed_with_its_dump_and_pushed(self):
+        self._add_prices(self.run_dir)
+        self._put(self.run_dir, "reports/fpl_2026-10-17.txt", "report\n")
+        self._put(self.run_dir, "fpl_export_gw8.json", "{}")          # working copy: ignored
+        code, out = self._publish()
+        self.assertEqual(code, 0, out)
+        self.assertIn("PUSH OK", out)
+        self.assertEqual(self._remote_files(),
+                         [".gitignore", "fpl.sql", "fpl.sqlite", "projection_log.csv",
+                          "reports/fpl_2026-10-17.txt"])
+        msg = self._git(self.remote, "log", "-1", "--format=%s", "data").stdout.strip()
+        self.assertRegex(msg, r"^nightly \d{4}-\d{2}-\d{2} \[skip ci\]$")
+
+    def test_a_failed_gate_commits_and_pushes_nothing(self):
+        before = self._remote_head()
+        con = sqlite3.connect(os.path.join(self.run_dir, "fpl.sqlite"))
+        con.execute("DELETE FROM price_history WHERE player_id < 5")
+        con.commit()
+        con.close()
+        self._put(self.run_dir, "logs/run_2026-10-17.log", "log\n")
+        code, out = self._publish()
+        self.assertEqual(code, 1, out)
+        self.assertIn("GATE FAIL", out)
+        self.assertEqual(self._remote_head(), before)
+        self.assertEqual(self._git(self.run_dir, "rev-list", "--count", "HEAD").stdout.strip(), "1")
+        self.assertFalse(os.path.exists(os.path.join(self.run_dir, "fpl.sql")))
+
+    def test_a_staged_secret_commits_nothing_and_unstages(self):
+        before = self._remote_head()
+        self._put(self.run_dir, "logs/run_2026-10-17.log", "GET /odds?" + "api" + "Key=" + "x" * 3 + "\n")
+        code, out = self._publish()
+        self.assertEqual(code, 1, out)
+        self.assertIn("SECRET FAIL  logs/run_2026-10-17.log", out)
+        self.assertEqual(self._remote_head(), before)
+        self.assertEqual(self._git(self.run_dir, "diff", "--cached", "--name-only").stdout.strip(), "")
+
+    def test_nothing_new_is_not_a_failure(self):
+        self.assertEqual(self._publish()[0], 0)                       # first night: fpl.sql is new
+        code, out = self._publish()
+        self.assertEqual(code, 0, out)
+        self.assertIn("nothing to commit", out)
+
+    def test_a_push_refused_by_a_newer_origin_rebases_and_lands(self):
+        other = self._clone("other")
+        self._put(other, "reports/watch_2026-10-17.txt", "watch\n")
+        self._git(other, "add", "-A")
+        self._git(other, "commit", "-q", "-m", "someone else first")
+        self.assertEqual(self._git(other, "push", "-q", "origin", "HEAD:refs/heads/data").returncode, 0)
+        self._add_prices(self.run_dir)
+        code, out = self._publish()
+        self.assertEqual(code, 0, out)
+        self.assertIn("PUSH REFUSED attempt 1", out)
+        self.assertIn("PUSH OK      origin data after 1 retries", out)
+        self.assertIn("reports/watch_2026-10-17.txt", self._remote_files())
+        self.assertIn("fpl.sql", self._remote_files())
+
+    def test_a_rebase_conflict_fails_and_never_forces(self):
+        other = self._clone("other")
+        self._add_prices(other, n=7)
+        self._git(other, "add", "-A")
+        self._git(other, "commit", "-q", "-m", "a different database first")
+        self.assertEqual(self._git(other, "push", "-q", "origin", "HEAD:refs/heads/data").returncode, 0)
+        theirs = self._remote_head()
+        self._add_prices(self.run_dir, n=3)
+        code, out = self._publish()
+        self.assertEqual(code, 1, out)
+        self.assertIn("rebase conflict", out)
+        self.assertEqual(self._remote_head(), theirs, "origin's data was overwritten")
+        self.assertFalse(os.path.exists(os.path.join(self.run_dir, ".git", "rebase-merge")),
+                         "the rebase was left half done")
+
+
+class PrePush(unittest.TestCase):
+    """D1 (Step 1.5): a push to master that adds or changes a data path is
+    rejected by the installed hook; deleting one (the migration) and pushing
+    data to the data branch are not."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.remote = os.path.join(self.tmp, "remote.git")
+        self.repo = os.path.join(self.tmp, "clone")
+        subprocess.run(["git", "init", "-q", "--bare", self.remote], check=True)
+        subprocess.run(["git", "init", "-q", self.repo], check=True)
+        self._git("checkout", "-q", "-b", "master")
+        self._git("remote", "add", "origin", self.remote)
+        self._write("fpl_edge.py", "code\n")         # no fpl_prepush.py: the hook runs the installer's copy
+        self._write("projection_log.csv", "made_at\n")
+        self._commit("start")
+        self._push("master")
+        PP.install(self.repo)
+
+    def _git(self, *args):
+        return subprocess.run(["git", "-C", self.repo, "-c", "user.name=t", "-c", "user.email=t@t",
+                               "-c", "core.autocrlf=false", *args],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
+
+    def _write(self, name, body):
+        path = os.path.join(self.repo, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(body)
+
+    def _commit(self, msg):
+        self._git("add", "-A")
+        self.assertEqual(self._git("commit", "-q", "-m", msg).returncode, 0)
+
+    def _push(self, ref):
+        return self._git("push", "-q", "origin", f"HEAD:refs/heads/{ref}")
+
+    def test_the_path_rules(self):
+        for path in ("fpl.sqlite", "fpl.sql", "projection_log.csv", "exports/fpl_export_gw7_2026-10-18.json",
+                     "reports/watch_2026-10-18.txt", "reports/fpl_2026-10-18.txt", "logs/run_2026-10-18.log"):
+            self.assertTrue(PP.is_data(path), path)
+        for path in ("fpl_edge.py", "watchlist.txt", "prereg/S1.md", "worklog/cc.md", "CHANGELOG.md",
+                     "historical/x.csv", "myexports/x", "fpl.sqlite.bak"):
+            self.assertFalse(PP.is_data(path), path)
+
+    def test_a_push_to_master_adding_data_is_rejected(self):
+        self._write("exports/fpl_export_gw7_2026-10-18.json", "{}\n")
+        self._commit("data on master")
+        r = self._push("master")
+        self.assertNotEqual(r.returncode, 0, r.stderr)
+        self.assertIn("PRE-PUSH REJECTED", r.stderr)
+        self.assertIn("exports/fpl_export_gw7_2026-10-18.json", r.stderr)
+
+    def test_a_push_to_master_changing_data_is_rejected(self):
+        self._write("projection_log.csv", "made_at\nrow\n")
+        self._commit("log on master")
+        r = self._push("master")
+        self.assertNotEqual(r.returncode, 0, r.stderr)
+        self.assertIn("projection_log.csv", r.stderr)
+
+    def test_a_code_push_and_the_migration_delete_pass(self):
+        self._write("fpl_edge.py", "code v2\n")
+        self._commit("code")
+        self.assertEqual(self._push("master").returncode, 0)
+        self._git("rm", "-q", "projection_log.csv")
+        self._commit("migration: data moves to the data branch")
+        r = self._push("master")
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_data_may_go_to_the_data_branch(self):
+        self._write("exports/fpl_export_gw7_2026-10-18.json", "{}\n")
+        self._commit("data")
+        r = self._push("data")
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_a_push_from_a_data_worktree_without_the_code_passes(self):
+        # worktrees share the hook; C:\GIT\FPL-data holds no fpl_prepush.py
+        wt = os.path.join(self.tmp, "data-worktree")
+        self._git("worktree", "add", "-q", "-b", "data", wt)
+        git = lambda *a: subprocess.run(["git", "-C", wt, "-c", "user.name=t", "-c", "user.email=t@t",
+                                         *a], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        encoding="utf-8")
+        self.assertEqual(git("rm", "-q", "fpl_edge.py").returncode, 0)
+        os.makedirs(os.path.join(wt, "reports"))
+        with open(os.path.join(wt, "reports", "watch_2026-10-18.txt"), "w") as fh:
+            fh.write("watch\n")
+        git("add", "-A")
+        self.assertEqual(git("commit", "-q", "-m", "data only").returncode, 0)
+        self.assertFalse(os.path.exists(os.path.join(wt, "fpl_prepush.py")))
+        r = git("push", "-q", "origin", "HEAD:refs/heads/data")
+        self.assertEqual(r.returncode, 0, r.stderr)
 
 
 class Hygiene(unittest.TestCase):

@@ -72,6 +72,52 @@ f. After each item, the chat reply is at most 15 lines: what changed, commit ran
 
 g. If the session gets long or you notice you are losing earlier instructions, update worklog/SESSION_STATE.md, push, and tell Boris to start a fresh session with: "Read CLAUDE.md, BUILD_PLAN.md and worklog/SESSION_STATE.md, then wait for the next instruction."
 
+## Data branch (BUILD_PLAN.md Step 1)
+- Generated data lives on branch `data`: `fpl.sqlite`, `fpl.sql` (its text
+  dump), `exports/` (new exports `.json.gz`), `reports/` (report and watch
+  files), `logs/`, `projection_log.csv`. `master` holds code, docs,
+  `watchlist.txt`, `prereg/`, `worklog/` and `CHANGELOG.md`, and ignores every
+  data path.
+- The runner checks out `master` for code and `data` into `./data`; the one
+  setting is `FPL_DATA_DIR`. It commits and pushes to `data` only, through
+  `fpl_publish.py` (integrity gate, dump, staged-secret scan, fetch + rebase +
+  push with retries). Sundays it uploads `fpl.sqlite` and `fpl.sql` as
+  release `backup-<date>`; the last 8 are kept.
+- Locally: the worktree `C:\GIT\FPL-data` (`git worktree add C:\GIT\FPL-data
+  data`, once). `git -C C:\GIT\FPL-data pull` before reading data.
+- **Local command pattern: run from `C:\GIT\FPL-data`, call the script in
+  `C:\GIT\FPL`.** The scripts read and write their working folder; of the
+  scripts only `fpl_nightly.py` reads `FPL_DATA_DIR` (`test_fpl.py` uses it
+  only to find the real data).
+  ```
+  cd C:\GIT\FPL-data
+  git pull
+  python C:\GIT\FPL\fpl_nightly.py --restore
+  python C:\GIT\FPL\fpl_edge.py --section calibration
+  python C:\GIT\FPL\fpl_edge.py --diff
+  ```
+  `--restore` comes first, every time: the working exports
+  (`fpl_export_gwN.json`, plain JSON, ignored on `data`) are not committed, so
+  it writes them from the newest dated copy in `exports/`, replacing a stale
+  one. It writes nothing else and commits nothing. After it, the frozen
+  `p1_eval.py` reads those working exports as before.
+  The runner is the only writer: never run `fpl_sync.py`, `--record`, or
+  `fpl_nightly.py` without `--restore` here. `python C:\GIT\FPL\test_fpl.py`
+  needs no data; after `--restore`, with `$env:FPL_DATA_DIR =
+  "C:\GIT\FPL-data"`, it also checks the real export and database.
+- Once per clone: `python fpl_prepush.py --install` (the hook rejects a push to
+  `master` that adds or changes a data path; deleting one is allowed).
+- Secret scan: `.github/workflows/secret-scan.yml` runs the gitleaks action on
+  every push to `master` (the pushed commits) and on Run workflow (the full
+  history of the branch chosen: `master` or `data`). Nothing scans `data`
+  automatically: it holds no workflow file, and the nightly's pushes start no
+  workflow. Every data commit is still checked before it is made by
+  `fpl_gate.py --secrets`; a full scan of `data` is a manual run with
+  branch = data.
+- Raw URLs: `https://raw.githubusercontent.com/borisdanihel-dev/FPL/data/reports/watch_<date>.txt`
+  and `.../data/reports/fpl_<date>.txt`.
+- Rollback: tag `pre-data-branch` is `master` before the migration.
+
 ## Where things are
 - `CLAUDE_fable chat.md` — project handoff: data flow, design rules, FPL context.
 - `CLAUDE_opusChat.md` — measured findings, failed approaches, working practices.

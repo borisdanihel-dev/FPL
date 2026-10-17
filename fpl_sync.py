@@ -53,11 +53,11 @@ def get(path):
             return data
         except Exception as e:  # noqa: BLE001
             if attempt == RETRIES:
-                print(f"  ! failed {url}: {e}")
+                print(f"  ! failed {path}: {e}")      # the path, never the full URL
                 FAILED.append(url)
                 return None
             wait = BACKOFF * 2 ** attempt
-            print(f"  retry {attempt + 1}/{RETRIES} in {wait:.0f}s - {url}: {e}")
+            print(f"  retry {attempt + 1}/{RETRIES} in {wait:.0f}s - {path}: {e}")
             _sleep(wait)
 
 # ----------------------------------------------------------------------------

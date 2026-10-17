@@ -194,13 +194,13 @@ Item D1. Acceptance tests are listed per point.
    - the table list is unchanged.
    
    On failure: commit nothing and exit non-zero. *Test:* a planted truncated database is rejected.
-2. **Nightly text dump** `prices.sql` via `sqlite3.Connection.iterdump()`, committed alongside the binary. *Test:* rebuild a database from the dump; row counts match.
+2. **Nightly text dump** `fpl.sql` via `sqlite3.Connection.iterdump()`, committed alongside the binary. *Test:* rebuild a database from the dump; row counts match.
 3. **Weekly backup:**
-   - On Sundays, upload `fpl.sqlite` and `prices.sql` as assets of a GitHub Release `backup-<YYYY-MM-DD>` (`gh` on the runner, `contents: write`).
+   - On Sundays, upload `fpl.sqlite` and `fpl.sql` as assets of a GitHub Release `backup-<YYYY-MM-DD>` (`gh` on the runner, `contents: write`).
    - Keep the last 8 releases.
 4. **Data branch.** Create an orphan branch `data`.
    - **What moves where:**
-     - On `data`, all generated data: `fpl.sqlite`, `prices.sql`, `exports/` (new exports gzipped as `.json.gz`), `reports/`, `logs/`, `projection_log.csv` and the watch files.
+     - On `data`, all generated data: `fpl.sqlite`, `fpl.sql`, `exports/` (new exports gzipped as `.json.gz`), `reports/`, `logs/`, `projection_log.csv` and the watch files.
      - On `master`: code, docs, `watchlist.txt`, `prereg/`, `worklog/` and the changelog.
    - **Migration:**
      - The first `data` commit holds the current data files.

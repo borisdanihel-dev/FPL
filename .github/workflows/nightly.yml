@@ -1,7 +1,11 @@
 # The nightly FPL run on GitHub's runners - the scheduled path.
-# fpl_run.bat stays the manual local path; for the same export both write the
-# same forecasts and the same report (tested in test_fpl.py).
-# No secrets: every endpoint fpl_sync.py calls is public.
+# Code comes from master; every data file lives on the `data` branch, checked
+# out into ./data (BUILD_PLAN.md Step 1.4). The run commits and pushes to data
+# only, through fpl_publish.py: the integrity gate, the fpl.sql dump, the
+# staged-secret scan, then fetch + rebase + push with retries, never forced.
+# No secrets: every endpoint fpl_sync.py calls is public. The secret scan looks
+# for "apiKey=" always and for the ODDS_API_KEY value whenever a step has it -
+# the step that first passes the key to a run must pass it to the commit too.
 # To start a run by hand: Actions tab -> nightly -> Run workflow, branch master.
 name: nightly
 
@@ -12,20 +16,31 @@ on:
     # freeze, and fpl_edge.py refuses to record once a deadline has passed.
     - cron: "40 21 * * *"
   workflow_dispatch:
+    inputs:
+      force_backup:
+        description: "Run the release backup now, whatever the weekday"
+        type: boolean
+        default: false
 
-permissions:
-  contents: write            # the run commits its outputs back
+permissions: {}              # nothing by default; the one job below asks for its own
 
 concurrency:
-  group: nightly
+  group: nightly-data
   cancel-in-progress: false  # never cut a run that may be mid-write
 
 jobs:
   nightly:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write        # the pushing job: commits to data, Sunday releases
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          ref: data
+          path: data
 
       - uses: actions/setup-python@v5
         with:
@@ -34,24 +49,39 @@ jobs:
       - name: Install requirements
         run: python -m pip install -r requirements.txt
 
-      # tests -> sync -> record x4 -> report -> dated export.
+      # tests -> sync -> record x4 -> watch -> report -> dated export, all in ./data.
       # Exits 1 on any failure, so the run goes red and GitHub sends mail.
       - name: Nightly run
         env:
           PYTHONIOENCODING: utf-8
+          FPL_DATA_DIR: data
         run: python fpl_nightly.py
 
-      # always: a red run still commits its log, so the failure explains itself
-      - name: Commit outputs back
+      # always: a red run still commits its log, so the failure explains itself -
+      # unless the gate fails, which commits nothing and turns this step red
+      - name: Commit outputs to the data branch
+        id: publish
         if: always()
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          mkdir -p exports logs reports
-          git add projection_log.csv fpl.sqlite exports logs reports
-          if git diff --cached --quiet; then
-            echo "nothing to commit"
-          else
-            git commit -m "nightly $(date -u +%F) [skip ci]"
-            git push || (git pull --rebase && git push)
-          fi
+          git -C data config user.name "github-actions[bot]"
+          git -C data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python fpl_publish.py data
+
+      # Sundays (or a dispatch with force_backup ticked): fpl.sqlite and fpl.sql
+      # as assets of release backup-<date> on the data branch; the newest 8
+      # backup releases are kept. A dispatch that backs up on a Sunday makes
+      # that evening's scheduled run skip as "exists".
+      - name: Weekly backup
+        if: always() && steps.publish.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_BACKUP: ${{ inputs.force_backup }}
+        run: |
+          if [ "$FORCE_BACKUP" != "true" ] && [ "$(date -u +%u)" != 7 ]; then echo "BACKUP skipped: not Sunday"; exit 0; fi
+          tag="backup-$(date -u +%F)"
+          if gh release view "$tag" >/dev/null 2>&1; then echo "BACKUP skipped: $tag exists"; exit 0; fi
+          gh release create "$tag" data/fpl.sqlite data/fpl.sql --target data --title "$tag" --notes "Weekly backup of fpl.sqlite and fpl.sql from the data branch."
+          gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^backup-' | sort -r | tail -n +9 | while read -r old; do gh release delete "$old" --yes --cleanup-tag; done
+          echo "BACKUP OK    $tag"
