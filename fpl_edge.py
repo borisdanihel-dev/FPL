@@ -49,7 +49,7 @@ def newest_export(folder="."):
 
 
 def load(path):
-    with open(path, encoding="utf-8") as f:
+    with open(path, encoding="utf-8", newline="") as f:
         return json.load(f)
 
 
@@ -3344,7 +3344,7 @@ def read_watchlist(path):
     """One FPL player id per line; blank lines and '#' comments ignored. A line
     that is not an id is an error, not a silent skip."""
     ids = []
-    with open(path, encoding="utf-8") as fh:
+    with open(path, encoding="utf-8", newline="") as fh:
         for n, raw in enumerate(fh, 1):
             line = raw.split("#", 1)[0].strip()
             if not line:
@@ -3940,7 +3940,7 @@ def main():
         except (OSError, ValueError) as e:
             sys.exit(f"WATCH FAILED: {e}")
         text = watch_report(d, forecasts(read_log()), ids)
-        with open(args.out, "w", encoding="utf-8") as fh:
+        with open(args.out, "w", encoding="utf-8", newline="") as fh:
             fh.write(text)
         print(f"[watch file: {len(ids)} ids, {len(text.encode('utf-8'))} bytes -> {args.out}]")
         return
@@ -3956,7 +3956,7 @@ def main():
                 if ok else f"RECORD FAIL {args.source} {reason}")
         print(line)
         if args.status:
-            with open(args.status, "a", encoding="utf-8") as fh:
+            with open(args.status, "a", encoding="utf-8", newline="") as fh:
                 fh.write(line + "\n")
         if not ok:
             sys.exit(1)
@@ -3980,7 +3980,7 @@ def main():
             prev = load(ppath)
             print(f"[diffing against {os.path.basename(ppath)}]\n")
 
-    sink = open(args.out, "w", encoding="utf-8") if args.out else None
+    sink = open(args.out, "w", encoding="utf-8", newline="") if args.out else None
     real = sys.stdout
     try:
         if sink:

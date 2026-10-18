@@ -501,21 +501,21 @@ def main():
         text, _, _ = concentration_report(c)
         print(text)
         if args.out:
-            with open(args.out, "w", encoding="utf-8") as fh:
+            with open(args.out, "w", encoding="utf-8", newline="") as fh:
                 fh.write(text + "\n")
         return
     if args.horizon:
         text = horizon_report(c)
         print(text)
         if args.out:
-            with open(args.out, "w", encoding="utf-8") as fh:
+            with open(args.out, "w", encoding="utf-8", newline="") as fh:
                 fh.write(text + "\n")
         return
     if args.backtest:
         text = backtest_report(c)
         print(text)
         if args.out:
-            with open(args.out, "w", encoding="utf-8") as fh:
+            with open(args.out, "w", encoding="utf-8", newline="") as fh:
                 fh.write(text + "\n")
         return
     if not args.windows:

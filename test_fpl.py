@@ -5963,6 +5963,32 @@ class StepTwoSelling(unittest.TestCase):
         self.assertIn("UPGRADE SHORTLIST  (fdr>=4 spots, bank £0.2m + selling price)", out)
 
 
+class StepTwoFiles(unittest.TestCase):
+    """S2, Step 2.9: every text file the runner code opens is opened with
+    encoding="utf-8" and an explicit newline - Windows would otherwise turn
+    "\\n" into "\\r\\n" (the projection log's own no-\\r test is in
+    ProjectionLogKey). p1_eval.py is frozen and not checked."""
+
+    RUNNER = ("fpl_edge.py", "fpl_sync.py", "fpl_nightly.py", "fpl_gate.py", "fpl_publish.py",
+              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py")
+
+    def test_every_text_open_names_utf8_and_newline(self):
+        import re
+        here = os.path.dirname(os.path.abspath(__file__))
+        bad = []
+        for name in self.RUNNER:
+            for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+                                          newline=""), 1):
+                code = line.split("#")[0]
+                if not re.search(r"(?<![\w.])open\(", code):
+                    continue
+                if re.search(r"""["'](r|w|a)?b["']|["']r\+b["']""", code):
+                    continue                           # binary mode
+                if 'encoding="utf-8"' not in code or "newline=" not in code:
+                    bad.append(f"{name}:{n}: {line.strip()}")
+        self.assertEqual(bad, [])
+
+
 class StepTwoRuleset(unittest.TestCase):
     """S2, Step 2.7: every scored row carries its ruleset, and BPS and bonus
     are never compared across rulesets."""
