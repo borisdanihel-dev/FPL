@@ -184,6 +184,10 @@ class Variance(unittest.TestCase):
             self.assertAlmostEqual(eo[17], w.get(RIVAL_A, 0) * 2 + w.get(RIVAL_B, 0) * 1)
             self.assertAlmostEqual(eo[10], w.get(RIVAL_A, 0) * 1 + w.get(RIVAL_B, 0) * 2)
             self.assertAlmostEqual(eo.get(7, 0.0), 0.0)                              # bench
+            # a mismatching multiplier stops the run
+            c = sqlite3.connect(db); c.execute("update picks set multiplier = 3 where entry_id = ? and event = 5 and is_captain = 1", (RIVAL_A,)); c.commit(); c.close()
+            with self.assertRaises(L.MissingInput):
+                L.load(tmp)
         with tempfile.TemporaryDirectory() as tmp:                                    # a rival ahead: the threat set is exactly the rivals ahead
             toy_league(tmp, gaps={RIVAL_A: 10})
             var = L.variance_table(L.load(tmp))
@@ -192,10 +196,6 @@ class Variance(unittest.TestCase):
             b = {r["entry"]: r for r in var["rows"]}[RIVAL_B]
             self.assertGreaterEqual(1 - b["p_above"], L.THREAT_MIN_P)                # B would qualify by P alone, but is behind
             self.assertEqual(w, {RIVAL_A: 1.0})
-            # a mismatching multiplier stops the run
-            c = sqlite3.connect(db); c.execute("update picks set multiplier = 3 where entry_id = ? and event = 5 and is_captain = 1", (RIVAL_A,)); c.commit(); c.close()
-            with self.assertRaises(L.MissingInput):
-                L.load(tmp)
 
     def test_captain_table_and_history(self):
         with tempfile.TemporaryDirectory() as tmp:
