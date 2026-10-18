@@ -82,9 +82,10 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   INCONCLUSIVE by construction; re-run `python tools/xp_v2.py --validate
   --cut 6` at the GW10 and GW19 checkpoints; the chat rules on the metric
   power before GW10.
-- **S9:** fixed under RULING S9 decisions (`629da70`, `5aceef2`); re-verification
-  running at the time of this commit (its verdict is recorded in the report
-  and here when it returns).
+- **S9:** complete on `lane-b` — fixed under RULING S9 decisions (`629da70`,
+  `5aceef2`), re-verified **PASS** (Fable 5.1), write guard clean. For lane
+  A: S2b (Tuesday) and the verifier's note that `standings` "event 2" rows
+  are mislabelled GW3 snapshots.
 - **Current item:** S8 built (`tools/planner.py`, `tests/test_S8.py`, prereg
   `de7e1b3` with RULING Step 8 verbatim; code `51520ef`, `7f8ba52`, `22a179c`;
   7 tests, mutations 19 of 19 red). The 50-squad replay is running in the

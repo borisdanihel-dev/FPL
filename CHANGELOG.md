@@ -3239,8 +3239,14 @@ on some settled gameweeks** — the sync stops re-fetching entry history at
 `finished = 1`, before `data_checked` (GW3–4 short 12–29 points for every
 manager, GW6 short 1–6 for five rivals; the totals chain holds the final
 scores). Numbers below are as measured on the stored rows (P within 0.02 of
-the reconstruction). Stopped for the rulings (report, Decisions 0). Not on
-master.
+the reconstruction). **RULING S9 decisions** (`1f0d881`, verbatim in the
+prereg): the tool reads settled scores from the totals chain (`629da70`,
+`5aceef2`; 18 provisional rows printed, 0 excluded; pooled σ_d 18.03 [10.45,
+20.31], our σ 13.76, line 102.0; every rival inside), intervals on every σ
+and P, the flags as ruled; tests 8, mutations 21 of 21 red. **Verifier,
+second run: PASS** (Fable 5.1): its own chain reconstruction equals the
+tool's, the `standings` totals and Σ multiplier × points on every row. Lane
+A: S2b (Tuesday) and the `standings` "event 2" mislabelling. Not on master.
 
 **Definitions, as pre-registered.** Net points = `entry_gw.points −
 transfers_cost`, settled gameweeks only; σ_i, σ_d,j, ρ_ij per rival; pooled
