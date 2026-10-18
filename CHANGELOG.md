@@ -3096,3 +3096,48 @@ the heuristic's input, the bootstrap seed); mutations 23 of 23 red;
   on the toy). Write guard clean.
 
 Report: `worklog/cc_2026-10-18_S7.md` (amendment section).
+
+## 2026-10-18 — S5: odds-implied fixture λ, `bottomup_lambda`, backtest (`f9ca3d0` prereg, `94fbc36` amendment 1, `df5d5fa` odds, `01be62b` code; lane B)
+
+Lane B's third item, under auto-continue after S7's amendment (RULING S5 and
+RULING lane B go points 2–3, verbatim in `prereg/S5.md`). `tools/odds_lambda.py`
+(standard library only; the nightly never imports it; `ODDS_API_KEY` never
+appears — the live collector is lane A's W1), `tests/test_S5.py`, and the
+football-data.co.uk E0 CSVs for 2025/26 (380 rows) and 2026/27 (60 rows to
+12 Oct), fetched 2026-10-18 with Boris's approval. Verifier: VERIFIER_LINE.
+Not on master (lands with S4 and S7 after a green dry run).
+
+**Definitions, as pre-registered.** Pre-closing `Avg*` odds (B365 as the
+row fallback; closing and Pinnacle columns never read); power de-margin;
+λ_total by bisection on the Poisson CDF at 2 from P(under 2.5); home/away
+split by bisection on P(home win); P(cs) = exp(−λ_opp); fallback = a
+time-decayed Poisson team model (ξ = 0.0065 per day) on results before the
+deadline. `bottomup_lambda` = bottomup with the GK/DEF clean-sheet λ from
+the odds and a goals-conceded term −P(start) × E[floor(GC/2)]; MID/FWD
+unchanged. 2025/26 through the S4 harness (clubs of the origin, rounds
+< g); the 2026/27 condition from the newest export before each deadline.
+
+**Measured.**
+- **Primary (a) PASS.** 2025/26 GW5–38, GK/DEF with 60+ minutes (3,193
+  player-fixtures): Brier improvement **+0.0153, 90% CI [+0.0098, +0.0214]**
+  (bar ≥ 0.005, lower bound > 0); levels model 0.1910, λ 0.1757. Without
+  the 10 Friday-kickoff gameweeks +0.0162 [+0.0091, +0.0242]. Log loss
+  +0.0368 [+0.0238, +0.0506]. Fallback fired 0 times.
+- DEF starters' realised points, easiest minus hardest quintile: **+2.30
+  by λ_opp** (4.74 → 2.44) against −1.92 by the file's undated FDR.
+- 2025/26 DEF/GK starters Spearman: model +0.126, λ +0.180, **λ − model
+  +0.054 [+0.028, +0.080]**; s_d 0.096 → 143 gameweeks for Δ = 0.02.
+- **Condition (b) PASS in form, without power.** 2026/27: GW5 (export of
+  17 Sep) and GW6 (export of 9 Oct) only — GW1–3 have no pre-deadline
+  export, GW4's export predates the grain change (no `player_id`) and is
+  refused by the frozen adapter, printed as excluded. λ − model +0.1375
+  [+0.1282, +0.1469], n = 2; CI upper bound ≥ 0; 143 gameweeks would be
+  needed to detect a fall of 0.02. The rebuilt `bottomup` equals the
+  recorded log rows (max difference 0.000, 256 and 246 rows).
+- Tests: `test_fpl.py` 386 → 386; `tests/test_S5.py` 10 new; mutations 15
+  of 16 red (the survivor a defence-in-depth no-op, the two-site mutation
+  red).
+- **Adoption of `bottomup_lambda` needs Boris's acceptance in chat**
+  (ruling 3); nothing records it yet.
+
+Report: `worklog/cc_2026-10-18_S5.md`; verifier `worklog/verify_S5.md`.

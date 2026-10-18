@@ -61,14 +61,16 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   then never merge `origin/master` into `lane-b`** (it would carry the
   revert and delete S4 from lane-b); after the landing, merge master into
   lane-b as usual. Dry runs are capped at 6 a day; batch items.
-- **Current item:** S7 — RULING S7 result (`d9c36e4`, verbatim in
-  `prereg/S7.md`): the failed replay test is accepted as reported, the
-  calculator is not a decision input. Amendment built (`41ff6b4`): live
-  table on real fixtures GW8–19 from `fpl.sqlite` (no proxies), two
-  information-only replay comparators, the verifier's three test gaps
-  closed. Amended replay run and recorded; verifier rerun **PASS** (Fable 5.1),
-  write guard clean. S7 complete on `lane-b`; lands with S4 on Monday
-  after the dry run. The queue continues with S5 (ruling point 4).
+- **S7:** complete on `lane-b` (`8e8583b`): failed replay bar accepted by
+  RULING S7 result; amendment (real fixtures to GW19, comparators) verified
+  PASS. Lands with S4 on Monday.
+- **Current item:** S5 built (`tools/odds_lambda.py`, `tests/test_S5.py`,
+  odds CSVs `df5d5fa`, code `01be62b`). **Both pre-registered parts pass**
+  (Brier +0.0153 [+0.0098, +0.0214]; the 2026/27 condition on two
+  gameweeks). Verifier: VERIFIER_STATE. Auto-continue stops after S5: a
+  passed model test whose adoption needs Boris's acceptance in chat (FAST
+  item 6). S6 starts on the chat's word; its prereg uses `bottomup_lambda`
+  if S5's test and verifier passed.
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
@@ -108,7 +110,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 2 of 6 (S4, S7).
-- **Open for the chat:** S7 Decisions 1–2 (the failed chip test; whether S5 starts); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
+- **Items since the last chat review:** 3 of 6 (S4, S7, S5).
+- **Open for the chat:** S5 Decision 1 (adopt `bottomup_lambda`?) and whether S6 starts; the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
