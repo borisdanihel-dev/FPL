@@ -611,15 +611,73 @@ def sec_value(d, horizon, min_mins=135, top=12):
     print()
 
 
+FORMATION_MIN = {1: 1, 2: 3, 3: 2, 4: 1}    # every XI: 1 GK, 3+ DEF, 2+ MID, 1+ FWD
+
+
+def rule_autosubs(rows):
+    """FPL's automatic substitutions applied to the minutes, for a gameweek
+    whose own list was never stored (Step 2.10): each starter who played 0
+    minutes, in slot order, is replaced by the first bench player in bench
+    order who played and keeps the XI legal (FORMATION_MIN); the keeper only
+    by the bench keeper. Returns [(bench row in, starter row out)]."""
+    from collections import Counter
+    xi = sorted((r for r in rows if r["slot"] <= 11), key=lambda r: r["slot"])
+    bench = sorted((r for r in rows if r["slot"] > 11), key=lambda r: r["slot"])
+    current, used, pairs = list(xi), set(), []
+    for out in xi:
+        if (out.get("minutes") or 0) > 0:
+            continue
+        for cand in bench:
+            if id(cand) in used or (cand.get("minutes") or 0) == 0:
+                continue
+            if (out["pos"] == 1) != (cand["pos"] == 1):
+                continue
+            trial = [r for r in current if r is not out] + [cand]
+            have = Counter(r["pos"] for r in trial)
+            if all(have[p] >= n for p, n in FORMATION_MIN.items()):
+                pairs.append((cand, out))
+                used.add(id(cand))
+                current = trial
+                break
+    return pairs
+
+
+def effective_lineup(d, rows):
+    """(xi, bench, n_subs, source) for one squad after its automatic
+    substitutions (Step 2.10). source "FPL": the list FPL applied, stored by
+    the sync with the picks (autosubs_known); "rules": the gameweek has no
+    stored list, so FPL's rules are applied to the minutes."""
+    xi = [r for r in rows if r["slot"] <= 11]
+    bench = [r for r in rows if r["slot"] > 11]
+    entry, event = (rows[0].get("entry_id") if rows else None), d.get("gameweek")
+    known = {(k["entry_id"], k["event"]) for k in d.get("autosubs_known", [])}
+    if entry is not None and (entry, event) in known:
+        by_pid = {r.get("player_id"): r for r in rows}
+        pairs = [(by_pid.get(a["element_in"]), by_pid.get(a["element_out"]))
+                 for a in d.get("automatic_subs", [])
+                 if a["entry_id"] == entry and a["event"] == event]
+        if any(i is None or o is None for i, o in pairs):
+            raise ValueError(f"automatic_subs of entry {entry} GW{event} name a "
+                             f"player who is not in its squad")
+        source = "FPL"
+    else:
+        pairs, source = rule_autosubs(rows), "rules"
+    ins, outs = {id(i) for i, _ in pairs}, {id(o) for _, o in pairs}
+    return ([r for r in xi if id(r) not in outs] + [i for i, _ in pairs],
+            [r for r in bench if id(r) not in ins] + [o for _, o in pairs],
+            len(pairs), source)
+
+
 def sec_bench(d):
     print("=" * 78)
-    print("BENCH AUDIT")
+    print("BENCH AUDIT  (after automatic substitutions: FPL's list where stored, else its rules)")
     print("=" * 78)
     me = my_name(d)
     for entry in sorted({r["entry_name"] for r in d["squads"]}):
         rows = [r for r in d["squads"] if r["entry_name"] == entry]
-        bench = [r for r in rows if r["slot"] > 11]
-        xi = [r for r in rows if r["slot"] <= 11 and r["pos"] != 1]
+        # points that already counted through an auto-sub are not a bench gain
+        on, bench, n_subs, src = effective_lineup(d, rows)
+        xi = [r for r in on if r["pos"] != 1]
         lost = sum((r["gw_points"] or 0) for r in bench if r["pos"] != 1)
         worst = min(((r["gw_points"] or 0), r["web_name"]) for r in xi) if xi else (0, "-")
         best = max(((r["gw_points"] or 0), r["web_name"]) for r in bench
@@ -629,12 +687,13 @@ def sec_bench(d):
         # the keeper swap: the bench keeper for the starting one, if he scored more
         k_in = max((r for r in bench if r["pos"] == 1),
                    key=lambda r: r["gw_points"] or 0, default=None)
-        k_out = min((r for r in rows if r["slot"] <= 11 and r["pos"] == 1),
+        k_out = min((r for r in on if r["pos"] == 1),
                     key=lambda r: r["gw_points"] or 0, default=None)
         gk_gain = (max(0, (k_in["gw_points"] or 0) - (k_out["gw_points"] or 0))
                    if k_in and k_out else 0)
         keeper = k_in["web_name"] if k_in and k_out else "-"
-        print(f"{flag} {entry[:22]:22s} bench={lost:>3}  best benched {best[1][:12]:12s}"
+        print(f"{flag} {entry[:22]:22s} bench={lost:>3}  subs {n_subs} {src:5s}  "
+              f"best benched {best[1][:12]:12s}"
               f"({best[0]:>2})  worst XI {worst[1][:12]:12s}({worst[0]:>2})  "
               f"keeper {keeper[:12]:12s}+{gk_gain:<3} perfect-XI gain +{gain + gk_gain}")
     print()

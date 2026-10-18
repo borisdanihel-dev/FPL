@@ -5806,6 +5806,68 @@ class StepTwoEdge(unittest.TestCase):
         self.assertEqual([(r["pts"], r["mins"], r["n_fixtures"]) for r in rows], [(15, 170, 2)])
 
 
+class StepTwoBenchAudit(unittest.TestCase):
+    """S2, Step 2.10: points that already counted through an automatic
+    substitution are not a bench gain - FPL's list where the sync stored it,
+    else FPL's rules applied to the minutes."""
+
+    def _world(self):
+        d = make_export()
+        slots = _legal_lineup(d)              # 1 GK, 2-5 DEF, 6-9 MID, 10-11 FWD; 12 GK, 13 DEF, 14 MID, 15 FWD
+        for s, r in slots.items():
+            r["gw_points"], r["minutes"], r["player_id"] = 4, 90, 1000 + s
+        slots[2]["gw_points"], slots[2]["minutes"] = 0, 0         # a starter who did not play
+        slots[13]["gw_points"] = 7                                # the bench DEF who came on
+        return d, slots
+
+    def _line(self, d):
+        return BenchAudit._audit(d)
+
+    def test_a_zero_minute_starter_whose_bench_player_came_on_shows_no_gain(self):
+        d, slots = self._world()
+        a = self._line(d)
+        self.assertEqual(a["gain"], 0, "an auto-sub's points counted as a bench gain")
+        self.assertIn("subs 1 rules", run("bench", d))
+
+    def test_fpl_s_stored_list_is_the_authority(self):
+        d, slots = self._world()
+        me = slots[1]["entry_id"]
+        d["autosubs_known"] = [{"entry_id": me, "event": d["gameweek"]}]
+        d["automatic_subs"] = [{"entry_id": me, "event": d["gameweek"],
+                                "element_in": 1013, "element_out": 1002}]
+        self.assertEqual(self._line(d)["gain"], 0)
+        self.assertIn("subs 1 FPL", run("bench", d))
+        d["automatic_subs"] = []          # FPL made no sub: the rules are not applied over it
+        self.assertEqual(self._line(d)["gain"], 7)
+
+    def test_bench_order_decides_and_the_keeper_only_swaps_with_the_keeper(self):
+        d, slots = self._world()            # bench 13 DEF and 14 MID both played; 4 DEF in the XI
+        pairs = E.rule_autosubs(list(slots.values()))
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(13, 2)],
+                         "the first eligible bench player in bench order comes on")
+        # keeper: a 0-minute keeper is replaced only by the bench keeper
+        d, slots = self._world()
+        slots[2]["minutes"], slots[2]["gw_points"] = 90, 4
+        slots[1]["minutes"], slots[1]["gw_points"] = 0, 0
+        pairs = E.rule_autosubs(list(slots.values()))
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(12, 1)])
+
+    def test_a_defender_short_xi_takes_the_bench_defender_not_the_midfielder(self):
+        d, slots = self._world()
+        slots[5]["pos"] = 3                                # XI now 3 DEF (2, 3, 4) + 5 MID
+        rows = sorted(slots.values(), key=lambda r: r["slot"])
+        # bench order: 12 GK, 13 MID (played), 14 DEF (played), 15 FWD
+        slots[13]["pos"], slots[14]["pos"] = 3, 2
+        pairs = E.rule_autosubs(rows)
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(14, 2)])
+
+    def test_a_bench_player_who_did_not_play_is_not_brought_on(self):
+        d, slots = self._world()
+        slots[13]["minutes"] = 0
+        pairs = E.rule_autosubs(list(slots.values()))
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(14, 2)])
+
+
 class StepTwoRuleset(unittest.TestCase):
     """S2, Step 2.7: every scored row carries its ruleset, and BPS and bonus
     are never compared across rulesets."""
