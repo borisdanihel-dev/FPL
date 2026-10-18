@@ -3027,7 +3027,9 @@ and RULING lane B go point 4, verbatim in `prereg/S7.md`). `tools/chips.py`
 (standard library only; the nightly never imports it — wiring is lane A's
 W2) and `tests/test_S7.py`; builds on S4's harness and `hist_pit`, and on
 the frozen `fpl_edge` pieces (`project()`, `_best_xi`, the item N Free Hit
-solver and screen, `rule_autosubs`, `selling_budget`). Verifier: VERIFIER_LINE.
+solver and screen, `rule_autosubs`, `selling_budget`). Verifier: **PASS** (Fable 5.1, effort
+high, `worklog/verify_S7.md`: no leak, no moved bar; four readings flagged
+for the chat, three test gaps noted — report).
 Not on master (RULING lane B landing: lands with S4 after a green dry run).
 
 **Definitions, as pre-registered.** xP source `own`: the recorded row for

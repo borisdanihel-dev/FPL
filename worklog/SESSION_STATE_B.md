@@ -64,7 +64,9 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Current item:** S7 built (`tools/chips.py`, `tests/test_S7.py`, code
   `d0fc715` on `lane-b`). **The pre-registered replay test FAILS on its
   bar** (calculator − heuristic −0.18 per squad, 90% CI [−1.26, +0.72]; mean
-  not ≥ 0); recorded, not tuned. Verifier: VERIFIER_STATE. Auto-continue
+  not ≥ 0); recorded, not tuned. Verifier: PASS (Fable 5.1, `worklog/verify_S7.md`), write guard clean; three
+  test gaps it noted (live budget variable, heuristic input, bootstrap seed)
+  are to be closed by tests before the landing if the chat keeps S7. Auto-continue
   stops here (a model result that would change a live decision, and an
   open decision): S5 starts only on the chat's word. S7 lands with S4 on
   Monday (RULING lane B landing) if the chat wants the code on master.
