@@ -82,7 +82,19 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   INCONCLUSIVE by construction; re-run `python tools/xp_v2.py --validate
   --cut 6` at the GW10 and GW19 checkpoints; the chat rules on the metric
   power before GW10.
-- **Current item:** S9 built (`tools/league.py`, `tests/test_S9.py`, code
+- **S9:** complete on `lane-b` — fixed under RULING S9 decisions (`629da70`,
+  `5aceef2`), re-verified **PASS** (Fable 5.1), write guard clean. For lane
+  A: S2b (Tuesday) and the verifier's note that `standings` "event 2" rows
+  are mislabelled GW3 snapshots.
+- **Current item:** S8 built (`tools/planner.py`, `tests/test_S8.py`, prereg
+  `de7e1b3` with RULING Step 8 verbatim; code `51520ef`, `7f8ba52`, `22a179c`;
+  7 tests, mutations 19 of 19 red). The 50-squad replay is running in the
+  background (about two hours; output `tools/out/s8_run2/`); the report
+  `worklog/cc_2026-10-19_S8.md` is drafted with the live table. Then the
+  verifier, the docs, and the queue continues with S11 (prereg template rows
+  to fill), S12, S13 — the rulings are verbatim in `prereg/S11.md`, `S12.md`,
+  `S13.md`.
+- **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
   variance line. **Verifier FAIL** on a data finding: `entry_gw.points` is
@@ -109,6 +121,16 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   1. The Monday landing: after W1's green dispatch, the landing branch
      (revert of `32bf218` + lane-b's items + the BUILD_PLAN Part C line) is
      pushed and needs the dry-run click.
+  2. **S11 download approval:** the ruling's priors and reliability
+     constants come from 2024/25 per-gameweek data (the player's 2024/25
+     share at the same club; k from split-half reliability measured on
+     2024/25). The repo holds only 2025/26 per-gameweek rows and the FPL
+     API's 2024/25 season totals without clubs, so S11 needs
+     `github.com/vaastav/Fantasy-Premier-League` season 2024/25
+     (`merged_gw.csv`, `fixtures.csv`, `teams.csv`, about 7 MB, into
+     `historical/2024-25/`, gitignored). Question: may lane B download it?
+     Until then S11 is parked and the queue runs S12, then S13 (2025/26
+     only).
 
   Boris is asleep until about 08:00 Prague. Until then:
   - Ask nothing. Anything that needs me (a click, a download approval, a decision) gets parked in your SESSION_STATE file with the exact question, and you move on to the next queued item that doesn't need it.

@@ -1,220 +1,238 @@
 # Verifier report — S9 (league variance, relative xP, captain table — offline part)
 
-Verifier: backtest-verifier, run on Fable 5.1 (claude-fable-5-1), effort high,
-from `C:\GIT\FPL-b` (branch `lane-b`), 2026-10-18 ~22:50-23:30 UTC. Instructions
-read from `.claude/agents/backtest-verifier.md` on disk. Data read-only from
-`C:\GIT\FPL-data` at `9da6ff1` (nightly 2026-10-18); worktree clean before and
-after. No source file touched; this file is the only write.
+## First run (2026-10-18, FAIL) — summary
 
-Descriptive item: checks 1, 2, 5, 6, 7 and the prereg's acceptance tests 1-6
-were run; check 3 (reproduction) and check 4 (definitions) are reported as
-information, as the launch asked.
+The first verification (Fable 5.1, `2d56fd5`) passed every mechanical check
+(prereg before code; truncation at GW7 line-identical; every `own` snapshot
+pre-deadline; 386/386 and 5/5 green in clean archives; my reproduction equal
+to the printed numbers; seven mutations red; no runner or data file touched;
+no secrets) and failed the item on its input: `entry_gw.points` was
+provisional on settled gameweeks (GW3 and GW4 for all seven managers, GW6 for
+five rivals; short by 1-29 points, proven by the API's running totals and by
+Σ multiplier × player points; `fetched_at_utc` NULL on every GW1-6 row;
+the sync stops re-fetching at `finished = 1`, before `data_checked`). It also
+noted three textual deviations from the prereg: no intervals for σ_i, our σ,
+the no-chip σ_d and P(above j); an extra EO condition on the "free variance"
+flag; the "allowed differential" flag not reading the EO. RULING S9 decisions
+(verbatim in `prereg/S9.md`, commit `1f0d881`) answered all four: the sync fix
+is lane A's S2b; meanwhile the tool derives each settled score from the totals
+chain, prints provisional rows, excludes and counts uncorrectable ones; an
+interval for every sigma and every P; the free-variance EO condition kept as
+the ruling's reading; the allowed-differential flag reads the threat-set EO.
+
+## This run (re-verification after the ruling)
+
+Verifier: backtest-verifier, run on Fable 5.1 (claude-fable-5-1), effort high,
+from `C:\GIT\FPL-b` (branch `lane-b`), 2026-10-18 ~23:30 UTC to 2026-10-19
+~00:10 UTC. Instructions read from `.claude/agents/backtest-verifier.md` on
+disk. Data read-only from `C:\GIT\FPL-data` at `9da6ff1` (= `origin/data`
+after fetch; the same snapshot as the first run; `fpl.sqlite` sha256
+`a4ac...`, `projection_log.csv` sha256 `e466...` before and after). Item
+range `94cbe3b..5aceef2`; clean archives of both in the scratchpad. No source
+file touched; this file is the only write. While I ran, lane B committed S8,
+S12 and S13 work on top (`51520ef..b456909`, `tools/planner.py`,
+`tests/test_S8.py`, preregs, worklog); `git diff 5aceef2 HEAD` on
+`tools/league.py`, `tests/test_S9.py`, `tools/backtest.py`,
+`tools/console_utf8.py`, `fpl_edge.py` and `prereg/S9.md` is empty, so the
+worktree runs below are of the item's code.
+
+Descriptive item (no pass/fail metric): checks 1, 2, 5, 6, 7 decide; checks 3
+and 4 are reported as the launch asked.
 
 ## Prereg order — PASS
 
-`git log`: `98ebddd` 2026-10-19 00:40:12 +0200 adds only `prereg/S9.md`;
-first code commit `1dc2263` 00:45:39; test-order fix `2d56fd5` 00:46:17;
-report/CHANGELOG `15ecae8` 00:47:08. The prereg carries the RULING Step 9
-verbatim (points 1-5, END RULING). `git diff f25fe4d..2d56fd5 --stat`: only
-`prereg/S9.md`, `tests/test_S9.py`, `tools/league.py`.
+`git log`: `98ebddd` (2026-10-19 00:40) added `prereg/S9.md` before the first
+S9 code `1dc2263` (00:45). The ruling on the result: `1f0d881` (01:07:57,
+only `prereg/S9.md`, "RULING S9 decisions" verbatim, END RULING) precedes the
+fix code `629da70` (01:13:12) and `5aceef2` (01:15:40). `git diff
+94cbe3b..5aceef2 --stat`: `prereg/S8.md`, `S9.md`, `S11.md`, `S12.md`,
+`S13.md`, `tests/test_S9.py`, `tools/league.py`, `worklog/SESSION_STATE_B.md`.
 
-## Check 1 — point-in-time — PASS on the mechanics (but see Finding A)
+## Check 1 — point-in-time, the chain — PASS
 
-a. Truncation (decides). Scratch copy of `fpl.sqlite` with every row of
+a. Chain reconstruction (my own script, `tools/league.py` not imported). For
+   every entry and settled g: final_total[g] = row(g+1).total_points −
+   (row(g+1).points − transfers_cost); final_total[g−1] = row(g).total −
+   row(g).net (0 before GW1); net[g] = difference. Result: 18 provisional
+   rows, 0 excluded, the same rows and differences as the output (GW3 all
+   seven, +6..+21; GW4 six — Bruno, Djedi, Revelstoke, Rice Guy, Kiripolcz,
+   PyroNeniZlocin, +2..+11; GW6 five, +1..+6; the launch's "GW4 five" is a
+   slip in the message, the output and my count are six). The first run's
+   method (GW3+GW4 = tot5 − net5 − tot2; GW6 = tot7 − net7 − tot5) equals the
+   chain for every manager.
+   API totals: the `standings` table (the league endpoint, fetched separately
+   from `entry_gw`) holds `event_total` and `total` per event; for events 3-6
+   all 28 rows equal the chain's net and final total exactly. The seven
+   "event 2" standings rows do not match the chain's GW2 (they carry a GW3
+   snapshot under the event-2 label, e.g. ReturnOfTheDjedi 45/217, and
+   PyroNeniZlocin's is itself provisional, 68/176 vs 71/179); the tool does
+   not read `standings`, so this is information for lane A's sync, not an S9
+   input. Σ multiplier × `player_gw.total_points` with autosubs rebuilt from
+   minutes (bench order, formation validity, GK-for-GK, vice for a 0-minute
+   captain, no subs under Bench Boost): equals the chain on 42 of 42 rows
+   GW1-6 (the raw Σ differs on exactly the seven rows with a 0-minute
+   starter: ours GW4 62→64, Rice Guy GW6 60→61, Revelstoke GW6 64→66,
+   PyroNeniZlocin GW3 68→71, GW4 48→57, GW6 30→36).
+a'. Truncation (decides). Scratch copy of `fpl.sqlite` with every row of
    `event >= 7` deleted from `entry_gw`, `picks`, `player_gw`,
-   `automatic_subs`, fixtures `finished = 0` and events `finished =
-   data_checked = 0` for `id >= 7` (the calendar keeps its deadlines);
-   `L.report(..., today=2026-10-18T22:00Z)` rebuilt: **0 of 50 lines differ**
-   from `tools/out/league_2026-10-18.txt`. Settled set = [1..6]. The tool
-   therefore reads nothing of GW7 although `entry_gw` and `picks` hold GW7
-   rows for all seven managers (3xc rows for us and 4866471 in GW7 exist and
-   are not used).
-   Per-gameweek rebuild of the captain history (earliest, middle, latest =
-   GW4, GW5, GW6; the only settled gameweeks with own rows), each from the
-   last `own` snapshot made strictly before its deadline and our picks of
-   that gameweek: GW4 top João Pedro FWD 7.20, GW5 Haaland FWD 8.70, GW6
-   Tarkowski DEF 6.20 → **1 of 3**, as printed.
-b. Timestamp audit (decides). `own` snapshots in the log: GW4
-   2026-09-11T21:55:16Z (< deadline 09-12T12:30Z), GW5 09-17T21:55:18Z (<
-   09-18T17:30Z), GW6 10-09T21:50:35Z (< 10-10T10:00Z), GW7 10-16T22:02:14Z
-   (< 10-17T10:00Z), GW8 10-17T22:04:06Z and 10-18T21:58:06Z (both <
-   10-23T17:30Z; the later one is read, through `fpl_edge.forecasts`). Every
-   gameweek counted has `data_checked = 1` and 10/10 fixtures `finished = 1`;
-   GW7 has `data_checked = 0`, 0/10 finished, and is excluded. Picks used for
-   EO and for our 15 are GW6's (the last settled), printed as such.
+   `automatic_subs`, `standings`; fixtures `finished = started = 0` and
+   events `finished = data_checked = 0` for `id >= 7`. Tool rerun
+   (`today = 2026-10-18T22:00Z`): settled [1..6]; GW6 excluded for all seven
+   managers ("7 rows the chain cannot correct, excluded", seven "excluded:
+   <manager> GW6 (no later row to correct it)" lines) — the expected GW6
+   effect; 13 provisional rows = the 18 minus the five GW6 ones, same
+   differences; GW1-5 chain nets and final totals identical to the full run
+   for every manager (checked programmatically). The truncated run's
+   statistics (settled through GW5, n = 33: pooled σ_d 19.36 [11.55, 21.51],
+   our σ 13.39 [1.87, 17.02], no-chip 17.87 [6.29, 19.22], line 111.2, and
+   the six rival rows) are identical, line for line, to my reconstruction on
+   the truncated database. Side note: in this degenerate state the header
+   reads "settled through GW5 ... (GW6, GW7 played, not yet settled)" because
+   `last` is the last gameweek with our score, while GW6 is settled-but-
+   excluded; cosmetic.
+   Captain history (GW4/GW5/GW6 from each gameweek's last pre-deadline `own`
+   snapshot and our picks of that gameweek, first run: 1 of 3): the diff
+   leaves `captain_history`, `our_xi`, the `own` reader and the picks reader
+   untouched, and the line prints the same "1 of 3".
+b. Timestamp audit (decides). The chain's GW6 reads the GW7 row, fetched
+   2026-10-18T21:57:54..21:58:06Z (`fetched_at_utc`), before the run; GW6's
+   `data_checked = 1` is already in the first data-branch commit holding a
+   GW7 row (`e84bee6`, 2026-10-17 22:04Z), and the GW6 final total implied by
+   the GW7 row is constant across all four GW7 fetches (`e84bee6`, `4af6abe`,
+   `e8629f0`, `9da6ff1`) for all seven managers (406, 433, 398, 377, 379,
+   419, 333). GW1-6 rows carry `fetched_at_utc` NULL (pre-S2), as before.
+   `own` snapshots as in the first run: GW4 09-11T21:55Z, GW5 09-17T21:55Z,
+   GW6 10-09T21:50Z, GW7 10-16T22:02Z, GW8 10-18T21:58Z, each before its
+   deadline. GW7 (`data_checked = 0`, 0/10 finished) is excluded from
+   everything but the chain's next-row read.
 c. Shift probe: not applicable (no forecast correlation metric).
 
-## Check 2 — clean-checkout test runs — PASS
+## Check 2 — clean-archive test runs — PASS
 
-`git archive` of `f25fe4d` (before) and `2d56fd5` (after) into the
-scratchpad, `FPL_DATA_DIR` unset:
+`git archive` of `94cbe3b` (before) and `5aceef2` (after), `FPL_DATA_DIR`
+unset:
 
 | archive | `python test_fpl.py` | `python -m unittest tests.test_S9` | discovery `tests/` |
 |---|---|---|---|
-| before f25fe4d | Ran 386, OK (skipped=8) | file absent | — |
-| after 2d56fd5 | Ran 386, OK (skipped=8) | Ran 5, OK | Ran 149, OK (skipped=2) |
+| before 94cbe3b | Ran 386, OK (skipped=8) | Ran 5, OK | Ran 149, OK (skipped=2) |
+| after 5aceef2 | Ran 386, OK (skipped=8) | Ran 8, OK | Ran 152, OK (skipped=2) |
 
-Matches the implementer's counts. In the worktree itself: 5 OK.
+Matches the implementer (8 OK; 386 OK, 8 skipped).
 
-## Check 3 — reproduction (information) — numbers match
+## Check 3 — reproduction — numbers match (max abs diff 0.0)
 
 `python tools/league.py --out <scratch>` from `C:\GIT\FPL-b`: rc 0, one file
-`league_2026-10-18.txt`; body identical to the implementer's file line for
-line (header line compared separately: same text, same date). Independent
-recomputation from the database (my own script, not the tool): pooled
-σ_d 18.6250, our σ 14.3306, line 105.4; σ_d,j / gap / P: 21.03/27/0.399,
-20.24/56/0.298, 17.77/19/0.428, 15.82/1/0.496, 23.73/40/0.352,
-10.03/−50/0.682 — all equal to the printed values. Bootstrap indices follow
-`backtest.bootstrap_mean` (lo = sorted[round(0.05·B)], hi = sorted[round(0.95·B)−1]).
+`league_2026-10-18.txt` (UTC date at run time), byte-identical to
+`tools/out/league_2026-10-18.txt` including the header;
+`L.report(today=2026-10-18T22:00Z)` likewise identical. Independent
+recomputation (my script, own chain, own statistics, own bootstrap with the
+pre-registered RNG protocol): pooled σ_d 18.03 [10.45, 20.31], our σ 13.76
+[3.01, 18.35], no-chip 17.87 [5.62, 19.72], line 102.0; σ_j / σ_d,j / ρ /
+gap / P [90%]: 26.94/21.74/0.60/29/0.388 [0.312, 0.400];
+22.76/20.35/0.47/56/0.291 [0.172, 0.313]; 22.74/14.96/0.77/21/0.418 [0.361,
+0.427]; 24.63/13.95/0.89/2/0.492 [0.487, 0.493]; 21.74/22.08/0.29/42/0.340
+[0.239, 0.357]; 13.41/12.53/0.57/−44/0.667 [0.649, 0.772]; all "inside";
+threat set the five ahead. Raw (unrounded) comparison of 5 global and 66
+per-rival values against `variance_table`: max abs diff 0.0 (< 1e-6).
 
-## Check 4 — definitions against the prereg (information; deviations noted)
+## Check 4 — definitions against the prereg and the ruling
 
-Faithful: pooled σ_d = RMS of σ_d,j (`pooled_sigma_d`); Φ with zero drift,
-sign −gap; the line strictly `>` (a gap on the line is "inside"); threat set
-= rivals with gap > 0, else P(j above) ≥ 0.05; w_j = 1 − P(above j),
-normalised (sum 1.000); multiplier rule starter 1 / captain 2 / 3xc 3 / bench
-0 / bench 1 under bboost, cross-checked on every settled gameweek of every
-manager (a mismatch raises `MissingInput`); relative xP = (mult − EO) × own;
-allowance 0.5 before GW25, 1.0 from GW25; free-variance threshold 0.3; net
-= points − transfers_cost; chip-week exclusion when either side's
-`active_chip` is set; "next gameweek" = the coming deadline (GW8) for xP, EO
-and the captain table while n and the gaps rest on the settled GW6 — stated
-in the output header.
-
-Deviations from the prereg text (none changes a printed number):
-1. The prereg says "Bootstrap ... for pooled σ_d, each σ_d,j and each σ_i"
-   and "Every σ and every P is printed with its interval". The output prints
-   intervals for pooled σ_d and each σ_d,j only; σ_j (each σ_i), our σ, the
-   no-chip σ_d and every P(above j) are printed without one.
-2. The "free variance" flag carries an extra condition not in the prereg or
-   the ruling: `cost < 0.3 and EO(option) < EO(top)` (league.py line 363).
-   The ruling says only "when the xP difference between two options is
-   under 0.3". Not exercised by the GW8 table (no option within 0.3 of
-   Haaland); the toy test only covers the lower-EO case.
-3. "allowed differential" flags `cost <= allowance` for every option below
-   rank 1 without reading the EO; the prereg's "against the threat-set EO"
-   is met only by printing the EO column beside it.
+- Ruling point 2 (chain): `totals_chain` as defined; "WARN provisional:
+  <manager> GW<g> stored <a>, chain <b> (<±diff>)" per row; "<k> rows the
+  chain cannot correct, excluded" plus one "excluded:" line each; `load`
+  returns `provisional` and `excluded`. Faithful.
+- Ruling point 3 (1): intervals printed for pooled σ_d, our σ, the no-chip
+  σ_d, every σ_j, every σ_d,j and every P(above j); P's interval from the
+  resampled pooled σ_d (it equals Φ(−gap/(σ√n)) at the σ_d interval's ends,
+  checked). Faithful for the primary table. Information: the drift-version
+  P(above) lines ("information only") are printed without an interval; the
+  first run's deviation list named P(above j), which the ruling answered —
+  the chat may want to say whether "every P" also covers the drift version.
+  Also the P bootstrap drops the resamples where the pooled σ_d is 0 (all six
+  draws the same gameweek, ~1 in 7,776), which the σ_d bootstrap keeps;
+  the effect on a percentile index at B = 10,000 is nil here.
+- Ruling point 3 (2): "free variance" = cost < 0.3 AND a lower EO than the
+  top (line 428) — the ruling's reading, kept. Faithful.
+- Ruling point 3 (3): "allowed differential" = cost <= allowance AND a lower
+  threat-set EO than the top (line 426); the header says so. Faithful.
+- Unchanged and still faithful: pooled σ_d = RMS of σ_d,j; Φ sign; the line
+  strictly `>`; threat set rule; w_j = 1 − P(above j) normalised (sum 1.000);
+  multiplier rule cross-checked on every settled gameweek; net = points −
+  cost; chip-week exclusion; allowance 0.5 before GW25 / 1.0 from GW25; the
+  bootstrap B = 10,000, seed 20261018, 90% percentile.
+- No metric promoted or re-tuned after the results: the primary (pooled
+  σ_d), the sample (settled gameweeks, now read through the chain by ruling)
+  and the bootstrap settings are those of the prereg; the item has no bar.
 
 ## Check 5 — recording path — PASS
 
-Only `prereg/S9.md`, `tests/test_S9.py`, `tools/league.py` changed between
-`f25fe4d` and `2d56fd5`; `15ecae8` adds `CHANGELOG.md`, the two worklog
-files. No runner file, no workflow file. Nightly isolation, run by me:
-importing `fpl_nightly, fpl_ship, fpl_edge, fpl_sync, fpl_gate, fpl_publish`
-loads no module under `tools/` (empty list). `C:\GIT\FPL-data` `git status`
-clean before and after; `projection_log.csv` sha256 `e466...` and
-`fpl.sqlite` sha256 `a4ac...` unchanged by my runs; the tool wrote only under
-`--out` (the CLI test also checks the data folder's listing). No recording
-code was added, so every model's recorded forecasts are byte-identical by
-construction.
+Only `prereg/*.md`, `tests/test_S9.py`, `tools/league.py` and
+`worklog/SESSION_STATE_B.md` changed between `94cbe3b` and `5aceef2`; `git
+diff` on `.github`, `fpl_nightly.py`, `fpl_ship.py`, `fpl_edge.py`,
+`fpl_sync.py`, `fpl_gate.py`, `fpl_publish.py`, `test_fpl.py` is empty.
+Nightly isolation, run by me: importing `fpl_nightly, fpl_ship, fpl_edge,
+fpl_sync, fpl_gate, fpl_publish` loads no module under `tools/` or
+`analysis/` (empty list). `C:\GIT\FPL-data` `git status` clean before and
+after; `fpl.sqlite` `a4ac...` and `projection_log.csv` `e466...` unchanged;
+the tool wrote only under `--out` (`/tools/out/` is gitignored). No recording
+code exists in the item, so every model's recorded forecasts are byte-
+identical by construction.
 
-## Check 6 — mutation spot-check — PASS
+## Check 6 — mutation spot-check — PASS (12 of 12 red)
 
-Seven mutations, each alone in the scratch copy of `2d56fd5`, `python -m
-unittest tests.test_S9` after each, restored and re-run green at the end:
+Each alone in the scratch copy of `5aceef2`, `python -m unittest
+tests.test_S9` after each, restored and re-run green (8 OK) at the end:
 
 | mutation | result |
 |---|---|
-| pooled σ_d as a plain mean of σ_d,j | FAILED (1) |
-| the line at `>=` | FAILED (1) |
-| Bench Boost bench multiplier 0 | FAILED (1) |
-| Φ's sign (+gap) | FAILED (1) |
-| hits not subtracted | FAILED (1) |
-| picks of unsettled gameweeks loaded | FAILED (2) |
-| allowance switch at GW24 | FAILED (1) |
+| chain: stored net instead of the chain | FAILED (1) |
+| chain: provisional rows not reported | FAILED (1) |
+| chain: uncorrectable row kept (stored total used) | FAILED (1) |
+| chain: next row's total not net of its own points | FAILED (2) |
+| chain: previous total from the previous row's stored total | FAILED (1) |
+| chain: only a settled next row corrects | FAILED (5) |
+| P interval collapsed | FAILED (1) |
+| σ_j interval taken from the diffs | FAILED (1) |
+| our σ interval collapsed | FAILED (1) |
+| allowed differential ignores the EO | FAILED (1) |
+| free variance without the EO condition | FAILED (1) |
+| lockdown dropped: every gameweek with a later row counted | FAILED (4) |
+
+The last one is the mutation the toy's GW7 row (`5aceef2`) makes visible.
 
 ## Check 7 — secrets — PASS
 
-`prereg/S9.md`, `tests/test_S9.py`, `tools/league.py`,
+Every file in `git diff --name-only 94cbe3b..5aceef2` plus
 `tools/out/league_2026-10-18.txt`: 0 hits for `apikey=`, `api_key`,
-`Authorization:`, `Bearer `, 32-hex strings; no `ODDS_API_KEY` reference.
+`Authorization:`, `Bearer `, `ODDS_API_KEY`, 32-hex strings.
 
 ## Acceptance tests 1-6 (prereg) — all exercised
 
-1. Toy league (3 managers, GW1-5 hand-set points and hits): σ_i, σ_d,j,
-   pooled, ρ equal the hand values; Φ(0) = 0.5, Φ(−1) = 0.1587; "inside"
-   on the line, "beyond" one point past it; weights sum to 1 — `test_sigmas_
-   pooled_rho_phi_and_line`, `test_multipliers_threat_set_and_eo`. Pass.
-2. Point-in-time: the toy's unsettled GW6 (99 points, the biggest) is never
-   counted; rival picks used are GW5's with GW6 rows present; the
-   post-deadline GW6 own snapshot (99.0) is never read — `test_point_in_
-   time`; confirmed on the real database in check 1. Pass.
-3. EO multipliers incl. TC and BB, the cross-check stops the run on a
-   mismatch, EO = Σ w·mult, bench 0 — covered. Pass.
-4. Captain table: ranking by own, allowance text, "allowed differential",
-   the DEF/GK count 0 of 5 on the toy, 1 of 3 real (rebuilt by me). Pass.
-5. Mutations: my seven above all red (the implementer reports 16/16). Pass.
-6. CLI writes one `league_<date>.txt` and nothing else; nightly imports
-   nothing under `tools/`; tests in `tests/test_S9.py`; `test_fpl.py`
-   untouched (not in the diff). Pass.
+1. Toy league hand values (σ_i, σ_d,j, pooled, ρ, Φ(0), Φ(−1), the line on
+   and past it, weights sum to 1) — green, unchanged. 2. Point-in-time: the
+   toy's unsettled GW6 (and now GW7) never counted though later rows exist;
+   rival picks GW5's; post-deadline own snapshot never read — green; real
+   database in check 1. 3. Multipliers incl. TC/BB, mismatch stops the run,
+   EO = Σ w·mult — green. 4. Captain table: ranking, both flags on the
+   one-rival-ahead toys, DEF/GK count — green. 5. Mutations: 12 red above
+   (implementer 21 of 21). 6. CLI writes one file, nothing else; nightly
+   imports nothing under `tools/`; tests in `tests/test_S9.py`; `test_fpl.py`
+   untouched.
 
-## Finding A — the settled gameweek scores in `entry_gw` are provisional (decides)
+## VERDICT: PASS
 
-The prereg's data row asserts: "`points` is the gross gameweek score, equal
-to Σ pick multiplier × player points — checked on GW5 for every manager."
-GW5 is the one settled gameweek where that holds for everyone. On the
-database as of `9da6ff1`:
-
-- `entry_gw.fetched_at_utc` is NULL on 42 of 49 rows (every GW1-6 row);
-  `automatic_subs` is empty. `fpl_sync.sync_entries` re-fetches a manager's
-  row only until `events.finished = 1`, i.e. before `data_checked`, so a row
-  can freeze with provisional points (and pre-S2 rows froze earlier still).
-- The API's own running totals expose it. A later row's `total_points −
-  (points − transfers_cost)` is the final total of the previous gameweek:
-
-  | manager | GW3+GW4 stored | GW3+GW4 final (tot5 − net5 − tot2) | GW6 stored | GW6 final (tot7 − net7 − tot5) | Σ mult×pts GW3/GW4/GW6 |
-  |---|---|---|---|---|---|
-  | ReturnOfTheDjedi FC | 118 | 138 | 63 | 65 | 45/93/65 |
-  | Bruno Dos Tres | 119 | 133 | 71 | 71 | 53/80/71 |
-  | Skori FC | 107 | 128 | 59 | 61 | 56/72/61 |
-  | 1. FC Kiripolcz (us) | 111 | 123 | 49 | 49 | 59/62/49 |
-  | No More Mr. Rice Guy | 90 | 108 | 60 | 61 | 48/60/60 |
-  | Revelstoke FC | 147 | 168 | 64 | 66 | 66/102/64 |
-  | PyroNeniZlocin | 99 | 128 | 30 | 36 | 68/48/30 |
-
-  GW1, GW2 and GW5 rows are consistent (tot2 = p1 + p2, tot5 = tot7 − net7 −
-  GW6 final for every manager). GW3 and GW4 `points` are short by 12-29 for
-  all seven managers; GW6 is short for five of the six rivals (ours is
-  right). Where the Σ equals the chain the difference is pure staleness;
-  where it does not (zero-minute starters) autosubs are the remainder.
-  `tools/league.py` reads these rows as the settled scores; its lockdown
-  test is on the event, not on the row.
-- Materiality, recomputed by me on the final scores (GW3/GW4 split by the
-  Σ where no starter had 0 minutes, remainder to the other; PyroNeniZlocin
-  has zero-minute starters in both, so both splits): pooled σ_d 18.62 →
-  18.49 / 17.94; our σ 14.33 → 13.76; Skori σ_d,j 17.77 → 14.96;
-  PyroNeniZlocin σ_d,j 10.03 → 16.06 / 11.74; gaps 27, 56, 19, 1, 40, −50 →
-  29, 56, 21, 2, 42, −44; P(above) moves by ≤ 0.02; line 105.4 → 104.6 /
-  101.5; the threat set (the five ahead) and every "inside" label are
-  unchanged. The item's report (`worklog/cc_2026-10-18_S9.md`) repeats the
-  GW5 claim and does not mention provisional rows.
-
-This is a sync (lane A, runner) defect in origin, but the item built its
-primary statistic on the assertion, verified it on one gameweek only, and
-printed provisional scores as settled ones — against "a missing input is
-reported and the work stops; nothing is substituted" and the lockdown rule's
-"provisional grades are never recorded".
-
-## VERDICT: FAIL
-
-Every mechanical check passes — prereg before code, truncation at GW7
-line-identical, every own row pre-deadline, 386/386 and 5/5 green in clean
-archives, my reproduction equal to the printed numbers, seven mutations red,
-no runner file or data file touched, no secrets — and the code implements
-the pre-registered definitions faithfully (three textual deviations noted in
-check 4: missing intervals for σ_i, our σ and every P; an extra EO condition
-on the free-variance flag; the allowance flag not reading the EO). The item
-fails on its input: the prereg's claim that `entry_gw.points` is the gross
-settled score holds only on GW5; on the database as committed the GW3 and
-GW4 rows of all seven managers and the GW6 rows of five rivals are
-provisional (short by 1-29 points, proven by the API's own running totals
-and by Σ multiplier × player points), `fetched_at_utc` is NULL on every
-GW1-6 row, and the tool treats them as settled because its lockdown test is
-on the event rather than on the row. The printed σ_d (18.62), σ_j, σ_d,j, ρ,
-gaps and P are therefore not the settled-league quantities the prereg
-defines (recomputed on final scores: σ_d 17.9-18.5, Skori σ_d,j 14.96,
-PyroNeniZlocin 11.7-16.1, gaps +1 to +6 off, P within 0.02); the threat set
-and the lines do not change. Before the item can pass, the settled rows need
-a re-fetch after `data_checked` (lane A's sync) or the tool must derive the
-settled score from a consistent source and stop with MISSING INPUT when a
-settled gameweek's row predates lockdown; then rerun and re-verify.
+The ruling was committed verbatim before the fix code; the settled scores
+now come from the totals chain, which I rebuilt independently and found equal
+on every row to the first run's method, to the league `standings` totals for
+events 3-6, and to Σ multiplier × player points with autosubs reconstructed
+from minutes; the 18 provisional rows are printed with their differences and
+the uncorrectable case is excluded and counted (seven GW6 rows when GW7 is
+removed, with GW1-5 unchanged and the truncated statistics identical to my
+reconstruction); the GW7 row the chain reads postdates GW6's lockdown and
+implies the same GW6 totals across all four of its fetches; every sigma and
+every P(above j) carries a bootstrap interval, both flags are as ruled, and
+my raw numbers match the implementer's at 0.0; 386/386 and 8/8 green in clean
+archives, twelve mutations red, no runner or data file touched, no secrets.
+Two information points for the chat, neither moving a number: the drift-
+version P (information only) prints no interval, and the `standings` table's
+"event 2" rows are mislabelled GW3 snapshots (a lane A sync matter).
