@@ -1,4 +1,4 @@
-WATCH  GW8  export 2026-10-18T18:45  forecasts recorded 2026-10-18T18:45  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
+WATCH  GW8  export 2026-10-18T21:58  forecasts recorded 2026-10-18T21:58  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
   id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
   109   Verbruggen     BHA  GK    4.6 a    -   2.7   3.5   3.8  1.00  LIV (A) 4
   82    Kelleher       BRE  GK    5.0 a    -   2.3   4.5   4.1  1.00  HUL (A) 2
@@ -25,7 +25,7 @@ FREE HIT SCREEN  budget £99.7m; FH candidate: gap > 8 or 3+ of our XI not 'a' (
   GW8  own          37.0   31.2   +5.8      0   4-4-2 / 5-3-2
   GW9  bottomup     54.7   52.0   +2.7      0   5-4-1 / 4-3-3
   GW10 bottomup     58.0   54.7   +3.3      0   5-4-1 / 4-3-3
-  GW11 bottomup     57.2   53.0   +4.1      0   5-4-1 / 4-3-3
+  GW11 bottomup     57.2   53.0   +4.2      0   5-4-1 / 4-3-3
   GW12 bottomup     57.3   52.5   +4.9      0   5-4-1 / 4-3-3
   GW13 bottomup     55.0   51.8   +3.2      0   5-4-1 / 4-3-3
 
@@ -46,15 +46,15 @@ TOP 12 PER POSITION BY OWN, GW8
   115   De Cuyper      BHA  DEF   5.2 a    -   3.6   5.6   5.4  1.00  LIV (A) 4
   4     Gabriel        ARS  DEF   7.9 a    -   3.4   5.2   5.2  1.00  EVE (H) 3
   8     Calafiori      ARS  DEF   6.0 a    -   3.2   5.0   5.3  1.00  EVE (H) 3
-  504   Vuskovic       BHA  DEF   5.1 a    -   3.0   5.7   5.3  1.00  LIV (A) 4
+  504   Vuskovic       BHA  DEF   5.1 a    -   3.0   5.8   5.4  1.00  LIV (A) 4
   650   Affengruber    FUL  DEF   4.5 a    -   3.0   6.1   4.6  1.00  COV (A) 2
   257   Bassey         FUL  DEF   4.5 a    -   2.9   5.4   4.2  1.00  COV (A) 2
   176   Dasilva        COV  DEF   4.0 a    -   2.8   4.1   2.6  0.75  FUL (H) 2
   356   Virgil         LIV  DEF   6.5 a    -   2.7   5.0   3.8  1.00  BHA (H) 3
   388   Guéhi          MCI  DEF   6.0 a    -   2.7   4.6   5.2  1.00  AVL (A) 3
-  114   Boscagli       BHA  DEF   4.5 a    -   2.7   4.0   4.5  1.00  LIV (A) 4
   362   Jacquet        LIV  DEF   5.0 a  100   2.6   4.7   3.8  1.00  BHA (H) 3
   389   Matheus N.     MCI  DEF   5.9 a  100   2.6   4.0   4.6  1.00  AVL (A) 3
+  114   Boscagli       BHA  DEF   4.5 a    -   2.6   4.0   4.5  1.00  LIV (A) 4
   124   Groß           BHA  MID   6.1 a    -   3.6   4.9   4.4  1.00  LIV (A) 4
   156   Neto           CHE  MID   6.5 a    -   3.2   4.8   3.9  1.00  TOT (H) 2
   40    Rogers         CHE  MID   7.9 a    -   3.1   5.5   4.4  1.00  TOT (H) 2
