@@ -6,8 +6,11 @@ checks.py  -  the nightly checks, the status line and reports/status.txt
 
 Reads the data folder (fpl.sqlite, projection_log.csv, the working export),
 its last commit (git show HEAD:...), tonight's run log logs/run_<stamp>.log
-(the run's start time and the sync's "SYNC STATS" line) and the newest run log
-of the last commit. Runs the 27 checks of Step 3 and writes:
+(the run's start time, the test result, the sync's "SYNC STATS" line and the
+record summary) and the newest run log of the last commit. Runs the 27 checks
+of Step 3 and two more, 28 "test gate" and 29 "record" (ruling S3 amendment 1,
+point 3: the status line never reads OK on a night whose suite or record
+failed), and writes:
 
   reports/status.txt   the status line, then one line per check. A dry run
                        writes reports/status_dryrun.txt instead and never
@@ -66,13 +69,15 @@ NAMES = {
     18: "projection-log growth", 19: "projection-log duplicate keys",
     20: "forecast rows after the deadline", 21: "stuck gameweek",
     22: "manager score reconciliation", 23: "secret in the files to commit",
-    24: "repo size", 25: "run duration", 26: "heartbeat", 27: "workflow state"}
+    24: "repo size", 25: "run duration", 26: "heartbeat", 27: "workflow state",
+    28: "test gate", 29: "record"}
 
 # what a breach is, check by check: the table's own word where it gives one
 SEVERITY = {1: FAIL, 2: FAIL, 3: FAIL, 4: FAIL, 5: FAIL, 6: WARN, 7: WARN, 8: FAIL, 9: WARN,
             10: FAIL, 11: FAIL, 12: WARN, 13: FAIL, 14: WARN, 15: FAIL, 16: FAIL, 17: WARN,
             18: FAIL, 19: WARN, 20: FAIL, 21: WARN, 22: WARN, 23: FAIL, 24: FAIL, 25: WARN,
-            26: WARN, 27: SKIP}
+            26: WARN, 27: SKIP, 28: FAIL, 29: FAIL}
+SOURCES = ("own", "xg", "minutes", "bottomup")     # as fpl_nightly.SOURCES
 
 Result = collections.namedtuple("Result", "n name level detail")
 
@@ -85,6 +90,7 @@ class Ctx:
         self.log, self.prev_log = [], None
         self.now = datetime.now(timezone.utc)
         self.started = self.prev_status = self.repo_kb = None
+        self.run_log = ""                     # tonight's block of the run log
         self.repo_why = "not measured"
         self.changed = []                     # [(name, bytes)] the files the commit would add
         self.key = ""
@@ -484,7 +490,42 @@ def c27(x):
                   "runs no check, and the token has no actions scope)")
 
 
-CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 28)]
+def c28(x):
+    """The test gate: tonight's suite, from the run log (fpl_nightly.py prints
+    TESTS OK or TESTS FAILED after it)."""
+    text = x.run_log or ""
+    part = text[text.find("running tests ..."):] if "running tests ..." in text else text
+    ran = re.findall(r"^Ran (\d+) tests?", part, re.M)
+    if "TESTS FAILED" in part:
+        res = re.findall(r"^(FAILED \(.*\))\s*$", part, re.M)
+        return FAIL, f"the suite is red: {res[0] if res else 'TESTS FAILED'}"
+    if "TESTS OK" in part:
+        return OK, f"{ran[0] if ran else '?'} tests green"
+    return FAIL, "no test result in tonight's run log: the suite did not run"
+
+
+def c29(x):
+    """Every source recorded: the record summary of the run log has RECORD OK
+    for each of SOURCES; a RECORD FAIL - a failure, or a source skipped because
+    the suite was red - or a missing source fails."""
+    text = x.run_log or ""
+    i = text.rfind("record summary:")
+    if i < 0:
+        return FAIL, "no record summary in tonight's run log"
+    got = {}
+    for line in text[i:].splitlines()[1:]:
+        m = re.match(r"RECORD (OK|FAIL) (\S+) ?(.*)", line.strip())
+        if not m:
+            break
+        got[m.group(2)] = (m.group(1), m.group(3))
+    bad = [f"{s} {why}" for s, (st, why) in got.items() if st == "FAIL"]
+    bad += [f"{s} missing" for s in SOURCES if s not in got]
+    if bad:
+        return FAIL, _short(bad)
+    return OK, ", ".join(f"{s} {got[s][1]}" for s in SOURCES)
+
+
+CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 30)]
 
 
 def run_all(x):
@@ -642,7 +683,7 @@ def load(data, stamp, now=None, env=None):
     if os.path.exists(run_log):
         with open(run_log, encoding="utf-8", newline="") as fh:
             text = run_block(fh.read())
-    x.stats, x.started = sync_stats(text), started_at(text)
+    x.stats, x.started, x.run_log = sync_stats(text), started_at(text), text
     names = (_git(data, "ls-tree", "--name-only", "HEAD", f"{LOGS}/") or b"").decode().split()
     logs = sorted(n for n in names if re.search(r"run_\d{4}-\d{2}-\d{2}\.log$", n))
     if logs:

@@ -205,6 +205,8 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
 
         say("running tests ...")
         tests_ok = run([py, *TEST_ARGS, "-s", root, "-t", root], root) == 0
+        if tests_ok:
+            say("TESTS OK")                  # read by checks.py, check 28 (the test gate)
         if not tests_ok:
             failed.append("tests")
             say(f"TESTS FAILED - see {os.path.join(LOGS, os.path.basename(log_path))}")

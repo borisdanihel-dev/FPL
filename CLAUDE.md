@@ -25,6 +25,9 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   timestamped, before the deadline that tests them; a frozen entry is never
   edited, only amended by a new one. A model drives a decision only after
   clearing its pre-stated bar. Nothing is tuned on the data that exposed it.
+- **Hermetic tests** (S3 amendment 1): tests are hermetic; no test may rely on
+  global git config, the machine's timezone or locale, or files outside its
+  temporary folder.
 - **Change protocol.** The whole suite before and after, by discovery
   (`test_fpl.py` plus `tests/`, FAST-TRACK item 5): `python -m unittest
   discover -v -p "test*.py"` in `C:\GIT\FPL`. Build in a

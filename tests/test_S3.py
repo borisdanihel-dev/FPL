@@ -160,7 +160,35 @@ def world():
                  started=NOW - timedelta(minutes=8),
                  prev_status=f"STATUS OK | generated {iso(NOW - timedelta(hours=24))} | x",
                  changed=[("reports/fpl_2026-10-18.txt", b"report")], repo_kb=120 * 1024,
-                 repo_why="", key="", known_gaps={})
+                 repo_why="", key="", known_gaps={}, run_log=GOOD_RUN)
+
+
+GOOD_RUN = ("running tests ...\nRan 454 tests in 9.1s\n\nOK (skipped=11)\nTESTS OK\n"
+            "syncing FPL API ...\nrecord summary:\nRECORD OK own 275\nRECORD OK xg 260\n"
+            "RECORD OK minutes 260\nRECORD OK bottomup 260\narchiving the export ...\n")
+RED_RUN = ("running tests ...\nRan 454 tests in 9.5s\n\nFAILED (failures=3, skipped=11)\n"
+           "TESTS FAILED - see logs/run_2026-10-18.log\nsyncing FPL API ...\n"
+           "SKIPPED --record: test suite is red, no forecasts written\nrecord summary:\n"
+           + "".join(f"RECORD FAIL {s} skipped - test suite is red\n" for s in C.SOURCES)
+           + "archiving the export ...\n")
+
+# git commits made by the code under test (fpl_publish.py) get their identity
+# from the environment, never from the machine (S3 amendment 1, point 1)
+IDENTITY = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+            "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+
+
+def with_identity(test):
+    saved = {k: os.environ.get(k) for k in IDENTITY}
+    os.environ.update(IDENTITY)
+
+    def restore():
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    test.addCleanup(restore)
 
 
 def level(x, n):
@@ -174,7 +202,7 @@ class TheChecks(unittest.TestCase):
         res = C.run_all(world())
         self.assertEqual([r for r in res if r.level in (C.WARN, C.FAIL)], [])
         self.assertEqual([r.n for r in res if r.level == C.SKIP], [22, 27])
-        self.assertEqual(len(res), 27)
+        self.assertEqual(len(res), 29)
 
     def test_01_core_endpoints(self):
         x = world()
@@ -379,6 +407,38 @@ class TheChecks(unittest.TestCase):
     def test_27_workflow_state_is_manual(self):
         self.assertEqual(level(world(), 27), C.SKIP)
 
+    def test_28_test_gate(self):
+        """S3 amendment 1, point 3: a red suite fails the night."""
+        x = world()
+        self.assertEqual(C.c28(x), (C.OK, "454 tests green"))
+        x.run_log = RED_RUN
+        self.assertEqual(C.c28(x), (C.FAIL, "the suite is red: FAILED (failures=3, skipped=11)"))
+        x.run_log = "syncing FPL API ...\n"
+        self.assertEqual(level(x, 28), C.FAIL)               # the suite never ran
+
+    def test_29_record(self):
+        x = world()
+        self.assertEqual(level(x, 29), C.OK)
+        x.run_log = GOOD_RUN.replace("RECORD OK minutes 260", "RECORD FAIL minutes locked")
+        self.assertEqual(C.c29(x), (C.FAIL, "minutes locked"))
+        x.run_log = RED_RUN                                  # skipped: the suite was red
+        self.assertEqual(level(x, 29), C.FAIL)
+        self.assertIn("own skipped - test suite is red", C.c29(x)[1])
+        x.run_log = GOOD_RUN.replace("RECORD OK xg 260\n", "")
+        self.assertEqual(C.c29(x), (C.FAIL, "xg missing"))
+        x.run_log = GOOD_RUN.replace("record summary:", "no summary")
+        self.assertEqual(level(x, 29), C.FAIL)
+
+    def test_a_night_with_a_red_suite_never_reads_ok(self):
+        """The dry run of 18 Oct said STATUS OK, 23/23, while three tests failed;
+        that must be impossible (S3 amendment 1, point 3)."""
+        x = world()
+        x.run_log = RED_RUN
+        res = C.run_all(x)
+        line = C.status_line(res, NOW, None, x.repo_kb, PRAGUE)
+        self.assertTrue(line.startswith("STATUS FAIL |"), line)
+        self.assertEqual(sorted(r.n for r in res if r.level == C.FAIL), [28, 29])
+
     def test_a_check_that_raises_is_a_warn_never_a_crash(self):
         x = world()
         x.stats = {"calls": "not a list"}
@@ -449,7 +509,7 @@ class StatusLine(unittest.TestCase):
     def test_the_line_and_its_fields(self):
         line = self._line(datetime(2026, 10, 23, 17, 30, tzinfo=UTC))
         self.assertEqual(line, "STATUS OK | generated 2026-10-18T21:50:00Z | next deadline GW8 "
-                               "2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 25/25 | repo 120 MB")
+                               "2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 27/27 | repo 120 MB")
 
     def test_both_sides_of_the_25_october_change(self):
         before = self._line(datetime(2026, 10, 25, 0, 30, tzinfo=UTC))
@@ -476,7 +536,7 @@ class StatusLine(unittest.TestCase):
         x.started = NOW - timedelta(minutes=20)              # 25 WARN
         line = C.status_line(C.run_all(x), NOW, None, None, PRAGUE)
         self.assertTrue(line.startswith("STATUS WARN |"), line)
-        self.assertIn("| next deadline none | checks 24/25 | repo ? MB", line)
+        self.assertIn("| next deadline none | checks 26/27 | repo ? MB", line)
         x.stats["teams"] = 19                                # 4 FAIL
         self.assertTrue(C.status_line(C.run_all(x), NOW, None, None, PRAGUE).startswith("STATUS FAIL"))
 
@@ -513,7 +573,7 @@ class ChecksMain(unittest.TestCase):
                  "2026-10-18T21:40:00+00:00")
         stats = world().stats
         self._put(f"logs/run_{STAMP}.log", f"==== run {STAMP} UTC, started 2026-10-18 21:42:00 UTC ====\n"
-                  + C.STATS_PREFIX + json.dumps(stats) + "\n")
+                  + GOOD_RUN + C.STATS_PREFIX + json.dumps(stats) + "\n")
         self._put(f"reports/fpl_{STAMP}.txt", "THE REPORT\n")
         with open(os.path.join(d, "fpl_export_gw7.json"), "w", encoding="utf-8") as fh:
             json.dump(_export(), fh)
@@ -546,7 +606,7 @@ class ChecksMain(unittest.TestCase):
         status = self._get("reports/status.txt")
         self.assertTrue(status.startswith("STATUS OK | generated 2026-10-18T21:50:00Z | next deadline GW8 "
                                           "2026-10-24 10:00 UTC / 2026-10-24 12:00 Prague"), status)
-        self.assertEqual(len(status.splitlines()), 28)
+        self.assertEqual(len(status.splitlines()), 30)
         self.assertEqual(self._get(f"reports/fpl_{STAMP}.txt"), status.splitlines()[0] + "\n\nTHE REPORT\n")
         self.assertFalse(os.path.exists(os.path.join(self.tmp, "reports", "status_dryrun.txt")))
 
@@ -567,6 +627,7 @@ class PublishOnAFail(unittest.TestCase):
     """Step 3.1: FAIL = no data commit; a dry run still reports to data-dryrun."""
 
     def setUp(self):
+        with_identity(self)                  # fpl_publish.py commits: no machine identity
         self.tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.tmp, True)
         self.remote = os.path.join(self.tmp, "remote.git")
@@ -912,6 +973,53 @@ class PinnedActions(unittest.TestCase):
             self.assertNotIn(old, y)
 
 
+class Hermetic(unittest.TestCase):
+    """S3 amendment 1, points 1 and 2: every test that runs git sets its own
+    identity and never relies on machine config. The proof, kept: every test
+    class that runs git (found in the sources) runs again in a child process
+    whose home is an empty folder and whose git reads no system or global
+    config, and with no git identity in its environment."""
+
+    FILES = ("test_fpl.py", os.path.join("tests", "test_S3.py"))
+
+    def _git_classes(self):
+        import ast
+        import re
+        found = []
+        for name in self.FILES:
+            module = name[:-3].replace(os.sep, ".")
+            with open(os.path.join(HERE, name), encoding="utf-8") as fh:
+                tree = ast.parse(fh.read())
+            helpers = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)
+                       and re.search(r"[\"']git[\"']", ast.unparse(n))}
+            for cls in (n for n in tree.body if isinstance(n, ast.ClassDef)):
+                src = ast.unparse(cls)
+                calls = {c.func.id for c in ast.walk(cls) if isinstance(c, ast.Call)
+                         and isinstance(c.func, ast.Name)}
+                if (re.search(r"[\"']git[\"']", src) or "PUB.main" in src or calls & helpers) \
+                        and cls.name != "Hermetic":
+                    found.append(f"{module}.{cls.name}")
+        return found
+
+    def test_the_git_using_tests_pass_with_an_empty_home(self):
+        classes = self._git_classes()
+        for must in ("test_fpl.Publish", "test_fpl.PrePush", "test_fpl.DataGate",
+                     "tests.test_S3.PublishOnAFail", "tests.test_S3.ChecksMain"):
+            self.assertIn(must, classes)
+        home = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, home, True)
+        empty = os.path.join(home, "empty.gitconfig")
+        open(empty, "w").close()
+        env = {k: v for k, v in os.environ.items()
+               if not k.startswith(("GIT_AUTHOR_", "GIT_COMMITTER_", "EMAIL"))}
+        env.update(HOME=home, USERPROFILE=home, XDG_CONFIG_HOME=home, GIT_CONFIG_NOSYSTEM="1",
+                   GIT_CONFIG_GLOBAL=empty, PYTHONDONTWRITEBYTECODE="1")
+        r = subprocess.run([sys.executable, "-W", "ignore", "-m", "unittest", *classes], cwd=HERE,
+                           env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           encoding="utf-8", errors="replace")
+        self.assertEqual(r.returncode, 0, r.stdout[-3000:])
+
+
 class FastTrack(unittest.TestCase):
     """RULING FAST-TRACK: item 1 (the nightly imports nothing under tools/ or
     analysis/) and item 5 (the suite runs by discovery, tests/ included)."""
@@ -974,6 +1082,26 @@ class FastTrack(unittest.TestCase):
         self.assertIn("CHECKS FAIL stub", lines)
         self.assertTrue(lines[-1].startswith("FINISHED WITH ERRORS:") and "checks" in lines[-1], lines[-1])
         self.assertFalse(os.path.exists(os.path.join(tmp, "__pycache__")), "the suite left bytecode behind")
+        self.assertIn("TESTS OK", lines)
+
+    def test_the_nightly_says_tests_ok_only_on_a_green_suite(self):
+        """Check 28 reads these lines (S3 amendment 1, point 3)."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        stubs = {"test_fpl.py": "import unittest\n\n\nclass T(unittest.TestCase):\n    def test(self):\n        self.fail('planted')\n",
+                 "fpl_sync.py": "print('sync')\n", "fpl_export_gw3.json": "{}",
+                 "fpl_edge.py": "import sys\nprint('edge', sys.argv[1:])\n", "checks.py": "print('checks')\n"}
+        for name, body in stubs.items():
+            with open(os.path.join(tmp, name), "w", encoding="utf-8") as fh:
+                fh.write(body)
+        lines = []
+        self.assertEqual(N.nightly(root=tmp, stamp=STAMP, echo=lines.append), 1)
+        self.assertNotIn("TESTS OK", lines)
+        self.assertTrue(any(l.startswith("TESTS FAILED") for l in lines))
+        x = world()
+        x.run_log = "\n".join(lines)
+        self.assertEqual(level(x, 28), C.FAIL)
+        self.assertEqual(level(x, 29), C.FAIL)
 
 
 if __name__ == "__main__":
