@@ -3144,3 +3144,18 @@ unchanged. 2025/26 through the S4 harness (clubs of the origin, rounds
   (ruling 3); nothing records it yet.
 
 Report: `worklog/cc_2026-10-18_S5.md`; verifier `worklog/verify_S5.md`.
+
+## 2026-10-18 — RULING S5 result: `bottomup_lambda` adopted as an S6 input; Part C tie-break change (`prereg/S5.md`, verbatim)
+
+The chat accepted S5's two passed parts (the 1c WARN cleared by 1a/1b: a
+fixture-specific term loses more when shifted, truncation shows nothing
+after the deadline reaches it, the Friday sensitivity shows no timing
+effect). **Decisions in force:** `bottomup_lambda` is an input to S6 (the
+bottomup half of `xp_v2`); XI, keeper and captain stay on `own` until
+`xp_v2` passes Step 6. **Part C tie-break (chat's decision):** for GK/DEF
+ties within 0.3 on `own`, `bottomup_lambda` replaces `bottomup` in the
+tie-break, and the keeper line shows each keeper's odds-implied P(clean
+sheet); the Part C line in BUILD_PLAN.md is edited at lane B's landing.
+Amendment to build before landing: a toy-level test of `condition_2627`
+(post-deadline export refused; starters threshold) and an information-only
+live mode reading W1's odds snapshots for the deadline pass (next entry).
