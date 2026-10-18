@@ -607,19 +607,38 @@ class ProjectionLogKey(unittest.TestCase):
         self.assertEqual(len(first), len(second), "a same-day re-run appended rows")
         self.assertEqual(E.duplicate_keys(second), {})
 
-    def test_readers_take_the_last_snapshot_per_event_player_and_source(self):
-        """S2 amendment 1, point 5: per (event, player_id, source), the row of
-        the last snapshot - a player missing from a later snapshot keeps his
-        earlier row."""
+    def test_readers_take_the_whole_last_snapshot_per_event_and_source(self):
+        """S2 amendment 2, point 4: per (event, source), the whole set of the
+        last snapshot - a player missing from it is not read on an older
+        forecast, and is counted."""
         rows = [self._row("2026-10-16T21:40:00+00:00", "own", 8, 1, 1.0),
                 self._row("2026-10-16T21:40:00+00:00", "own", 8, 2, 2.0),
                 self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 3.0),
-                self._row("2026-10-17T21:41:00+00:00", "own", 8, 1, 4.0),   # same key: last wins
+                self._row("2026-10-17T21:41:00+00:00", "own", 8, 1, 4.0),   # the last snapshot
                 self._row("2026-10-16T21:40:00+00:00", "xg", 8, 1, 5.0),
                 self._row("2026-10-09T21:40:00+00:00", "own", 7, 1, 6.0)]
         got = [(r["source"], r["event"], r["player_id"], r["predicted"]) for r in E.forecasts(rows)]
-        self.assertEqual(got, [("own", "8", "1", "4.0"), ("own", "8", "2", "2.0"),
-                               ("xg", "8", "1", "5.0"), ("own", "7", "1", "6.0")])
+        self.assertEqual(got, [("own", "8", "1", "4.0"), ("xg", "8", "1", "5.0"),
+                               ("own", "7", "1", "6.0")])
+        self.assertEqual(E.dropped_players(rows), {("8", "own"): 1})
+
+    def test_two_forecasts_with_the_same_timestamp_the_later_row_wins(self):
+        """S2 amendment 2, point 3: the tie rule."""
+        rows = [self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 2, 2.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 3.0)]
+        got = [(r["player_id"], r["predicted"]) for r in E.forecasts(rows)]
+        self.assertEqual(got, [("1", "3.0"), ("2", "2.0")])
+        self.assertEqual(E.dropped_players(rows), {})
+
+    def test_a_snapshot_after_the_deadline_does_not_hide_the_last_one_before_it(self):
+        d = {"events": [{"event": 8, "deadline_time": "2026-10-23T17:30:00Z"}]}
+        rows = [self._row("2026-10-22T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-22T21:40:00+00:00", "own", 8, 2, 2.0),
+                self._row("2026-10-23T18:00:00+00:00", "own", 8, 1, 9.0)]   # after the deadline
+        got = [(r["player_id"], r["predicted"]) for r in E.forecasts(rows, d)]
+        self.assertEqual(got, [("1", "1.0"), ("2", "2.0")])
+        self.assertEqual(E.dropped_players(rows, d), {})
 
     def test_the_last_snapshot_is_the_latest_made_at_not_the_last_line(self):
         rows = [self._row("2026-10-18T21:40:00+00:00", "own", 8, 1, 2.0),
@@ -661,6 +680,7 @@ class ProjectionLogKey(unittest.TestCase):
         tree = ast.parse(src)
         parent = {c: p for p in ast.walk(tree) for c in ast.iter_child_nodes(p)}
         raw_ok = {"record_status", "recover_stranded_log"}   # they rewrite the log itself
+        readers = {"forecasts", "dropped_players"}             # both apply the deadline from d
         bad = []
         for fn in ast.walk(tree):
             if not isinstance(fn, ast.FunctionDef) or fn.name in raw_ok:
@@ -668,7 +688,7 @@ class ProjectionLogKey(unittest.TestCase):
             for n in ast.walk(fn):
                 if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "read_log":
                     p = parent[n]
-                    if not (isinstance(p, ast.Call) and getattr(p.func, "id", None) == "forecasts"
+                    if not (isinstance(p, ast.Call) and getattr(p.func, "id", None) in readers
                             and len(p.args) == 2 and getattr(p.args[1], "id", None) == "d"):
                         bad.append(f"{fn.name} line {n.lineno}")
         self.assertEqual(bad, [], "a reader skips forecasts(read_log(...), d)")
@@ -1997,6 +2017,26 @@ def _graded_world():
             "player_id": str(p["id"]), "web_name": p["web_name"],
             "predicted": str(2.0 + p["id"] % 5)} for p in d["all_players"][:40]]
     return d, gw, log
+
+
+class SnapshotCount(unittest.TestCase):
+    """S2 amendment 2, point 4: calibration grades the whole last snapshot
+    and counts the players found only in an earlier one."""
+
+    def test_calibration_counts_players_only_in_an_earlier_snapshot(self):
+        d, gw, log = _graded_world()
+        early = [dict(r, made_at="2026-07-31T00:00:00+00:00") for r in log[:3]]
+        gone = dict(log[0], made_at="2026-07-31T00:00:00+00:00", player_id="99999",
+                    web_name="Gone", predicted="9.9")
+        out = _calibration(d, early + [gone] + log)
+        self.assertIn("players only in an earlier snapshot (not graded on an older "
+                      f"forecast): xg GW{gw} 1", out)
+        # the graded numbers are those of the last snapshot alone
+        base = _calibration(d, log)
+        keep = lambda s: [ln for ln in s.splitlines() if "earlier snapshot" not in ln]
+        self.assertEqual(keep(out), keep(base))
+        self.assertIn("players only in an earlier snapshot (not graded on an older "
+                      "forecast): none", base)
 
 
 def _calibration(d, log):
@@ -4350,7 +4390,8 @@ class NightlyWorkflow(unittest.TestCase):
         """S1 amendment 2, point 8: workflow_dispatch input force_backup,
         boolean, default false; the proof dispatch ticks it."""
         y = self._read(".github", "workflows", "nightly.yml")
-        self.assertIn("  workflow_dispatch:\n    inputs:\n      force_backup:\n", y)
+        inputs = y[y.index("  workflow_dispatch:\n    inputs:\n"):y.index("\npermissions:")]
+        self.assertIn("      force_backup:\n", inputs)
         block = y[y.index("      force_backup:"):y.index("\npermissions:")]
         self.assertIn("        type: boolean\n", block)
         self.assertIn("        default: false\n", block)
@@ -4359,7 +4400,8 @@ class NightlyWorkflow(unittest.TestCase):
         """D1 (Step 1.5, 1.6): one concurrency group, never cancelled; write
         access for the pushing job only; triggers schedule and dispatch only."""
         y = self._read(".github", "workflows", "nightly.yml")
-        self.assertIn("concurrency:\n  group: nightly-data\n  cancel-in-progress: false", y)
+        conc = y[y.index("\nconcurrency:\n"):y.index("\njobs:")]
+        self.assertIn("|| 'nightly-data' }}\n  cancel-in-progress: false", conc)
         top = y[:y.index("jobs:")]
         self.assertIn("\npermissions: {}", top)
         self.assertNotIn("contents: write", top)
@@ -5298,6 +5340,74 @@ class DataGate(unittest.TestCase):
         self.assertTrue("NOTHING COMMITTED TONIGHT" in out.getvalue())
 
 
+class DryRunMode(unittest.TestCase):
+    """S2 amendment 2, point 5: who is dry - in fpl_publish.py and in the
+    workflow, which must agree."""
+
+    def test_the_mode_table(self):
+        M = "refs/heads/master"
+        cases = [
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "schedule"}, "real"),
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "schedule", "FPL_DRY_RUN": "true"}, "real"),
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "workflow_dispatch", "FPL_DRY_RUN": "true"}, "dry"),
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "workflow_dispatch", "FPL_DRY_RUN": "false"}, "real"),
+            ({"GITHUB_REF": "refs/heads/s2-wip", "GITHUB_EVENT_NAME": "workflow_dispatch",
+              "FPL_DRY_RUN": "false"}, "dry"),
+            ({"GITHUB_REF": "refs/heads/s2-wip", "GITHUB_EVENT_NAME": "schedule"}, "dry"),
+            ({"GITHUB_REF": "refs/tags/pre-S2", "FPL_DRY_RUN": "false"}, "dry"),
+            ({"GITHUB_REF": "refs/heads/master-copy"}, "dry"),
+            ({}, "real"),
+            ({"FPL_DRY_RUN": "TRUE"}, "dry"),
+        ]
+        for env, want in cases:
+            with self.subTest(env=env):
+                self.assertEqual(PUB.run_mode(env)[0], want)
+
+    @staticmethod
+    def _yml():
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, ".github", "workflows", "nightly.yml"), encoding="utf-8") as fh:
+            return fh.read()
+
+    DRY = "(github.ref != 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && inputs.dry_run))"
+
+    def test_the_dispatch_input_dry_run_is_ticked_by_default(self):
+        y = self._yml()
+        inputs = y[y.index("  workflow_dispatch:\n    inputs:\n"):y.index("\npermissions:")]
+        block = inputs[inputs.index("      dry_run:\n"):inputs.index("      force_backup:")]
+        self.assertIn("        type: boolean\n", block)
+        self.assertIn("        default: true\n", block)
+
+    def test_one_dry_condition_for_the_group_and_the_job(self):
+        """The same condition picks the concurrency group and sets
+        FPL_DRY_RUN: dry for any ref but master, or a ticked dispatch; a
+        scheduled run on master never. Its own group, so it never waits on the
+        nightly."""
+        y = self._yml()
+        self.assertIn("  group: ${{ " + self.DRY + " && 'nightly-dryrun' || 'nightly-data' }}\n", y)
+        job = y[y.index("\njobs:"):]
+        self.assertIn("      FPL_DRY_RUN: ${{ " + self.DRY + " && 'true' || 'false' }}\n", job)
+        self.assertLess(job.index("FPL_DRY_RUN:"), job.index("    steps:"))   # job-wide
+        self.assertEqual(y.count(self.DRY), 2)
+
+    def test_a_dry_run_creates_no_release_and_no_issue(self):
+        """Every step that runs gh release or gh issue is skipped on a dry run
+        and exits first thing if it starts anyway."""
+        y = self._yml()
+        steps = y[y.index("    steps:"):].split("\n      - ")[1:]
+        guarded = 0
+        for step in steps:
+            if "gh release" in step or "gh issue" in step:
+                guarded += 1
+                cond = next(l for l in step.splitlines() if l.strip().startswith("if:"))
+                self.assertIn("env.FPL_DRY_RUN != 'true'", cond, step[:60])
+                body = step[step.index("run: |"):]
+                first = [l.strip() for l in body.splitlines()[1:] if l.strip()][0]
+                self.assertEqual(first, 'if [ "$FPL_DRY_RUN" = "true" ]; then echo "BACKUP skipped: '
+                                        'dry run"; exit 0; fi', step[:60])
+        self.assertGreaterEqual(guarded, 1)
+
+
 class Publish(unittest.TestCase):
     """D1 (Step 1.1, 1.5, 1.6): the runner's commit to the data branch - the
     gate first, the secret scan on what is staged, then fetch + rebase + push
@@ -5360,11 +5470,77 @@ class Publish(unittest.TestCase):
         con.commit()
         con.close()
 
-    def _publish(self):
+    def _publish(self, env=None):
+        """A real run unless `env` says otherwise - never the environment of
+        the run executing the tests (a dry run on the runner sets GITHUB_REF)."""
         out, lines = io.StringIO(), []
         with redirect_stdout(out):
-            code = PUB.main([self.run_dir], sleep=lambda s: None, say=lines.append)
+            code = PUB.main([self.run_dir], sleep=lambda s: None, say=lines.append,
+                            env={} if env is None else env)
         return code, out.getvalue() + "\n".join(lines)
+
+    def _remote_ref(self, branch):
+        r = self._git(self.remote, "rev-parse", "--verify", "-q", f"refs/heads/{branch}")
+        return r.stdout.strip() if r.returncode == 0 else None
+
+    # --- the dry run (S2 amendment 2, point 5) ------------------------------
+
+    def test_a_non_master_ref_cannot_reach_data(self):
+        before = self._remote_head()
+        self._add_prices(self.run_dir)
+        self._put(self.run_dir, "logs/run_2026-10-18.log", "log\n")
+        code, out = self._publish({"GITHUB_REF": "refs/heads/s2-wip", "GITHUB_REF_NAME": "s2-wip",
+                                   "GITHUB_SHA": "0123456789abcdef", "GITHUB_EVENT_NAME":
+                                   "workflow_dispatch", "FPL_DRY_RUN": "false"})
+        self.assertEqual(code, 0, out)
+        self.assertIn("DRY RUN      ref refs/heads/s2-wip is not refs/heads/master", out)
+        self.assertEqual(self._remote_head(), before, "a non-master ref pushed to data")
+        dry = self._remote_ref("data-dryrun")
+        self.assertIsNotNone(dry)
+        msg = self._git(self.remote, "log", "-1", "--format=%s", "data-dryrun").stdout.strip()
+        self.assertRegex(msg, r"^dry run \d{4}-\d{2}-\d{2} s2-wip 0123456 \[skip ci\]$")
+        files = self._git(self.remote, "ls-tree", "-r", "--name-only", "data-dryrun").stdout.split()
+        self.assertIn("logs/run_2026-10-18.log", files)
+        self.assertIn("fpl.sql", files)                     # the gate ran and dumped
+
+    def test_a_dry_run_on_master_goes_to_data_dryrun_only(self):
+        before = self._remote_head()
+        self._add_prices(self.run_dir)
+        code, out = self._publish({"GITHUB_REF": "refs/heads/master",
+                                   "GITHUB_EVENT_NAME": "workflow_dispatch", "FPL_DRY_RUN": "true"})
+        self.assertEqual(code, 0, out)
+        self.assertIn("DRY RUN      dry_run is ticked", out)
+        self.assertEqual(self._remote_head(), before)
+        self.assertIsNotNone(self._remote_ref("data-dryrun"))
+
+    def test_a_dry_run_replaces_whatever_data_dryrun_held(self):
+        other = self._clone_new("other")
+        self._put(other, "x.txt", "unrelated\n")
+        self._git(other, "add", "-A")
+        self._git(other, "commit", "-q", "-m", "unrelated")
+        self._git(other, "push", "-q", "origin", "HEAD:refs/heads/data-dryrun")
+        self._add_prices(self.run_dir)
+        code, out = self._publish({"GITHUB_REF": "refs/heads/s2-wip"})
+        self.assertEqual(code, 0, out)
+        parent = self._git(self.remote, "rev-parse", "data-dryrun~1").stdout.strip()
+        self.assertEqual(parent, self._remote_head(), "data-dryrun is not the dry commit on data")
+
+    def test_a_scheduled_run_is_never_dry(self):
+        self._add_prices(self.run_dir)
+        code, out = self._publish({"GITHUB_REF": "refs/heads/master",
+                                   "GITHUB_EVENT_NAME": "schedule", "FPL_DRY_RUN": "true"})
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("DRY RUN", out)
+        msg = self._git(self.remote, "log", "-1", "--format=%s", "data").stdout.strip()
+        self.assertRegex(msg, r"^nightly \d{4}-\d{2}-\d{2} \[skip ci\]$")
+        self.assertIsNone(self._remote_ref("data-dryrun"))
+
+    def test_a_dry_run_with_nothing_new_still_reports_to_data_dryrun(self):
+        self.assertEqual(self._publish()[0], 0)               # a real night: commits fpl.sql
+        code, out = self._publish({"GITHUB_REF": "refs/heads/s2-wip"})
+        self.assertEqual(code, 0, out)
+        self.assertIn("nothing to commit", out)
+        self.assertEqual(self._remote_ref("data-dryrun"), self._remote_head())
 
     def _remote_files(self):
         r = self._git(self.remote, "ls-tree", "-r", "--name-only", "data")

@@ -16,11 +16,18 @@ unless the gate fails, which commits nothing at all.
      jitter), fetch, rebase onto what was fetched, push again - up to 3
      retries. A rebase conflict is aborted and fails the step. Never forced.
 
-Exit 0 after a push, or when there is nothing to commit; 1 otherwise.
+A dry run (S2 amendment 2, point 5) does 1-3 the same way, then commits and
+force-pushes the result to origin's data-dryrun branch - and only there: it
+never pushes to data. Any run whose ref is not master is dry, whatever it
+asked for; a scheduled run is never dry; a dispatch on master is dry while
+its dry_run input is ticked (the workflow passes it as FPL_DRY_RUN).
+
+Exit 0 after a push, or when a real run has nothing to commit; 1 otherwise.
 
 Standard library only.
 """
 
+import os
 import random
 import subprocess
 import sys
@@ -30,6 +37,8 @@ from datetime import datetime, timezone
 import fpl_gate
 
 BRANCH = "data"
+DRY_BRANCH = "data-dryrun"           # a dry run's only push target (S2 amendment 2, point 5)
+MASTER = "refs/heads/master"
 RETRIES = 3
 
 
@@ -61,23 +70,61 @@ def push(repo, branch=BRANCH, retries=RETRIES, sleep=None, say=print):
     return False
 
 
-def main(argv=None, sleep=None, say=print):
+def run_mode(env):
+    """("dry" | "real", why) for this run (S2 amendment 2, point 5). Any run
+    whose ref is not master is dry, whatever it asked for; a scheduled run on
+    master is never dry; otherwise FPL_DRY_RUN decides ("true" = dry). A
+    local run has no GITHUB_REF and is real unless FPL_DRY_RUN is "true"."""
+    ref = env.get("GITHUB_REF") or ""
+    if ref and ref != MASTER:
+        return "dry", f"ref {ref} is not {MASTER}"
+    if env.get("GITHUB_EVENT_NAME") == "schedule":
+        return "real", "scheduled run"
+    if (env.get("FPL_DRY_RUN") or "").strip().lower() == "true":
+        return "dry", "dry_run is ticked"
+    return "real", ("dry_run is not ticked" if ref else "local run")
+
+
+def push_dry(repo, say=print):
+    """Force-push HEAD to origin's data-dryrun: the dry run's only push.
+    Never to data."""
+    assert DRY_BRANCH != BRANCH
+    r = _git(repo, "push", "--force", "origin", f"HEAD:refs/heads/{DRY_BRANCH}")
+    if r.returncode == 0:
+        say(f"PUSH OK      origin {DRY_BRANCH} (dry run, forced; {BRANCH} untouched)")
+        return True
+    say(f"PUSH FAILED  origin {DRY_BRANCH}: {r.stdout.strip().splitlines()[-1:] or ''}")
+    return False
+
+
+def main(argv=None, sleep=None, say=print, env=None):
     argv = sys.argv[1:] if argv is None else argv
+    env = os.environ if env is None else env
     data = argv[0] if argv else "."
+    mode, why = run_mode(env)
+    if mode == "dry":
+        say(f"DRY RUN      {why}: the result goes to {DRY_BRANCH} only, never to {BRANCH}")
     if fpl_gate.main([data]) != 0:
         return 1
     _git(data, "add", "-A")
     if fpl_gate.main(["--secrets", data]) != 0:
         _git(data, "reset", "-q")
         return 1
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     if _git(data, "diff", "--cached", "--quiet").returncode == 0:
         say("nothing to commit")
-        return 0
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    r = _git(data, "commit", "-q", "-m", f"nightly {stamp} [skip ci]")
-    if r.returncode != 0:
-        say(f"COMMIT FAILED {r.stdout.strip()}")
-        return 1
+        if mode == "real":
+            return 0
+    else:
+        msg = (f"dry run {stamp} {env.get('GITHUB_REF_NAME', '')} "
+               f"{env.get('GITHUB_SHA', '')[:7]} [skip ci]" if mode == "dry"
+               else f"nightly {stamp} [skip ci]")
+        r = _git(data, "commit", "-q", "-m", " ".join(msg.split()))
+        if r.returncode != 0:
+            say(f"COMMIT FAILED {r.stdout.strip()}")
+            return 1
+    if mode == "dry":
+        return 0 if push_dry(data, say=say) else 1
     return 0 if push(data, sleep=sleep, say=say) else 1
 
 

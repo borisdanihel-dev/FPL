@@ -3,10 +3,15 @@
 # out into ./data (BUILD_PLAN.md Step 1.4). The run commits and pushes to data
 # only, through fpl_publish.py: the integrity gate, the fpl.sql dump, the
 # staged-secret scan, then fetch + rebase + push with retries, never forced.
+# A dry run (S2 amendment 2, point 5) runs the same pipeline on its branch's
+# code and force-pushes the result to data-dryrun only: never to data, no
+# release, no issue, its own concurrency group. Any branch but master is
+# always dry; a scheduled run never is. At most 6 dry runs a day (point 9).
 # No secrets: every endpoint fpl_sync.py calls is public. The secret scan looks
 # for "apiKey=" always and for the ODDS_API_KEY value whenever a step has it -
 # the step that first passes the key to a run must pass it to the commit too.
-# To start a run by hand: Actions tab -> nightly -> Run workflow, branch master.
+# To start a run by hand: Actions tab -> nightly -> Run workflow. Branch
+# master with dry_run unticked is a real run; anything else is dry.
 name: nightly
 
 on:
@@ -17,6 +22,10 @@ on:
     - cron: "40 21 * * *"
   workflow_dispatch:
     inputs:
+      dry_run:
+        description: "Dry run: the whole pipeline, result force-pushed to data-dryrun only (always dry on a branch other than master)"
+        type: boolean
+        default: true
       force_backup:
         description: "Run the release backup now, whatever the weekday"
         type: boolean
@@ -25,7 +34,8 @@ on:
 permissions: {}              # nothing by default; the one job below asks for its own
 
 concurrency:
-  group: nightly-data
+  # a dry run has its own group: it never blocks or waits on the nightly
+  group: ${{ (github.ref != 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && inputs.dry_run)) && 'nightly-dryrun' || 'nightly-data' }}
   cancel-in-progress: false  # never cut a run that may be mid-write
 
 jobs:
@@ -37,6 +47,11 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write        # the pushing job: commits to data, Sunday releases
+    env:
+      # dry: any ref but master, or a dispatch with dry_run ticked; a scheduled
+      # run never (S2 amendment 2, point 5). fpl_publish.py decides again from
+      # GITHUB_REF and GITHUB_EVENT_NAME, so a non-master ref cannot reach data.
+      FPL_DRY_RUN: ${{ (github.ref != 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && inputs.dry_run)) && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -77,11 +92,12 @@ jobs:
       # backup releases are kept. A dispatch that backs up on a Sunday makes
       # that evening's scheduled run skip as "exists".
       - name: Weekly backup
-        if: always() && steps.publish.outcome == 'success'
+        if: always() && steps.publish.outcome == 'success' && env.FPL_DRY_RUN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE_BACKUP: ${{ inputs.force_backup }}
         run: |
+          if [ "$FPL_DRY_RUN" = "true" ]; then echo "BACKUP skipped: dry run"; exit 0; fi
           if [ "$FORCE_BACKUP" != "true" ] && [ "$(date -u +%u)" != 7 ]; then echo "BACKUP skipped: not Sunday"; exit 0; fi
           tag="backup-$(date -u +%F)"
           if gh release view "$tag" >/dev/null 2>&1; then echo "BACKUP skipped: $tag exists"; exit 0; fi

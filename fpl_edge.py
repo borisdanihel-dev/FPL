@@ -2674,29 +2674,63 @@ def natural_key(row):
     return (str(row["event"]), str(row["player_id"]), row["source"], snapshot_date(row))
 
 
-def forecasts(rows, d=None):
-    """The forecasts every reader uses (S2 amendment 1, point 5): for each
-    (event, player_id, source), its row from the last snapshot made before
-    that gameweek's deadline - the latest made_at, the later row on a tie. A
-    row made at or after its deadline is never read. `d` (the export) gives
-    the deadlines (event_deadline); without it, or for an event it has no
-    deadline for, no row is dropped - the recorder writes none at or after a
-    deadline (Step 2.2) and a test checks the real log for that nightly.
-    Keys keep the order in which they first appear, so a log with one
-    snapshot per gameweek reads back unchanged."""
+def _snapshots(rows, d=None):
+    """{(event, source): sorted made_at datetimes of its snapshots made
+    before that gameweek's deadline}. A snapshot is one recording run: the
+    rows sharing one made_at. `d` (the export) gives the deadlines
+    (event_deadline); without it, or for an event it has no deadline for, no
+    snapshot is dropped - the recorder writes none at or after a deadline
+    (Step 2.2) and a test checks the real log for that nightly."""
     from datetime import datetime
-    deadline, keep = {}, {}
+    deadline, snaps = {}, {}
     for r in rows:
         ev = str(r["event"])
         if ev not in deadline:
             deadline[ev] = event_deadline(d, int(ev)) if d is not None else None
         made = datetime.fromisoformat(r["made_at"])
-        if deadline[ev] is not None and made >= deadline[ev]:
-            continue
-        k = (ev, str(r["player_id"]), r["source"])
-        if k not in keep or made >= keep[k][0]:
-            keep[k] = (made, r)
-    return [r for _, r in keep.values()]
+        if deadline[ev] is None or made < deadline[ev]:
+            snaps.setdefault((ev, r["source"]), set()).add(made)
+    return {k: sorted(v) for k, v in snaps.items()}
+
+
+def forecasts(rows, d=None):
+    """The forecasts every reader uses (S2 amendment 2, point 4): for each
+    (event, source), the whole set of its last snapshot made before that
+    gameweek's deadline - what the log held before S2. A player who is only
+    in an earlier snapshot is not read (dropped_players counts them); a row
+    made at or after the deadline is never read. Within the set, a player
+    listed twice keeps the later row (the tie rule). Rows keep their order,
+    so a log with one snapshot per gameweek reads back unchanged."""
+    from datetime import datetime
+    last = {k: v[-1] for k, v in _snapshots(rows, d).items()}
+    keep = {}
+    for r in rows:
+        k = (str(r["event"]), r["source"])
+        if k in last and datetime.fromisoformat(r["made_at"]) == last[k]:
+            keep[(k, str(r["player_id"]))] = r
+    return list(keep.values())
+
+
+def dropped_players(rows, d=None):
+    """{(event, source): n} - the players in an earlier pre-deadline
+    snapshot of that gameweek and source who are missing from its last one.
+    They are not graded on the older forecast (S2 amendment 2, point 4); the
+    calibration prints this count. Only pairs with n > 0."""
+    from datetime import datetime
+    snaps = _snapshots(rows, d)
+    players = {}
+    for r in rows:
+        k = (str(r["event"]), r["source"])
+        made = datetime.fromisoformat(r["made_at"])
+        if k in snaps and made in snaps[k]:
+            players.setdefault(k, {}).setdefault(made, set()).add(str(r["player_id"]))
+    out = {}
+    for k, by_snap in players.items():
+        last = by_snap[snaps[k][-1]]
+        earlier = set().union(*(p for m, p in by_snap.items() if m != snaps[k][-1]))
+        if earlier - last:
+            out[k] = len(earlier - last)
+    return out
 
 
 def duplicate_keys(rows):
@@ -3084,6 +3118,11 @@ def sec_calibration(d, horizon, path=None):
         print("\n  No forecasts recorded yet. Run before each deadline:")
         print("    python fpl_edge.py --record\n")
         return
+    dropped = dropped_players(read_log(path), d)
+    dropped_line = ("  players only in an earlier snapshot (not graded on an older forecast): "
+                    + (", ".join(f"{s} GW{e} {n}" for (e, s), n in
+                                 sorted(dropped.items(), key=lambda kv: (kv[0][1], int(kv[0][0]))))
+                       or "none"))
 
     graded, pending = grade_forecasts(d, log, detail=True)
 
@@ -3118,6 +3157,7 @@ def sec_calibration(d, horizon, path=None):
         if weeks:
             print(f"\n  {len(log)} forecasts recorded for GW{weeks} - "
                   f"not played yet.")
+        print(dropped_line)
         print()
         return
 
@@ -3170,8 +3210,8 @@ def sec_calibration(d, horizon, path=None):
 
     for (src, ev), cnt in sorted(pending.items()):
         print(f"  {cnt} forecasts pending for {src} GW{ev}")
-    if pending:
-        print()
+    print(dropped_line)
+    print()
 
 
 # ---------------------------------------------------------------------------
