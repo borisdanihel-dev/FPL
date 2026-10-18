@@ -68,10 +68,12 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   odds CSVs `df5d5fa`, code `01be62b`). **Both pre-registered parts pass**
   (Brier +0.0153 [+0.0098, +0.0214]; the 2026/27 condition on two
   gameweeks). Verifier PASS (Fable 5.1; a 1c shift-probe WARN cleared by 1a/1b, reported
-  to the chat), write guard clean. Auto-continue stops after S5: a
-  passed model test whose adoption needs Boris's acceptance in chat (FAST
-  item 6). S6 starts on the chat's word; its prereg uses `bottomup_lambda`
-  if S5's test and verifier passed.
+  to the chat), write guard clean. RULING S5 result (`4abc716`): accepted;
+  `bottomup_lambda` adopted as an S6 input; Part C tie-break change recorded
+  (**edit the Part C line in BUILD_PLAN.md at the landing**). Amendment
+  built (AMEND_COMMIT): the `condition_2627` toy test and `--live` for the
+  Thursday deadline pass (W1's snapshots; reader shape to confirm when W1
+  lands). Verifier on the amendment: AMEND_STATE. Then S6.
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.

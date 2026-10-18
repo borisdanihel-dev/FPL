@@ -3159,3 +3159,17 @@ sheet); the Part C line in BUILD_PLAN.md is edited at lane B's landing.
 Amendment to build before landing: a toy-level test of `condition_2627`
 (post-deadline export refused; starters threshold) and an information-only
 live mode reading W1's odds snapshots for the deadline pass (next entry).
+
+## 2026-10-18 — S5 amendment: `condition_2627` toy test and the live mode (RULING S5 result points 3–4; `4abc716` ruling, AMEND_COMMIT code; lane B)
+
+`tools/odds_lambda.py --live` (information only): the newest `odds/*.json.gz`
+under the data worktree taken before the next deadline (W1's Odds API
+snapshots; fetch time from the payload or the file name, a date-only name
+counting as the end of that UTC day), aggregated as the mean decimal price
+across bookmakers for h2h (`h2h_lay` excluded) and totals at 2.5, then the
+S5 λ pipeline; per fixture λ_home, λ_away, P(cs) per side, bookmaker counts
+and source; our GK/DEF's `bottomup` and `bottomup_lambda`; no snapshot →
+the fallback, labelled. Toy-level test of `condition_2627` (post-deadline
+export refused; starters threshold). Tests 10 → 14; mutations 21 of 22 red
+(the survivor the documented round-guard no-op). First live run: no
+snapshot yet, every GW8 fixture on the fallback. Verifier: VERIFIER_LINE.
