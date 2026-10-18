@@ -3233,7 +3233,14 @@ Report: `worklog/cc_2026-10-18_S6.md`; verifier `worklog/verify_S6.md`.
 RULING Step 9 (verbatim in `prereg/S9.md`): `tools/league.py` (standard
 library only; the nightly never imports it; the LEAGUE ODDS section and
 `fetched_at` on the league tables are lane A's W2), `tests/test_S9.py`.
-Descriptive: no adoption bar. Verifier: VERIFIER_LINE. Not on master.
+Descriptive: no adoption bar. **Verifier: FAIL** (Fable 5.1, `worklog/verify_S9.md`):
+the tool's mechanics pass every check, but `entry_gw.points` is **provisional
+on some settled gameweeks** — the sync stops re-fetching entry history at
+`finished = 1`, before `data_checked` (GW3–4 short 12–29 points for every
+manager, GW6 short 1–6 for five rivals; the totals chain holds the final
+scores). Numbers below are as measured on the stored rows (P within 0.02 of
+the reconstruction). Stopped for the rulings (report, Decisions 0). Not on
+master.
 
 **Definitions, as pre-registered.** Net points = `entry_gw.points −
 transfers_cost`, settled gameweeks only; σ_i, σ_d,j, ρ_ij per rival; pooled

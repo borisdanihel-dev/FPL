@@ -85,8 +85,12 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Current item:** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
-  variance line. Verifier: VERIFIER_STATE. Next in the queue: Step 8
-  (transfer planner) — needs its ruling.
+  variance line. **Verifier FAIL** on a data finding: `entry_gw.points` is
+  provisional on settled gameweeks (the runner's sync stops re-fetching
+  at `finished = 1`); the tool's mechanics passed. **Stopped** for the
+  rulings (report, Decisions 0: lane A sync fix and backfill; the tool's
+  behaviour on pre-lockdown rows; three textual deviations). Then rerun
+  S9 and re-verify. Next in the queue after that: Step 8 — needs its ruling.
 - **Monday landing (RULING Step 9):** after W1's real dispatch is green,
   S4 + S7 + S5 + S6 (+ S9 if verified) on one landing branch from
   `origin/master`: `git revert 32bf218`, cherry-pick the lane-b commits
@@ -133,6 +137,6 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
 - **Items since the last chat review:** 1 of 6 (S9; the review of S4–S6 is done).
-- **Open for the chat:** RULING Step 8 (the next item); the S9 report's Decision 1 (σ_d in Part C rule 1); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
+- **Open for the chat:** the S9 FAIL rulings (report, Decision 0); RULING Step 8; the S9 report's Decision 1 (σ_d in Part C rule 1); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
