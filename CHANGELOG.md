@@ -3172,4 +3172,8 @@ and source; our GK/DEF's `bottomup` and `bottomup_lambda`; no snapshot →
 the fallback, labelled. Toy-level test of `condition_2627` (post-deadline
 export refused; starters threshold). Tests 10 → 14; mutations 21 of 22 red
 (the survivor the documented round-guard no-op). First live run: no
-snapshot yet, every GW8 fixture on the fallback. Verifier: VERIFIER_LINE.
+snapshot yet, every GW8 fixture on the fallback. **Verifier: FAIL** (Fable 5.1,
+`worklog/verify_S5.md`): `--live` as a plain command crashes on a cp1252
+stdout (UnicodeEncodeError on "Muharemović") and writes no file; the numbers
+reproduce byte for byte under UTF-8; every other check passed. Fix (one line
+per tool's `main`, also `chips.py` and `backtest.py`) awaits the ruling.
