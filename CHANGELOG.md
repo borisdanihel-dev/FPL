@@ -2731,3 +2731,38 @@ effort high (`worklog/verify_S2_pre.md`).
 **Open for the chat:** four decisions in `worklog/cc_2026-10-18_S2.md`:
 `made_at` as record time; `fetched_at_utc` coverage; the nightly missing-dates
 warning; log growth (~15 MB a season).
+
+---
+
+## 2026-10-18 — S2 amendment 1: known price gaps, readers take the last snapshot before the deadline (`b1d691e` prereg, `9266f23` BUILD_PLAN, `s2-wip` `32d623c`)
+
+**Done on `s2-wip`, still not on master.** Verifier: **PASS** on Fable 5.1,
+effort high (`worklog/verify_S2_a1.md`).
+- Point 1: `made_at` stays the record time; no change.
+- Point 2: `BUILD_PLAN.md` Step 9 gives `fetched_at_utc` to `picks`,
+  `transfers`, `chips`, `standings` and `player_history`. The new S2 table
+  `automatic_subs` already has it: open for the chat.
+- Point 3: `price_gaps_known.txt` lists 2026-09-28 and 2026-10-02..04. Reason:
+  no sync ran; there is no log, export, report or price snapshot for those days.
+  `PRICE DATES MISSING` warns only on an unlisted gap. An unreadable list
+  warns every gap.
+- Point 5: `forecasts(rows, d)` returns, per (event, player_id, source), the
+  row with the latest `made_at` before `events.deadline_time`. Calibration,
+  the Free Hit screen and the watch file use it, and a static test guards it.
+  The frozen `p1_eval.py` reads the last line per player; the log is
+  append-only in time order, checked nightly.
+
+**Measured:**
+- Tests 355 → 366, green; 0 skips with the data and a time zone.
+- Of the new tests, 9 of 12 are red on `04acd7d`. My 12 mutations are all red;
+  the verifier's are 11 of 12 red (the untested tie rule survived).
+- Recording path: with a frozen clock, `04acd7d` and `32d623c` write
+  byte-identical log, watch file, report, status and export. The new reader
+  returns the master baseline log exactly: 4679 rows, same order.
+- Calibration on the same data, master code against S2 code: the GW4–GW6
+  numbers are identical to the last digit. The only difference is the list of
+  unfinished GW7 fixtures (the Step 2.1 three-hour rule).
+- GW7 is not settled; its last kickoff is 19 Oct 19:00Z. It has one snapshot
+  per source, so its numbers cannot differ. The comparison itself runs once it
+  settles.
+- On the real price history, `PRICE DATES MISSING` now prints nothing.
