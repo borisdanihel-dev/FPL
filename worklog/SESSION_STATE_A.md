@@ -5,11 +5,18 @@ Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
 before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
 this file, then waits for the next instruction.
 
-- **Current item:** S3 (Step 3, D3) with Amendment 1, on branch `s3-wip`
-  (`8149abd`). Prereg `prereg/S3.md` (`5727db2`, Amendment 1 `d5aa4d2`).
-  Dry run `f23d74a` green; verifier pre-check PASS (`worklog/verify_S3_pre.md`).
-  Next: tag `pre-S3`, merge, Boris's real dispatch, final verifier. Report
-  `worklog/cc_2026-10-18_S3.md`. Latest merge Wed 21 Oct 20:00 UTC.
+- **Monday 19 Oct, first task** (RULING S3 dispatch result): confirm
+  tonight's scheduled run - the data commit, status.txt with checks 9 and
+  26 now active instead of SKIP, release backup-2026-10-18, and what the
+  03:17 UTC backup run did. Then ask Boris for three Actions-log lines of
+  the 18:45 dispatch (due, backup, failure issue).
+- **Current item:** W1 (wiring: fpl_ep and the Odds API collector), on
+  branch `w1-wip`; prereg `prereg/W1.md`. Lands by Wed 21 Oct 20:00 UTC.
+  Nothing on master after 21:00 UTC on 18 Oct.
+- **S3: done** (18 Oct). Merged `1af9644` (tag `pre-S3` = `3ce5a08`); real
+  dispatch `e8629f0` STATUS WARN 24/25, ruled green (the WARN is check 3, a
+  new FPL player); final verifier PASS (`worklog/verify_S3.md`). Report
+  `worklog/cc_2026-10-18_S3.md`. Open S3 decisions are listed there.
 - **S2: closed** (RULING FAST-TRACK: "S2 is closed"). On master since `9b4a462`
   and `50abf60`; final verifier PASS (`worklog/verify_S2.md`); report
   `worklog/cc_2026-10-18_S2.md`. Revert tags `pre-S2` (`1cddca9`) and
@@ -25,7 +32,7 @@ this file, then waits for the next instruction.
     snapshots together (S2 final decision 1);
   - `CLAUDE.md` items b and g still name `worklog/SESSION_STATE.md`, which is
     now an index pointing to the two lane files.
-- **Queue (FAST-TRACK item 8):** S3, W1 (by Wed 21 Oct 20:00 UTC: fpl_ep and the
+- **Queue (FAST-TRACK item 8):** W1 (by Wed 21 Oct 20:00 UTC: fpl_ep and the
   Odds API collector), Step 10, W2 (after the GW8 deadline), Step 16, W3,
   Steps 17-18, W4.
   - **Step 10 addition** (RULING Step 10 addition, 18 Oct, verbatim; also in

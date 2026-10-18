@@ -2922,3 +2922,27 @@ verifier follow.
 **Also on 18 Oct:** RULING Step 10 addition (BUILD_PLAN.md Step 10, lane A
 queue) and RULING Part E note (BUILD_PLAN.md Part E item 4), both recorded
 verbatim.
+
+---
+
+## 2026-10-18 — S3 done: merged, real dispatch green, final verifier PASS (`1af9644`; data `e8629f0`)
+
+**Merged** as `1af9644`: twelve files, blob-identical to `s3-wip` `8149abd`.
+Tag `pre-S3` = `3ce5a08`.
+
+**Real dispatch** (`e8629f0`, 18:45 UTC):
+- `STATUS WARN` 24/25. The only WARN is check 3, a new FPL player id 668;
+  ruled information.
+- 459 tests green; check 28 test gate and check 29 record OK.
+- `reports/status.txt` committed, and the report starts with the status line.
+- `GATE OK` on a re-run here.
+- No backup release, as a dispatch without `force_backup` should make none.
+
+**Final verifier:** PASS on Fable 5.1, effort high (`worklog/verify_S3.md`).
+
+**Pending:**
+- tonight's scheduled run: `backup-2026-10-18`, checks 9 and 26 active;
+- the 03:17 cron;
+- check 22 after the GW7 lockdown;
+- the failure issue's first live red path;
+- three Actions-log lines for Boris to read.
