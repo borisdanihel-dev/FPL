@@ -78,17 +78,21 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   called by the three mains, cp1252 subprocess tests (`313bcb0`).
   Verifier rerun **PASS** (Fable 5.1), write guard
   clean. S5 complete on `lane-b`.
-- **Current item:** S6 built (`tools/xp_v2.py`, `tests/test_S6.py`, code
-  `8bb22a8`): development cut GW6, development GW5–6 in-sample, validation
-  empty → INCONCLUSIVE by construction; nothing adopted; re-run with the
-  same cut at the GW10 and GW19 checkpoints (`python tools/xp_v2.py
-  --validate --cut 6`). Verifier **PASS** (Fable 5.1), write guard clean. S6
-  complete on `lane-b`. Next in the queue: Step 9
-  (league variance), then Step 8 — **stopped: Step 9 has no ruling yet** (a
-  prereg with the chat's ruling verbatim precedes any code), and items
-  since the last chat review are 4 of 6. Also open: the replacement-rule
-  wording in `xp_v2.validate()` (report), the BUILD_PLAN Part C line and the
-  Monday landing (S4 + S7 + S5 + S6).
+- **S6:** complete on `lane-b` (`f25fe4d`): cut GW6, validation empty,
+  INCONCLUSIVE by construction; re-run `python tools/xp_v2.py --validate
+  --cut 6` at the GW10 and GW19 checkpoints; the chat rules on the metric
+  power before GW10.
+- **Current item:** S9 built (`tools/league.py`, `tests/test_S9.py`, code
+  `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
+  Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
+  variance line. Verifier: VERIFIER_STATE. Next in the queue: Step 8
+  (transfer planner) — needs its ruling.
+- **Monday landing (RULING Step 9):** after W1's real dispatch is green,
+  S4 + S7 + S5 + S6 (+ S9 if verified) on one landing branch from
+  `origin/master`: `git revert 32bf218`, cherry-pick the lane-b commits
+  after `70f026d`, edit the BUILD_PLAN Part C line (RULING S5 result point
+  2), full suite, push the branch, ask Boris for the dry-run click; land
+  only on green, outside 9d, then merge master into `lane-b`.
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
@@ -128,7 +132,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 4 of 6 (S4, S7, S5, S6).
-- **Open for the chat:** S6 is inconclusive by construction (nothing to decide); the S4 power question on the S6 metric stands; the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
+- **Items since the last chat review:** 1 of 6 (S9; the review of S4–S6 is done).
+- **Open for the chat:** RULING Step 8 (the next item); the S9 report's Decision 1 (σ_d in Part C rule 1); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
