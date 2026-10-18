@@ -24,6 +24,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 import fpl_edge as E                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
+import hist_pit as PIT                                            # noqa: E402
 
 TEAMS = [("Alpha", "ALP"), ("Beta", "BET"), ("Gamma", "GAM"), ("Delta", "DEL"),
          ("Eps", "EPS"), ("Zeta", "ZET")]
@@ -88,6 +89,39 @@ def toy_hist(folder, rounds=6, seed=1):
         w = csv.DictWriter(fh, fieldnames=MERGED_COLS)
         w.writeheader(); w.writerows(rows)
     return players, rows
+
+
+def plant_transfer(folder, pid, from_round, new_team):
+    """Rewrite the toy so player `pid` plays for team id `new_team` from
+    `from_round` on: his rows move to that team's fixture of each round."""
+    with open(os.path.join(folder, "fixtures.csv"), encoding="utf-8", newline="") as fh:
+        fixtures = list(csv.DictReader(fh))
+    with open(os.path.join(folder, "merged_gw.csv"), encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    for r in rows:
+        if int(r["element"]) != pid or int(r["round"]) < from_round:
+            continue
+        f = next(f for f in fixtures if int(f["event"]) == int(r["round"])
+                 and new_team in (int(f["team_h"]), int(f["team_a"])))
+        home = int(f["team_h"]) == new_team
+        r.update({"team": TEAMS[new_team - 1][0], "fixture": f["id"], "was_home": home,
+                  "opponent_team": f["team_a"] if home else f["team_h"]})
+    with open(os.path.join(folder, "merged_gw.csv"), "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=MERGED_COLS)
+        w.writeheader(); w.writerows(rows)
+
+
+def truncate_rounds(src, dst, g):
+    """Copy the toy keeping only merged rows with round <= g."""
+    os.makedirs(dst, exist_ok=True)
+    for name in ("teams.csv", "fixtures.csv"):
+        with open(os.path.join(src, name), encoding="utf-8") as a, open(os.path.join(dst, name), "w", encoding="utf-8") as b:
+            b.write(a.read())
+    with open(os.path.join(src, "merged_gw.csv"), encoding="utf-8", newline="") as fh:
+        rows = [r for r in csv.DictReader(fh) if int(r["round"]) <= g]
+    with open(os.path.join(dst, "merged_gw.csv"), "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=MERGED_COLS)
+        w.writeheader(); w.writerows(rows)
 
 
 def toy_data(folder, deadline5="2026-09-18T17:30:00+00:00"):
@@ -345,6 +379,140 @@ class Season2526(unittest.TestCase):
         out = io.StringIO()
         BT.print_compare(res, lambda s: out.write(s + "\n"))
         self.assertIn("COMPARE bottomup vs minutes", out.getvalue())
+
+    def test_rebuild_uses_the_club_of_that_gameweek(self):
+        """The team-column leak test: a transfer planted in round 6 leaves
+        every gameweek-5 number unchanged, and gameweek 6 sees the new club."""
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_hist(tmp)
+            base = BT.load_2526(tmp)
+            pid = 3                                      # an Alpha defender
+            reb5 = BT.rebuild_2526(base, 5)
+            cands5 = BT.squad_candidates(base, 5)
+            plant_transfer(tmp, pid, 6, 2)
+            hist = BT.load_2526(tmp)
+            self.assertEqual(hist["c"]["players"][pid]["team"], "BET")     # the frozen adapter: end-of-season club
+            reb5b = BT.rebuild_2526(hist, 5)
+            self.assertEqual(reb5["rows"], reb5b["rows"])
+            self.assertEqual(reb5["components"], reb5b["components"])
+            self.assertEqual(reb5["p_start"], reb5b["p_start"])
+            self.assertEqual(cands5, BT.squad_candidates(hist, 5))
+            self.assertEqual(next(c for c in BT.squad_candidates(hist, 6) if c["id"] == pid)["team"], "BET")
+            self.assertEqual(BT.canonical_at(hist, 5)["players"][pid]["team"], "ALP")
+            self.assertEqual(BT.canonical_at(hist, 6)["players"][pid]["team"], "BET")
+
+    def test_components_leak_free_and_mutation_red(self):
+        """P(start), P(cs) and P(DEFCON) for gameweek 5 read nothing from
+        round 5 onward; training through the target week moves them."""
+        def probs(reb):
+            return (reb["p_start"], [p for p, _ in reb["components"]["bottomup"]["cs"]],
+                    [p for p, _ in reb["components"]["bottomup"]["defcon"]])
+        before = probs(self.h.rebuilt(5))
+        hist2 = BT.load_2526(self.tmp.name)
+        for r in hist2["c"]["rows"]:
+            if r["event"] >= 5:
+                r["starts"] = 0; r["minutes"] = 1; r["xg"] = (r["xg"] or 0) + 2.0; r["defcon"] = 40
+        for m in hist2["c"]["team_matches"]:
+            if m["event"] >= 5:
+                m["goals_against"] = 9
+        self.assertEqual(probs(BT.rebuild_2526(hist2, 5)), before)
+        no_cut = lambda c, gw: E.check_canonical(dict(c, through_gw=gw))      # noqa: E731
+        with mock.patch.object(E, "canonical_through", no_cut):              # the verifier's mutation:
+            leaked = probs(BT.rebuild_2526(hist2, 5))                        # slice keeps the target week
+        self.assertEqual(leaked[0], before[0])        # P(start)'s window is bounded by gws_played, not the slice
+        self.assertNotEqual(leaked[1], before[1])     # team rates and season totals move P(cs) ...
+        self.assertNotEqual(leaked[2], before[2])     # ... and P(DEFCON)
+        orig = E.reliability_inputs
+        with mock.patch.object(E, "canonical_through", no_cut),              mock.patch.object(E, "reliability_inputs", lambda c, gws_played=None, **k: orig(c, gws_played=gws_played + 1, **k)):
+            leaked = probs(BT.rebuild_2526(hist2, 5))                        # training through the target week
+        self.assertNotEqual(leaked[0], before[0])
+
+
+class ClubMap(unittest.TestCase):
+    """prereg/S4.md amendment 2: the point-in-time club map."""
+
+    def test_every_row_club_is_one_of_its_fixture_teams(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_hist(tmp)
+            cm = PIT.club_map(tmp)
+            with open(os.path.join(tmp, "fixtures.csv"), newline="") as fh:
+                fx = {f["id"]: f for f in csv.DictReader(fh)}
+            with open(os.path.join(tmp, "merged_gw.csv"), newline="") as fh:
+                rows = list(csv.DictReader(fh))
+            short = {str(i): s for i, (_, s) in enumerate(TEAMS, 1)}
+            self.assertEqual(len(rows), len(cm["rows"]))
+            for r in rows:
+                f = fx[r["fixture"]]
+                self.assertIn(cm["rows"][(int(r["element"]), int(r["round"]))],
+                              {short[f["team_h"]], short[f["team_a"]]})
+            self.assertEqual(PIT.changes(cm), [])
+
+    @unittest.skipUnless(os.path.isdir(os.path.join(ROOT, "historical", "2025-26")), "no 2025/26 copy")
+    def test_real_season_rows_match_their_fixtures(self):
+        folder = os.path.join(ROOT, "historical", "2025-26")
+        cm = PIT.club_map(folder)            # derive_clubs raises on any mismatch
+        self.assertEqual((len(cm["first"]), cm["through"]), (841, 38))
+        self.assertGreater(len(PIT.changes(cm)), 0)
+
+    def test_planted_transfer_changes_club_in_exactly_that_gameweek(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_hist(tmp)
+            cm0 = PIT.club_map(tmp)
+            pid = 1                           # Alpha's keeper
+            self.assertEqual(PIT.club_at(cm0, pid, 6), "ALP")
+            plant_transfer(tmp, pid, 4, 2)    # to Beta from round 4
+            cm = PIT.club_map(tmp)
+            self.assertEqual([PIT.club_at(cm, pid, g) for g in range(1, 7)],
+                             ["ALP", "ALP", "ALP", "BET", "BET", "BET"])
+            self.assertEqual(PIT.changes(cm), [(pid, 4, "ALP", "BET")])
+            self.assertEqual(PIT.club_at(cm, pid, 0), None)
+            self.assertEqual(PIT.club_at(cm, pid, 99), "BET")   # beyond the data: the last known club
+
+    def test_look_ahead_probe(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = os.path.join(tmp, "full"); os.makedirs(src); toy_hist(src)
+            plant_transfer(src, 1, 4, 2)
+            full = PIT.club_map(src)
+            for g in range(1, 7):
+                cut = os.path.join(tmp, f"upto{g}")
+                truncate_rounds(src, cut, g)
+                self.assertEqual(PIT.club_map(cut)["by_gw"][g], full["by_gw"][g], f"gameweek {g}")
+            self.assertEqual(PIT.club_at(full, 1, 3), "ALP")     # the round-4 move is invisible at 3
+
+    def test_cross_check_and_unknown_fixture_raise(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_hist(tmp)
+            path = os.path.join(tmp, "merged_gw.csv")
+            with open(path, newline="") as fh:
+                rows = list(csv.DictReader(fh))
+            rows[0]["team"] = TEAMS[1][0] if rows[0]["team"] != TEAMS[1][0] else TEAMS[2][0]
+            with open(path, "w", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=MERGED_COLS); w.writeheader(); w.writerows(rows)
+            with self.assertRaises(ValueError):
+                PIT.club_map(tmp)
+            toy_hist(tmp)
+            with open(path, newline="") as fh:
+                rows = list(csv.DictReader(fh))
+            rows[0]["fixture"] = "999"
+            with open(path, "w", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=MERGED_COLS); w.writeheader(); w.writerows(rows)
+            with self.assertRaises(ValueError):
+                PIT.club_map(tmp)
+
+    def test_blank_carries_forward_and_no_backfill(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_hist(tmp)
+            path = os.path.join(tmp, "merged_gw.csv")
+            with open(path, newline="") as fh:
+                rows = [r for r in csv.DictReader(fh) if not (int(r["element"]) == 1 and int(r["round"]) in (1, 2, 4))]
+            with open(path, "w", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=MERGED_COLS); w.writeheader(); w.writerows(rows)
+            cm = PIT.club_map(tmp)
+            self.assertEqual([PIT.club_at(cm, 1, g) for g in range(1, 7)], [None, None, "ALP", "ALP", "ALP", "ALP"])
+            c = BT.load_2526(tmp)["c"]
+            self.assertNotIn(1, PIT.players_at(c, cm, 2))
+            self.assertEqual(PIT.players_at(c, cm, 3)[1]["team"], "ALP")
+            self.assertEqual(PIT.players_at(c, cm, 3)[1]["pos"], c["players"][1]["pos"])
 
 
 class Season2627(unittest.TestCase):
