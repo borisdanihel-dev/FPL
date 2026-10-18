@@ -34,10 +34,16 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   session runs on Fable (Boris selects it). The verifier runs on Fable for
   every item; it falls back to Opus at xhigh only if the Fable weekly bar is
   above 80% before its reset. Each report names the models used.
-- **Current item:** none yet. The first is Step 4 (harness, offline part).
-  Waiting for the chat's rulings for Steps 4-7, which come together (item 7).
-  Each prereg is committed before its item starts and never edited after any
-  of its evaluation numbers exist.
+- **Current item:** none started. The rulings for Steps 4-7 arrived on
+  2026-10-18 (item 7); `prereg/S4.md`, `S7.md`, `S5.md` and `S6.md` are
+  written (every template row filled, each ruling verbatim) and pushed on
+  `lane-b`. Waiting for the chat's "go"; then S4, S7, S5, S6 in that order
+  under auto-continue (item 6). Each prereg is never edited after any of its
+  evaluation numbers exist. Open points for the chat before the go are in
+  the chat reply of 2026-10-18 (S4 `selected` timing; S5 download approval
+  and the undated pre-closing odds; S5/S6 2025/26 exclusions of own, xg,
+  fpl_ep; S7 "after normal transfers" without Step 8; S6 penalty inputs
+  and the development cut).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
 - **Items since the last chat review:** 0 of 6.
