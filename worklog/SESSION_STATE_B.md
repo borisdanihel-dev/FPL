@@ -67,7 +67,8 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Current item:** S5 built (`tools/odds_lambda.py`, `tests/test_S5.py`,
   odds CSVs `df5d5fa`, code `01be62b`). **Both pre-registered parts pass**
   (Brier +0.0153 [+0.0098, +0.0214]; the 2026/27 condition on two
-  gameweeks). Verifier: VERIFIER_STATE. Auto-continue stops after S5: a
+  gameweeks). Verifier PASS (Fable 5.1; a 1c shift-probe WARN cleared by 1a/1b, reported
+  to the chat), write guard clean. Auto-continue stops after S5: a
   passed model test whose adoption needs Boris's acceptance in chat (FAST
   item 6). S6 starts on the chat's word; its prereg uses `bottomup_lambda`
   if S5's test and verifier passed.

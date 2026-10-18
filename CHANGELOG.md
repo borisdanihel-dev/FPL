@@ -3104,7 +3104,10 @@ RULING lane B go points 2–3, verbatim in `prereg/S5.md`). `tools/odds_lambda.p
 (standard library only; the nightly never imports it; `ODDS_API_KEY` never
 appears — the live collector is lane A's W1), `tests/test_S5.py`, and the
 football-data.co.uk E0 CSVs for 2025/26 (380 rows) and 2026/27 (60 rows to
-12 Oct), fetched 2026-10-18 with Boris's approval. Verifier: VERIFIER_LINE.
+12 Oct), fetched 2026-10-18 with Boris's approval. Verifier: **PASS** (Fable 5.1,
+effort high, `worklog/verify_S5.md`; a check-1c shift-probe WARN on the
+pooled DEF/GK starters, drop +0.113 against the 0.10 line, cleared by 1a and
+1b — stated to the chat; two test gaps in the 2026/27 condition path noted).
 Not on master (lands with S4 and S7 after a green dry run).
 
 **Definitions, as pre-registered.** Pre-closing `Avg*` odds (B365 as the
