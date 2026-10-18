@@ -11,7 +11,10 @@ this file, then waits for the next instruction.
   03:17 UTC backup run did. Then ask Boris for three Actions-log lines of
   the 18:45 dispatch (due, backup, failure issue).
 - **Current item:** W1 (wiring: fpl_ep and the Odds API collector), on
-  `w1-wip` (`a5b63bd`); prereg `prereg/W1.md` (`7efc2b2`, decisions `91b10c7`).
+  `w1-wip` (`d928ebe`); prereg `prereg/W1.md` (`7efc2b2`, decisions `91b10c7`,
+  odds storage `249be76`). Odds are raw gzip files in `odds/` on data, append-only;
+  no odds table; check 24 names files over 50 MB. Suite 495, green normally and
+  hermetically.
   - RULING W1 decisions applied:
     - 4 credits a night, about 124 a month;
     - `odds_live` dispatch input, so a dry run skips the API unless it is ticked;
