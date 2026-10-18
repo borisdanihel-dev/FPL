@@ -7,6 +7,11 @@
 # code and force-pushes the result to data-dryrun only: never to data, no
 # release, no issue, its own concurrency group. Any branch but master is
 # always dry; a scheduled run never is. At most 6 dry runs a day (point 9).
+# The checks (checks.py, Step 3) write reports/status.txt; a FAIL commits
+# nothing. A red run opens or updates the issue "Nightly run failed", a green
+# one closes it (fpl_alert.py). A second cron at 03:17 UTC is the backup run:
+# it does the whole night again only when the 21:40 nightly left no
+# status.txt (ruling S3, point 4), in the same concurrency group.
 # No secrets: every endpoint fpl_sync.py calls is public. The secret scan looks
 # for "apiKey=" always and for the ODDS_API_KEY value whenever a step has it -
 # the step that first passes the key to a run must pass it to the commit too.
@@ -20,6 +25,8 @@ on:
     # Actions cron can start late; this keeps a margin before the Friday-night
     # freeze, and fpl_edge.py refuses to record once a deadline has passed.
     - cron: "40 21 * * *"
+    # the backup run: due only when the nightly above left no status.txt
+    - cron: "17 3 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -44,42 +51,60 @@ jobs:
     # 20261012.334.1, from the run log), not ubuntu-latest, which moves to
     # Ubuntu 26 from 19 Oct (S1 amendment 3, point 4)
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: write        # the pushing job: commits to data, Sunday releases
+      issues: write          # the one issue "Nightly run failed" (ruling S3, point 3)
     env:
       # dry: any ref but master, or a dispatch with dry_run ticked; a scheduled
       # run never (S2 amendment 2, point 5). fpl_publish.py decides again from
       # GITHUB_REF and GITHUB_EVENT_NAME, so a non-master ref cannot reach data.
       FPL_DRY_RUN: ${{ (github.ref != 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && inputs.dry_run)) && 'true' || 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      # actions pinned to full commit SHAs, read from their release pages
+      # (ruling S3, point 2): checkout v7.0.1, setup-python v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: data
           path: data
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.14"
 
+      # every later step runs only when this says run=true: always, except the
+      # 03:17 backup cron after a nightly that wrote its status.txt
+      - name: Is this run due
+        id: due
+        env:
+          FPL_DATA_DIR: data
+          FPL_SCHEDULE: ${{ github.event.schedule }}
+        run: python fpl_nightly.py --due
+
       - name: Install requirements
+        if: steps.due.outputs.run == 'true'
         run: python -m pip install -r requirements.txt
 
-      # tests -> sync -> record x4 -> watch -> report -> dated export, all in ./data.
-      # Exits 1 on any failure, so the run goes red and GitHub sends mail.
+      # tests -> sync -> record x4 -> watch -> report -> dated export -> checks,
+      # all in ./data. Exits 1 on any failure, so the run goes red. The token
+      # only reads the repository's size (check 24).
       - name: Nightly run
+        id: nightly
+        if: steps.due.outputs.run == 'true'
         env:
           PYTHONIOENCODING: utf-8
+          GH_TOKEN: ${{ github.token }}
           FPL_DATA_DIR: data
         run: python fpl_nightly.py
 
       # always: a red run still commits its log, so the failure explains itself -
-      # unless the gate fails, which commits nothing and turns this step red
+      # unless the gate fails or a check FAILs, which commit nothing and turn
+      # this step red
       - name: Commit outputs to the data branch
         id: publish
-        if: always()
+        if: always() && steps.due.outputs.run == 'true'
         env:
           PYTHONIOENCODING: utf-8
         run: |
@@ -93,7 +118,8 @@ jobs:
       # the data branch; the newest 8 backup releases are kept. A release that
       # already exists for the day is skipped with a log line, never a red run.
       - name: Weekly backup
-        if: always() && steps.publish.outcome == 'success' && env.FPL_DRY_RUN != 'true'
+        id: backup
+        if: always() && steps.due.outputs.run == 'true' && steps.publish.outcome == 'success' && env.FPL_DRY_RUN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE_BACKUP: ${{ inputs.force_backup }}
@@ -112,3 +138,14 @@ jobs:
           fi
           gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^backup-' | sort -r | tail -n +9 | while read -r old; do gh release delete "$old" --yes --cleanup-tag; done
           echo "BACKUP OK    $tag"
+
+      # last, whatever happened: a red run opens or updates the one issue
+      # "Nightly run failed", a green run closes it; a dry run never touches it
+      # (ruling S3, points 3 and 7)
+      - name: Failure issue
+        if: always() && steps.due.outputs.run == 'true' && env.FPL_DRY_RUN != 'true'
+        env:
+          PYTHONIOENCODING: utf-8
+          GH_TOKEN: ${{ github.token }}
+          RUN_OUTCOMES: "nightly=${{ steps.nightly.outcome }} publish=${{ steps.publish.outcome }} backup=${{ steps.backup.outcome }}"
+        run: python fpl_alert.py data

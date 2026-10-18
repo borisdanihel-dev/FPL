@@ -3,10 +3,14 @@ fpl_nightly.py  -  the nightly run as GitHub Actions executes it.
 
     python fpl_nightly.py            # code from this folder, data from FPL_DATA_DIR
     python fpl_nightly.py --restore  # local: only the working exports, see restore_only
+    python fpl_nightly.py --due      # the workflow's first step: is this run due? (S3)
 
 The same steps as fpl_run.bat, in the same order, on any platform:
 
     tests  ->  sync  ->  record own / xg / minutes / bottomup  ->  report  ->  stuck check
+           ->  archive  ->  checks (checks.py: the status line and reports/status.txt)
+
+The tests run by discovery: test_fpl.py plus tests/ (RULING FAST-TRACK, item 5).
 
 with the Windows paths gone and the Google Drive shipping replaced by files the
 workflow commits back to the repository:
@@ -57,9 +61,15 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import fpl_ship
+
+# the suite by discovery: test_fpl.py and tests/test_<item>.py (FAST-TRACK item 5)
+TEST_ARGS = ("-m", "unittest", "discover", "-v", "-p", "test*.py")
+NIGHTLY_UTC = (21, 40)              # the scheduled nightly: cron "40 21 * * *"
+BACKUP_CRON = "17 3 * * *"          # the backup run: only when the nightly left no status
+STATUS_REL = os.path.join("reports", "status.txt")
 
 SOURCES = ("own", "xg", "minutes", "bottomup")
 EXPORTS, LOGS, REPORTS = "exports", "logs", "reports"
@@ -170,16 +180,20 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
             log.flush()
             echo(line)
 
-        def step(script, *args, cwd=data):
-            """One python step: `script` from the code folder, run in the data
-            folder; its output goes to the log and the console."""
-            env = dict(os.environ, PYTHONIOENCODING="utf-8")
-            r = subprocess.run([py, os.path.join(root, script), *args], cwd=cwd, env=env,
-                               stdout=subprocess.PIPE,
+        def run(cmd, cwd):
+            """One command; its output goes to the log and the console."""
+            # no __pycache__ in the code or data folder from the discovered suite
+            env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+            r = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, encoding="utf-8", errors="replace")
             for line in r.stdout.splitlines():
                 say(line)
             return r.returncode
+
+        def step(script, *args, cwd=data):
+            """One python step: `script` from the code folder, run in the data
+            folder."""
+            return run([py, os.path.join(root, script), *args], cwd)
 
         say(f"==== run {stamp} UTC, started "
             f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC ====")
@@ -190,7 +204,7 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
         restore_exports(data, say)
 
         say("running tests ...")
-        tests_ok = step("test_fpl.py", cwd=root) == 0
+        tests_ok = run([py, *TEST_ARGS, "-s", root, "-t", root], root) == 0
         if not tests_ok:
             failed.append("tests")
             say(f"TESTS FAILED - see {os.path.join(LOGS, os.path.basename(log_path))}")
@@ -272,11 +286,58 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
             failed.append("archive")
             say("ARCHIVE FAILED: no fpl_export_gw*.json in this folder")
 
+        # the 27 checks of Step 3: the status line at the top of the report and
+        # reports/status.txt; a FAIL also stops fpl_publish.py from committing
+        say("running the checks ...")
+        if step("checks.py", "--stamp", stamp) != 0:
+            failed.append("checks")
+
         if failed:
             say(f"FINISHED WITH ERRORS: {', '.join(failed)}")
             return 1
         say(f"Done. Report: {report_rel}")
         return 0
+
+
+def last_nightly_slot(now):
+    """The latest scheduled nightly time (21:40 UTC) at or before `now`."""
+    slot = now.replace(hour=NIGHTLY_UTC[0], minute=NIGHTLY_UTC[1], second=0, microsecond=0)
+    return slot if slot <= now else slot - timedelta(days=1)
+
+
+def backup_due(data, now, schedule):
+    """(due, why) for a run of the workflow (ruling S3, point 4). Only the
+    backup cron can be skipped: it is due when the nightly of the last slot
+    left no status.txt - none at all, or one generated before that slot. A
+    run of the nightly's own cron, or a dispatch, is always due. Reads one
+    file and writes nothing."""
+    import checks
+    if schedule != BACKUP_CRON:
+        return True, "not the backup cron"
+    path = os.path.join(data, STATUS_REL)
+    slot = last_nightly_slot(now)
+    if not os.path.exists(path):
+        return True, f"no {STATUS_REL}: the nightly of {slot:%Y-%m-%d %H:%M} UTC left none"
+    with open(path, encoding="utf-8", newline="") as fh:
+        when = checks.status_time(fh.readline())
+    if when is None or when < slot:
+        return True, (f"{STATUS_REL} is from {when:%Y-%m-%d %H:%M} UTC, before the "
+                      f"{slot:%Y-%m-%d %H:%M} UTC nightly" if when else
+                      f"{STATUS_REL} has no generated time")
+    return False, f"{STATUS_REL} from {when:%Y-%m-%d %H:%M} UTC exists: the nightly ran"
+
+
+def due_main(data, env=None, now=None, say=print):
+    """--due: print whether this run is due and, on the runner, write
+    run=true|false to GITHUB_OUTPUT for the later steps. Exit 0 either way."""
+    env = os.environ if env is None else env
+    due, why = backup_due(data, now or datetime.now(timezone.utc), env.get("FPL_SCHEDULE", ""))
+    say(("DUE          " if due else "NOT DUE      backup run skipped: ") + why)
+    out = env.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a", encoding="utf-8", newline="") as fh:
+            fh.write(f"run={'true' if due else 'false'}\n")
+    return 0
 
 
 def main(argv=None):
@@ -289,8 +350,10 @@ def main(argv=None):
     here = os.path.dirname(os.path.abspath(__file__))
     if argv == ["--restore"]:
         sys.exit(restore_only(os.environ.get(DATA_ENV) or os.getcwd(), here))
+    if argv == ["--due"]:
+        sys.exit(due_main(os.environ.get(DATA_ENV) or os.getcwd()))
     if argv:
-        sys.exit(f"usage: fpl_nightly.py [--restore]  (got {' '.join(argv)})")
+        sys.exit(f"usage: fpl_nightly.py [--restore | --due]  (got {' '.join(argv)})")
     sys.exit(nightly(root=here, data=os.environ.get(DATA_ENV) or None))
 
 
