@@ -3904,6 +3904,17 @@ class NightlyRunner(unittest.TestCase):
         self.assertEqual(log[-1], "FINISHED WITH ERRORS: sync")
         self.assertEqual(code, 1, "on the runner a failed sync must turn the run red")
 
+    def test_a_stuck_gameweek_turns_the_run_red(self):
+        """S2, Step 2.1: the GW stuck alarm runs after the report."""
+        code, log, _ = self._run(self._world(mode="stuck"))
+        self.assertIn("GW STUCK: GW9 stub", log)
+        self.assertLess(log.index("building report ..."), log.index("checking for a stuck gameweek ..."))
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: stuck")
+        self.assertEqual(code, 1)
+        code, log, _ = self._run(self._world())
+        self.assertIn("STUCK CHECK OK stub", log)
+        self.assertEqual(code, 0)
+
     def test_report_failure_is_red(self):
         code, log, _ = self._run(self._world(mode="noreport"))
         self.assertIn("EDGE FAILED", log)
@@ -5408,6 +5419,390 @@ class PrePush(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(wt, "fpl_prepush.py")))
         r = git("push", "-q", "origin", "HEAD:refs/heads/data")
         self.assertEqual(r.returncode, 0, r.stderr)
+
+
+def _s2_sync_ns(now_iso="2026-10-17T21:40:00+00:00", tz=None):
+    """fpl_sync's functions in a namespace with a frozen clock and an injected
+    London zone (the tests need no time-zone database)."""
+    ns = {"__name__": "fpl_sync_s2"}
+    here = os.path.dirname(os.path.abspath(__file__))
+    src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+    exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+    real = ns["datetime"]
+    fixed = real.fromisoformat(now_iso)
+
+    class Frozen(real):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed if tz else fixed.replace(tzinfo=None)
+
+    ns["datetime"] = Frozen
+    ns["london_tz"] = lambda: (tz or UK_SUMMER)
+    return ns
+
+
+def _s2_event(i, deadline, cur=False, nxt=False, fin=False, chk=False):
+    return {"id": i, "name": f"GW{i}", "deadline_time": deadline, "finished": fin,
+            "data_checked": chk, "is_current": cur, "is_next": nxt}
+
+
+def _s2_element(pid, **over):
+    el = {"id": pid, "web_name": f"P{pid}", "first_name": "A", "second_name": "B",
+          "team": 1, "element_type": 3, "now_cost": 55, "cost_change_start": 0,
+          "selected_by_percent": "1.5", "total_points": 10, "minutes": 270,
+          "goals_scored": 1, "assists": 0, "clean_sheets": 0, "bonus": 0,
+          "expected_goals": "0.90", "expected_assists": "0.20", "ict_index": "12.3",
+          "status": "a", "chance_of_playing_next_round": None, "news": "", "starts": 3,
+          "penalties_order": None, "corners_and_indirect_freekicks_order": None,
+          "direct_freekicks_order": None, "expected_goals_conceded": "1.10",
+          "transfers_in_event": 5, "transfers_out_event": 2, "form": "2.5",
+          "points_per_game": "3.3", "influence": "10.0", "creativity": "8.0",
+          "threat": "9.0"}
+    el.update(over)
+    return el
+
+
+GW_DEADLINES = {i: f"2026-{8 + (i + 1) // 5:02d}-{(i * 6) % 28 + 1:02d}T10:00:00Z" for i in range(1, 10)}
+
+
+class StepTwoSync(unittest.TestCase):
+    """S2 (Step 2.1, 2.4-2.7, 2.10; ruling 3), the sync side."""
+
+    EVENTS = [_s2_event(i, d) for i, d in sorted({
+        1: "2026-08-21T17:30:00Z", 6: "2026-10-10T10:00:00Z", 7: "2026-10-17T10:00:00Z",
+        8: "2026-10-23T17:30:00Z", 9: "2026-10-31T11:00:00Z"}.items())]
+
+    def _db(self, ns):
+        import sqlite3
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        ns["migrate"](db)
+        return db
+
+    def _boot(self, ns, db, elements=(), events=None, flags=(7, 8)):
+        evs = [dict(e, is_current=e["id"] == flags[0], is_next=e["id"] == flags[1])
+               for e in (events or self.EVENTS)]
+        ns["get"] = lambda path: {"teams": [], "elements": list(elements), "events": evs}
+        out = io.StringIO()
+        with redirect_stdout(out):
+            cur = ns["sync_bootstrap"](db)
+        return cur, out.getvalue()
+
+    # --- price dates (Step 2.4) ------------------------------------------------
+
+    def test_a_snapshot_carries_its_fetch_time_and_london_date(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._db(ns)
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertEqual(db.execute("SELECT player_id, date, now_cost, fetched_at_utc, london_date "
+                                    "FROM price_history").fetchall(),
+                         [(7, "2026-10-17", 55, "2026-10-17T21:40:00+00:00", "2026-10-17")])
+        self.assertNotIn("PRICE DATE FLAG", out)
+
+    def test_a_fetch_after_uk_midnight_is_flagged_in_summer_and_winter(self):
+        for now, tz, london, flagged in (("2026-10-17T23:30:00+00:00", UK_SUMMER, "2026-10-18", True),
+                                         ("2026-10-27T00:30:00+00:00", UK_WINTER, "2026-10-27", True),
+                                         ("2026-10-27T21:40:00+00:00", UK_WINTER, "2026-10-27", False)):
+            with self.subTest(now=now):
+                ns = _s2_sync_ns(now, tz)
+                db = self._db(ns)
+                _, out = self._boot(ns, db, [_s2_element(7)])
+                self.assertEqual(db.execute("SELECT london_date FROM price_history").fetchone()[0], london)
+                self.assertEqual("PRICE DATE FLAG" in out, flagged, out)
+
+    def test_a_missing_price_date_is_warned(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._db(ns)
+        db.executemany("INSERT INTO price_history (player_id, date, now_cost) VALUES (?,?,?)",
+                       [(7, "2026-10-14", 55), (7, "2026-10-16", 55)])
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertIn("PRICE DATES MISSING: 1 day(s) without a snapshot: 2026-10-15", out)
+
+    def test_without_the_london_zone_the_sync_stops_with_a_clear_error(self):
+        import zoneinfo
+        ns = {"__name__": "fpl_sync_tz"}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+
+        def gone(key):
+            raise zoneinfo.ZoneInfoNotFoundError(key)
+
+        real = zoneinfo.ZoneInfo
+        zoneinfo.ZoneInfo = gone
+        try:
+            with self.assertRaises(SystemExit) as cm:
+                ns["london_tz"]()
+        finally:
+            zoneinfo.ZoneInfo = real
+        self.assertIn("TIME ZONE MISSING", str(cm.exception.code))
+        self.assertIn("tzdata", str(cm.exception.code))
+
+    def test_the_real_london_zone_where_installed(self):
+        import zoneinfo
+        from datetime import datetime
+        try:
+            tz = zoneinfo.ZoneInfo("Europe/London")
+        except zoneinfo.ZoneInfoNotFoundError:
+            self.skipTest("no time-zone database here (Windows without tzdata)")
+        ns = _s2_sync_ns()
+        labels = ns["price_labels"]
+        at = lambda s: datetime.fromisoformat(s)
+        self.assertEqual(labels(at("2026-10-17T21:40:00+00:00"), tz), ("2026-10-17", "2026-10-17", False))
+        self.assertEqual(labels(at("2026-10-17T23:30:00+00:00"), tz), ("2026-10-17", "2026-10-18", True))
+        self.assertEqual(labels(at("2026-10-26T23:30:00+00:00"), tz), ("2026-10-26", "2026-10-26", False))
+
+    # --- the gameweek by deadline_time (Step 2.5) ----------------------------------
+
+    def test_the_current_gameweek_comes_from_deadlines_not_flags(self):
+        ns = _s2_sync_ns("2026-10-18T09:00:00+00:00")         # after GW7's deadline
+        db = self._db(ns)
+        cur, out = self._boot(ns, db, flags=(6, 7))            # stale flags
+        self.assertEqual(cur, 7)
+        self.assertIn("GAMEWEEK FLAGS DISAGREE: by deadline_time current GW7, next GW8; "
+                      "the API flags say is_current GW6, is_next GW7", out)
+        cur, out = self._boot(ns, db, flags=(7, 8))
+        self.assertEqual(cur, 7)
+        self.assertNotIn("DISAGREE", out)
+
+    # --- field handling (Step 2.6) -----------------------------------------------
+
+    def test_numeric_strings_are_cast_and_a_missing_value_raises(self):
+        num = _s2_sync_ns()["num"]
+        self.assertEqual(num("0.35", "form"), 0.35)
+        self.assertEqual(num(4, "x"), 4.0)
+        with self.assertRaises(ValueError):
+            num(None, "form")
+        with self.assertRaises(ValueError):
+            num("n/a", "form")
+
+    def test_a_missing_required_field_raises_instead_of_zero(self):
+        ns = _s2_sync_ns()
+        db = self._db(ns)
+        with self.assertRaises(ValueError):
+            self._boot(ns, db, [_s2_element(7, minutes=None)])
+        events = [dict(e) for e in self.EVENTS]
+        del events[0]["data_checked"]
+        with self.assertRaises((ValueError, KeyError)):
+            self._boot(ns, db, events=events)
+        stats = {"minutes": 90, "total_points": 2, "goals_scored": 0, "assists": 0,
+                 "clean_sheets": 0, "goals_conceded": 1, "bonus": 0, "bps": 10, "saves": 0,
+                 "yellow_cards": 0, "red_cards": 0, "expected_goals": "0.1",
+                 "expected_assists": "0.0", "starts": 1}
+        db.execute("INSERT INTO events (id, finished) VALUES (7, 0)")
+        ns["get"] = lambda path: {"elements": [{"id": 7, "stats": stats}]}
+        with self.assertRaises(ValueError), redirect_stdout(io.StringIO()):
+            ns["sync_player_gw"](db, 7)
+
+    def test_scored_rows_carry_ruleset_and_fetch_time_one_per_gameweek(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._db(ns)
+        db.execute("INSERT INTO events (id, finished) VALUES (7, 0)")
+        stats = {"minutes": 180, "total_points": 9, "goals_scored": 1, "assists": 0,
+                 "clean_sheets": 0, "goals_conceded": 2, "bonus": 1, "bps": 30, "saves": 0,
+                 "yellow_cards": 0, "red_cards": 0, "expected_goals": "0.9",
+                 "expected_assists": "0.1", "defensive_contribution": 14, "starts": 2}
+        ns["get"] = lambda path: ({"elements": [{"id": 7, "stats": stats}]}
+                                  if path == "event/7/live/" else None)
+        with redirect_stdout(io.StringIO()):
+            ns["sync_player_gw"](db, 7)
+        self.assertEqual(db.execute("SELECT player_id, event, minutes, defensive_contribution, "
+                                    "fetched_at_utc, ruleset FROM player_gw").fetchall(),
+                         [(7, 7, 180, 14, "2026-10-17T21:40:00+00:00", "2026-27")])
+
+    # --- fixtures, automatic substitutions, the export ------------------------------
+
+    def _export(self, ns, db, gw):
+        cwd, tmp = os.getcwd(), tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.chdir(tmp)
+        try:
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, gw)
+            with open(f"fpl_export_gw{gw}.json", encoding="utf-8") as fh:
+                return json.load(fh)
+        finally:
+            os.chdir(cwd)
+
+    def test_fixtures_store_started_and_the_export_carries_it_and_every_deadline(self):
+        ns = _s2_sync_ns()
+        db = self._db(ns)
+        self._boot(ns, db)
+        db.executemany("INSERT INTO teams (id, short_name) VALUES (?,?)", [(1, "ARS"), (2, "CHE")])
+        fx = [{"id": 1, "event": 7, "kickoff_time": "2026-10-17T11:30:00Z", "team_h": 1,
+               "team_a": 2, "team_h_difficulty": 3, "team_a_difficulty": 3, "team_h_score": 1,
+               "team_a_score": 0, "finished": True, "started": True},
+              {"id": 2, "event": 7, "kickoff_time": "2026-10-17T14:00:00Z", "team_h": 2,
+               "team_a": 1, "team_h_difficulty": 3, "team_a_difficulty": 3, "team_h_score": None,
+               "team_a_score": None, "finished": False, "started": False}]
+        ns["get"] = lambda path: fx
+        with redirect_stdout(io.StringIO()):
+            ns["sync_fixtures"](db)
+        self.assertEqual(db.execute("SELECT id, started FROM fixtures ORDER BY id").fetchall(),
+                         [(1, 1), (2, 0)])
+        d = self._export(ns, db, 7)
+        self.assertEqual([f["started"] for f in d["fixtures_status"]], [1, 0])
+        self.assertEqual({e["event"]: e["deadline_time"] for e in d["events"]},
+                         {e["id"]: e["deadline_time"] for e in self.EVENTS},
+                         "every event's deadline_time must be exported")
+
+    def test_automatic_subs_are_stored_known_and_exported(self):
+        ns = _s2_sync_ns()
+        db = self._db(ns)
+        db.execute("INSERT INTO events (id, finished) VALUES (7, 0)")
+        hist = {"points": 50, "total_points": 400, "overall_rank": 1, "bank": 5, "value": 1000,
+                "event_transfers": 0, "event_transfers_cost": 0, "points_on_bench": 3}
+        picks = [{"element": i, "position": i, "multiplier": 1 if i <= 11 else 0,
+                  "is_captain": i == 1, "is_vice_captain": i == 2} for i in range(1, 16)]
+        ns["get"] = lambda path: ({"chips": []} if "history" in path else [] if "transfers" in path
+                                  else {"entry_history": hist, "active_chip": None, "picks": picks,
+                                        "automatic_subs": [{"element_in": 12, "element_out": 3}]}
+                                  if path == "entry/99/event/7/picks/" else None)
+        with redirect_stdout(io.StringIO()):
+            ns["sync_entries"](db, [99], 7)
+        self.assertEqual(db.execute("SELECT entry_id, event, element_in, element_out FROM "
+                                    "automatic_subs").fetchall(), [(99, 7, 12, 3)])
+        d = self._export(ns, db, 7)
+        self.assertEqual(d["automatic_subs"], [{"entry_id": 99, "event": 7, "element_in": 12,
+                                                "element_out": 3}])
+        self.assertEqual(d["autosubs_known"], [{"entry_id": 99, "event": 7}])
+
+    def test_rows_stored_before_s2_are_never_rewritten(self):
+        """S2 ruling 3: new columns by ALTER TABLE; old rows keep NULL there."""
+        import sqlite3
+        ns = _s2_sync_ns()
+        db = sqlite3.connect(":memory:")
+        db.executescript("""
+            CREATE TABLE price_history (player_id INTEGER, date TEXT, now_cost INTEGER,
+                                        PRIMARY KEY (player_id, date));
+            CREATE TABLE player_gw (player_id INTEGER, event INTEGER, minutes INTEGER,
+                total_points INTEGER, goals INTEGER, assists INTEGER, clean_sheets INTEGER,
+                goals_conceded INTEGER, bonus INTEGER, bps INTEGER, saves INTEGER,
+                yellow INTEGER, red INTEGER, expected_goals REAL, expected_assists REAL,
+                defensive_contribution INTEGER, starts INTEGER, PRIMARY KEY (player_id, event));
+            INSERT INTO price_history VALUES (7, '2026-10-01', 55), (7, '2026-10-02', 56);
+            INSERT INTO player_gw VALUES (7, 1, 90, 6, 1, 0, 0, 1, 1, 25, 0, 0, 0, 0.5, 0.1, 9, 1);
+        """)
+        before = (db.execute("SELECT * FROM price_history ORDER BY date").fetchall(),
+                  db.execute("SELECT * FROM player_gw").fetchall())
+        db.executescript(ns["SCHEMA"])
+        with redirect_stdout(io.StringIO()):
+            ns["migrate"](db)
+        after_p = db.execute("SELECT player_id, date, now_cost, fetched_at_utc, london_date "
+                             "FROM price_history ORDER BY date").fetchall()
+        after_g = db.execute("SELECT * FROM player_gw").fetchall()
+        self.assertEqual([r[:3] for r in after_p], before[0])
+        self.assertEqual({r[3:] for r in after_p}, {(None, None)})
+        self.assertEqual([r[:17] for r in after_g], before[1])
+        self.assertEqual(after_g[0][17:], (None, None))
+
+
+class StepTwoEdge(unittest.TestCase):
+    """S2 (Step 2.1, 2.6), the report side: the lockdown guard's 3-hour rule,
+    the GW stuck alarm, chance of playing null = 100, doubles counted once."""
+
+    NOW = None
+
+    def _world(self, fixtures, data_checked=1, event=7):
+        return {"events": [{"event": event, "finished": 1, "data_checked": data_checked}],
+                "fixtures_status": [dict(event=event, home=f"H{i}", away=f"A{i}", **f)
+                                    for i, f in enumerate(fixtures)]}
+
+    @staticmethod
+    def _ago(hours):
+        from datetime import datetime, timedelta, timezone
+        return (datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
+                - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    @property
+    def now(self):
+        from datetime import datetime, timezone
+        return datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
+
+    def test_a_fixture_not_started_three_hours_after_kickoff_is_postponed(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 1, "started": 1},
+                         {"kickoff_time": self._ago(5), "finished": 0, "started": 0}])
+        self.assertEqual(E.gameweek_settled(d, 7, self.now), (True, []))
+
+    def test_a_started_fixture_past_three_hours_must_be_finished(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 1, "started": 1},
+                         {"kickoff_time": self._ago(4), "finished": 0, "started": 1}])
+        ok, blockers = E.gameweek_settled(d, 7, self.now)
+        self.assertFalse(ok)
+        self.assertIn("H1 v A1", blockers[0])
+
+    def test_a_fixture_inside_three_hours_of_kickoff_does_not_block(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 1, "started": 1},
+                         {"kickoff_time": self._ago(1), "finished": 0, "started": 1}])
+        self.assertEqual(E.gameweek_settled(d, 7, self.now), (True, []))
+
+    def test_an_export_without_started_still_needs_every_past_fixture_finished(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 0}])
+        self.assertFalse(E.gameweek_settled(d, 7, self.now)[0])
+
+    def test_a_gameweek_not_final_72_hours_after_its_last_kickoff_is_stuck(self):
+        d = self._world([{"kickoff_time": self._ago(80), "finished": 1, "started": 1}],
+                        data_checked=0)
+        stuck = E.stuck_gameweeks(d, self.now)
+        self.assertEqual([(e, round(h)) for e, h, _ in stuck], [(7, 80)])
+        d = self._world([{"kickoff_time": self._ago(50), "finished": 1, "started": 1}],
+                        data_checked=0)
+        self.assertEqual(E.stuck_gameweeks(d, self.now), [])
+        d = self._world([{"kickoff_time": self._ago(80), "finished": 1, "started": 1}])
+        self.assertEqual(E.stuck_gameweeks(d, self.now), [], "a settled gameweek is not stuck")
+
+    def test_the_stuck_command_exits_one_and_names_the_gameweek(self):
+        d = make_export()
+        d["events"][-1]["data_checked"] = 0                  # its fixtures are weeks old
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        path = os.path.join(tmp, "fpl_export_gw3.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        here = os.path.dirname(os.path.abspath(__file__))
+        r = subprocess.run([sys.executable, os.path.join(here, "fpl_edge.py"), path, "--stuck"],
+                           capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn(f"GW STUCK: GW{d['events'][-1]['event']} not final", r.stdout)
+
+    def test_chance_of_playing_null_is_100_and_never_0(self):
+        self.assertEqual(E.chance_of_playing({"chance_next_round": None}), 100.0)
+        self.assertEqual(E.chance_of_playing({}), 100.0)
+        self.assertEqual(E.chance_of_playing({"chance_next_round": 0}), 0.0)
+        self.assertEqual(E.chance_of_playing({"chance_next_round": 75}), 75.0)
+        p = {"starts_last4": 3, "chance_next_round": None}
+        self.assertEqual(E.start_probability(p, 6), E.start_probability(dict(p, chance_next_round=100), 6))
+
+    def test_no_code_turns_a_null_chance_into_zero(self):
+        import re
+        here = os.path.dirname(os.path.abspath(__file__))
+        for name in ("fpl_edge.py", "fpl_sync.py", "fpl_hist.py"):
+            src = open(os.path.join(here, name), encoding="utf-8").read()
+            self.assertIsNone(re.search(r"chance\w*[\"']?\)?\]?\s+or\s+0", src), name)
+
+    def test_a_double_gameweek_is_one_row_with_two_fixtures(self):
+        """Step 2.6: player_gw holds the gameweek total once; the export counts
+        the fixtures (n_fixtures) without fanning the row out."""
+        ns = _s2_sync_ns()
+        import sqlite3
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        db.executemany("INSERT INTO teams (id, short_name) VALUES (?,?)", [(1, "ARS"), (2, "CHE"), (3, "LIV")])
+        db.execute("INSERT INTO players (id, web_name, team_id, position, now_cost) VALUES (7, 'Saka', 1, 3, 100)")
+        db.executemany("INSERT INTO fixtures (id, event, team_h, team_a, finished) VALUES (?,?,?,?,1)",
+                       [(1, 7, 1, 2), (2, 7, 3, 1)])
+        db.execute("INSERT INTO player_gw (player_id, event, minutes, total_points) VALUES (7, 7, 170, 15)")
+        cwd, tmp = os.getcwd(), tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.chdir(tmp)
+        try:
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, 7)
+            d = json.load(open("fpl_export_gw7.json", encoding="utf-8"))
+        finally:
+            os.chdir(cwd)
+        rows = [r for r in d["player_gw_recent"] if r["player_id"] == 7]
+        self.assertEqual([(r["pts"], r["mins"], r["n_fixtures"]) for r in rows], [(15, 170, 2)])
 
 
 class Hygiene(unittest.TestCase):
