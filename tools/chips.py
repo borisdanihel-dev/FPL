@@ -8,10 +8,10 @@ never imports it (wiring is lane A's W2).
 
 Definitions, as pre-registered in prereg/S7.md (with amendment 1):
   xP source   `own`: the recorded row for the next gameweek (projection log,
-              S2 reader rule), and for later gameweeks fpl_edge.project() from
-              the same export on that gameweek's fixture(s) - the recording
-              formula. Beyond the export's fixtures (six gameweeks) a week is
-              a "proxy" carrying the last fixture-known week's values.
+              S2 reader rule), and for every later gameweek through GW19
+              fpl_edge.project() from the same export on that gameweek's real
+              fixture(s) from fpl.sqlite's fixtures table (RULING S7 result,
+              point 2: no proxy weeks) - the recording formula.
   V_BB,t      sum over the four bench players of xP_t x (1 - w), w = 0.30 /
               0.10 / 0.03 for the outfield bench in forecast order, 0.03 for
               the sub keeper: the bench points a Bench Boost adds beyond the
@@ -36,6 +36,7 @@ import json
 import math
 import os
 import random
+import sqlite3
 import sys
 from collections import Counter, defaultdict
 
@@ -87,14 +88,44 @@ def newest_export(data_dir):
         return json.load(fh), path
 
 
-def own_week_points(d, log_rows):
-    """(weeks, pts, src): pts[w][pid] by the `own` source for every upcoming
-    gameweek in the export: the recorded row where the log holds one for that
-    event (the S2 reader rule), else fpl_edge.project() on that week's
-    fixture(s) - the formula record_status uses - for players through the
-    recording gate (status 'a', 45+ minutes in the last four); a blank or a
-    gated-out player scores 0. src is 'own', 'own-model', 'blank' or 'gate'."""
-    tick, weeks = E.build_ticker(d, 6)
+def fixtures_ticker(data_dir, first, last=LAST_GW):
+    """team -> [(gw, 'OPP (H)', fdr), ...] for gameweeks first..last from
+    fpl.sqlite's fixtures table (all 380), the shape fpl_edge.build_ticker
+    gives for the export's six. A gameweek with no fixture rows stops the
+    run (reported, never substituted)."""
+    db = os.path.join(data_dir, "fpl.sqlite")
+    if not os.path.exists(db):
+        raise MissingInput(f"{db} is missing")
+    c = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    teams = {i: short for i, short in c.execute("select id, short_name from teams")}
+    tick, seen = defaultdict(list), set()
+    for ev, h, a, hd, ad in c.execute(
+            "select event, team_h, team_a, team_h_difficulty, team_a_difficulty from fixtures "
+            "where event between ? and ? and team_h is not null and team_a is not null", (first, last)):
+        if h not in teams or a not in teams:
+            raise MissingInput(f"fixture in GW{ev} names a team id not in teams: {h}, {a}")
+        tick[teams[h]].append((ev, f"{teams[a]} (H)", hd))
+        tick[teams[a]].append((ev, f"{teams[h]} (A)", ad))
+        seen.add(ev)
+    c.close()
+    missing = [w for w in range(first, last + 1) if w not in seen]
+    if missing:
+        raise MissingInput(f"the fixtures table has no fixture for GW{missing}")
+    for t in tick:
+        tick[t].sort()
+    return tick, list(range(first, last + 1))
+
+
+def own_week_points(d, log_rows, tick=None, weeks=None):
+    """(weeks, pts, src): pts[w][pid] by the `own` source for every gameweek
+    in `weeks` (default: the export's upcoming six): the recorded row where
+    the log holds one for that event (the S2 reader rule), else
+    fpl_edge.project() on that week's fixture(s) from `tick` - the formula
+    record_status uses - for players through the recording gate (status 'a',
+    45+ minutes in the last four); a blank or a gated-out player scores 0.
+    src is 'own', 'own-model', 'blank' or 'gate'."""
+    if tick is None or weeks is None:
+        tick, weeks = E.build_ticker(d, 6)
     own = defaultdict(dict)
     for r in E.forecasts(log_rows, d):
         if r["source"] == "own":
@@ -270,9 +301,11 @@ def residual_pools(data_dir, source="own"):
 def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
     d, path = newest_export(data_dir)
     log_rows = E.read_log(os.path.join(data_dir, E.LOG_PATH))
-    weeks, pts, src = own_week_points(d, log_rows)
-    if not weeks:
-        raise MissingInput("the export has no upcoming fixtures")
+    first = d["gameweek"] + 1
+    if first > LAST_GW:
+        raise MissingInput(f"GW{first} is past GW{LAST_GW}: the first-half chips are worth 0")
+    tick, weeks = fixtures_ticker(data_dir, first, LAST_GW)
+    weeks, pts, src = own_week_points(d, log_rows, tick, weeks)
     squad = my_squad(d)
     budget, why = E.selling_budget(d)
     if budget is None:
@@ -282,7 +315,7 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
     out(f"CHIP CALCULATOR  export {os.path.basename(path)} (GW{d['gameweek']} played), "
         f"next GW{first}, chips left: {', '.join(sorted(chips)) or 'none'}; budget £{budget:.1f}m = bank + selling prices")
     out(f"  xP source: own - the recorded row for GW{first} where the log holds one, else the own")
-    out("  formula on each week's fixtures; weeks beyond the export's fixtures are proxies.")
+    out(f"  formula on each week's real fixtures from the fixtures table, GW{first}-GW{LAST_GW} (no proxy weeks).")
     out("  Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).")
     v_bb, v_fh, detail = {}, {}, {}
     for w in weeks:
@@ -293,11 +326,7 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
         v_fh[w] = v
         n_own = sum(1 for r in squad if src[w].get(r["id"]) == "own")
         detail[w] = {"xi": xi, "bench": outfield, "gk": gk, "fh": fh, "ours": sum(r["proj"] for r in xi),
-                     "metric": "own" if n_own else "own-model", "proxy": False}
-    last_known = weeks[-1]
-    for w in range(weeks[-1] + 1, LAST_GW + 1):
-        v_bb[w], v_fh[w] = v_bb[last_known], v_fh[last_known]
-        detail[w] = dict(detail[last_known], proxy=True)
+                     "metric": "own" if n_own else "own-model"}
     ind = induction(v_bb, v_fh, first, LAST_GW, chips)
     out("")
     out(f"  {'GW':>4} {'metric':>10} {'V_BB':>7} {'V_FH':>7} {'ours XI':>8} {'FH XI':>7}   "
@@ -305,7 +334,7 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
     for w in range(first, LAST_GW + 1):
         dw = detail[w]
         cont = "  ".join(f"{ind['V'][(w, S)]:9.2f}" for S in ind["subsets"])
-        out(f"  {w:>4} {('proxy' if dw['proxy'] else dw['metric']):>10} {v_bb[w]:7.2f} "
+        out(f"  {w:>4} {dw['metric']:>10} {v_bb[w]:7.2f} "
             f"{(v_fh[w] if v_fh[w] is not None else float('nan')):7.2f} {dw['ours']:8.2f} "
             f"{(dw['fh']['pts'] if dw['fh'] else float('nan')):7.2f}   {cont}   {ind['action'][(w, chips)]}")
     out("")
@@ -333,8 +362,6 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
                     rf[w] = fh_pts - ours
                 else:
                     rf[w] = None
-            for w in range(weeks[-1] + 1, LAST_GW + 1):
-                rb[w], rf[w] = rb[last_known], rf[last_known]
             ri = induction(rb, rf, first, LAST_GW, chips)
             same += ri["next"] == nxt
             margins.append(margin(rb, rf, ri, first, chips, action=nxt))
@@ -351,9 +378,9 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
         bb_week = max(range(first, LAST_GW + 1), key=lambda w: v_bb[w])
     if bb_week is not None and "BB" in chips:
         out("")
-        out(f"  BENCH PREP for GW{bb_week}{' (proxy week)' if detail[bb_week]['proxy'] else ''}: "
+        out(f"  BENCH PREP for GW{bb_week}: "
             "one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)")
-        for line in bench_prep(d, squad, pts[min(bb_week, last_known)], detail[bb_week], budget):
+        for line in bench_prep(d, squad, pts[bb_week], detail[bb_week], budget):
             out(line)
     # the Free Hit screen (item N, selling budget)
     out("")
@@ -361,7 +388,8 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
     fh_table = E.free_hit_table(d, E.forecasts(log_rows, d))
     for line in E.free_hit_lines(fh_table):
         out(line)
-    return {"weeks": weeks, "v_bb": v_bb, "v_fh": v_fh, "induction": ind, "next": nxt, "chips": chips}
+    return {"weeks": weeks, "v_bb": v_bb, "v_fh": v_fh, "induction": ind, "next": nxt, "chips": chips,
+            "budget": budget, "detail": detail}
 
 
 def bench_prep(d, squad, pts_w, dw, budget):
@@ -569,7 +597,7 @@ def replay(hist_dir, n_squads=N_SQUADS, seed=SQUAD_SEED, out=print, boot_seed=SE
     results = []
     for si, squad in enumerate(squads):
         policies = {name: {"chips": set(CHIPS), "pts": 0.0, "played": {}, "split": {"BB": 0.0, "FH": 0.0}}
-                    for name in ("calculator", "heuristic", "early")}
+                    for name in ("calculator", "heuristic", "early", "late", "bb_first_fh_heur")}
         for t in range(first, last + 1):
             v_bb, v_fh, detail = rp.values(squad, t)
             bench_sum = {u: detail[u]["bench_sum"] for u in detail}
@@ -580,6 +608,12 @@ def replay(hist_dir, n_squads=N_SQUADS, seed=SQUAD_SEED, out=print, boot_seed=SE
             acts["heuristic"] = heuristic_action(t, P["chips"], bench_sum, v_fh, last)
             P = policies["early"]
             acts["early"] = "PLAY BB" if "BB" in P["chips"] else ("PLAY FH" if "FH" in P["chips"] and t != last else "HOLD")
+            P = policies["late"]                      # both-late: FH in the week before the last, BB in the last
+            acts["late"] = ("PLAY FH" if t == last - 1 and "FH" in P["chips"]
+                            else "PLAY BB" if t == last and "BB" in P["chips"] else "HOLD")
+            P = policies["bb_first_fh_heur"]          # BB in the first week, FH by the heuristic
+            acts["bb_first_fh_heur"] = ("PLAY BB" if t == first and "BB" in P["chips"]
+                                        else heuristic_action(t, P["chips"] & {"FH"}, bench_sum, v_fh, last))
             for name, act in acts.items():
                 P = policies[name]
                 if act == "PLAY BB" and "BB" in P["chips"]:
@@ -611,7 +645,21 @@ def replay(hist_dir, n_squads=N_SQUADS, seed=SQUAD_SEED, out=print, boot_seed=SE
         out(f"  {name:<10} mean BB gain {sb:+.2f}, mean FH gain {sf:+.2f};  BB weeks "
             f"{dict(sorted(bb.items(), key=lambda kv: (kv[0] is None, kv[0])))}  "
             f"FH weeks {dict(sorted(fh.items(), key=lambda kv: (kv[0] is None, kv[0])))}")
-    return {"results": results, "boot": b1, "boot_early": b2, "pass": ok}
+    # RULING S7 result, point 3: two more comparators, information only, same squads
+    out(f"  information only (RULING S7 result point 3), same replay, seed and squads:")
+    extra = {}
+    for name, label in (("late", f"both-late (FH GW{last - 1}, BB GW{last})"),
+                        ("bb_first_fh_heur", f"BB GW{first} + FH by the heuristic")):
+        pts = [r[name][0] for r in results]
+        d_calc = BT.bootstrap_mean([a - b for a, b in zip(calc, pts)], seed=boot_seed)
+        d_heur = BT.bootstrap_mean([a - b for a, b in zip(heur, pts)], seed=boot_seed)
+        sb = sum(r[name][2]["BB"] for r in results) / len(results)
+        sf = sum(r[name][2]["FH"] for r in results) / len(results)
+        out(f"  {label}: mean {sum(pts) / len(pts):.2f} per squad (BB {sb:+.2f}, FH {sf:+.2f}); "
+            f"calculator - it {d_calc['mean']:+.2f} [{d_calc['lo']:+.2f}, {d_calc['hi']:+.2f}]; "
+            f"heuristic - it {d_heur['mean']:+.2f} [{d_heur['lo']:+.2f}, {d_heur['hi']:+.2f}]")
+        extra[name] = {"mean": sum(pts) / len(pts), "vs_calc": d_calc, "vs_heur": d_heur}
+    return {"results": results, "boot": b1, "boot_early": b2, "pass": ok, "extra": extra}
 
 
 def main(argv=None):

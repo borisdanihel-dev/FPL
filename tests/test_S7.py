@@ -9,6 +9,7 @@ import gzip
 import io
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -51,14 +52,31 @@ def toy_export(tmp, own_rows=True, selling=True):
         if selling:
             row.update({"purchase_price": p["price"], "selling_price": p["price"]})
         squads.append(row)
-    fixtures = []
-    for ev in (8, 9, 10):
+    fixtures, db_rows = [], []
+    for ev in range(8, 20):
         pairs = [(0, 1), (2, 3), (4, 5)] if ev % 2 == 0 else [(1, 2), (3, 4), (5, 0)]
         for h, a in pairs:
-            fixtures.append({"event": ev, "home": CLUBS[h], "away": CLUBS[a], "h_fdr": 3, "a_fdr": 3,
-                             "kickoff_time": f"2026-10-{20 + ev}T14:00:00Z"})
-    if not selling:
-        pass
+            hd, ad = 2 + (ev % 3), 2 + ((ev + h) % 3)
+            if ev <= 10:
+                fixtures.append({"event": ev, "home": CLUBS[h], "away": CLUBS[a], "h_fdr": hd, "a_fdr": ad,
+                                 "kickoff_time": f"2026-11-{ev:02d}T14:00:00Z"})
+            db_rows.append((1000 + len(db_rows), ev, f"2026-11-{ev:02d}T14:00:00Z", h + 1, a + 1, hd, ad, 0))
+    db = os.path.join(tmp, "fpl.sqlite")
+    c = sqlite3.connect(db)
+    c.executescript("""
+      create table if not exists teams(id integer, name text, short_name text);
+      create table if not exists fixtures(id integer, event integer, finished integer);
+    """)
+    cols = [r[1] for r in c.execute("pragma table_info(fixtures)")]
+    for col, typ in (("kickoff_time", "text"), ("team_h", "integer"), ("team_a", "integer"),
+                     ("team_h_difficulty", "integer"), ("team_a_difficulty", "integer")):
+        if col not in cols:
+            c.execute(f"alter table fixtures add column {col} {typ}")
+    c.execute("delete from teams")
+    c.executemany("insert into teams values (?,?,?)", [(i, club, club) for i, club in enumerate(CLUBS, 1)])
+    c.executemany("insert into fixtures (id, event, kickoff_time, team_h, team_a, team_h_difficulty, team_a_difficulty, finished) "
+                  "values (?,?,?,?,?,?,?,?)", db_rows)
+    c.commit(); c.close()
     d = {"schema": 2, "generated": "2026-10-18T18:00:00+00:00", "league_id": 1, "my_entry": 1, "gameweek": 7,
          "standings": [{"entry_id": 1, "entry_name": "Us", "bank": 15, "value": 1000}],
          "chips_used": [{"entry_name": "Us", "name": "wildcard", "event": 6}],
@@ -129,8 +147,17 @@ class Live(unittest.TestCase):
     def test_own_week_points_recorded_then_formula(self):
         d, _ = C.newest_export(self.tmp.name)
         log = E.read_log(os.path.join(self.tmp.name, E.LOG_PATH))
-        weeks, pts, src = C.own_week_points(d, log)
-        self.assertEqual(weeks, [8, 9, 10])
+        tick, weeks = C.fixtures_ticker(self.tmp.name, 8)
+        self.assertEqual(weeks, list(range(8, 20)))
+        etick, eweeks = E.build_ticker(d, 6)
+        for team in etick:                                   # the database agrees with the export's six
+            self.assertEqual([f for f in tick[team] if f[0] in eweeks], etick[team])
+        with self.assertRaises(C.MissingInput):              # a gameweek without fixtures is refused
+            C.fixtures_ticker(self.tmp.name, 8, 25)
+        weeks, pts, src = C.own_week_points(d, log, tick, weeks)
+        self.assertEqual(weeks, list(range(8, 20)))
+        self.assertIn(15, pts)
+        self.assertEqual(C.own_week_points(d, log)[0], [8, 9, 10])   # the default: the export's six
         self.assertEqual(pts[8][5], 2.5)                            # the recorded own row for the next gameweek
         self.assertEqual(src[8][5], "own")
         # later weeks: the recording formula on that week's fixture
@@ -184,10 +211,15 @@ class Live(unittest.TestCase):
         self.assertIn("NEXT GAMEWEEK GW8:", text)
         self.assertIn("FREE HIT SCREEN", text)
         self.assertIn("BENCH PREP", text)
-        self.assertEqual(res["weeks"], [8, 9, 10])
-        self.assertTrue(all(w in res["v_bb"] for w in range(8, 20)))        # proxies to GW19
-        self.assertIn("proxy", text)
+        self.assertEqual(res["weeks"], list(range(8, 20)))                # real fixtures to GW19, no proxies
+        self.assertNotIn("proxy", text.replace("no proxy weeks", ""))      # no proxy rows
         self.assertEqual(res["induction"]["V"][(20, frozenset({"BB", "FH"}))], 0.0)
+        d, _ = C.newest_export(self.tmp.name)
+        self.assertEqual(res["budget"], E.selling_budget(d)[0])            # bank + selling prices, never value
+        self.assertNotEqual(res["budget"], d["standings"][0]["value"] / 10)
+        for w in res["weeks"]:                                             # V_FH's XI fits the selling budget
+            fh = res["detail"][w]["fh"]
+            self.assertLessEqual(fh["cost"], res["budget"] + 1e-9)
 
 
 class ReplayTests(unittest.TestCase):
@@ -253,14 +285,33 @@ class ReplayTests(unittest.TestCase):
 
     def test_replay_runs_and_scores_every_policy(self):
         buf = io.StringIO()
-        res = C.replay(self.tmp.name, n_squads=3, seed=7, out=lambda s: buf.write(s + "\n"), first=5, last=6)
+        seen = {"heur": [], "seeds": []}
+        orig_h, orig_b = C.heuristic_action, BT.bootstrap_mean
+
+        def spy_h(t, chips, v_bench_sum, v_gap, last=C.LAST_GW):
+            seen["heur"].append(dict(v_bench_sum)); return orig_h(t, chips, v_bench_sum, v_gap, last)
+
+        def spy_b(values, b=BT.B, seed=BT.SEED, ci=BT.CI):
+            seen["seeds"].append(seed); return orig_b(values, b=200, seed=seed, ci=ci)
+        with mock.patch.object(C, "heuristic_action", spy_h), mock.patch.object(BT, "bootstrap_mean", spy_b):
+            res = C.replay(self.tmp.name, n_squads=3, seed=7, out=lambda s: buf.write(s + "\n"), first=5, last=6)
+        self.assertEqual(set(seen["seeds"]), {BT.SEED})                    # the pre-registered bootstrap seed
+        rp = C.Replay(self.tmp.name, last=6)
+        sq = C.sample_squads(C.gw1_candidates(rp.hist), n=3, seed=7)[0]
+        _, _, detail = rp.values(sq, 5)
+        self.assertIn({u: sum(r["proj"] for r in detail[u]["bench"]) + detail[u]["gk"]["proj"] for u in detail},
+                      seen["heur"])                                         # the heuristic sees the unweighted bench sum
         self.assertEqual(len(res["results"]), 3)
         for r in res["results"]:
-            self.assertEqual(set(r), {"calculator", "heuristic", "early"})
+            self.assertEqual(set(r), {"calculator", "heuristic", "early", "late", "bb_first_fh_heur"})
+            self.assertEqual(r["late"][1], {"FH": 5, "BB": 6})               # both-late: FH in the week before the last, BB last
+            self.assertEqual(r["bb_first_fh_heur"][1].get("BB"), 5)
             for name, (pts, played, split) in r.items():
                 self.assertTrue(set(played) <= {"BB", "FH"})
                 self.assertNotIn(6, [played.get("FH")])                # FH never in the last week
                 self.assertAlmostEqual(pts, split["BB"] + split["FH"])
+        self.assertIn("information only (RULING S7 result point 3)", buf.getvalue())
+        self.assertEqual(set(res["extra"]), {"late", "bb_first_fh_heur"})
         self.assertIn("pre-registered bar", buf.getvalue())
         self.assertEqual(res["results"][0]["early"][1], {"BB": 5})       # FH cannot follow in the last week
 
