@@ -2812,3 +2812,34 @@ Verifier pre-check: **PASS** on Fable 5.1, effort high (`worklog/verify_S2_a2.md
 - the GW7 before/after comparison, after lockdown (point 1);
 - the scheduled-only behaviour (point 8);
 - the real dispatch after the merge.
+
+---
+
+## 2026-10-18 — S2 decisions: the force-push exception, the weekly backup (`d2cf781` prereg + CLAUDE.md, `s2-backup` `3ae739b`, `data-dryrun` `b4efd66`)
+
+**Point 1:** `CLAUDE.md` item e names the one force-push exception, word for
+word: the dry-run workflow force-pushes to `data-dryrun` only.
+
+**Point 2:** the Weekly backup step now matches the ruling.
+- A scheduled run backs up on Sundays only.
+- A manual dispatch backs up only with `force_backup` ticked, on any day.
+- The day's release is checked before the create and again after a failed
+  one: "exists" is a skip line and exit 0; any other create failure is red.
+
+The step merged in `9b4a462` backed up on a Sunday dispatch without
+`force_backup`, and went red on a release made between the check and the create.
+
+**Verifier pre-check:** **PASS** on Fable 5.1, effort high
+(`worklog/verify_S2_backup.md`).
+
+**Measured:**
+- Tests 378 → 386: `BackupStep` runs the step's own script under bash with
+  stand-ins for `gh` and `date`.
+- On the merged step, 3 of those tests are red, plus the YAML pin.
+- Mutations: mine 8 of 8 red; the verifier's 8 of 8 red.
+- No Python runner file changed.
+- **Dry run 2 of 6 today**, `s2-backup` on GitHub:
+  - 386 tests OK, with all 8 `BackupStep` tests ok on Linux;
+  - the log blob begins with `data`'s byte for byte (+1055 rows); the gate,
+    re-run here, gives `GATE OK` and an identical `fpl.sql`;
+  - no release was made, and `data` is still `e84bee6`.
