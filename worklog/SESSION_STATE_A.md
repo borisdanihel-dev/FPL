@@ -10,31 +10,21 @@ this file, then waits for the next instruction.
   26 now active instead of SKIP, release backup-2026-10-18, and what the
   03:17 UTC backup run did. Then ask Boris for three Actions-log lines of
   the 18:45 dispatch (due, backup, failure issue).
-- **Current item:** W1 (wiring: fpl_ep and the Odds API collector), built on
-  `w1-wip` (`fec087a`, GitHub backup); prereg `prereg/W1.md` (`7efc2b2`).
-  - Tests 459 -> 478; green bare, hermetic, and with the data and zones.
-  - 15 of the 19 W1 tests are red on master's runner code; 18 of 18
-    mutations red.
-  - The frozen four record byte-identically; the export only gains
-    `ep_next`.
-  - Local rehearsal on a data copy: `RECORD OK fpl_ep 668`; without a key
-    `ODDS SKIPPED` gives check 30 WARN; `GATE OK` with 15 tables.
-  - Next (Mon 19 Oct, after the first task): the dry run of `w1-wip` (the
-    first real Odds API call: credits, totals coverage), read back, the
+- **Current item:** W1 (wiring: fpl_ep and the Odds API collector), on
+  `w1-wip` (`a5b63bd`); prereg `prereg/W1.md` (`7efc2b2`, decisions `91b10c7`).
+  - RULING W1 decisions applied:
+    - 4 credits a night, about 124 a month;
+    - `odds_live` dispatch input, so a dry run skips the API unless it is ticked;
+    - every odds problem is a WARN only;
+    - check 30 WARNs below 60 credits;
+    - no `ep_next` is `RECORD SKIP fpl_ep` (a WARN), and missing players are counted.
+    `ODDS_API_KEY` is confirmed by Boris, re-entered 20:15 UTC on 18 Oct.
+  - Tests 459 -> 487, green normally and hermetically. Mutations: 18 + 10, all red.
+  - Next: the dry run of `w1-wip` with `odds_live` ticked (before 21:30 UTC on 18 Oct,
+    or after that night's nightly has committed). Then read back, the
     verifier pre-check, tag `pre-W1`, merge (at most one wiring merge a
-    day, never in a freeze window), Boris's real dispatch. Lands by Wed
-    21 Oct 20:00 UTC.
-  - Open for the chat (W1):
-    1. 4 credits a call (h2h,totals x uk,eu), about 120 a month plus 4
-       per dry run; the plan said about 60.
-    2. A failed or keyless odds night is a WARN (check 30), not a FAIL.
-    3. An export without `ep_next` is RECORD FAIL fpl_ep, so check 29
-       FAILs and the night commits nothing. Keep that strict?
-    4. `fpl_ep` records every player FPL gives an ep_next for, not the
-       frozen models' population.
-    5. `ODDS_API_KEY` must exist as a repository secret; it cannot be
-       seen from here (a missing one shows as ODDS SKIPPED).
-  - Nothing on master after 21:00 UTC on 18 Oct.
+    day, never in a freeze window), Boris's real dispatch. Lands by Wed 21
+    Oct 20:00 UTC. Nothing on master after 21:00 UTC on 18 Oct.
 - **S3: done** (18 Oct). Merged `1af9644` (tag `pre-S3` = `3ce5a08`); real
   dispatch `e8629f0` STATUS WARN 24/25, ruled green (the WARN is check 3, a
   new FPL player); final verifier PASS (`worklog/verify_S3.md`). Report
