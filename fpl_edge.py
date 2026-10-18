@@ -2526,12 +2526,65 @@ def next_deadline(d, event):
 
 
 def read_log(path=None):
+    """Every row of the log, as stored. Recording rewrites from this; every
+    other reader takes forecasts(read_log())."""
     import csv
     path = path or LOG_PATH
     if not os.path.exists(path):
         return []
     with open(path, encoding="utf-8", newline="") as fh:
         return [r for r in csv.DictReader(fh)]
+
+
+def snapshot_date(row):
+    """The UTC date of a forecast's snapshot. made_at (UTC) is the snapshot
+    and fetch time (S2 ruling 2)."""
+    return row["made_at"][:10]
+
+
+def natural_key(row):
+    """(event, player_id, source, snapshot_date): one forecast per gameweek,
+    player, model and snapshot day (S2 ruling 2). fixture joins it only when
+    doubles arrive (Step 16), through a new log file, never by rewriting this
+    one."""
+    return (str(row["event"]), str(row["player_id"]), row["source"], snapshot_date(row))
+
+
+def forecasts(rows):
+    """The forecasts every reader uses: for each (source, gameweek), the rows
+    of its latest snapshot day - the last one made before the deadline, which
+    is what the log held when it kept one snapshot per gameweek - and of those
+    the last row per natural key (S2 ruling 2). Order is kept."""
+    latest = {}
+    for r in rows:
+        k = (r["source"], str(r["event"]))
+        latest[k] = max(latest.get(k, ""), snapshot_date(r))
+    keep = {}
+    for r in rows:
+        if snapshot_date(r) == latest[(r["source"], str(r["event"]))]:
+            keep[natural_key(r)] = r
+    return list(keep.values())
+
+
+def duplicate_keys(rows):
+    """{natural key: rows holding it} for keys held by more than one row.
+    Reported, never deleted (S2 ruling 2): the gate freezes past-deadline rows,
+    and forecasts() keeps the last."""
+    from collections import Counter
+    n = Counter(natural_key(r) for r in rows)
+    return {k: c for k, c in n.items() if c > 1}
+
+
+def event_deadline(d, event):
+    """UTC deadline of a gameweek: its events.deadline_time, which the sync
+    exports for every event (S2, Step 2.2/2.5). An export written before that
+    has none; then 90 minutes before the first kickoff, the rule the deadline
+    follows. None when neither is in the export."""
+    from datetime import datetime
+    for e in d.get("events", []):
+        if e.get("event") == event and e.get("deadline_time"):
+            return datetime.fromisoformat(e["deadline_time"].replace("Z", "+00:00"))
+    return next_deadline(d, event)
 
 
 WRITE_RETRIES = 3           # after the first attempt
@@ -2611,7 +2664,8 @@ def write_log_atomic(path, rows, retries=WRITE_RETRIES, wait=WRITE_WAIT):
     """
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=LOG_FIELDS)
+        # LF, not csv's default CRLF: the file holds no \r (S2, Step 2.9)
+        w = csv.DictWriter(fh, fieldnames=LOG_FIELDS, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     return _replace_with_retry(tmp, path, retries, wait)
@@ -2625,9 +2679,11 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
     or the log could not be written. A passed deadline is ok with n = 0 -
     that is the guard working, and it happens after every deadline.
 
-    Point-in-time discipline: refuses to write once the deadline has passed, so
-    the log can never contain a forecast made with knowledge of the result.
-    Re-running before the deadline replaces the entry with fresher data.
+    Point-in-time discipline: refuses to write at or after the deadline
+    (events.deadline_time), so the log can never contain a forecast made with
+    knowledge of the result. Rows are keyed (event, player_id, source,
+    snapshot_date): a re-run the same UTC day replaces that day's rows for this
+    source and gameweek; an earlier day's snapshot stays (S2 ruling 2).
     """
     import csv
     from datetime import datetime, timezone
@@ -2639,12 +2695,12 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
         return False, 0, (f"{os.path.basename(path)}.tmp holds {held} unpromoted "
                           f"rows and the log is locked - close it and re-run")
     target = d["gameweek"] + 1
-    dl = next_deadline(d, target)
+    dl = event_deadline(d, target)
     now = datetime.now(timezone.utc)
     if dl is None:
         print(f"  no fixtures for GW{target} in this export - nothing recorded")
         return True, 0, f"no fixtures for GW{target} in this export"
-    if now > dl:
+    if now >= dl:
         print(f"  GW{target} deadline passed ({dl:%Y-%m-%d %H:%M} UTC). "
               f"Refusing to record - it would not be a genuine forecast.")
         return True, 0, f"GW{target} deadline passed - nothing to record"
@@ -2737,9 +2793,14 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
                           f"deadline has not passed")
 
     existing = read_log(path)
-    keep = [r for r in existing
-            if not (r["source"] == source and int(r["event"]) == target)]
+    dups = duplicate_keys(existing)
+    if dups:
+        print(f"  LOG NOTE: {len(dups)} natural keys are held by more than one row "
+              f"({sum(dups.values()) - len(dups)} extra rows) - kept; readers use the last")
     stamp = now.isoformat(timespec="seconds")
+    keep = [r for r in existing
+            if not (r["source"] == source and int(r["event"]) == target
+                    and snapshot_date(r) == stamp[:10])]
     for pid, nm, val in rows:
         keep.append({"made_at": stamp, "source": source, "event": str(target),
                      "player_id": str(pid), "web_name": nm,
@@ -2836,7 +2897,7 @@ def sec_calibration(d, horizon, path=None):
     print("=" * 78)
     print("CALIBRATION  (accumulated forecast record)")
     print("=" * 78)
-    log = read_log(path)
+    log = forecasts(read_log(path))
     if not log:
         print("\n  No forecasts recorded yet. Run before each deadline:")
         print("    python fpl_edge.py --record\n")
@@ -3528,7 +3589,7 @@ def free_hit_lines(t):
 def sec_free_hit(d, horizon, log=None):
     """The Free Hit screen: one week at a time, the best legal XI the team
     value buys against our best XI, by the frozen one-week metric."""
-    t = free_hit_table(d, read_log() if log is None else log)
+    t = free_hit_table(d, forecasts(read_log()) if log is None else log)
     weeks = t["weeks"]
     print("=" * 78)
     print(f"FREE HIT SCREEN  (GW{weeks[0]['event']}-{weeks[-1]['event']}, one week at a time; "
@@ -3687,7 +3748,7 @@ def main():
             ids = read_watchlist(args.watch)
         except (OSError, ValueError) as e:
             sys.exit(f"WATCH FAILED: {e}")
-        text = watch_report(d, read_log(), ids)
+        text = watch_report(d, forecasts(read_log()), ids)
         with open(args.out, "w", encoding="utf-8") as fh:
             fh.write(text)
         print(f"[watch file: {len(ids)} ids, {len(text.encode('utf-8'))} bytes -> {args.out}]")

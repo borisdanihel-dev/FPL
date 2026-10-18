@@ -556,6 +556,120 @@ class ExternalProjections(unittest.TestCase):
             shutil.rmtree(tmp)
 
 
+class ProjectionLogKey(unittest.TestCase):
+    """S2 (Step 2.2, 2.3, 2.9; ruling 2): the natural key (event, player_id,
+    source, snapshot_date), same-day upserts that keep earlier days, readers
+    that take the latest snapshot, duplicates reported and never deleted, the
+    deadline from events.deadline_time, and a log with no carriage return."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.log = os.path.join(self.tmp, "log.csv")
+
+    @staticmethod
+    def _row(made_at, source, event, pid, val, name="P"):
+        return {"made_at": made_at, "source": source, "event": str(event),
+                "player_id": str(pid), "web_name": name, "predicted": str(val)}
+
+    def _record(self, d, source="own"):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ok, n, why = E.record_status(d, 6, source, None, self.log)
+        return ok, n, buf.getvalue()
+
+    def test_a_new_snapshot_day_keeps_the_earlier_one(self):
+        d = _recordable_export()
+        target = d["gameweek"] + 1
+        old = [self._row("2026-10-16T21:40:00+00:00", "own", target, p["id"], 1.0)
+               for p in d["all_players"][:3]]
+        E.write_log_atomic(self.log, old)
+        ok, n, _ = self._record(d)
+        self.assertTrue(ok and n > 0)
+        rows = E.read_log(self.log)
+        days = {E.snapshot_date(r) for r in rows if r["source"] == "own"}
+        self.assertEqual(len(days), 2, "the earlier snapshot day was dropped")
+        self.assertEqual(sum(1 for r in rows if r["made_at"].startswith("2026-10-16")), 3)
+
+    def test_a_same_day_rerun_replaces_that_days_rows_only(self):
+        d = _recordable_export()
+        self._record(d)
+        first = E.read_log(self.log)
+        self._record(d)
+        second = E.read_log(self.log)
+        self.assertEqual(len(first), len(second), "a same-day re-run appended rows")
+        self.assertEqual(E.duplicate_keys(second), {})
+
+    def test_readers_take_the_latest_snapshot_and_the_last_row_per_key(self):
+        rows = [self._row("2026-10-16T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-16T21:40:00+00:00", "own", 8, 2, 2.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 3.0),
+                self._row("2026-10-17T21:41:00+00:00", "own", 8, 1, 4.0),   # same key: last wins
+                self._row("2026-10-16T21:40:00+00:00", "xg", 8, 1, 5.0),
+                self._row("2026-10-09T21:40:00+00:00", "own", 7, 1, 6.0)]
+        got = [(r["source"], r["event"], r["player_id"], r["predicted"]) for r in E.forecasts(rows)]
+        self.assertEqual(got, [("own", "8", "1", "4.0"), ("xg", "8", "1", "5.0"),
+                               ("own", "7", "1", "6.0")])
+
+    def test_one_snapshot_per_gameweek_reads_back_unchanged(self):
+        rows = [self._row("2026-10-16T21:40:00+00:00", s, e, p, p / 10)
+                for s in ("own", "xg") for e in (6, 7) for p in range(1, 6)]
+        self.assertEqual(E.forecasts(rows), rows)
+
+    def test_duplicates_are_reported_and_never_deleted(self):
+        d = _recordable_export()
+        dup = [self._row("2026-09-01T21:40:00+00:00", "own", 2, 7, 1.0),
+               self._row("2026-09-01T21:40:30+00:00", "own", 2, 7, 1.5)]
+        E.write_log_atomic(self.log, dup)
+        ok, n, out = self._record(d)
+        self.assertTrue(ok)
+        self.assertIn("LOG NOTE: 1 natural keys are held by more than one row (1 extra rows)", out)
+        kept = [r for r in E.read_log(self.log) if r["event"] == "2"]
+        self.assertEqual(len(kept), 2, "a duplicate row was deleted")
+
+    def test_the_deadline_is_events_deadline_time(self):
+        from datetime import datetime, timedelta, timezone
+        d = _recordable_export()                  # kickoffs three days ahead
+        target = d["gameweek"] + 1
+        passed = (datetime.now(timezone.utc) - timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        d["events"].append({"event": target, "finished": 0, "data_checked": 0,
+                            "deadline_time": passed})
+        ok, n, out = self._record(d)
+        self.assertEqual((ok, n), (True, 0), "recorded after events.deadline_time")
+        self.assertIn("Refusing", out)
+
+    def test_the_log_holds_no_carriage_return(self):
+        self._record(_recordable_export())
+        with open(self.log, "rb") as fh:
+            body = fh.read()
+        self.assertGreater(len(body), 100)
+        self.assertNotIn(b"\r", body)
+
+    def _real(self):
+        data = os.environ.get("FPL_DATA_DIR")
+        if not data or not os.path.exists(os.path.join(data, "projection_log.csv")):
+            self.skipTest("no real projection_log.csv in FPL_DATA_DIR")
+        return data
+
+    def test_the_real_log_has_no_row_at_or_after_its_deadline(self):
+        """Step 2.2: run nightly over the whole log; must find 0."""
+        import sqlite3
+        from datetime import datetime
+        data = self._real()
+        con = sqlite3.connect("file:" + os.path.join(data, "fpl.sqlite") + "?mode=ro", uri=True)
+        dl = {str(i): datetime.fromisoformat(t.replace("Z", "+00:00"))
+              for i, t in con.execute("SELECT id, deadline_time FROM events")}
+        con.close()
+        rows = E.read_log(os.path.join(data, "projection_log.csv"))
+        late = [r for r in rows if datetime.fromisoformat(r["made_at"]) >= dl[r["event"]]]
+        self.assertEqual(len(late), 0, f"{len(late)} rows made at or after their deadline")
+
+    def test_the_real_log_has_no_duplicate_natural_key(self):
+        """Step 2.3: the duplicate-key test must find 0."""
+        rows = E.read_log(os.path.join(self._real(), "projection_log.csv"))
+        self.assertEqual(E.duplicate_keys(rows), {})
+
+
 class ProjectionLog(unittest.TestCase):
     """Point-in-time discipline: the log must never contain hindsight."""
 
