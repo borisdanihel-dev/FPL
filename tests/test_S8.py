@@ -116,7 +116,8 @@ class Score(unittest.TestCase):
         tiny = [{k: (v if k not in (i1["id"], i2["id"]) else 2.3) for k, v in w.items()} for w in xp]          # gain below 4
         self.assertIsNone(P.evaluate(plan, squad, tiny, 0.85, P.SCHEDULES["boris"], 1, {i1["id"]: 1.0, i2["id"]: 1.0}))
         # a gain between 4 and 5.5 is refused: the buffer, not the bare hit, is the bar
-        for lift in (0.5, 0.6, 0.7, 0.8):
+        for step in range(1, 200):
+            lift = 0.05 * step
             mid = [{k: (v if k not in (i1["id"], i2["id"]) else w[squad[13]["id"]] + lift) for k, v in w.items()} for w in xp]
             ev_mid = P.evaluate(plan, squad, mid, 0.85, P.SCHEDULES["boris"], 2, {})       # no hit: read the gain
             if ev_mid and 4.0 <= ev_mid["gain"] < P.HIT_MIN_GAIN:

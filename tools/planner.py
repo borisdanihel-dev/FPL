@@ -165,11 +165,14 @@ def plan_candidates(squad, bank, pool):
         rows = [r for r in squad if r["id"] != out["id"]] + [inc]
         if legal(rows, bank + out["selling"] - inc["price"]):
             plans.append(((out,), (inc,)))
+    seen = set()
     for (o1, i1), (o2, i2) in itertools.combinations(singles, 2):
         if o1["id"] == o2["id"] or i1["id"] == i2["id"]:
             continue
-        if o1["id"] > o2["id"]:
-            continue                                  # each unordered pair once
+        key = (tuple(sorted((o1["id"], o2["id"]))), tuple(sorted((i1["id"], i2["id"]))))
+        if key in seen:
+            continue                                  # the same 15 reached by swapping the pairing: once
+        seen.add(key)
         rows = [r for r in squad if r["id"] not in (o1["id"], o2["id"])] + [i1, i2]
         if legal(rows, bank + o1["selling"] + o2["selling"] - i1["price"] - i2["price"]):
             plans.append(((o1, o2), (i1, i2)))
