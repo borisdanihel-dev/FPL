@@ -3064,3 +3064,26 @@ origin), realised chip points, paired bootstrap over squads (B = 10,000,
   18 of 18 red.
 
 Report: `worklog/cc_2026-10-18_S7.md`; verifier `worklog/verify_S7.md`.
+
+## 2026-10-18 — S7 amendment: real fixtures to GW19, two comparators (RULING S7 result; `d9c36e4` ruling, `41ff6b4` code; lane B)
+
+RULING S7 result (verbatim in `prereg/S7.md`): the failed test is accepted
+as reported, the calculator is not a decision input, the numbers stand.
+Points 2–3 built here: `fixtures_ticker` reads GW8–19 from `fpl.sqlite`'s
+fixtures table (all 380) and the `own` formula projects every week on its
+real fixtures — no proxy weeks; the database agrees with the export for
+GW8–13 and every value there is unchanged. Replay comparators both-late
+(FH GW18, BB GW19) and BB GW5 + FH by the heuristic, information only,
+same squads and seed; the pre-registered lines are byte-identical to the
+first run. Three test gaps the verifier noted are closed (selling budget,
+the heuristic's input, the bootstrap seed); mutations 23 of 23 red;
+`test_fpl.py` 386 → 386; `tests/test_S7.py` 13.
+
+**Measured.**
+- Live GW8–19 on real fixtures: V_BB 5.6–6.7, V_FH 3.5–5.8 every week;
+  GW8 PLAY BB by +0.07 xP, 10% resample agreement (90% margin [−22.8,
+  +3.3]). The chip call for GW8 is the chat's at Thursday's deadline pass.
+- Replay comparators (information only): REPLAY_EXTRA
+- Verifier: VERIFIER_LINE.
+
+Report: `worklog/cc_2026-10-18_S7.md` (amendment section).

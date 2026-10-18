@@ -61,15 +61,13 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   then never merge `origin/master` into `lane-b`** (it would carry the
   revert and delete S4 from lane-b); after the landing, merge master into
   lane-b as usual. Dry runs are capped at 6 a day; batch items.
-- **Current item:** S7 built (`tools/chips.py`, `tests/test_S7.py`, code
-  `d0fc715` on `lane-b`). **The pre-registered replay test FAILS on its
-  bar** (calculator − heuristic −0.18 per squad, 90% CI [−1.26, +0.72]; mean
-  not ≥ 0); recorded, not tuned. Verifier: PASS (Fable 5.1, `worklog/verify_S7.md`), write guard clean; three
-  test gaps it noted (live budget variable, heuristic input, bootstrap seed)
-  are to be closed by tests before the landing if the chat keeps S7. Auto-continue
-  stops here (a model result that would change a live decision, and an
-  open decision): S5 starts only on the chat's word. S7 lands with S4 on
-  Monday (RULING lane B landing) if the chat wants the code on master.
+- **Current item:** S7 — RULING S7 result (`d9c36e4`, verbatim in
+  `prereg/S7.md`): the failed replay test is accepted as reported, the
+  calculator is not a decision input. Amendment built (`41ff6b4`): live
+  table on real fixtures GW8–19 from `fpl.sqlite` (no proxies), two
+  information-only replay comparators, the verifier's three test gaps
+  closed. Amended replay and verifier rerun: AMEND_STATE. Then the queue
+  continues with S5 (ruling point 4).
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
