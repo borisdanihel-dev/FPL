@@ -34,19 +34,33 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   session runs on Fable (Boris selects it). The verifier runs on Fable for
   every item; it falls back to Opus at xhigh only if the Fable weekly bar is
   above 80% before its reset. Each report names the models used.
-- **Current item:** none started. The rulings for Steps 4-7 arrived on
-  2026-10-18 (item 7); `prereg/S4.md`, `S7.md`, `S5.md` and `S6.md` are
-  written (every template row filled, each ruling verbatim) and pushed on
-  `lane-b`. Waiting for the chat's "go"; then S4, S7, S5, S6 in that order
-  under auto-continue (item 6). Each prereg is never edited after any of its
-  evaluation numbers exist. Open points for the chat before the go are in
-  the chat reply of 2026-10-18 (S4 `selected` timing; S5 download approval
-  and the undated pre-closing odds; S5/S6 2025/26 exclusions of own, xg,
-  fpl_ep; S7 "after normal transfers" without Step 8; S6 penalty inputs
-  and the development cut).
+- **Rulings:** Steps 4-7 pre-registered on 2026-10-18 (`prereg/S4.md`,
+  `S7.md`, `S5.md`, `S6.md`, every template row filled, rulings verbatim);
+  RULING lane B go appended as Amendment 1 to each (`94fbc36`). Order under
+  auto-continue: S4, S7, S5, S6. No prereg is edited after any of its
+  evaluation numbers exist.
+- **Current item:** S4, **verifier FAIL** on 2026-10-18 (code `4eab638` on
+  `lane-b`, not merged; report `worklog/cc_2026-10-18_S4.md`, verifier
+  `worklog/verify_S4.md`). Stopped under operating mode (e) and FAST item 6;
+  waiting for the chat's ruling on the fix (a per-gameweek club map in the
+  harness vs. in the frozen adapter `fpl_hist.py`) and on the CHANGELOG
+  amendment for the 2026-09-14 2025/26 bottomup results, which carry the
+  same club-map defect. Auto-continue is suspended until S4 passes. Next in
+  the queue after that: S7, S5, S6.
+- **S4 facts the next items use:** `tools/backtest.py` — `Harness(season,
+  data_dir, hist_dir)`, `.compare(a, b, filt)`, `.rows(ev, source, filt)`,
+  `.decision(ev, source)`; `bootstrap_mean(values, b, seed)`,
+  `power_gameweeks(s_d, delta)`, `holm`, `benjamini_hochberg`;
+  `rebuild_2526(hist, t)` (bottomup/minutes from rounds < t, with P(cs) and
+  P(DEFCON) per fixture); `best_fifteen(cands, budget)` (exact legal 15 by a
+  metric). Residuals for S7 come from `Harness.rows()` (actual − forecast).
+  Power: starters Spearman s_d = 0.103 (G = 165 gameweeks for Δ = 0.02),
+  whole population 0.021 (G = 7), decision metric 6.3 points.
+- **Historical data:** `C:\GIT\FPL-b\historical\2025-26` (gitignored copy
+  of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 0 of 6.
-- **Open for the chat:** none.
+- **Items since the last chat review:** 1 of 6 (S4).
+- **Open for the chat:** the S4 fix ruling (report, Decisions 0 and 1).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).

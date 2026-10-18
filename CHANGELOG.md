@@ -2879,3 +2879,62 @@ before each merge. Both merges were before 21:00 UTC and outside the 9d windows.
 - the scheduled-only behaviour.
 
 Report: `worklog/cc_2026-10-18_S2.md`.
+
+## 2026-10-18 — S4: the backtest harness, offline part (`f9ca3d0` prereg, `94fbc36` amendment 1, `4eab638` code; lane B)
+
+Lane B's first item (RULING FAST-TRACK items 1, 4, 6; RULING S4 and RULING
+lane B go, verbatim in `prereg/S4.md`). `tools/backtest.py` (standard library
+only; a test proves the nightly imports nothing under `tools/` or
+`analysis/`) and `tests/test_S4.py`; `tests/__init__.py` makes `tests/`
+discoverable; `tools/out/` is gitignored and is the only place the tool writes.
+**Verifier: FAIL** (Fable 5.1, effort high, `worklog/verify_S4.md`): the
+truncation test. **Not merged; the item is not done.** Rebuilding 2025/26
+GW5 and GW20 from rows with round < g moves bottomup by up to 2.149 points
+for about half the players, because the frozen `fpl_hist.canonical_from_vaastav`
+gives every player his end-of-season club and `canonical_through` does not
+slice `players` — so the 2025/26 bottomup figures below, **and every 2025/26
+bottomup figure recorded on 2026-09-14 (Steps 3–5, the horizon test, the
+concentration test), carry post-deadline club changes**. `minutes`, P(start),
+the self-test and the 2026/27 figures are unaffected. Fix and re-run await a
+ruling (report, "Decisions").
+
+**Definitions, as pre-registered.** 2026/27 forecasts through
+`fpl_edge.forecasts()` (the S2 reader rule), actuals from `player_gw`,
+settled gameweeks only (`data_checked = 1`, every fixture `finished = 1`).
+2025/26: only `bottomup` and `minutes` can be rebuilt from rounds < g
+(`fpl_edge.backtest_week`); `own` and `xg` need the pre-deadline FDR and
+`chance_next_round`, `fpl_ep` was never recorded — all three refused, never
+approximated. Decision squads: our `picks` (2026/27); for 2025/26 the exact
+legal 15 maximising `selected` of gameweek g-1 at gameweek g's `value`
+within £100.0m (amendment 1). Metrics per gameweek: tie-corrected Spearman,
+Kendall tau-b, top-k regret (1/3/11), MAE, Brier and log loss on the
+components a source exposes, XI + captain points from the fixed 15 (no
+autosubs, missing forecast = 0). Paired percentile bootstrap over gameweeks
+(B = 10,000, 90%, seed 20261018), Holm and BH (q = 0.10), power
+G = ((1.645 + 0.842) s_d / Δ)².
+
+**Measured.**
+- Self-test, 400 replications, seed 4 (s = 0.10, Δ = 0.03, n = 69), judged
+  by the harness's own "90% CI lower bound > 0" rule: true effect detected
+  **0.777** (bar 0.80 ± 0.05), false positives **0.068** (bar 0.05 ± 0.02).
+  Both bars hold; the percentile bootstrap is slightly liberal at n = 69.
+- Power on 2025/26 (bottomup − minutes, GW5–38): starters Spearman
+  s_d = 0.1032 → G = 658 / 165 / 73 gameweeks for Δ = 0.01 / 0.02 / 0.03;
+  whole-population Spearman s_d = 0.0213 → 28 / 7 / 3; decision metric
+  s_d = 6.32 points → 247 / 62 / 28 gameweeks for Δ = 1 / 2 / 3 points.
+  **A Δ = 0.02 starters effect is not detectable within a season.**
+- 2025/26, bottomup − minutes, 34 gameweeks: starters Spearman +0.095
+  [+0.066, +0.124] (levels +0.123 vs +0.028); whole population +0.000
+  [−0.006, +0.006] (both +0.313) — the 2026-09-14 findings reproduced through
+  the new harness; Kendall tau-b whole population −0.021 [−0.026, −0.016]
+  (ties); XI + captain on the most-selected 15 **+2.03 points a gameweek
+  [+0.29, +3.79]**; regret1 −1.65 [−2.88, −0.53], regret11 −6.4 [−11.3,
+  −1.6]. Components: P(cs) Brier 0.199 (n = 5,969), P(DEFCON) 0.132
+  (n = 7,078), P(start) 0.204 (n = 11,039). 2025/26 rules.
+- 2026/27: GW4–6 settled, 2–3 gameweeks per source — printed with the note
+  that the intervals are not meaningful; `fpl_ep` not yet recorded (W1).
+- Tests: `test_fpl.py` 386 → 386 (untouched), `tests/test_S4.py` 24 new;
+  mutations 20 of 20 red (three first-round survivors were test weaknesses,
+  fixed in the tests).
+
+Report: `worklog/cc_2026-10-18_S4.md`; verifier `worklog/verify_S4.md`.
