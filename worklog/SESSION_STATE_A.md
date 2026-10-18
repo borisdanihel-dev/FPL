@@ -11,8 +11,23 @@ this file, then waits for the next instruction.
   03:17 UTC backup run did. Then ask Boris for three Actions-log lines of
   the 18:45 dispatch (due, backup, failure issue).
 - **Current item:** W1 (wiring: fpl_ep and the Odds API collector), on
-  branch `w1-wip`; prereg `prereg/W1.md`. Lands by Wed 21 Oct 20:00 UTC.
-  Nothing on master after 21:00 UTC on 18 Oct.
+  `w1-wip` (`d928ebe`); prereg `prereg/W1.md` (`7efc2b2`, decisions `91b10c7`,
+  odds storage `249be76`). Odds are raw gzip files in `odds/` on data, append-only;
+  no odds table; check 24 names files over 50 MB. Suite 495, green normally and
+  hermetically.
+  - RULING W1 decisions applied:
+    - 4 credits a night, about 124 a month;
+    - `odds_live` dispatch input, so a dry run skips the API unless it is ticked;
+    - every odds problem is a WARN only;
+    - check 30 WARNs below 60 credits;
+    - no `ep_next` is `RECORD SKIP fpl_ep` (a WARN), and missing players are counted.
+    `ODDS_API_KEY` is confirmed by Boris, re-entered 20:15 UTC on 18 Oct.
+  - Tests 459 -> 487, green normally and hermetically. Mutations: 18 + 10, all red.
+  - Next: the dry run of `w1-wip` with `odds_live` ticked (before 21:30 UTC on 18 Oct,
+    or after that night's nightly has committed). Then read back, the
+    verifier pre-check, tag `pre-W1`, merge (at most one wiring merge a
+    day, never in a freeze window), Boris's real dispatch. Lands by Wed 21
+    Oct 20:00 UTC. Nothing on master after 21:00 UTC on 18 Oct.
 - **S3: done** (18 Oct). Merged `1af9644` (tag `pre-S3` = `3ce5a08`); real
   dispatch `e8629f0` STATUS WARN 24/25, ruled green (the WARN is check 3, a
   new FPL player); final verifier PASS (`worklog/verify_S3.md`). Report
