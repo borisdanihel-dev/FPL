@@ -3177,3 +3177,13 @@ snapshot yet, every GW8 fixture on the fallback. **Verifier: FAIL** (Fable 5.1,
 stdout (UnicodeEncodeError on "Muharemović") and writes no file; the numbers
 reproduce byte for byte under UTF-8; every other check passed. Fix (one line
 per tool's `main`, also `chips.py` and `backtest.py`) awaits the ruling.
+
+## 2026-10-18 — S5 amendment fix: the shared UTF-8 console helper (RULING S5 amendment fix; `9ea56c4` ruling, `313bcb0` code; lane B)
+
+`tools/console_utf8.py`: `utf8_console()` reconfigures stdout and stderr to
+UTF-8 at the start of each tool's `main` (`backtest.py`, `chips.py`,
+`odds_lambda.py`); output files were already UTF-8. Tests run each CLI in a
+subprocess on a cp1252 console with a toy holding "Ćaleta-Car": exit 0 and
+the name byte-exact in the output file (`backtest --report` prints no
+names: exit 0 and valid UTF-8 only, stated). The reconfigure mutation goes
+red. No number changed. Verifier: VERIFIER3_LINE.
