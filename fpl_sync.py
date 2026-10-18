@@ -30,6 +30,10 @@ USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 RETRIES = 3                 # after the first attempt
 BACKOFF = 2.0               # seconds before the first retry, doubling: 2, 4, 8
 FAILED = []                 # urls that still failed after every retry
+RULESET = "2026-27"         # the scoring rules of the season this sync pulls (Step 2.7)
+LONDON = "Europe/London"    # FPL prices change at 00:00 UK time (Step 2.4)
+EARLY_HOURS = 12            # a fetch before 12:00 London time came after that day's
+                            # 00:00 UK price change: flagged (Step 2.4)
 _urlopen = urllib.request.urlopen
 _sleep = time.sleep
 
@@ -60,6 +64,69 @@ def get(path):
             print(f"  retry {attempt + 1}/{RETRIES} in {wait:.0f}s - {path}: {e}")
             _sleep(wait)
 
+def num(value, field):
+    """A numeric API field as float. Many arrive as strings ("0.00"); each is
+    cast explicitly, and a missing value is an error, never a silent 0
+    (Step 2.6)."""
+    if value is None:
+        raise ValueError(f"required numeric field {field!r} is missing")
+    return float(value)
+
+
+def required(obj, field):
+    """obj[field], or an error naming it: a required field never defaults to 0
+    (Step 2.6)."""
+    if obj.get(field) is None:
+        raise ValueError(f"required field {field!r} is missing")
+    return obj[field]
+
+
+def london_tz():
+    """Europe/London from zoneinfo. Windows ships no time-zone database: there
+    the tzdata package is required, and without it the sync stops with a clear
+    error rather than label a day wrongly (Step 2.4)."""
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+    try:
+        return ZoneInfo(LONDON)
+    except ZoneInfoNotFoundError:
+        sys.exit("TIME ZONE MISSING: Europe/London is not available. On Windows "
+                 "install the tzdata package (python -m pip install tzdata) - price "
+                 "snapshots are labelled with the London calendar day.")
+
+
+def price_labels(fetched_utc, tz):
+    """(UTC date, London date, early) for a price fetch. The London date is the
+    day whose prices the snapshot holds: prices change at 00:00 UK. `early`
+    flags a fetch made after that midnight and before noon London time - it
+    holds the new day's prices, so the evening snapshot of the day before is
+    missing unless another run took it (Step 2.4)."""
+    local = fetched_utc.astimezone(tz)
+    return (fetched_utc.date().isoformat(), local.date().isoformat(),
+            local.hour < EARLY_HOURS)
+
+
+def missing_dates(dates):
+    """Calendar dates absent between the first and the last of `dates`."""
+    from datetime import date, timedelta
+    have = sorted({date.fromisoformat(d) for d in dates if d})
+    if not have:
+        return []
+    have_set = set(have)
+    return [str(have[0] + timedelta(n)) for n in range((have[-1] - have[0]).days + 1)
+            if have[0] + timedelta(n) not in have_set]
+
+
+def deadline_gameweeks(events, now):
+    """(current, next) by deadline_time alone (Step 2.5): current = the last
+    event whose deadline has passed (0 before GW1), next = the first event
+    whose deadline is still ahead (None after GW38). The API's is_current and
+    is_next flags are never used for this."""
+    passed, ahead = [], []
+    for e in events:
+        dl = datetime.fromisoformat(required(e, "deadline_time").replace("Z", "+00:00"))
+        (passed if dl <= now else ahead).append(e["id"])
+    return (max(passed) if passed else 0), (min(ahead) if ahead else None)
+
 # ----------------------------------------------------------------------------
 # Schema
 # ----------------------------------------------------------------------------
@@ -88,6 +155,7 @@ CREATE TABLE IF NOT EXISTS player_history (
 
 CREATE TABLE IF NOT EXISTS price_history (
     player_id INTEGER, date TEXT, now_cost INTEGER,
+    fetched_at_utc TEXT, london_date TEXT,
     PRIMARY KEY (player_id, date));
 
 CREATE TABLE IF NOT EXISTS events (
@@ -99,14 +167,14 @@ CREATE TABLE IF NOT EXISTS fixtures (
     id INTEGER PRIMARY KEY, event INTEGER, kickoff_time TEXT,
     team_h INTEGER, team_a INTEGER, team_h_difficulty INTEGER,
     team_a_difficulty INTEGER, team_h_score INTEGER, team_a_score INTEGER,
-    finished INTEGER);
+    finished INTEGER, started INTEGER, fetched_at_utc TEXT);
 
 CREATE TABLE IF NOT EXISTS player_gw (
     player_id INTEGER, event INTEGER, minutes INTEGER, total_points INTEGER,
     goals INTEGER, assists INTEGER, clean_sheets INTEGER, goals_conceded INTEGER,
     bonus INTEGER, bps INTEGER, saves INTEGER, yellow INTEGER, red INTEGER,
     expected_goals REAL, expected_assists REAL, defensive_contribution INTEGER,
-    starts INTEGER,
+    starts INTEGER, fetched_at_utc TEXT, ruleset TEXT,
     PRIMARY KEY (player_id, event));
 
 CREATE TABLE IF NOT EXISTS entries (
@@ -120,6 +188,7 @@ CREATE TABLE IF NOT EXISTS entry_gw (
     entry_id INTEGER, event INTEGER, points INTEGER, total_points INTEGER,
     overall_rank INTEGER, bank INTEGER, value INTEGER, transfers INTEGER,
     transfers_cost INTEGER, points_on_bench INTEGER, active_chip TEXT,
+    fetched_at_utc TEXT,
     PRIMARY KEY (entry_id, event));
 
 CREATE TABLE IF NOT EXISTS picks (
@@ -135,6 +204,11 @@ CREATE TABLE IF NOT EXISTS transfers (
 CREATE TABLE IF NOT EXISTS chips (
     entry_id INTEGER, name TEXT, event INTEGER, time TEXT,
     PRIMARY KEY (entry_id, name, event));
+
+CREATE TABLE IF NOT EXISTS automatic_subs (
+    entry_id INTEGER, event INTEGER, element_in INTEGER, element_out INTEGER,
+    fetched_at_utc TEXT,
+    PRIMARY KEY (entry_id, event, element_in, element_out));
 """
 
 MIGRATIONS = {
@@ -143,8 +217,13 @@ MIGRATIONS = {
                 "tout_event INTEGER", "form REAL", "ppg REAL",
                 "influence REAL", "creativity REAL", "threat REAL"],
     "teams": ["att_h INTEGER", "att_a INTEGER", "def_h INTEGER", "def_a INTEGER"],
-    "player_gw": ["starts INTEGER"],
+    "player_gw": ["starts INTEGER", "fetched_at_utc TEXT", "ruleset TEXT"],
     "events": ["data_checked INTEGER"],
+    # S2: added with ALTER TABLE; rows already stored keep NULL - their fetch
+    # time was never recorded (S2 ruling 3)
+    "price_history": ["fetched_at_utc TEXT", "london_date TEXT"],
+    "fixtures": ["started INTEGER", "fetched_at_utc TEXT"],
+    "entry_gw": ["fetched_at_utc TEXT"],
 }
 
 
@@ -169,8 +248,9 @@ def sync_bootstrap(db):
     bs = get("bootstrap-static/")
     if not bs:
         sys.exit("cannot reach FPL API")
-    today = datetime.now(timezone.utc).date().isoformat()
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    fetched = datetime.now(timezone.utc)
+    now = fetched.isoformat(timespec="seconds")
+    today, london_day, early = price_labels(fetched, london_tz())
 
     db.executemany("INSERT OR REPLACE INTO teams VALUES (?,?,?,?,?,?,?,?)",
                    [(t["id"], t["name"], t["short_name"], t["strength"],
@@ -182,47 +262,68 @@ def sync_bootstrap(db):
     for p in bs["elements"]:
         rows.append((p["id"], p["web_name"], p["first_name"], p["second_name"],
                      p["team"], p["element_type"], p["now_cost"], p["cost_change_start"],
-                     float(p["selected_by_percent"]), p["total_points"], p["minutes"],
+                     num(p["selected_by_percent"], "selected_by_percent"),
+                     required(p, "total_points"), required(p, "minutes"),
                      p["goals_scored"], p["assists"], p["clean_sheets"], p["bonus"],
-                     float(p.get("expected_goals") or 0), float(p.get("expected_assists") or 0),
-                     float(p.get("ict_index") or 0), p["status"],
+                     num(p.get("expected_goals"), "expected_goals"),
+                     num(p.get("expected_assists"), "expected_assists"),
+                     num(p.get("ict_index"), "ict_index"), required(p, "status"),
                      p.get("chance_of_playing_next_round"), p.get("news", ""), now,
                      p.get("starts") or 0,
                      p.get("penalties_order"),
                      p.get("corners_and_indirect_freekicks_order"),
                      p.get("direct_freekicks_order"),
-                     float(p.get("expected_goals_conceded") or 0),
+                     num(p.get("expected_goals_conceded"), "expected_goals_conceded"),
                      p.get("transfers_in_event") or 0,
                      p.get("transfers_out_event") or 0,
-                     float(p.get("form") or 0),
-                     float(p.get("points_per_game") or 0),
-                     float(p.get("influence") or 0),
-                     float(p.get("creativity") or 0),
-                     float(p.get("threat") or 0)))
-        db.execute("INSERT OR REPLACE INTO price_history VALUES (?,?,?)",
-                   (p["id"], today, p["now_cost"]))
+                     num(p.get("form"), "form"),
+                     num(p.get("points_per_game"), "points_per_game"),
+                     num(p.get("influence"), "influence"),
+                     num(p.get("creativity"), "creativity"),
+                     num(p.get("threat"), "threat")))
+        db.execute("INSERT OR REPLACE INTO price_history "
+                   "(player_id, date, now_cost, fetched_at_utc, london_date) VALUES (?,?,?,?,?)",
+                   (required(p, "id"), today, required(p, "now_cost"), now, london_day))
     db.executemany("INSERT OR REPLACE INTO players VALUES (%s)" % ",".join("?" * 34), rows)
 
     # data_checked = points and bonus are final. `finished` only means the
     # matches ended; grading keys on data_checked.
     db.executemany("INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
-                   [(e["id"], e["name"], e["deadline_time"], int(e["finished"]),
+                   [(e["id"], e["name"], required(e, "deadline_time"), int(e["finished"]),
                      e.get("average_entry_score"), e.get("highest_score"),
-                     e.get("most_captained"), int(bool(e.get("data_checked"))))
+                     e.get("most_captained"), int(required(e, "data_checked") is True))
                     for e in bs["events"]])
     db.commit()
-    # latest gameweek that has started (finished OR currently in progress)
-    started = [e["id"] for e in bs["events"] if e["finished"] or e.get("is_current")]
-    return max(started) if started else 0
+    if early:
+        print(f"PRICE DATE FLAG: fetched {now} = after 00:00 UK - this snapshot holds "
+              f"the prices of London day {london_day}, not of the evening before")
+    gaps = missing_dates(r[0] for r in db.execute("SELECT DISTINCT date FROM price_history"))
+    if gaps:
+        print(f"PRICE DATES MISSING: {len(gaps)} day(s) without a snapshot: {', '.join(gaps)}")
+    # the gameweek that has started = the last one whose deadline has passed;
+    # the target of the forecasts = the next one (Step 2.5). The flags only
+    # get compared, and a disagreement is logged.
+    current, nxt = deadline_gameweeks(bs["events"], fetched)
+    flag_cur = next((e["id"] for e in bs["events"] if e.get("is_current")), 0)
+    flag_next = next((e["id"] for e in bs["events"] if e.get("is_next")), None)
+    if (flag_cur, flag_next) != (current, nxt):
+        print(f"GAMEWEEK FLAGS DISAGREE: by deadline_time current GW{current}, next "
+              f"GW{nxt}; the API flags say is_current GW{flag_cur}, is_next GW{flag_next}"
+              f" - using deadline_time")
+    return current
 
 
 def sync_fixtures(db):
     print("fixtures ...")
     fx = get("fixtures/") or []
-    db.executemany("INSERT OR REPLACE INTO fixtures VALUES (?,?,?,?,?,?,?,?,?,?)",
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    db.executemany("INSERT OR REPLACE INTO fixtures (id, event, kickoff_time, team_h, team_a, "
+                   "team_h_difficulty, team_a_difficulty, team_h_score, team_a_score, "
+                   "finished, started, fetched_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                    [(f["id"], f.get("event"), f.get("kickoff_time"), f["team_h"], f["team_a"],
                      f["team_h_difficulty"], f["team_a_difficulty"],
-                     f.get("team_h_score"), f.get("team_a_score"), int(f["finished"]))
+                     f.get("team_h_score"), f.get("team_a_score"), int(f["finished"]),
+                     int(required(f, "started") is True), now)
                     for f in fx])
     db.commit()
 
@@ -238,15 +339,23 @@ def sync_player_gw(db, last_gw, refetch=False):
         if not live:
             continue
         rows = []
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         for el in live["elements"]:
             s = el["stats"]
-            rows.append((el["id"], gw, s["minutes"], s["total_points"], s["goals_scored"],
+            # one row per (player, gameweek): the live endpoint's stats are the
+            # gameweek total over all of a double's fixtures (Step 2.6)
+            rows.append((el["id"], gw, required(s, "minutes"), required(s, "total_points"),
+                         s["goals_scored"],
                          s["assists"], s["clean_sheets"], s["goals_conceded"], s["bonus"],
                          s["bps"], s["saves"], s["yellow_cards"], s["red_cards"],
-                         float(s.get("expected_goals") or 0), float(s.get("expected_assists") or 0),
-                         s.get("defensive_contribution", 0),
-                         s.get("starts", 0)))
-        db.executemany("INSERT OR REPLACE INTO player_gw VALUES (%s)" % ",".join("?" * 17), rows)
+                         num(s.get("expected_goals"), "expected_goals"),
+                         num(s.get("expected_assists"), "expected_assists"),
+                         required(s, "defensive_contribution"),
+                         s.get("starts", 0), now, RULESET))
+        db.executemany("INSERT OR REPLACE INTO player_gw (player_id, event, minutes, total_points, "
+                       "goals, assists, clean_sheets, goals_conceded, bonus, bps, saves, yellow, "
+                       "red, expected_goals, expected_assists, defensive_contribution, starts, "
+                       "fetched_at_utc, ruleset) VALUES (%s)" % ",".join("?" * 19), rows)
         db.commit()
 
 
@@ -322,10 +431,19 @@ def sync_entries(db, entries, last_gw):
             if not pk:
                 continue
             h = pk["entry_history"]
-            db.execute("INSERT OR REPLACE INTO entry_gw VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            fetched = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            # fetched_at_utc set = this gameweek's automatic_subs are known (S2,
+            # Step 2.10); a row stored before S2 has NULL and its subs unknown
+            db.execute("INSERT OR REPLACE INTO entry_gw (entry_id, event, points, total_points, "
+                       "overall_rank, bank, value, transfers, transfers_cost, points_on_bench, "
+                       "active_chip, fetched_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                        (eid, gw, h["points"], h["total_points"], h["overall_rank"], h["bank"],
                         h["value"], h["event_transfers"], h["event_transfers_cost"],
-                        h["points_on_bench"], pk.get("active_chip")))
+                        h["points_on_bench"], pk.get("active_chip"), fetched))
+            db.executemany("INSERT OR REPLACE INTO automatic_subs (entry_id, event, element_in, "
+                           "element_out, fetched_at_utc) VALUES (?,?,?,?,?)",
+                           [(eid, gw, a["element_in"], a["element_out"], fetched)
+                            for a in pk["automatic_subs"]])
             db.executemany("INSERT OR REPLACE INTO picks VALUES (?,?,?,?,?,?,?)",
                            [(eid, gw, p["element"], p["position"], p["multiplier"],
                              int(p["is_captain"]), int(p["is_vice_captain"])) for p in pk["picks"]])
@@ -358,7 +476,8 @@ def export(db, gw):
         ORDER BY e.entry_name, c.event""")
 
     out["squads"] = q(db, """
-        SELECT e.id AS entry_id, e.entry_name, p.position AS slot, pl.web_name, t.short_name AS team,
+        SELECT e.id AS entry_id, e.entry_name, p.position AS slot, p.player_id,
+               pl.web_name, t.short_name AS team,
                pl.position AS pos, pl.now_cost/10.0 AS price, p.multiplier,
                p.is_captain, p.is_vice, g.total_points AS gw_points, g.minutes
         FROM picks p JOIN entries e ON e.id=p.entry_id
@@ -476,16 +595,25 @@ def export(db, gw):
         FROM fixtures f JOIN teams th ON th.id=f.team_h JOIN teams ta ON ta.id=f.team_a
         WHERE f.event BETWEEN ?+1 AND ?+6 ORDER BY f.event, f.kickoff_time""", (gw, gw))
 
-    # what grading needs to know before it trusts a gameweek's points
+    # what grading needs to know before it trusts a gameweek's points, and every
+    # event's deadline: the forecast target and its cut-off (Step 2.2, 2.5)
     out["events"] = q(db, """
-        SELECT id AS event, finished, data_checked FROM events
-        WHERE id<=? ORDER BY id""", (gw,))
+        SELECT id AS event, finished, data_checked, deadline_time FROM events
+        ORDER BY id""")
 
     out["fixtures_status"] = q(db, """
         SELECT f.event, th.short_name AS home, ta.short_name AS away,
-               f.kickoff_time, f.finished
+               f.kickoff_time, f.finished, f.started
         FROM fixtures f JOIN teams th ON th.id=f.team_h JOIN teams ta ON ta.id=f.team_a
         WHERE f.event<=? ORDER BY f.event, f.kickoff_time""", (gw,))
+
+    # automatic substitutions as FPL applied them, where known (Step 2.10)
+    out["automatic_subs"] = q(db, """
+        SELECT a.entry_id, a.event, a.element_in, a.element_out
+        FROM automatic_subs a WHERE a.event=? ORDER BY a.entry_id""", (gw,))
+    out["autosubs_known"] = q(db, """
+        SELECT entry_id, event FROM entry_gw
+        WHERE event=? AND fetched_at_utc IS NOT NULL ORDER BY entry_id""", (gw,))
 
     out["price_changes_7d"] = q(db, """
         SELECT pl.web_name, t.short_name AS team, a.now_cost/10.0 AS price_now,
@@ -497,7 +625,7 @@ def export(db, gw):
           AND a.now_cost<>b.now_cost ORDER BY change DESC""")
 
     fname = f"fpl_export_gw{gw}.json"
-    with open(fname, "w", encoding="utf-8") as f:
+    with open(fname, "w", encoding="utf-8", newline="") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
     print(f"\nexported -> {fname}  (upload this file to Claude)")
 

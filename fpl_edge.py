@@ -2461,10 +2461,15 @@ def start_probability(p, gws_played):
     else:
         window = min(4, gws_played)
     p_start = min(1.0, (starts or 0) / max(1, window))
-    chance = p.get("chance_next_round")
-    if chance is not None:
-        p_start *= float(chance) / 100.0
+    p_start *= chance_of_playing(p) / 100.0
     return p_start
+
+
+def chance_of_playing(p):
+    """The API's chance_of_playing_next_round: null means no flag, i.e. 100,
+    mapped explicitly - never `or 0` (Step 2.6)."""
+    chance = p.get("chance_next_round")
+    return 100.0 if chance is None else float(chance)
 
 
 def project_xg(p, fdr, gws_played, cs_table, cs_default, hist, ict_pct=0.5):
@@ -2823,16 +2828,42 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
 
 
 STARTER_MINUTES = 60
+POSTPONED_AFTER_H = 3       # not started this long after kickoff = postponed (Step 2.1)
+STUCK_AFTER_H = 72          # not final this long after the last kickoff = stuck (Step 2.1)
 
 
-def gameweek_settled(d, event):
-    """(ok, blockers). A gameweek may be graded only when its points are final:
-    the event has data_checked = 1 AND every one of its fixtures has
-    finished = 1. `data_checked` is the API's "points and bonus are final"
-    flag and exists on events only; a fixture carries `finished`, which flips
-    earlier (observed GW5: fixtures 10/10 finished while the event was still
-    data_checked = 0). Grading before both hold records provisional points.
+def _kickoff(f):
+    from datetime import datetime
+    ko = f.get("kickoff_time")
+    return datetime.fromisoformat(ko.replace("Z", "+00:00")) if ko else None
+
+
+def _postponed(f, now):
+    """A fixture not started POSTPONED_AFTER_H hours after its kickoff, or with
+    no kickoff at all, counts as postponed. Without the `started` field (an
+    export before S2) a past fixture counts as started, so it must finish."""
+    from datetime import timedelta
+    ko = _kickoff(f)
+    if ko is None:
+        return True
+    return (now - ko >= timedelta(hours=POSTPONED_AFTER_H)
+            and f.get("started", 1) is not None and not f.get("started", 1))
+
+
+def gameweek_settled(d, event, now=None):
+    """(ok, blockers). A gameweek may be graded only when its points are final
+    (Step 2.1): the event has data_checked = 1 AND every one of its fixtures
+    whose kickoff is 3 h or more in the past has finished = 1. A fixture not
+    started 3 h after kickoff is postponed and excluded; a fixture whose event
+    is null never reaches fixtures_status. `data_checked` is the API's "points
+    and bonus are final" flag and exists on events only; a fixture carries
+    `finished`, which flips earlier (observed GW5: fixtures 10/10 finished
+    while the event was still data_checked = 0). In 2026/27 lockdown comes at
+    09:00 UK the morning after the last match, so the same night's run never
+    sees a gameweek as final.
     """
+    from datetime import datetime, timedelta, timezone
+    now = now or datetime.now(timezone.utc)
     if "events" not in d or "fixtures_status" not in d:
         return False, ["export has no events / fixtures_status section - "
                        "re-run fpl_sync.py to write one"]
@@ -2847,10 +2878,33 @@ def gameweek_settled(d, event):
     if not fixtures:
         blockers.append(f"no fixtures listed for GW{event}")
     for f in fixtures:
-        if not f.get("finished"):
+        if _postponed(f, now):
+            continue
+        if now - _kickoff(f) >= timedelta(hours=POSTPONED_AFTER_H) and not f.get("finished"):
             blockers.append(f"{f['home']} v {f['away']} ({f.get('kickoff_time')}) "
                             f"finished = 0")
     return not blockers, blockers
+
+
+def stuck_gameweeks(d, now=None):
+    """[(event, hours since its last kickoff, blockers)] for every gameweek not
+    final STUCK_AFTER_H hours after its last (not postponed) kickoff - the
+    "GW stuck" alarm (Step 2.1)."""
+    from datetime import datetime, timezone
+    now = now or datetime.now(timezone.utc)
+    stuck = []
+    for event in sorted({f["event"] for f in d.get("fixtures_status", []) if f.get("event")}):
+        kos = [_kickoff(f) for f in d["fixtures_status"]
+               if f["event"] == event and not _postponed(f, now)]
+        if not kos:
+            continue
+        hours = (now - max(kos)).total_seconds() / 3600
+        if hours < STUCK_AFTER_H:
+            continue
+        ok, blockers = gameweek_settled(d, event, now)
+        if not ok:
+            stuck.append((event, hours, blockers))
+    return stuck
 
 
 def grade_forecasts(d, log, detail=False):
@@ -3697,6 +3751,9 @@ def main():
                     help="label for --record, e.g. openfpl")
     ap.add_argument("--status",
                     help="with --record: append the RECORD OK/FAIL line to this file")
+    ap.add_argument("--stuck", action="store_true",
+                    help="exit 1 when a gameweek is not final 72 h after its last "
+                         "kickoff (the GW stuck alarm)")
     ap.add_argument("--watch",
                     help="watchlist file (one player id per line, # comments): "
                          "write the watch file to --out and stop")
@@ -3741,6 +3798,14 @@ def main():
     print(f"[reading {os.path.basename(path)}]\n")
 
     d = load(path)
+    if args.stuck:
+        stuck = stuck_gameweeks(d)
+        for event, hours, blockers in stuck:
+            print(f"GW STUCK: GW{event} not final {hours:.0f} h after its last kickoff: "
+                  + "; ".join(blockers))
+        if not stuck:
+            print(f"STUCK CHECK OK: no gameweek unsettled {STUCK_AFTER_H} h after its last kickoff")
+        sys.exit(1 if stuck else 0)
     if args.watch:
         if not args.out:
             sys.exit("--watch needs --out <file>")

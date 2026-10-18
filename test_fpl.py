@@ -34,6 +34,12 @@ import fpl_publish as PUB                                       # noqa: E402
 TEAMS = ["ARS", "BHA", "CHE", "CRY", "HUL", "LIV", "MCI", "MUN", "NEW", "NFO"]
 ENTRIES = ["My Team", "Rival A", "Rival B", "Rival C"]
 MY_ID = 999
+# London time for the sync, injected: Windows has no time-zone database without
+# the tzdata package, and the tests must not depend on it (S2, Step 2.4)
+from datetime import timedelta as _td, timezone as _tz
+UK_SUMMER = _tz(_td(hours=1), "BST")
+UK_WINTER = _tz(_td(0), "GMT")
+
 UNICODE_NAMES = ["Muharemović", "Groß", "João Pedro", "Ødegaard", "Horníček"]
 
 
@@ -2008,6 +2014,7 @@ class SyncExportsSettledFlags(unittest.TestCase):
         here = os.path.dirname(os.path.abspath(__file__))
         src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
         exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        ns["london_tz"] = lambda: UK_SUMMER
         ev = lambda i, fin, chk, cur=False: {
             "id": i, "name": f"GW{i}", "deadline_time": "2026-09-01T00:00:00Z",
             "finished": fin, "data_checked": chk, "is_current": cur}
@@ -3639,6 +3646,7 @@ class SyncNetwork(unittest.TestCase):
         here = os.path.dirname(os.path.abspath(__file__))
         src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
         exec(compile(src if full else src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        ns["london_tz"] = lambda: UK_SUMMER
         ns["sleeps"] = []
         ns["_sleep"] = ns["sleeps"].append
         return ns
@@ -3781,6 +3789,9 @@ NIGHTLY_EDGE_STUB = EDGE_STUB.replace(
     'if "--watch" in a:\n'
     '    if mode == "nowatch":\n        sys.exit(1)\n'
     '    open(a[a.index("--out") + 1], "w").write("WATCH STUB\\n")\n    sys.exit(0)\n'
+    'if "--stuck" in a:\n'
+    '    print("GW STUCK: GW9 stub" if mode == "stuck" else "STUCK CHECK OK stub")\n'
+    '    sys.exit(1 if mode == "stuck" else 0)\n'
     'if mode == "noreport":\n    sys.exit(1)\n'
     'print("EDGE", " ".join(a))')
 

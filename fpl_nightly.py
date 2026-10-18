@@ -6,7 +6,7 @@ fpl_nightly.py  -  the nightly run as GitHub Actions executes it.
 
 The same steps as fpl_run.bat, in the same order, on any platform:
 
-    tests  ->  sync  ->  record own / xg / minutes / bottomup  ->  report
+    tests  ->  sync  ->  record own / xg / minutes / bottomup  ->  report  ->  stuck check
 
 with the Windows paths gone and the Google Drive shipping replaced by files the
 workflow commits back to the repository:
@@ -239,6 +239,12 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
         if step("fpl_edge.py", "--diff", "--out", report_rel) != 0:
             failed.append("report")
             say("EDGE FAILED")
+
+        # the GW stuck alarm: a gameweek not final 72 h after its last kickoff
+        # turns the run red (BUILD_PLAN.md Step 2.1)
+        say("checking for a stuck gameweek ...")
+        if step("fpl_edge.py", "--stuck") != 0:
+            failed.append("stuck")
 
         say("record summary:")
         if os.path.exists(status):
