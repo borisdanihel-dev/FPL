@@ -5876,6 +5876,15 @@ class StepTwoBenchAudit(unittest.TestCase):
         pairs = E.rule_autosubs(rows)
         self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(14, 2)])
 
+    def test_a_gameweek_still_in_play_gets_no_rule_substitution(self):
+        """A starter on 0 minutes may yet play: without FPL's list, no sub
+        until every fixture of the gameweek is finished."""
+        d, slots = self._world()
+        f = next(x for x in d["fixtures_status"] if x["event"] == d["gameweek"])
+        f["finished"] = 0
+        self.assertEqual(self._line(d)["gain"], 7)
+        self.assertIn("subs 0 pending", run("bench", d))
+
     def test_a_bench_player_who_did_not_play_is_not_brought_on(self):
         d, slots = self._world()
         slots[13]["minutes"] = 0

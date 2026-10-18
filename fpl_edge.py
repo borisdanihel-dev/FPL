@@ -614,6 +614,11 @@ def sec_value(d, horizon, min_mins=135, top=12):
 FORMATION_MIN = {1: 1, 2: 3, 3: 2, 4: 1}    # every XI: 1 GK, 3+ DEF, 2+ MID, 1+ FWD
 
 
+def _now_utc():
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc)
+
+
 def rule_autosubs(rows):
     """FPL's automatic substitutions applied to the minutes, for a gameweek
     whose own list was never stored (Step 2.10): each starter who played 0
@@ -646,7 +651,9 @@ def effective_lineup(d, rows):
     """(xi, bench, n_subs, source) for one squad after its automatic
     substitutions (Step 2.10). source "FPL": the list FPL applied, stored by
     the sync with the picks (autosubs_known); "rules": the gameweek has no
-    stored list, so FPL's rules are applied to the minutes."""
+    stored list and all its fixtures are finished, so FPL's rules are applied
+    to the minutes; "pending": no stored list and matches still to play - a
+    starter on 0 minutes may yet play, so no substitution is made."""
     xi = [r for r in rows if r["slot"] <= 11]
     bench = [r for r in rows if r["slot"] > 11]
     entry, event = (rows[0].get("entry_id") if rows else None), d.get("gameweek")
@@ -660,8 +667,11 @@ def effective_lineup(d, rows):
             raise ValueError(f"automatic_subs of entry {entry} GW{event} name a "
                              f"player who is not in its squad")
         source = "FPL"
-    else:
+    elif all(f.get("finished") for f in d.get("fixtures_status", [])
+             if f.get("event") == event and not _postponed(f, _now_utc())):
         pairs, source = rule_autosubs(rows), "rules"
+    else:
+        pairs, source = [], "pending"
     ins, outs = {id(i) for i, _ in pairs}, {id(o) for _, o in pairs}
     return ([r for r in xi if id(r) not in outs] + [i for i, _ in pairs],
             [r for r in bench if id(r) not in ins] + [o for _, o in pairs],
