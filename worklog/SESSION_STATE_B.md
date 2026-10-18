@@ -71,7 +71,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   to the chat), write guard clean. RULING S5 result (`4abc716`): accepted;
   `bottomup_lambda` adopted as an S6 input; Part C tie-break change recorded
   (**edit the Part C line in BUILD_PLAN.md at the landing**). Amendment
-  built (AMEND_COMMIT): the `condition_2627` toy test and `--live` for the
+  built (`fa05534`): the `condition_2627` toy test and `--live` for the
   Thursday deadline pass (W1's snapshots; reader shape to confirm when W1
   lands). Verifier on the amendment: AMEND_STATE. Then S6.
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(

@@ -3160,7 +3160,7 @@ Amendment to build before landing: a toy-level test of `condition_2627`
 (post-deadline export refused; starters threshold) and an information-only
 live mode reading W1's odds snapshots for the deadline pass (next entry).
 
-## 2026-10-18 — S5 amendment: `condition_2627` toy test and the live mode (RULING S5 result points 3–4; `4abc716` ruling, AMEND_COMMIT code; lane B)
+## 2026-10-18 — S5 amendment: `condition_2627` toy test and the live mode (RULING S5 result points 3–4; `4abc716` ruling, `fa05534` code; lane B)
 
 `tools/odds_lambda.py --live` (information only): the newest `odds/*.json.gz`
 under the data worktree taken before the next deadline (W1's Odds API
