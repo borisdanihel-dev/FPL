@@ -70,14 +70,14 @@ NAMES = {
     20: "forecast rows after the deadline", 21: "stuck gameweek",
     22: "manager score reconciliation", 23: "secret in the files to commit",
     24: "repo size", 25: "run duration", 26: "heartbeat", 27: "workflow state",
-    28: "test gate", 29: "record"}
+    28: "test gate", 29: "record", 30: "odds snapshot"}
 
 # what a breach is, check by check: the table's own word where it gives one
 SEVERITY = {1: FAIL, 2: FAIL, 3: FAIL, 4: FAIL, 5: FAIL, 6: WARN, 7: WARN, 8: FAIL, 9: WARN,
             10: FAIL, 11: FAIL, 12: WARN, 13: FAIL, 14: WARN, 15: FAIL, 16: FAIL, 17: WARN,
             18: FAIL, 19: WARN, 20: FAIL, 21: WARN, 22: WARN, 23: FAIL, 24: FAIL, 25: WARN,
-            26: WARN, 27: SKIP, 28: FAIL, 29: FAIL}
-SOURCES = ("own", "xg", "minutes", "bottomup")     # as fpl_nightly.SOURCES
+            26: WARN, 27: SKIP, 28: FAIL, 29: FAIL, 30: WARN}
+SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # as fpl_nightly.SOURCES
 
 Result = collections.namedtuple("Result", "n name level detail")
 
@@ -525,7 +525,20 @@ def c29(x):
     return OK, ", ".join(f"{s} {got[s][1]}" for s in SOURCES)
 
 
-CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 30)]
+def c30(x):
+    """Tonight's odds snapshot (W1): fpl_odds.py's one line in the run log.
+    Missing, skipped or failed is a WARN - the odds are collected for later
+    models, and tonight's other data is sound without them."""
+    lines = [l.strip() for l in (x.run_log or "").splitlines()
+             if l.startswith(("ODDS OK", "ODDS FAILED", "ODDS SKIPPED"))]
+    if not lines:
+        return WARN, "no odds line in tonight's run log: the collector did not run"
+    if lines[-1].startswith("ODDS OK"):
+        return OK, lines[-1][len("ODDS OK"):].strip()
+    return WARN, lines[-1]
+
+
+CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 31)]
 
 
 def run_all(x):

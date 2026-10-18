@@ -2888,6 +2888,13 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
             if v is None:
                 v = next(iter(vals.values()))
             rows.append((p["id"], p["web_name"], v))
+    elif source == "fpl_ep":
+        # FPL's own expected points for the next gameweek, as the API gives
+        # them tonight (ep_next): an external benchmark, recorded as it is, for
+        # every player that has one (BUILD_PLAN.md Step 4 item 2; W1)
+        for p in d["all_players"]:
+            if p.get("ep_next") is not None:
+                rows.append((p["id"], p["web_name"], round(float(p["ep_next"]), 3)))
     elif source == "minutes":
         # The bar: P(start) alone, no model. BUILD_SPEC 3.1 - anything that
         # cannot beat this is not earning its complexity. Summed over a double

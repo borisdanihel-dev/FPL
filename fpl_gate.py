@@ -52,9 +52,9 @@ DB, DUMP, LOG = "fpl.sqlite", "fpl.sql", "projection_log.csv"
 # passes only if it is listed here; a schema change updates this list in the
 # same commit (test_fpl.py checks the two agree).
 EXPECTED_TABLES = frozenset({
-    "automatic_subs", "chips", "entries", "entry_gw", "events", "fixtures", "picks",
-    "player_gw", "player_history", "players", "price_history", "standings", "teams",
-    "transfers"})
+    "automatic_subs", "chips", "entries", "entry_gw", "events", "fixtures",
+    "odds_snapshots", "picks", "player_gw", "player_history", "players", "price_history",
+    "standings", "teams", "transfers"})
 
 # Tables that only ever grow: fewer rows than the last commit fails the gate.
 # A table qualifies only if fpl_sync.py never deletes from it. Today that is

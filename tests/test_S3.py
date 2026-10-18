@@ -164,8 +164,11 @@ def world():
 
 
 GOOD_RUN = ("running tests ...\nRan 454 tests in 9.1s\n\nOK (skipped=11)\nTESTS OK\n"
-            "syncing FPL API ...\nrecord summary:\nRECORD OK own 275\nRECORD OK xg 260\n"
-            "RECORD OK minutes 260\nRECORD OK bottomup 260\narchiving the export ...\n")
+            "syncing FPL API ...\ncollecting odds ...\nODDS OK      20 events (20 with totals), "
+            "1200 prices fetched 2026-10-18T21:41:00+00:00; credits used 4, remaining 496, this "
+            "request 4\nrecord summary:\nRECORD OK own 275\nRECORD OK xg 260\n"
+            "RECORD OK minutes 260\nRECORD OK bottomup 260\nRECORD OK fpl_ep 600\n"
+            "archiving the export ...\n")
 RED_RUN = ("running tests ...\nRan 454 tests in 9.5s\n\nFAILED (failures=3, skipped=11)\n"
            "TESTS FAILED - see logs/run_2026-10-18.log\nsyncing FPL API ...\n"
            "SKIPPED --record: test suite is red, no forecasts written\nrecord summary:\n"
@@ -202,7 +205,7 @@ class TheChecks(unittest.TestCase):
         res = C.run_all(world())
         self.assertEqual([r for r in res if r.level in (C.WARN, C.FAIL)], [])
         self.assertEqual([r.n for r in res if r.level == C.SKIP], [22, 27])
-        self.assertEqual(len(res), 29)
+        self.assertEqual(len(res), 30)
 
     def test_01_core_endpoints(self):
         x = world()
@@ -509,7 +512,7 @@ class StatusLine(unittest.TestCase):
     def test_the_line_and_its_fields(self):
         line = self._line(datetime(2026, 10, 23, 17, 30, tzinfo=UTC))
         self.assertEqual(line, "STATUS OK | generated 2026-10-18T21:50:00Z | next deadline GW8 "
-                               "2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 27/27 | repo 120 MB")
+                               "2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 28/28 | repo 120 MB")
 
     def test_both_sides_of_the_25_october_change(self):
         before = self._line(datetime(2026, 10, 25, 0, 30, tzinfo=UTC))
@@ -536,7 +539,7 @@ class StatusLine(unittest.TestCase):
         x.started = NOW - timedelta(minutes=20)              # 25 WARN
         line = C.status_line(C.run_all(x), NOW, None, None, PRAGUE)
         self.assertTrue(line.startswith("STATUS WARN |"), line)
-        self.assertIn("| next deadline none | checks 26/27 | repo ? MB", line)
+        self.assertIn("| next deadline none | checks 27/28 | repo ? MB", line)
         x.stats["teams"] = 19                                # 4 FAIL
         self.assertTrue(C.status_line(C.run_all(x), NOW, None, None, PRAGUE).startswith("STATUS FAIL"))
 
@@ -606,7 +609,7 @@ class ChecksMain(unittest.TestCase):
         status = self._get("reports/status.txt")
         self.assertTrue(status.startswith("STATUS OK | generated 2026-10-18T21:50:00Z | next deadline GW8 "
                                           "2026-10-24 10:00 UTC / 2026-10-24 12:00 Prague"), status)
-        self.assertEqual(len(status.splitlines()), 30)
+        self.assertEqual(len(status.splitlines()), 31)
         self.assertEqual(self._get(f"reports/fpl_{STAMP}.txt"), status.splitlines()[0] + "\n\nTHE REPORT\n")
         self.assertFalse(os.path.exists(os.path.join(self.tmp, "reports", "status_dryrun.txt")))
 
