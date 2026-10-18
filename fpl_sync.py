@@ -287,12 +287,6 @@ CREATE TABLE IF NOT EXISTS chips (
     entry_id INTEGER, name TEXT, event INTEGER, time TEXT,
     PRIMARY KEY (entry_id, name, event));
 
-CREATE TABLE IF NOT EXISTS odds_snapshots (
-    fetched_at_utc TEXT, event_id TEXT, commence_time TEXT, home_team TEXT,
-    away_team TEXT, bookmaker TEXT, last_update TEXT, market TEXT, outcome TEXT,
-    point TEXT, price REAL,
-    PRIMARY KEY (fetched_at_utc, event_id, bookmaker, market, outcome, point));
-
 CREATE TABLE IF NOT EXISTS automatic_subs (
     entry_id INTEGER, event INTEGER, element_in INTEGER, element_out INTEGER,
     fetched_at_utc TEXT,

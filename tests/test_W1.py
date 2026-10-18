@@ -195,67 +195,126 @@ EVENTS = [
 
 
 class Reply(io.BytesIO):
-    def __init__(self, payload, headers):
-        super().__init__(json.dumps(payload).encode("utf-8"))
+    def __init__(self, body, headers):
+        super().__init__(body)
         self.headers = headers
 
 
+# a body with its own spacing, as an API answer may have: re-encoding it
+# would change its bytes, so "byte for byte" is really tested
+BODY = json.dumps(EVENTS, indent=1).encode("utf-8")
+
+
 class OddsCollector(unittest.TestCase):
-    """Step 5 item 1, the collector: every snapshot stored with its fetch time,
-    the credits logged, the key never printed, logged or stored."""
+    """Step 5 item 1, the collector, as RULING W1 odds storage has it: the
+    answer body byte for byte as deterministic gzip in odds/, append-only, no
+    SQLite; the credits and the file size logged; the key never printed,
+    logged or stored."""
 
     HEADERS = {"x-requests-used": "12", "x-requests-remaining": "488", "x-requests-last": "4"}
+    NAME = "odds_2026-10-18T2141Z.json.gz"
 
-    def _opener(self, seen, payload=EVENTS, error=None):
+    def setUp(self):
+        self.data = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.data, True)
+
+    def _opener(self, seen, body=BODY, error=None):
         def opener(req, timeout=30):
             seen.append(req)
             if error is not None:
                 raise error
-            return Reply(payload, self.HEADERS)
+            return Reply(body, self.HEADERS)
         return opener
 
-    def test_one_row_per_price_with_its_fetch_time(self):
-        got = O.rows(EVENTS, "2026-10-18T21:41:00+00:00")
+    def _path(self, name=None):
+        return os.path.join(self.data, "odds", name or self.NAME)
+
+    def test_one_row_per_price_and_lay_prices_only_when_asked(self):
+        lay = [dict(EVENTS[0], bookmakers=[{"key": "betfair_ex_uk", "markets": [
+            {"key": "h2h_lay", "outcomes": [{"name": "Arsenal", "price": 1.52}]}]}])]
+        got = O.rows(EVENTS + lay, "2026-10-18T21:41:00+00:00")
         self.assertEqual(len(got), 8)
         self.assertIn(("2026-10-18T21:41:00+00:00", "e1", "2026-10-24T14:00:00Z", "Arsenal", "Everton",
                        "bet365", "2026-10-18T21:00:00Z", "totals", "Over", "2.5", 1.8), got)
         self.assertIn(("2026-10-18T21:41:00+00:00", "e2", "2026-10-24T16:30:00Z", "Leeds", "Burnley",
                        "unibet_eu", "2026-10-18T20:55:00Z", "h2h", "Draw", "", 3.3), got)
+        self.assertEqual(len(O.rows(EVENTS + lay, "x", lay=True)), 9)
 
-    def test_the_snapshot_is_stored_and_the_credits_logged(self):
-        db, seen = _db(), []
-        line = O.collect(db, fake_key(), NOW, self._opener(seen))
-        self.assertEqual(line, "ODDS OK      2 events (1 with totals), 8 prices fetched "
-                               "2026-10-18T21:41:00+00:00; credits used 12, remaining 488, this request 4")
-        self.assertEqual(db.execute("SELECT COUNT(*), MIN(fetched_at_utc), MAX(fetched_at_utc) "
-                                    "FROM odds_snapshots").fetchone(),
-                         (8, "2026-10-18T21:41:00+00:00", "2026-10-18T21:41:00+00:00"))
+    def test_the_answer_is_written_byte_for_byte_as_deterministic_gzip(self):
+        import gzip
+        seen = []
+        line = O.collect(self.data, fake_key(), NOW, self._opener(seen))
+        with open(self._path(), "rb") as fh:
+            raw = fh.read()
+        self.assertEqual(gzip.decompress(raw), BODY)
+        self.assertEqual(raw, O.gz(BODY))                       # the same body, the same bytes
+        self.assertEqual(raw[4:8], b"\0\0\0\0")                  # mtime 0
+        self.assertEqual(line, f"ODDS OK      2 events (1 with totals), 8 prices, odds/{self.NAME} "
+                               f"{len(raw)} bytes; credits used 12, remaining 488, this request 4")
         url = seen[0].full_url
         self.assertTrue(url.startswith(O.API + "/soccer_epl/odds/?"))
         for part in ("regions=uk%2Ceu", "markets=h2h%2Ctotals", "oddsFormat=decimal"):
             self.assertIn(part, url)
 
-    def test_a_second_night_adds_a_snapshot_and_keeps_the_first(self):
-        db = _db()
-        O.collect(db, fake_key(), NOW, self._opener([]))
-        O.collect(db, fake_key(), NOW + timedelta(days=1), self._opener([]))
-        self.assertEqual(db.execute("SELECT COUNT(DISTINCT fetched_at_utc), COUNT(*) FROM odds_snapshots").fetchone(),
-                         (2, 16))
+    def test_the_reader_gives_the_fetch_minute_and_the_events(self):
+        O.collect(self.data, fake_key(), NOW, self._opener([]))
+        when, events = O.read_snapshot(self._path())
+        self.assertEqual(when, NOW.replace(second=0))
+        self.assertEqual(events, EVENTS)
+        self.assertEqual(len(O.rows(events, when)), 8)
+
+    def test_a_second_night_adds_a_file_and_keeps_the_first(self):
+        O.collect(self.data, fake_key(), NOW, self._opener([]))
+        with open(self._path(), "rb") as fh:
+            first = fh.read()
+        O.collect(self.data, fake_key(), NOW + timedelta(days=1), self._opener([], body=b"[]"))
+        self.assertEqual(sorted(os.listdir(os.path.join(self.data, "odds"))),
+                         [self.NAME, "odds_2026-10-19T2141Z.json.gz"])
+        with open(self._path(), "rb") as fh:
+            self.assertEqual(fh.read(), first)
+
+    def test_an_existing_file_is_never_rewritten(self):
+        os.makedirs(os.path.join(self.data, "odds"))
+        with open(self._path(), "wb") as fh:
+            fh.write(b"already here")
+        line = O.collect(self.data, fake_key(), NOW, self._opener([]))
+        self.assertEqual(line, f"ODDS FAILED  odds/{self.NAME} exists - a snapshot is never rewritten")
+        with open(self._path(), "rb") as fh:
+            self.assertEqual(fh.read(), b"already here")
+
+    def test_no_odds_go_to_sqlite(self):
+        db = os.path.join(self.data, "fpl.sqlite")
+        con = sqlite3.connect(db)
+        con.executescript(S.SCHEMA)
+        con.close()
+        with open(db, "rb") as fh:
+            before = fh.read()
+        O.main({"ODDS_API_KEY": fake_key()}, say=lambda s: None, data_dir=self.data, opener=self._opener([]))
+        with open(db, "rb") as fh:
+            self.assertEqual(fh.read(), before)
+        self.assertNotIn("odds", S.SCHEMA.lower())
+        self.assertNotIn("odds_snapshots", G.EXPECTED_TABLES)
+        with open(os.path.join(HERE, "fpl_odds.py"), encoding="utf-8") as fh:
+            src = fh.read()
+        self.assertNotIn("sqlite3", src)
+        self.assertNotRegex(src, r"(?i)\binsert\b")
 
     def test_the_key_goes_to_the_api_and_nowhere_else(self):
-        key, seen, db = fake_key(), [], _db()
-        line = O.collect(db, key, NOW, self._opener(seen))
+        import gzip
+        key, seen = fake_key(), []
+        line = O.collect(self.data, key, NOW, self._opener(seen))
         self.assertIn(key, seen[0].full_url)                    # sent ...
         self.assertNotIn(key, line)                             # ... never shown
-        stored = "".join(map(str, db.execute("SELECT * FROM odds_snapshots").fetchall()))
-        self.assertNotIn(key, stored)
-        out = io.StringIO()
-        tmp = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, tmp, True)
-        with redirect_stdout(out):
-            self.assertEqual(O.main({"ODDS_API_KEY": key}, db_path=os.path.join(tmp, "fpl.sqlite"),
-                                    opener=self._opener([])), 0)
-        self.assertNotIn(key, out.getvalue())
+        with open(self._path(), "rb") as fh:
+            self.assertNotIn(key.encode(), gzip.decompress(fh.read()))
+        out = []
+        O.main({"ODDS_API_KEY": key}, say=out.append, data_dir=tempfile.mkdtemp(), opener=self._opener([]))
+        self.assertNotIn(key, "".join(out))
+
+    def test_the_secret_scan_reads_inside_an_odds_file(self):
+        key = fake_key()
+        self.assertTrue(G.secret_hit("odds/x.json.gz", O.gz(b'[{"leak": "' + key.encode() + b'"}]'), key))
+        self.assertFalse(G.secret_hit("odds/x.json.gz", O.gz(BODY), key))
 
     def test_a_failure_never_shows_the_url_or_the_key(self):
         key = fake_key()
@@ -265,22 +324,24 @@ class OddsCollector(unittest.TestCase):
                  (urllib.error.URLError("no route to " + url), "ODDS FAILED  network (URLError) - no snapshot tonight"))
         for error, want in cases:
             with self.subTest(want=want):
-                db = _db()
-                line = O.collect(db, key, NOW, self._opener([], error=error))
+                line = O.collect(self.data, key, NOW, self._opener([], error=error))
                 self.assertEqual(line, want)
                 self.assertNotIn(key, line)
-                self.assertEqual(db.execute("SELECT COUNT(*) FROM odds_snapshots").fetchone(), (0,))
+                self.assertFalse(os.path.exists(os.path.join(self.data, "odds")))
 
     def test_no_key_no_request(self):
         seen = []
-        self.assertEqual(O.collect(_db(), "", NOW, self._opener(seen)),
+        self.assertEqual(O.collect(self.data, "", NOW, self._opener(seen)),
                          "ODDS SKIPPED no ODDS_API_KEY in this run - no snapshot tonight")
         self.assertEqual(seen, [])
 
+    def test_a_body_that_is_not_a_list_is_a_failure_and_writes_nothing(self):
+        self.assertTrue(O.collect(self.data, fake_key(), NOW, self._opener([], body=b'{"message": "x"}'))
+                        .startswith("ODDS FAILED  the answer is not a list"))
+        self.assertFalse(os.path.exists(self._path()))
+
     def test_a_dry_run_calls_the_api_only_with_odds_live(self):
         """RULING W1 decisions, point 1."""
-        tmp = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, tmp, True)
         for env, calls in (({"GITHUB_REF": "refs/heads/w1-wip"}, 0),
                            ({"GITHUB_REF": "refs/heads/master", "FPL_DRY_RUN": "true"}, 0),
                            ({"GITHUB_REF": "refs/heads/w1-wip", "FPL_ODDS_LIVE": "false"}, 0),
@@ -289,7 +350,7 @@ class OddsCollector(unittest.TestCase):
             with self.subTest(env=env):
                 seen, lines = [], []
                 env = dict(env, ODDS_API_KEY=fake_key())
-                O.main(env, say=lines.append, db_path=os.path.join(tmp, "f.sqlite"), opener=self._opener(seen))
+                O.main(env, say=lines.append, data_dir=tempfile.mkdtemp(), opener=self._opener(seen))
                 self.assertEqual(len(seen), calls)
                 if not calls:
                     self.assertEqual(lines, ["ODDS SKIPPED (dry run): odds_live not ticked - no Odds API call"])
@@ -303,16 +364,83 @@ class OddsCollector(unittest.TestCase):
         step = y[y.index("name: Nightly run"):y.index("name: Commit outputs")]
         self.assertIn("FPL_ODDS_LIVE: ${{ inputs.odds_live }}", step)
 
-    def test_a_body_that_is_not_a_list_is_a_failure(self):
-        self.assertTrue(O.collect(_db(), fake_key(), NOW, self._opener([], payload={"message": "x"}))
-                        .startswith("ODDS FAILED  the answer is not a list"))
 
-    def test_the_table_is_grow_only_and_the_gate_knows_it(self):
-        self.assertIn("odds_snapshots", G.EXPECTED_TABLES)
-        self.assertIn("odds_snapshots", G.GROW_ONLY)
-        with open(os.path.join(HERE, "fpl_odds.py"), encoding="utf-8") as fh:
-            src = fh.read()
-        self.assertNotRegex(src, r"(?i)\b(delete\s+from|drop\s+table|truncate|vacuum)\b")
+class OddsAppendOnly(unittest.TestCase):
+    """The gate: every odds file of the last data commit present and
+    byte-identical (RULING W1 odds storage, point 1)."""
+
+    def setUp(self):
+        import subprocess
+        self.repo = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.repo, True)
+        self.git = lambda *a: subprocess.run(["git", "-C", self.repo, "-c", "user.name=t", "-c", "user.email=t@t",
+                                              "-c", "core.autocrlf=false", *a], capture_output=True, text=True)
+        subprocess.run(["git", "init", "-q", self.repo], check=True)
+        con = sqlite3.connect(os.path.join(self.repo, "fpl.sqlite"))
+        con.executescript("CREATE TABLE price_history (player_id INTEGER, date TEXT, now_cost INTEGER);"
+                          "CREATE TABLE events (id INTEGER PRIMARY KEY, deadline_time TEXT);")
+        con.close()
+        with open(os.path.join(self.repo, "projection_log.csv"), "w", encoding="utf-8", newline="") as fh:
+            fh.write("made_at,source,event,player_id,web_name,predicted\n")
+        os.makedirs(os.path.join(self.repo, "odds"))
+        self.old = os.path.join(self.repo, "odds", "odds_2026-10-18T2141Z.json.gz")
+        with open(self.old, "wb") as fh:
+            fh.write(O.gz(BODY))
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "last night")
+
+    def _gate(self):
+        with redirect_stdout(io.StringIO()) as out:
+            code = G.main([self.repo])
+        return code, out.getvalue()
+
+    def test_a_new_file_passes_and_the_old_one_untouched(self):
+        with open(os.path.join(self.repo, "odds", "odds_2026-10-19T2141Z.json.gz"), "wb") as fh:
+            fh.write(O.gz(b"[]"))
+        self.assertEqual(G.check_odds(self.repo), [])
+        self.assertEqual(self._gate()[0], 0)
+
+    def test_a_rewritten_odds_file_fails_the_gate(self):
+        with open(self.old, "wb") as fh:
+            fh.write(O.gz(b"[]"))
+        self.assertEqual(G.check_odds(self.repo),
+                         ["odds/odds_2026-10-18T2141Z.json.gz was rewritten - odds files are append-only"])
+        code, out = self._gate()
+        self.assertEqual(code, 1)
+        self.assertIn("GATE FAIL    odds/odds_2026-10-18T2141Z.json.gz was rewritten", out)
+
+    def test_a_deleted_odds_file_fails_the_gate(self):
+        os.remove(self.old)
+        self.assertEqual(G.check_odds(self.repo),
+                         ["odds/odds_2026-10-18T2141Z.json.gz was deleted - odds files are append-only"])
+        self.assertEqual(self._gate()[0], 1)
+
+
+class BigFiles(unittest.TestCase):
+    """Check 24 also WARNs when any single file of the data folder exceeds
+    50 MB, naming it (RULING W1 odds storage, point 4)."""
+
+    def test_a_big_file_is_found_and_named(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.makedirs(os.path.join(tmp, "odds"))
+        os.makedirs(os.path.join(tmp, ".git"))
+        for name in ("odds/big.json.gz", ".git/pack.bin", "small.txt"):
+            with open(os.path.join(tmp, name), "wb") as fh:
+                fh.write(b"x" * (3000 if name != "small.txt" else 10))
+        self.assertEqual(C.big_files(tmp, limit_mb=0.002), [("odds/big.json.gz", 3000)])
+        self.assertEqual(C.BIG_FILE_MB, 50)
+
+    def test_check_24_names_a_big_file(self):
+        x = C.Ctx(repo_kb=120 * 1024, big_files=[("fpl.sqlite", 60 * 1048576)])
+        self.assertEqual(C.c24(x), (C.WARN, "file(s) over 50 MB: fpl.sqlite 60 MB; repo 120 MB"))
+        x.repo_kb = None
+        self.assertEqual(C.c24(x)[0], C.WARN)                 # named even when the repo was not measured
+        x.repo_kb = 950 * 1024
+        self.assertEqual(C.c24(x)[0], C.FAIL)
+        x.big_files = []
+        x.repo_kb = 120 * 1024
+        self.assertEqual(C.c24(x), (C.OK, "120 MB"))
 
 
 class OddsCheck(unittest.TestCase):

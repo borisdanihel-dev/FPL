@@ -56,6 +56,7 @@ STATUS, STATUS_DRY = "status.txt", "status_dryrun.txt"
 STATS_PREFIX = "SYNC STATS "             # printed by fpl_sync.py at the end of every sync
 PRAGUE = "Europe/Prague"
 REPO_WARN_MB, REPO_FAIL_MB = 500, 900
+BIG_FILE_MB = 50            # GitHub warns at 50 MB a file, refuses 100 MB (W1 odds storage, point 4)
 API = "https://api.github.com"
 _urlopen = urllib.request.urlopen
 
@@ -94,6 +95,7 @@ class Ctx:
         self.run_log = ""                     # tonight's block of the run log
         self.repo_why = "not measured"
         self.changed = []                     # [(name, bytes)] the files the commit would add
+        self.big_files = []                   # [(name, size)] data files over BIG_FILE_MB
         self.key = ""
         self.known_gaps = {}
         self.__dict__.update(kw)
@@ -459,11 +461,17 @@ def c23(x):
 
 
 def c24(x):
-    if x.repo_kb is None:
+    """The repository's size (GitHub API), and every single file of the data
+    folder: one over BIG_FILE_MB is a WARN that names it (W1 odds storage,
+    point 4: GitHub refuses a file over 100 MB, so the push would fail)."""
+    big = [f"{n} {s / 1048576:.0f} MB" for n, s in sorted(x.big_files)]
+    mb = x.repo_kb / 1024 if x.repo_kb is not None else None
+    if mb is not None and mb >= REPO_FAIL_MB:
+        return FAIL, f"{mb:.0f} MB (>= {REPO_FAIL_MB})" + (f"; over {BIG_FILE_MB} MB: {_short(big)}" if big else "")
+    if big:
+        return WARN, f"file(s) over {BIG_FILE_MB} MB: {_short(big)}" + (f"; repo {mb:.0f} MB" if mb is not None else "")
+    if mb is None:
         return SKIP, x.repo_why
-    mb = x.repo_kb / 1024
-    if mb >= REPO_FAIL_MB:
-        return FAIL, f"{mb:.0f} MB (>= {REPO_FAIL_MB})"
     if mb >= REPO_WARN_MB:
         return WARN, f"{mb:.0f} MB (>= {REPO_WARN_MB})"
     return OK, f"{mb:.0f} MB"
@@ -666,6 +674,20 @@ def changed_files(data):
     return files
 
 
+def big_files(data, limit_mb=BIG_FILE_MB):
+    """[(path relative to the data folder, size)] of every file over limit_mb,
+    .git excluded."""
+    out = []
+    for root, dirs, files in os.walk(data):
+        dirs[:] = [d for d in dirs if d != ".git"]
+        for f in files:
+            p = os.path.join(root, f)
+            size = os.path.getsize(p)
+            if size > limit_mb * 1048576:
+                out.append((os.path.relpath(p, data).replace(os.sep, "/"), size))
+    return out
+
+
 def repo_size(env):
     """(kb, why): the repository size from the GitHub API (check 24), or
     (None, the reason it was not measured). The token is sent, never shown."""
@@ -720,6 +742,7 @@ def load(data, stamp, now=None, env=None):
     prev_status = _git(data, "show", f"HEAD:{REPORTS}/{STATUS}")
     x.prev_status = prev_status.decode("utf-8", "replace") if prev_status else None
     x.changed = changed_files(data)
+    x.big_files = big_files(data)
     x.repo_kb, x.repo_why = repo_size(env)
     x.known_gaps = fpl_sync.known_price_gaps()[0]
     return x

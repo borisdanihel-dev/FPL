@@ -20,6 +20,7 @@ workflow commits back to the repository:
     reports/watch_<UTC date>.txt               the watch file for watchlist.txt (item L)
     exports/fpl_export_gwN_<UTC date>.json     tonight's export, point-in-time
     projection_log.csv                         written by fpl_edge.py --record only
+    odds/odds_<fetched UTC>.json.gz            the Odds API answer, one a night (W1)
 
 Rules carried over from fpl_run.bat:
 * A red test suite blocks --record. Forecasts freeze at the deadline and cannot
