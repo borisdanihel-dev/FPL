@@ -120,6 +120,16 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   1. The Monday landing: after W1's green dispatch, the landing branch
      (revert of `32bf218` + lane-b's items + the BUILD_PLAN Part C line) is
      pushed and needs the dry-run click.
+  2. **S11 download approval:** the ruling's priors and reliability
+     constants come from 2024/25 per-gameweek data (the player's 2024/25
+     share at the same club; k from split-half reliability measured on
+     2024/25). The repo holds only 2025/26 per-gameweek rows and the FPL
+     API's 2024/25 season totals without clubs, so S11 needs
+     `github.com/vaastav/Fantasy-Premier-League` season 2024/25
+     (`merged_gw.csv`, `fixtures.csv`, `teams.csv`, about 7 MB, into
+     `historical/2024-25/`, gitignored). Question: may lane B download it?
+     Until then S11 is parked and the queue runs S12, then S13 (2025/26
+     only).
 
   Boris is asleep until about 08:00 Prague. Until then:
   - Ask nothing. Anything that needs me (a click, a download approval, a decision) gets parked in your SESSION_STATE file with the exact question, and you move on to the next queued item that doesn't need it.
