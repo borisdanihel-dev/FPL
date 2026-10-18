@@ -108,6 +108,12 @@ S3 on; where it differs from the parts above, it governs.
 8. Queues. Lane A: S3, W1, Step 10, W2 (after the GW8 deadline: chip calculator, Free Hit screen, league odds into the report), Step 16, W3, Steps 17-18, W4. Lane B: Step 4 (harness, offline part), Step 7, Step 5 (model and backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
 9. Usage: the verifier runs on Fable for model tests (Steps 4-7, 11-18) and on Opus at xhigh for tooling and wiring items. If the weekly allowance runs low, lane B pauses first.
 
+**Amendment 1** (verbatim; it replaces item 9):
+
+RULING FAST-TRACK amendment 1:
+Append verbatim to prereg/FAST.md and BUILD_PLAN.md Part E. On this account Fable has its own weekly limit, separate from the main allowance. Replace item 9: the verifier runs on Fable for every item; it falls back to Opus at xhigh only if the Fable weekly bar is above 80% before its reset. Lane B's main session runs on Fable (Boris selects it); lane A's stays on Opus 5.5. Each report names the models used.
+END RULING
+
 ---
 
 ## Verifier agent (created in Step 0)

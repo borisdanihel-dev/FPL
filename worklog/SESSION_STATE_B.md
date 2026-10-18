@@ -30,9 +30,10 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   guard and no open decision, start the next queued item and still print the
   15-line summary. Stop on FAIL, WARN, an open decision, a model result that
   would change a live decision, or after 6 items without a chat review.
-- **Verifier model (item 9):** Fable for model tests (Steps 4-7, 11-18); Opus
-  at effort xhigh for tooling items. If the weekly allowance runs low, lane B
-  pauses first.
+- **Models (FAST-TRACK amendment 1, which replaces item 9):** lane B's main
+  session runs on Fable (Boris selects it). The verifier runs on Fable for
+  every item; it falls back to Opus at xhigh only if the Fable weekly bar is
+  above 80% before its reset. Each report names the models used.
 - **Current item:** none yet. The first is Step 4 (harness, offline part).
   Waiting for the chat's rulings for Steps 4-7, which come together (item 7).
   Each prereg is committed before its item starts and never edited after any

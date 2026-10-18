@@ -27,6 +27,10 @@ this file, then waits for the next instruction.
 - **Queue (FAST-TRACK item 8):** S3, W1 (by Wed 21 Oct 20:00 UTC: fpl_ep and the
   Odds API collector), Step 10, W2 (after the GW8 deadline), Step 16, W3,
   Steps 17-18, W4.
+- **Models (FAST-TRACK amendment 1):** lane A's main session stays on Opus
+  5.5; the verifier runs on Fable for every item, falling back to Opus at
+  xhigh only if the Fable weekly bar is above 80% before its reset. Each
+  report names the models used.
 - **Dry runs used:** 18 Oct: 2 of 6.
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_A.md`).
