@@ -289,7 +289,10 @@ class OddsCollector(unittest.TestCase):
         con.close()
         with open(db, "rb") as fh:
             before = fh.read()
-        O.main({"ODDS_API_KEY": fake_key()}, say=lambda s: None, data_dir=self.data, opener=self._opener([]))
+        seen = []
+        O.main({"ODDS_API_KEY": fake_key(), "GITHUB_ACTIONS": "true"}, say=lambda s: None, data_dir=self.data,
+               opener=self._opener(seen))
+        self.assertEqual(len(seen), 1)
         with open(db, "rb") as fh:
             self.assertEqual(fh.read(), before)
         self.assertNotIn("odds", S.SCHEMA.lower())
@@ -307,8 +310,10 @@ class OddsCollector(unittest.TestCase):
         self.assertNotIn(key, line)                             # ... never shown
         with open(self._path(), "rb") as fh:
             self.assertNotIn(key.encode(), gzip.decompress(fh.read()))
-        out = []
-        O.main({"ODDS_API_KEY": key}, say=out.append, data_dir=tempfile.mkdtemp(), opener=self._opener([]))
+        out, seen = [], []
+        O.main({"ODDS_API_KEY": key, "GITHUB_ACTIONS": "true"}, say=out.append, data_dir=tempfile.mkdtemp(),
+               opener=self._opener(seen))
+        self.assertEqual(len(seen), 1)
         self.assertNotIn(key, "".join(out))
 
     def test_the_secret_scan_reads_inside_an_odds_file(self):
@@ -349,11 +354,55 @@ class OddsCollector(unittest.TestCase):
                            ({"GITHUB_REF": "refs/heads/master", "GITHUB_EVENT_NAME": "schedule"}, 1)):
             with self.subTest(env=env):
                 seen, lines = [], []
-                env = dict(env, ODDS_API_KEY=fake_key())
+                env = dict(env, ODDS_API_KEY=fake_key(), GITHUB_ACTIONS="true")
                 O.main(env, say=lines.append, data_dir=tempfile.mkdtemp(), opener=self._opener(seen))
                 self.assertEqual(len(seen), calls)
                 if not calls:
                     self.assertEqual(lines, ["ODDS SKIPPED (dry run): odds_live not ticked - no Odds API call"])
+
+    def test_the_api_is_called_only_in_github_actions(self):
+        """RULING W1 pre-check decisions, point 1: no call unless GITHUB_ACTIONS
+        is "true", whatever else the run asks for; anywhere else one SKIPPED
+        line and exit 0."""
+        real = {"GITHUB_REF": "refs/heads/master", "GITHUB_EVENT_NAME": "schedule"}
+        live = {"GITHUB_REF": "refs/heads/w1-wip", "FPL_ODDS_LIVE": "true"}
+        for env, calls in ((real, 0), ({}, 0), (live, 0), (dict(real, GITHUB_ACTIONS="false"), 0),
+                           (dict(real, GITHUB_ACTIONS=""), 0), (dict(real, GITHUB_ACTIONS="True"), 0),
+                           (dict(real, GITHUB_ACTIONS="1"), 0),
+                           (dict(real, GITHUB_ACTIONS="true"), 1), (dict(live, GITHUB_ACTIONS="true"), 1)):
+            with self.subTest(env=env):
+                seen, lines, data = [], [], tempfile.mkdtemp()
+                self.addCleanup(shutil.rmtree, data, True)
+                self.assertEqual(O.main(dict(env, ODDS_API_KEY=fake_key()), say=lines.append, data_dir=data,
+                                        opener=self._opener(seen)), 0)
+                self.assertEqual(len(seen), calls)
+                if calls:
+                    self.assertTrue(lines[0].startswith("ODDS OK"), lines)
+                else:
+                    self.assertEqual(lines, ["ODDS SKIPPED (not in GitHub Actions)"])
+                    self.assertFalse(os.path.exists(os.path.join(data, "odds")))
+
+    def test_the_command_line_reads_github_actions_from_its_environment(self):
+        """main() with no env argument (python fpl_odds.py) reads os.environ."""
+        from unittest import mock
+        for value, calls in ((None, 0), ("true", 1)):
+            env = {"ODDS_API_KEY": fake_key(), "GITHUB_REF": "refs/heads/master", "GITHUB_EVENT_NAME": "schedule"}
+            if value is not None:
+                env["GITHUB_ACTIONS"] = value
+            seen, lines, data = [], [], tempfile.mkdtemp()
+            self.addCleanup(shutil.rmtree, data, True)
+            with self.subTest(GITHUB_ACTIONS=value), mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(O.main(say=lines.append, data_dir=data, opener=self._opener(seen)), 0)
+                self.assertEqual(len(seen), calls)
+
+    def test_an_answer_without_credit_headers_is_kept_and_a_warn(self):
+        """RULING W1 pre-check decisions, point 2, from the collector's own line."""
+        line = O.collect(self.data, fake_key(), NOW, lambda req, timeout=30: Reply(BODY, {}))
+        self.assertTrue(line.startswith("ODDS OK"), line)
+        self.assertTrue(os.path.exists(self._path()))          # the snapshot is still kept
+        level, detail = C.c30(C.Ctx(run_log=line))
+        self.assertEqual(level, C.WARN)
+        self.assertTrue(detail.startswith("credits unknown"), detail)
 
     def test_the_workflow_input_odds_live(self):
         with open(os.path.join(HERE, ".github", "workflows", "nightly.yml"), encoding="utf-8") as fh:
@@ -450,8 +499,10 @@ class OddsCheck(unittest.TestCase):
         return C.c30(C.Ctx(run_log=text))
 
     def test_ok_skipped_failed_missing(self):
-        self.assertEqual(self._level("collecting odds ...\nODDS OK      20 events (20 with totals), 1200 prices")[0], C.OK)
+        self.assertEqual(self._level("collecting odds ...\nODDS OK      20 events (20 with totals), 1200 prices, "
+                                     "odds/x 10 bytes; credits used 8, remaining 492, this request 4")[0], C.OK)
         self.assertEqual(self._level("ODDS SKIPPED no ODDS_API_KEY in this run")[0], C.WARN)
+        self.assertEqual(self._level("ODDS SKIPPED (not in GitHub Actions)")[0], C.WARN)
         self.assertEqual(self._level("ODDS FAILED  HTTP 401 - no snapshot tonight")[0], C.WARN)
         self.assertEqual(self._level("collecting odds ...\n")[0], C.WARN)
         self.assertEqual(C.NAMES[30], "odds snapshot")
@@ -471,6 +522,19 @@ class OddsCheck(unittest.TestCase):
         self.assertEqual(C.c30(C.Ctx(run_log=line.format(59)))[0], C.WARN)
         self.assertIn("credits remaining 59 (< 60)", C.c30(C.Ctx(run_log=line.format(59)))[1])
         self.assertEqual(C.c30(C.Ctx(run_log=line.format(60)))[0], C.OK)
+
+    def test_missing_credit_headers_are_a_warn(self):
+        """RULING W1 pre-check decisions, point 2: any credit header missing is
+        "credits unknown", a WARN like remaining below 60."""
+        line = ("ODDS OK      20 events (20 with totals), 1200 prices, odds/x 10 bytes; "
+                "credits used {}, remaining {}, this request {}")
+        for heads in (("None", "None", "None"), ("8", "None", "4"), ("None", "492", "4"), ("8", "492", "None")):
+            with self.subTest(heads=heads):
+                level, detail = C.c30(C.Ctx(run_log=line.format(*heads)))
+                self.assertEqual(level, C.WARN)
+                self.assertTrue(detail.startswith("credits unknown"), detail)
+        self.assertEqual(C.c30(C.Ctx(run_log=line.format(8, 492, 4)))[0], C.OK)
+        self.assertEqual(C.c30(C.Ctx(run_log="ODDS OK      20 events (20 with totals), 1200 prices"))[0], C.WARN)
 
     def test_a_missing_fpl_ep_record_fails_check_29(self):
         text = ("record summary:\nRECORD OK own 5\nRECORD OK xg 5\nRECORD OK minutes 5\n"

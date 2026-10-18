@@ -24,9 +24,12 @@ status only. Without a key, or when the request fails, it says so in one line
 - ODDS SKIPPED or ODDS FAILED - and exits 0: tonight's other data still
 commits, and checks.py (check 30) turns the line into a WARN.
 
-A dry run (fpl_publish.run_mode) never calls the API unless its dispatch
-ticked odds_live (FPL_ODDS_LIVE=true): otherwise ODDS SKIPPED (dry run). A
-real run always calls it (RULING W1 decisions, point 1).
+The API is called only inside GitHub Actions (GITHUB_ACTIONS is "true");
+anywhere else - this PC, a test - it prints ODDS SKIPPED (not in GitHub
+Actions) and exits 0, key or no key (RULING W1 pre-check decisions, point 1).
+In Actions, a dry run (fpl_publish.run_mode) never calls it unless its
+dispatch ticked odds_live (FPL_ODDS_LIVE=true): otherwise ODDS SKIPPED (dry
+run). A real run always calls it (RULING W1 decisions, point 1).
 
 The ODDS OK line gives the events, how many carry a totals market (Step 5:
 "confirm totals coverage"), the prices, the file and its size, and the
@@ -149,6 +152,9 @@ def collect(data_dir, key, now=None, opener=None):
 def main(env=None, say=print, data_dir=".", opener=None):
     import fpl_publish
     env = os.environ if env is None else env
+    if env.get("GITHUB_ACTIONS") != "true":
+        say("ODDS SKIPPED (not in GitHub Actions)")
+        return 0
     mode, _ = fpl_publish.run_mode(env)
     if mode == "dry" and (env.get("FPL_ODDS_LIVE") or "").strip().lower() != "true":
         say("ODDS SKIPPED (dry run): odds_live not ticked - no Odds API call")

@@ -80,6 +80,7 @@ SEVERITY = {1: FAIL, 2: FAIL, 3: FAIL, 4: FAIL, 5: FAIL, 6: WARN, 7: WARN, 8: FA
             26: WARN, 27: SKIP, 28: FAIL, 29: FAIL, 30: WARN}
 SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # as fpl_nightly.SOURCES
 CREDITS_WARN = 60           # Odds API credits left below this: check 30 WARNs (W1 decisions)
+CREDIT_HEADERS = ("x-requests-used", "x-requests-remaining", "x-requests-last")   # in the ODDS OK line's order
 
 Result = collections.namedtuple("Result", "n name level detail")
 
@@ -541,17 +542,24 @@ def c29(x):
 def c30(x):
     """Tonight's odds snapshot (W1): fpl_odds.py's one line in the run log.
     Missing, skipped or failed is a WARN - the odds are collected for later
-    models, and tonight's other data is sound without them."""
+    models, and tonight's other data is sound without them. An OK line is a
+    WARN too when a credit header is missing ("credits unknown"; RULING W1
+    pre-check decisions, point 2) or fewer than CREDITS_WARN credits remain."""
     lines = [l.strip() for l in (x.run_log or "").splitlines()
              if l.startswith(("ODDS OK", "ODDS FAILED", "ODDS SKIPPED"))]
     if not lines:
         return WARN, "no odds line in tonight's run log: the collector did not run"
-    if lines[-1].startswith("ODDS OK"):
-        left = re.search(r"remaining (\d+)", lines[-1])
-        if left and int(left.group(1)) < CREDITS_WARN:
-            return WARN, f"credits remaining {left.group(1)} (< {CREDITS_WARN}): {lines[-1]}"
-        return OK, lines[-1][len("ODDS OK"):].strip()
-    return WARN, lines[-1]
+    line = lines[-1]
+    if line.startswith("ODDS OK"):
+        got = re.search(r"credits used (\S+), remaining (\S+), this request (\S+)", line)
+        heads = dict(zip(CREDIT_HEADERS, got.groups())) if got else {}
+        unknown = [h for h in CREDIT_HEADERS if not re.fullmatch(r"\d+(\.\d+)?", heads.get(h, ""))]
+        if unknown:
+            return WARN, f"credits unknown (no {', '.join(unknown)}): {line}"
+        if float(heads["x-requests-remaining"]) < CREDITS_WARN:
+            return WARN, f"credits remaining {heads['x-requests-remaining']} (< {CREDITS_WARN}): {line}"
+        return OK, line[len("ODDS OK"):].strip()
+    return WARN, line
 
 
 CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 31)]
