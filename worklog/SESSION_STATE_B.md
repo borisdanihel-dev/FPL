@@ -45,12 +45,36 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   RULING lane B go appended as Amendment 1 to each (`94fbc36`). Order under
   auto-continue: S4, S7, S5, S6. No prereg is edited after any of its
   evaluation numbers exist.
-- **Current item:** S4 (code `4eab638`, amendment 2 fix `973b3f8` on
-  `lane-b`). First verifier run FAIL (club-map leak in the frozen adapter);
-  RULING S4 amendment 2 → `tools/hist_pit.py`; second verifier run:
-  pending at the time of this commit — the report and CHANGELOG carry
-  VERIFIER2 placeholders until it returns. Merge by the branch-handling
-  ruling only after PASS; auto-continue (S7, S5, S6) resumes only then.
+- **PAUSED (RULING pause, 2026-10-18, verbatim below).** Land nothing on
+  master and start no item until Boris says resume. Work in progress is
+  committed on `lane-b` and pushed as a fast-forward only.
+- **Current item:** S4 (code `4eab638`, amendment 2 fix `973b3f8`, docs
+  `5ae7f4a` on `lane-b`, nothing on master). First verifier run FAIL
+  (club-map leak in the frozen adapter); RULING S4 amendment 2 →
+  `tools/hist_pit.py`, numbers recomputed; the second verifier run was in
+  progress when the pause arrived — its result, or "interrupted", is
+  recorded in `worklog/verify_S4.md` and the report. **On resume:** if the
+  second run is recorded as interrupted, rerun the verifier first; after
+  PASS and a clean write guard, land S4 by the branch-handling ruling
+  (temporary branch from `origin/master`, cherry-pick `79d14ee`..HEAD and
+  the S4 commits, full suite, push `HEAD:master`, merge master into
+  `lane-b`), observing the standing rule below for `tests/`; then S7, S5,
+  S6 under auto-continue.
+- **Standing rule (RULING pause, verbatim below):** once S3 is on master
+  the nightly runs `tests/` by discovery and a failing test fails the gate,
+  so any push to master that adds or changes a file under `tests/` is
+  runner path under 9d: never between 21:00 UTC and the end of that
+  night's nightly, never within 30 hours of a deadline
+  (`events.deadline_time`; next: GW8 Fri 23 Oct 17:30 UTC, so the window
+  closes Thu 22 Oct 11:30 UTC). Lane B's tests stay hermetic: no network,
+  no `C:\GIT\FPL-data`, no real git identity. `tests/test_S4.py` complies:
+  toy data in temp folders; one test reads the repo's gitignored
+  `historical/2025-26` copy and is skipped where it is absent (the runner).
+
+  RULING pause (Boris away, connection unreliable):
+  Finish the step you are in, then stop at a clean checkpoint. Land nothing on master and start no new item until I say resume. Commit work in progress; push lane-b only as a fast-forward (no rebase, no force). A verifier run cut off by the connection is recorded as interrupted (not FAIL) and rerun on resume. Update worklog/SESSION_STATE_B.md, then wait.
+  Standing rule from now on: once S3 is on master, the nightly runs tests/ by discovery (fpl_nightly.py TEST_ARGS) and a failing test fails the gate. So any push to master that adds or changes a file under tests/ counts as runner path under 9d: never between 21:00 UTC and the end of that night's nightly, and never within 30 hours of a deadline. Your tests stay hermetic: no network, no C:\GIT\FPL-data, no real git identity.
+  END RULING
 - **S4 facts the next items use:** `tools/backtest.py` — `Harness(season,
   data_dir, hist_dir)`, `.compare(a, b, filt)`, `.rows(ev, source, filt)`,
   `.decision(ev, source)`; `bootstrap_mean(values, b, seed)`,
