@@ -2843,3 +2843,39 @@ The step merged in `9b4a462` backed up on a Sunday dispatch without
   - the log blob begins with `data`'s byte for byte (+1055 rows); the gate,
     re-run here, gives `GATE OK` and an identical `fpl.sql`;
   - no release was made, and `data` is still `e84bee6`.
+
+---
+
+## 2026-10-18 — S2 done: merged, proof dispatch, final verifier (`9b4a462`, `50abf60`; data `4af6abe`)
+
+**Merges:**
+- `9b4a462`: S2 with amendments 1 and 2, ten files blob-identical to `08f29fb`;
+- `50abf60`: the backup fix, two files blob-identical to `3ae739b`.
+
+The tags `pre-S2` (`1cddca9`) and `pre-S2-backup` (`2bee604`) mark master
+before each merge. Both merges were before 21:00 UTC and outside the 9d windows.
+
+**Final verifier:** **PASS** on Fable 5.1, effort high (`worklog/verify_S2.md`).
+
+**Proof dispatch** (Boris, master, dry_run unticked) → `data` `4af6abe`. Measured:
+- 386 tests OK, with 11 Windows-only skips.
+- The seven ALTER TABLE columns, once.
+- No price-date warning.
+- Four RECORD OK and `STUCK CHECK OK`.
+- `projection_log.csv`: +1055 / −0, beginning with `e84bee6`'s blob byte for
+  byte.
+- The export carries 38 deadlines and 105 selling prices (A9 15/15 on the real
+  export; budget £99.7m).
+- The database only grew; the NULL counts are 25,214 / 3,883 / 42.
+- The gate, re-run here: `GATE OK` and an identical `fpl.sql`.
+- Calibration GW4–GW6: identical to the pre-S2 code to the last digit.
+- No backup release (a dispatch without `force_backup`).
+- Tests 309 → 386.
+
+**Pending:**
+- tonight's scheduled nightly: it confirms S1 and S2 and should make
+  `backup-2026-10-18`;
+- the GW7 before/after comparison after lockdown;
+- the scheduled-only behaviour.
+
+Report: `worklog/cc_2026-10-18_S2.md`.
