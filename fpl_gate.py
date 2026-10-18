@@ -198,30 +198,35 @@ def write_dump(db, out):
     return out
 
 
-def staged_secrets(data_dir, key):
-    """Staged files in `data_dir` holding a KEY_PATTERNS string (any case) or
+def secret_hit(name, body, key):
+    """True when one file's bytes hold a KEY_PATTERNS string (any case) or
     `key` (when set). A .gz file is read decompressed as well as raw; one that
-    cannot be decompressed counts as a hit, since it cannot be cleared.
-    Returns their names, never what matched."""
+    cannot be decompressed counts as a hit, since it cannot be cleared. Used
+    by the staged scan below and by checks.py check 23 before the commit."""
+    value = key.encode("utf-8") if key else None
+    bodies = [body]
+    if name.lower().endswith(".gz"):
+        try:
+            bodies.append(gzip.decompress(body))
+        except (OSError, EOFError, zlib.error):
+            return True
+    return any(any(p in b.lower() for p in KEY_PATTERNS) or bool(value and value in b)
+               for b in bodies)
+
+
+def staged_secrets(data_dir, key):
+    """Staged files in `data_dir` that secret_hit() flags. Returns their
+    names, never what matched."""
     r = subprocess.run(["git", "-C", data_dir, "diff", "--cached", "--name-only", "-z",
                         "--diff-filter=ACMR"], stdout=subprocess.PIPE, check=True)
-    value = key.encode("utf-8") if key else None
     hits = []
     for name in (n for n in r.stdout.decode("utf-8").split("\0") if n):
         path = os.path.join(data_dir, name)
         if not os.path.isfile(path):
             continue
         with open(path, "rb") as fh:
-            bodies = [fh.read()]
-        if name.lower().endswith(".gz"):
-            try:
-                bodies.append(gzip.decompress(bodies[0]))
-            except (OSError, EOFError, zlib.error):
+            if secret_hit(name, fh.read(), key):
                 hits.append(name)
-                continue
-        if any(any(p in b.lower() for p in KEY_PATTERNS) or (value and value in b)
-               for b in bodies):
-            hits.append(name)
     return hits
 
 

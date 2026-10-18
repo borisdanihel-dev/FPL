@@ -2880,6 +2880,48 @@ before each merge. Both merges were before 21:00 UTC and outside the 9d windows.
 
 Report: `worklog/cc_2026-10-18_S2.md`.
 
+---
+
+## 2026-10-18 — S3 (Step 3, D3): checks, status line, failure issue, backup run; pre-check PASS (`s3-wip` `8149abd`, `data-dryrun` `f23d74a`)
+
+**Built** (lane A; main session Opus 5.5, verifier Fable 5.1 high):
+- `checks.py`: the 27 checks of the Step 3 table, plus 28 test gate and 29
+  record (S3 amendment 1).
+- The status line in `reports/status.txt` (`status_dryrun.txt` on a dry run)
+  and at the top of the report.
+- A FAIL commits nothing (`fpl_publish.py`).
+- The one issue "Nightly run failed" (`fpl_alert.py`), never touched by a dry
+  run.
+- The 03:17 backup cron behind `fpl_nightly.py --due`.
+- The sync's retry policy and `SYNC STATS` line.
+- Actions `checkout` v7.0.1 and `setup-python` v7.0.0, pinned to SHAs.
+- The suite by discovery (`test_fpl.py` plus `tests/`).
+- Hermetic git-using tests.
+
+**Measured:**
+- Tests 386 → 459, green bare, with the data and zones (0 skips), under a
+  dry-run environment, and with an empty home.
+- Mutations: mine 27 + 8, all red; the verifier's 29 of 30 red (check 11's
+  test precision).
+- Recording path byte-identical with a frozen clock.
+- Dry run of `c1d130a` (`03c1b34`): red (no git identity on the runner), and
+  the status still read OK. That led to amendment 1.
+- Dry run of `8149abd` (`f23d74a`): green.
+  - 459 OK and `TESTS OK`; `STATUS OK` 25/25; repo 4 MB;
+  - only `status_dryrun.txt` written;
+  - `GATE OK` and the same `fpl.sql` on a re-run here.
+- A local rehearsal with a planted failing test: `STATUS FAIL` (28, 29) and
+  nothing committed.
+
+**Found, not fixed:** `entry_gw.points` for GW3, GW4 and GW6 are stale. The
+sync stops refetching picks at `events.finished`, not `data_checked`.
+
+Report: `worklog/cc_2026-10-18_S3.md`. Merge, real dispatch and final
+verifier follow.
+
+**Also on 18 Oct:** RULING Step 10 addition (BUILD_PLAN.md Step 10, lane A
+queue) and RULING Part E note (BUILD_PLAN.md Part E item 4), both recorded
+verbatim.
 ## 2026-10-18 — S4: the backtest harness, offline part (`f9ca3d0` prereg, `94fbc36` amendment 1, `4eab638` code; lane B)
 
 Lane B's first item (RULING FAST-TRACK items 1, 4, 6; RULING S4 and RULING

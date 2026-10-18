@@ -102,6 +102,7 @@ S3 on; where it differs from the parts above, it governs.
 2. Wiring: an offline tool reaches the nightly only through a wiring item (W1, W2, ...), which is runner work. Batch several tools per wiring item; at most one wiring merge a day; never inside a freeze window.
 3. Collect first. W1 lands by Wed 21 Oct 20:00 UTC: record FPL's ep_next nightly as source fpl_ep (Step 4 item 2), and store Odds API snapshots with their fetch time (Step 5's collector only; ODDS_API_KEY reaches the runner here, under S1 amendment 1 item 1). Models that use them come later, offline.
 4. Two lanes. Lane A works in C:\GIT\FPL: runner work, wiring items and history items. Lane B works in a second worktree, C:\GIT\FPL-b (lane A creates it with git worktree add, on its own branch): offline items. One Claude Code session per lane, never two sessions in one folder. Each lane keeps worklog/SESSION_STATE_A.md or worklog/SESSION_STATE_B.md. Either lane may merge its own items: fetch, rebase onto master, rerun the full test suite, push; never force. On a CHANGELOG conflict, keep both entries.
+   - **Note to item 4** (RULING Part E note, 18 Oct, verbatim): lane-b is a GitHub backup branch, only ever fast-forwarded; lane B lands items on master from a temporary branch and merges master back into lane-b, so no force-push is ever needed. Lane A does not touch lane-b or the C:\GIT\FPL-b worktree.
 5. Tests: new items put their tests in tests/test_<item>.py. S3 switches the nightly gate and local runs to test discovery (test_fpl.py plus tests/). Only lane A edits test_fpl.py.
 6. Auto-continue: after an offline item with verifier PASS, a clean write guard and no open decision, the lane starts its next queued item without waiting; it still prints its 15-line summary. It stops on FAIL, WARN, an open decision, a model result that would change a live decision (adoption needs Boris's acceptance in chat), or after 6 items without a chat review.
 7. Pre-registration up front: the chat sends the rulings for Steps 4-7 together; each prereg is committed before its item starts and is never edited after any of its evaluation numbers exist.
@@ -492,6 +493,7 @@ Item H1.
   - apply position reclassifications.
 - Use `code` as the cross-season player key.
 - Test: re-scoring 2025/26 under the 2025/26 rules reproduces official points within ±1 for ≥ 99% of player-gameweeks.
+- **Re-measure with the point-in-time club map** (RULING Step 10 addition, 18 Oct, verbatim): once lane B has merged tools/hist_pit.py, re-measure the earlier 2025/26 findings that used fpl_hist.canonical_from_vaastav (the horizon test H=6, the F test, backtest_2025-26 and concentration_2025-26) with the point-in-time club map. Descriptive only: report old against new side by side; no rule changes unless a pre-registered test calls for one.
 
 ## Step 11 — share-of-team allocation with historical priors
 

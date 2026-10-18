@@ -45,19 +45,14 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   RULING lane B go appended as Amendment 1 to each (`94fbc36`). Order under
   auto-continue: S4, S7, S5, S6. No prereg is edited after any of its
   evaluation numbers exist.
-- **PAUSED (RULING pause, 2026-10-18, verbatim below).** Land nothing on
-  master and start no item until Boris says resume. Work in progress is
-  committed on `lane-b` and pushed as a fast-forward only.
-- **Current item:** S4 (code `4eab638`, amendment 2 fix `973b3f8`, docs
-  `5ae7f4a` on `lane-b`, nothing on master). First verifier run FAIL
-  (club-map leak in the frozen adapter); RULING S4 amendment 2 →
-  `tools/hist_pit.py`, numbers recomputed; **second verifier run PASS**
-  (Fable 5.1, `worklog/verify_S4.md`), write guard clean. S4 is complete on
-  `lane-b` and waits only for the merge. **On resume:** land S4 by the branch-handling ruling
-  (temporary branch from `origin/master`, cherry-pick `79d14ee`..HEAD and
-  the S4 commits, full suite, push `HEAD:master`, merge master into
-  `lane-b`), observing the standing rule below for `tests/`; then S7, S5,
-  S6 under auto-continue.
+- **Resumed 2026-10-18 18:50 UTC** (Boris: "resume"). S4 landed on master
+  as `70f026d` by the branch-handling ruling (temporary branch `s4-land`
+  rebased onto `origin/master` `1af9644` (S3), one CHANGELOG conflict kept
+  both entries, full suite by discovery 491 OK (9 skipped), pushed
+  `HEAD:master` at 18:49 UTC, outside both 9d windows; master then merged
+  into `lane-b`). The RULING pause text stays below for the record.
+- **Current item:** S7 (`tools/chips.py`, `prereg/S7.md` with amendment 1),
+  started under auto-continue after S4's PASS. Then S5, S6.
 - **Standing rule (RULING pause, verbatim below):** once S3 is on master
   the nightly runs `tests/` by discovery and a failing test fails the gate,
   so any push to master that adds or changes a file under `tests/` is
@@ -90,6 +85,6 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
 - **Items since the last chat review:** 1 of 6 (S4).
-- **Open for the chat:** the S4 fix ruling (report, Decisions 0 and 1).
+- **Open for the chat:** S4 report Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).

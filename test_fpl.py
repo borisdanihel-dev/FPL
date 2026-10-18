@@ -695,6 +695,8 @@ class ProjectionLogKey(unittest.TestCase):
         allowed = {
             "fpl_edge.py": "the recorder and forecasts()",
             "fpl_gate.py": "the integrity gate: whole rows, never forecasts",
+            "checks.py": "checks 18-20 (S3): growth, duplicate keys and late rows of the raw "
+                         "log, like the gate - never forecasts",
             "fpl_nightly.py": "docstrings only",
             "fpl_prepush.py": "the data-path list of the hook",
             "fpl_publish.py": "docstring only",
@@ -3980,8 +3982,12 @@ class NightlyRunner(unittest.TestCase):
     def _world(self, mode="clean", tests=0, sync=0, export=True, edge=None):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, True)
-        stubs = {"test_fpl.py": f"import sys\nsys.exit({tests})\n",
+        # the suite runs by discovery (FAST-TRACK item 5): a stub test module
+        # whose one test fails when `tests` is not 0; the checks run last (S3)
+        stubs = {"test_fpl.py": ("import unittest\n\n\nclass Stub(unittest.TestCase):\n"
+                                 f"    def test_stub(self):\n        self.assertEqual({tests}, 0)\n"),
                  "fpl_sync.py": f"import sys\nprint('sync ran')\nsys.exit({sync})\n",
+                 "checks.py": "print('CHECKS stub')\n",
                  "fpl_edge.py": edge or NIGHTLY_EDGE_STUB, "MODE": mode}
         if export:
             stubs["fpl_export_gw3.json"] = "{}"
@@ -4149,7 +4155,8 @@ class NightlyRunner(unittest.TestCase):
         self.assertEqual(self._gunzip(os.path.join(data, "exports", f"fpl_export_gw3_{self.STAMP}.json.gz")),
                          "{}")
         self.assertEqual(sorted(os.listdir(code_dir)),
-                         ["MODE", "fpl_edge.py", "fpl_sync.py", "test_fpl.py", "watchlist.txt"])
+                         ["MODE", "checks.py", "fpl_edge.py", "fpl_sync.py", "test_fpl.py",
+                          "watchlist.txt"])
 
     def test_the_data_dir_comes_from_fpl_data_dir(self):
         seen, real = [], N.nightly
@@ -4204,7 +4211,8 @@ class NightlyRunner(unittest.TestCase):
         self.assertEqual(set(os.listdir(data)) - before, {"fpl_export_gw5.json", "fpl_export_gw6.json"})
         self.assertEqual(git("rev-parse", "HEAD").stdout, head, "--restore committed")
         self.assertEqual(git("status", "--porcelain").stdout, "", "--restore left a tracked change")
-        self.assertEqual(sorted(os.listdir(code_dir)), ["MODE", "fpl_edge.py", "fpl_sync.py", "test_fpl.py"])
+        self.assertEqual(sorted(os.listdir(code_dir)),
+                         ["MODE", "checks.py", "fpl_edge.py", "fpl_sync.py", "test_fpl.py"])
         self.assertTrue(lines[-1].startswith("RESTORE OK   2 working export(s)"), lines)
 
     def test_restore_replaces_a_stale_working_export_and_then_does_nothing(self):
@@ -4360,8 +4368,8 @@ class NightlyWorkflow(unittest.TestCase):
                                                  if not l.strip().startswith("#")))
         self.assertIn("actions/setup-python@", y)
         self.assertIn("run: python -m pip install -r requirements.txt", y)
-        self.assertIn("run: python fpl_nightly.py", y)
-        self.assertLess(y.index("pip install -r requirements.txt"), y.index("run: python fpl_nightly.py"))
+        self.assertIn("run: python fpl_nightly.py\n", y)
+        self.assertLess(y.index("pip install -r requirements.txt"), y.index("run: python fpl_nightly.py\n"))
         code = "\n".join(l for l in y.splitlines() if not l.strip().startswith("#"))
         for foreign in ("\\", "My Drive", "outbox", "fpl_ship", "fpl_run.bat", "secrets."):
             self.assertNotIn(foreign, code, f"{foreign!r} has no place on the runner")
@@ -4416,7 +4424,7 @@ class NightlyWorkflow(unittest.TestCase):
         only after a successful publish; backup-* releases beyond 8 deleted."""
         y = self._read(".github", "workflows", "nightly.yml")
         b = y[y.index("name: Weekly backup"):]
-        self.assertIn("if: always() && steps.publish.outcome == 'success'", b)
+        self.assertIn("if: always() && steps.due.outputs.run == 'true' && steps.publish.outcome == 'success'", b)
         self.assertIn("GH_TOKEN: ${{ github.token }}", b)
         self.assertIn('if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then', b)
         self.assertIn('if [ "$(date -u +%u)" != 7 ]; then echo "BACKUP skipped: not Sunday"; exit 0; fi', b)
@@ -5514,6 +5522,10 @@ class DryRunMode(unittest.TestCase):
         steps = y[y.index("    steps:"):].split("\n      - ")[1:]
         guarded = 0
         for step in steps:
+            if "fpl_alert.py" in step:                 # S3: the failure issue
+                cond = next(l for l in step.splitlines() if l.strip().startswith("if:"))
+                self.assertIn("env.FPL_DRY_RUN != 'true'", cond, step[:60])
+                continue
             if "gh release" in step or "gh issue" in step:
                 guarded += 1
                 cond = next(l for l in step.splitlines() if l.strip().startswith("if:"))
@@ -6432,7 +6444,7 @@ class StepTwoFiles(unittest.TestCase):
     ProjectionLogKey). p1_eval.py is frozen and not checked."""
 
     RUNNER = ("fpl_edge.py", "fpl_sync.py", "fpl_nightly.py", "fpl_gate.py", "fpl_publish.py",
-              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py")
+              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py", "checks.py", "fpl_alert.py")
 
     def test_every_text_open_names_utf8_and_newline(self):
         import re

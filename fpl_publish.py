@@ -22,6 +22,11 @@ never pushes to data. Any run whose ref is not master is dry, whatever it
 asked for; a scheduled run is never dry; a dispatch on master is dry while
 its dry_run input is ticked (the workflow passes it as FPL_DRY_RUN).
 
+Before all of it: when tonight's checks (checks.py, S3) wrote a status file
+whose first line is STATUS FAIL, a real run commits nothing (Step 3.1: FAIL =
+no data commit and a red run). A dry run says what a real one would have done
+and still reports to data-dryrun, so a failed dry run can be read back.
+
 Exit 0 after a push, or when a real run has nothing to commit; 1 otherwise.
 
 Standard library only.
@@ -97,6 +102,26 @@ def push_dry(repo, say=print):
     return False
 
 
+def checks_failed(data, mode):
+    """The FAIL lines of the status file tonight's checks wrote
+    (reports/status.txt, or reports/status_dryrun.txt on a dry run), or []
+    when it says no FAIL or was not written tonight - the same as in the
+    last commit, or absent."""
+    name = f"reports/{'status_dryrun.txt' if mode == 'dry' else 'status.txt'}"
+    path = os.path.join(data, name)
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as fh:
+        text = fh.read()
+    head = _git(data, "show", f"HEAD:{name}")
+    if head.returncode == 0 and head.stdout.splitlines() == text.splitlines():
+        return []
+    lines = text.splitlines()
+    if not lines or not lines[0].startswith("STATUS FAIL"):
+        return []
+    return [l.strip() for l in lines[1:] if l.split()[1:2] == ["FAIL"]] or [lines[0]]
+
+
 def main(argv=None, sleep=None, say=print, env=None):
     argv = sys.argv[1:] if argv is None else argv
     env = os.environ if env is None else env
@@ -104,6 +129,15 @@ def main(argv=None, sleep=None, say=print, env=None):
     mode, why = run_mode(env)
     if mode == "dry":
         say(f"DRY RUN      {why}: the result goes to {DRY_BRANCH} only, never to {BRANCH}")
+    failed = checks_failed(data, mode)
+    for line in failed:
+        say(f"CHECKS FAIL  {line}")
+    if failed and mode == "real":
+        say("CHECKS FAIL  nothing committed tonight (Step 3.1)")
+        return 1
+    if failed:
+        say("CHECKS FAIL  a real run would commit nothing; the dry run still reports "
+            f"to {DRY_BRANCH}")
     if fpl_gate.main([data]) != 0:
         return 1
     _git(data, "add", "-A")
