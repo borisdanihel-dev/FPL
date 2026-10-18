@@ -51,7 +51,7 @@ def toy_league(tmp, unsettled_gw6=True, a_total_gap=None, gaps=None, provisional
     """)
     c.executemany("insert into teams values (?,?,?)", [(1, "Alpha", "ALP"), (2, "Beta", "BET"), (3, "Gamma", "GAM")])
     c.executemany("insert into entries values (?,?,?)", [(US, "Us", "Boris"), (RIVAL_A, "Rival A", "A"), (RIVAL_B, "Rival B", "B")])
-    for ev in range(1, 7):
+    for ev in range(1, 8):
         c.execute("insert into events values (?,?,?,?)", (ev, f"2026-09-{ev + 10:02d}T11:00:00Z", 1 if ev < 6 else 0, 1 if ev < 6 else 0))
         c.execute("insert into fixtures values (?,?,?)", (ev, ev, 1 if ev < 6 else 0))
     # 20 players: GK 1-2, DEF 3-9, MID 10-16, FWD 17-20
@@ -66,6 +66,7 @@ def toy_league(tmp, unsettled_gw6=True, a_total_gap=None, gaps=None, provisional
             total += net
             c.execute("insert into entry_gw values (?,?,?,?,?,?,?,?)", (eid, ev, gross, total, 1, HITS[eid][i], 5, CHIPS.get((eid, ev))))
         c.execute("insert into entry_gw values (?,?,?,?,?,?,?,?)", (eid, 6, 99, total + 99, 0, 0, 0, None))   # unsettled: never counted
+        c.execute("insert into entry_gw values (?,?,?,?,?,?,?,?)", (eid, 7, 77, total + 99 + 77, 0, 0, 0, None))  # a later row exists, so only the lockdown keeps GW6 out
     for (eid, ev), short in (provisional or {}).items():     # a row fetched before lockdown: points and its own total both short
         c.execute("update entry_gw set points = points - ?, total_points = total_points - ? where entry_id = ? and event = ?", (short, short, eid, ev))
     gaps = dict(gaps or {})
@@ -154,7 +155,8 @@ class Variance(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             toy_league(tmp)
             data = L.load(tmp)
-            self.assertNotIn(6, data["gw"][US])                                   # GW6 is unsettled: never counted
+            self.assertNotIn(6, data["gw"][US])                                   # GW6 is unsettled: never counted (its later row exists)
+            self.assertNotIn(7, data["gw"][US])
             self.assertNotIn(6, data["picks"][RIVAL_A])
             ev, rows = L.last_settled_picks(data, RIVAL_A)
             self.assertEqual(ev, 5)
