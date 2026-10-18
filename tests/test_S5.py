@@ -76,7 +76,7 @@ API_NAMES = {"ARS": "Arsenal", "BOU": "Bournemouth", "BRE": "Brentford", "BHA": 
 CLUBS = list(API_NAMES)
 
 
-def toy_2627(tmp, post_deadline_export=True):
+def toy_2627(tmp, post_deadline_export=True, export_gw=7, rename=None):
     """A small 2026/27 data folder: six clubs, 30 players, GW4-7 played
     (results before the GW8 deadline), GW8 settled with points, GW9 far in
     the future; exports of gameweek 7 generated before and (optionally)
@@ -115,8 +115,8 @@ def toy_2627(tmp, post_deadline_export=True):
         for pos, n in ((1, 1), (2, 2), (3, 1), (4, 1)):
             for _ in range(n):
                 pid += 1
-                players.append({"id": pid, "web_name": f"P{pid}", "team": club, "pos": pos, "price": 4.5 + (pid % 4) * 0.5,
-                                "status": "a", "chance_next_round": None})
+                players.append({"id": pid, "web_name": (rename or {}).get(pid, f"P{pid}"), "team": club, "pos": pos,
+                                "price": 4.5 + (pid % 4) * 0.5, "status": "a", "chance_next_round": None})
     c.executemany("insert into players values (?,?)", [(p["id"], p["pos"]) for p in players])
     for p in players:
         for ev in range(4, 9):
@@ -129,7 +129,7 @@ def toy_2627(tmp, post_deadline_export=True):
     def export(generated, boost):
         rows = []
         for p in players:
-            for ev in range(4, 8):
+            for ev in range(4, export_gw + 1):
                 mins = 90 if rng.random() < 0.85 else 0
                 f = next(x for x in fixtures if x[1] == ev and (x[3] == CLUBS.index(p["team"]) + 1 or x[4] == CLUBS.index(p["team"]) + 1))
                 home = f[3] == CLUBS.index(p["team"]) + 1
@@ -145,18 +145,22 @@ def toy_2627(tmp, post_deadline_export=True):
             allp.append(dict(p, mins_last4=sum(r["mins"] for r in mine), starts_last4=sum(r["starts"] for r in mine),
                              pts_last4=sum(r["pts"] for r in mine), minutes=sum(r["mins"] for r in mine),
                              xg=sum(r["xg"] for r in mine), xa=sum(r["xa"] for r in mine), starts=sum(r["starts"] for r in mine)))
-        fx = [{"event": 8, "home": g["home"], "away": g["away"], "h_fdr": 3, "a_fdr": 3, "kickoff_time": "2026-10-18T14:00:00Z"} for g in gw8]
+        if export_gw == 7:
+            fx = [{"event": 8, "home": g["home"], "away": g["away"], "h_fdr": 3, "a_fdr": 3, "kickoff_time": "2026-10-18T14:00:00Z"} for g in gw8]
+        else:
+            fx = [{"event": 9, "home": CLUBS[f[3] - 1], "away": CLUBS[f[4] - 1], "h_fdr": 3, "a_fdr": 3, "kickoff_time": f[2]}
+                  for f in fixtures if f[1] == 9]
         squads = [{"entry_id": 1, "entry_name": "Us", "slot": i + 1, "player_id": p["id"], "web_name": p["web_name"], "team": p["team"],
                    "pos": p["pos"], "price": p["price"], "multiplier": 1, "is_captain": 0, "is_vice": 0, "gw_points": 0, "minutes": 0,
                    "purchase_price": p["price"], "selling_price": p["price"]}
                   for i, p in enumerate([players[0], players[5], players[1], players[2], players[6], players[11], players[16],
                                          players[3], players[8], players[13], players[18], players[23], players[4], players[9], players[14]])]
-        return {"schema": 2, "generated": generated, "league_id": 1, "my_entry": 1, "gameweek": 7,
+        return {"schema": 2, "generated": generated, "league_id": 1, "my_entry": 1, "gameweek": export_gw,
                 "standings": [{"entry_id": 1, "entry_name": "Us", "bank": 10, "value": 1000}], "chips_used": [],
                 "squads": squads, "all_players": allp, "player_history": [], "fixtures_played": [], "fixtures_next6": fx,
                 "player_gw_recent": rows, "events": [], "fixtures_status": [], "teams": [], "league_ownership": [], "transfers": []}
     os.makedirs(os.path.join(tmp, "exports"))
-    with gzip.open(os.path.join(tmp, "exports", "fpl_export_gw7_2026-10-17.json.gz"), "wt", encoding="utf-8") as fh:
+    with gzip.open(os.path.join(tmp, "exports", f"fpl_export_gw{export_gw}_2026-10-17.json.gz"), "wt", encoding="utf-8") as fh:
         json.dump(export("2026-10-17T21:55:00+00:00", 0), fh)
     if post_deadline_export:
         with gzip.open(os.path.join(tmp, "exports", "fpl_export_gw7_2026-10-18.json.gz"), "wt", encoding="utf-8") as fh:
@@ -441,6 +445,68 @@ class LiveMode(unittest.TestCase):
             self.assertAlmostEqual(lam["lambda_home"], want["lambda_home"]); self.assertAlmostEqual(lam["lambda_away"], want["lambda_away"])
             self.assertIn("2/2", buf.getvalue())                                            # bookmaker counts printed
             self.assertIn("is for GW8, not GW9", buf.getvalue())                           # the toy export is a gameweek behind: no squad lines
+
+
+NON_CP1252 = "\u0106aleta-Car"
+CP1252_ENV = dict(os.environ, PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+
+
+def read_utf8(path):
+    with open(path, "rb") as fh:
+        return fh.read().decode("utf-8")
+
+
+def run_cli(module, argv, cwd):
+    """One tool's CLI in a subprocess on a cp1252 console."""
+    return subprocess.run([sys.executable, os.path.join(ROOT, "tools", module + ".py")] + argv,
+                          cwd=cwd, capture_output=True, env=CP1252_ENV)
+
+
+class ConsoleEncoding(unittest.TestCase):
+    """RULING S5 amendment fix: each CLI exits 0 on a cp1252 console with a
+    non-cp1252 name in play, and its output file holds the name byte-exact."""
+
+    def test_helper_reconfigures_the_console(self):
+        code = "import sys; sys.path.insert(0, r'%s'); from console_utf8 import utf8_console; utf8_console(); print('%s')" % (
+            os.path.join(ROOT, "tools"), NON_CP1252)
+        r = subprocess.run([sys.executable, "-c", code], capture_output=True, env=CP1252_ENV)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.decode("utf-8").strip(), NON_CP1252)
+        code = "import sys; print('%s')" % NON_CP1252                   # without the helper the console cannot print it
+        r = subprocess.run([sys.executable, "-c", code], capture_output=True, env=CP1252_ENV)
+        self.assertNotEqual(r.returncode, 0)
+
+    def test_odds_lambda_live_on_cp1252(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_2627(tmp, post_deadline_export=False, export_gw=8, rename={1: NON_CP1252})   # player 1: our keeper
+            out = os.path.join(tmp, "out")
+            r = run_cli("odds_lambda", ["--live", "--data", tmp, "--out", out], tmp)
+            self.assertEqual(r.returncode, 0, r.stderr.decode("utf-8", "replace"))
+            text = read_utf8(os.path.join(out, "odds_lambda_live.txt"))
+            self.assertIn(NON_CP1252, text)
+            self.assertIn("our GK/DEF for GW9", text)
+
+    def test_chips_live_on_cp1252(self):
+        from tests.test_S7 import toy_export
+        from tests.test_S4 import toy_data
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_data(tmp); toy_export(tmp, rename={1: NON_CP1252})         # player 1: our sub keeper, printed by bench prep
+            out = os.path.join(tmp, "out")
+            r = run_cli("chips", ["--data", tmp, "--out", out, "--resamples", "5"], tmp)
+            self.assertEqual(r.returncode, 0, r.stderr.decode("utf-8", "replace"))
+            text = read_utf8(os.path.join(out, "chips_live.txt"))
+            self.assertIn(NON_CP1252, text)
+
+    def test_backtest_report_on_cp1252(self):
+        from tests.test_S4 import toy_hist, toy_data
+        with tempfile.TemporaryDirectory() as tmp:
+            hist = os.path.join(tmp, "hist"); os.makedirs(hist); toy_hist(hist)
+            data = os.path.join(tmp, "data"); os.makedirs(data); toy_data(data)
+            out = os.path.join(tmp, "out")
+            r = run_cli("backtest", ["--report", "--hist", hist, "--data", data, "--out", out], tmp)
+            self.assertEqual(r.returncode, 0, r.stderr.decode("utf-8", "replace"))
+            text = read_utf8(os.path.join(out, "report.txt"))   # valid UTF-8; the report prints no names
+            self.assertIn("REPORT 2025-26", text)
 
 
 class CLI(unittest.TestCase):

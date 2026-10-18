@@ -28,7 +28,7 @@ from tests.test_S4 import toy_hist, toy_data, plant_transfer, TEAMS, MERGED_COLS
 CLUBS = ["ARS", "BOU", "BRE", "BHA", "CHE", "EVE"]
 
 
-def toy_export(tmp, own_rows=True, selling=True):
+def toy_export(tmp, own_rows=True, selling=True, rename=None):
     """A small live world: 30 players over six clubs, our 15, selling prices,
     GW8-10 fixtures, deadlines, and a log with own rows for GW8."""
     players, pid = [], 0
@@ -36,7 +36,7 @@ def toy_export(tmp, own_rows=True, selling=True):
         for pos, n in ((1, 1), (2, 2), (3, 1), (4, 1)):
             for k in range(n):
                 pid += 1
-                players.append({"id": pid, "web_name": f"P{pid}", "team": club, "pos": pos,
+                players.append({"id": pid, "web_name": (rename or {}).get(pid, f"P{pid}"), "team": club, "pos": pos,
                                 "price": 4.0 + 0.5 * (pid % 5), "status": "a", "mins_last4": 360,
                                 "pts_last4": 4 + (pid % 7), "chance_next_round": None, "starts_last4": 4})
     players[1]["status"] = "d"                 # a doubtful player: outside the gate

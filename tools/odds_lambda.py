@@ -63,6 +63,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import fpl_hist as H                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
+from console_utf8 import utf8_console                             # noqa: E402
 
 XI = 0.0065                 # Dixon-Coles decay per day
 MIN_WEIGHTED = 4.0          # below this weighted match count the fallback uses the league average
@@ -871,6 +872,7 @@ def fixture_report(data_dir, home, away, out=print, odds_file=None):
 
 
 def main(argv=None):
+    utf8_console()                       # RULING S5 amendment fix: never stop on a console code page
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
