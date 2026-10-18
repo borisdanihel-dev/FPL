@@ -2651,7 +2651,7 @@ def next_deadline(d, event):
 
 def read_log(path=None):
     """Every row of the log, as stored. Recording rewrites from this; every
-    other reader takes forecasts(read_log())."""
+    other reader takes forecasts(read_log(), d)."""
     import csv
     path = path or LOG_PATH
     if not os.path.exists(path):
@@ -2674,26 +2674,35 @@ def natural_key(row):
     return (str(row["event"]), str(row["player_id"]), row["source"], snapshot_date(row))
 
 
-def forecasts(rows):
-    """The forecasts every reader uses: for each (source, gameweek), the rows
-    of its latest snapshot day - the last one made before the deadline, which
-    is what the log held when it kept one snapshot per gameweek - and of those
-    the last row per natural key (S2 ruling 2). Order is kept."""
-    latest = {}
+def forecasts(rows, d=None):
+    """The forecasts every reader uses (S2 amendment 1, point 5): for each
+    (event, player_id, source), its row from the last snapshot made before
+    that gameweek's deadline - the latest made_at, the later row on a tie. A
+    row made at or after its deadline is never read. `d` (the export) gives
+    the deadlines (event_deadline); without it, or for an event it has no
+    deadline for, no row is dropped - the recorder writes none at or after a
+    deadline (Step 2.2) and a test checks the real log for that nightly.
+    Keys keep the order in which they first appear, so a log with one
+    snapshot per gameweek reads back unchanged."""
+    from datetime import datetime
+    deadline, keep = {}, {}
     for r in rows:
-        k = (r["source"], str(r["event"]))
-        latest[k] = max(latest.get(k, ""), snapshot_date(r))
-    keep = {}
-    for r in rows:
-        if snapshot_date(r) == latest[(r["source"], str(r["event"]))]:
-            keep[natural_key(r)] = r
-    return list(keep.values())
+        ev = str(r["event"])
+        if ev not in deadline:
+            deadline[ev] = event_deadline(d, int(ev)) if d is not None else None
+        made = datetime.fromisoformat(r["made_at"])
+        if deadline[ev] is not None and made >= deadline[ev]:
+            continue
+        k = (ev, str(r["player_id"]), r["source"])
+        if k not in keep or made >= keep[k][0]:
+            keep[k] = (made, r)
+    return [r for _, r in keep.values()]
 
 
 def duplicate_keys(rows):
     """{natural key: rows holding it} for keys held by more than one row.
     Reported, never deleted (S2 ruling 2): the gate freezes past-deadline rows,
-    and forecasts() keeps the last."""
+    and forecasts() reads only the last snapshot of each."""
     from collections import Counter
     n = Counter(natural_key(r) for r in rows)
     return {k: c for k, c in n.items() if c > 1}
@@ -3070,7 +3079,7 @@ def sec_calibration(d, horizon, path=None):
     print("=" * 78)
     print("CALIBRATION  (accumulated forecast record)")
     print("=" * 78)
-    log = forecasts(read_log(path))
+    log = forecasts(read_log(path), d)
     if not log:
         print("\n  No forecasts recorded yet. Run before each deadline:")
         print("    python fpl_edge.py --record\n")
@@ -3774,7 +3783,7 @@ def sec_free_hit(d, horizon, log=None):
     """The Free Hit screen: one week at a time, the best legal XI the team
     value buys against our best XI, by the frozen one-week metric."""
     try:
-        t = free_hit_table(d, forecasts(read_log()) if log is None else log)
+        t = free_hit_table(d, forecasts(read_log(), d) if log is None else log)
     except ValueError as e:
         print("=" * 78)
         print(f"FREE HIT SCREEN  not built: {e}")
@@ -3949,7 +3958,7 @@ def main():
             ids = read_watchlist(args.watch)
         except (OSError, ValueError) as e:
             sys.exit(f"WATCH FAILED: {e}")
-        text = watch_report(d, forecasts(read_log()), ids)
+        text = watch_report(d, forecasts(read_log(), d), ids)
         with open(args.out, "w", encoding="utf-8", newline="") as fh:
             fh.write(text)
         print(f"[watch file: {len(ids)} ids, {len(text.encode('utf-8'))} bytes -> {args.out}]")

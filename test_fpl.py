@@ -607,7 +607,10 @@ class ProjectionLogKey(unittest.TestCase):
         self.assertEqual(len(first), len(second), "a same-day re-run appended rows")
         self.assertEqual(E.duplicate_keys(second), {})
 
-    def test_readers_take_the_latest_snapshot_and_the_last_row_per_key(self):
+    def test_readers_take_the_last_snapshot_per_event_player_and_source(self):
+        """S2 amendment 1, point 5: per (event, player_id, source), the row of
+        the last snapshot - a player missing from a later snapshot keeps his
+        earlier row."""
         rows = [self._row("2026-10-16T21:40:00+00:00", "own", 8, 1, 1.0),
                 self._row("2026-10-16T21:40:00+00:00", "own", 8, 2, 2.0),
                 self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 3.0),
@@ -615,8 +618,79 @@ class ProjectionLogKey(unittest.TestCase):
                 self._row("2026-10-16T21:40:00+00:00", "xg", 8, 1, 5.0),
                 self._row("2026-10-09T21:40:00+00:00", "own", 7, 1, 6.0)]
         got = [(r["source"], r["event"], r["player_id"], r["predicted"]) for r in E.forecasts(rows)]
-        self.assertEqual(got, [("own", "8", "1", "4.0"), ("xg", "8", "1", "5.0"),
-                               ("own", "7", "1", "6.0")])
+        self.assertEqual(got, [("own", "8", "1", "4.0"), ("own", "8", "2", "2.0"),
+                               ("xg", "8", "1", "5.0"), ("own", "7", "1", "6.0")])
+
+    def test_the_last_snapshot_is_the_latest_made_at_not_the_last_line(self):
+        rows = [self._row("2026-10-18T21:40:00+00:00", "own", 8, 1, 2.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 1.0)]
+        self.assertEqual([r["predicted"] for r in E.forecasts(rows)], ["2.0"])
+
+    def test_a_row_at_or_after_the_deadline_is_never_read(self):
+        """S2 amendment 1, point 5: the last snapshot *before* the deadline,
+        from the export's events.deadline_time."""
+        d = {"events": [{"event": 8, "deadline_time": "2026-10-23T17:30:00Z"}]}
+        rows = [self._row("2026-10-22T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-23T17:30:00+00:00", "own", 8, 1, 9.0),   # at the deadline
+                self._row("2026-10-23T18:00:00+00:00", "own", 8, 2, 9.0)]   # after it
+        got = [(r["player_id"], r["predicted"]) for r in E.forecasts(rows, d)]
+        self.assertEqual(got, [("1", "1.0")])
+
+    def test_recording_keeps_the_log_in_time_order(self):
+        """Rows are only ever appended after the rows already there, so a
+        reader that keeps the last line per player (the frozen p1_eval.py)
+        also reads the last snapshot."""
+        d = _recordable_export()
+        target = d["gameweek"] + 1
+        old = [self._row("2026-10-16T21:40:00+00:00", "own", target, p["id"], 1.0)
+               for p in d["all_players"][:3]]
+        E.write_log_atomic(self.log, old)
+        self._record(d)
+        self._record(d)
+        made = [r["made_at"] for r in E.read_log(self.log)]
+        self.assertGreater(len(made), 3)
+        self.assertEqual(made, sorted(made))
+
+    def test_every_reader_goes_through_forecasts_with_the_export(self):
+        """S2 amendment 1, point 5: outside the recorder, fpl_edge.py reads
+        the log only as forecasts(read_log(...), d); and no other runner file
+        reads it without being listed here with its reason."""
+        import ast
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_edge.py"), encoding="utf-8").read()
+        tree = ast.parse(src)
+        parent = {c: p for p in ast.walk(tree) for c in ast.iter_child_nodes(p)}
+        raw_ok = {"record_status", "recover_stranded_log"}   # they rewrite the log itself
+        bad = []
+        for fn in ast.walk(tree):
+            if not isinstance(fn, ast.FunctionDef) or fn.name in raw_ok:
+                continue
+            for n in ast.walk(fn):
+                if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "read_log":
+                    p = parent[n]
+                    if not (isinstance(p, ast.Call) and getattr(p.func, "id", None) == "forecasts"
+                            and len(p.args) == 2 and getattr(p.args[1], "id", None) == "d"):
+                        bad.append(f"{fn.name} line {n.lineno}")
+        self.assertEqual(bad, [], "a reader skips forecasts(read_log(...), d)")
+        allowed = {
+            "fpl_edge.py": "the recorder and forecasts()",
+            "fpl_gate.py": "the integrity gate: whole rows, never forecasts",
+            "fpl_nightly.py": "docstrings only",
+            "fpl_prepush.py": "the data-path list of the hook",
+            "fpl_publish.py": "docstring only",
+            "fpl_ship.py": "copies the file, reads no row",
+            "p1_eval.py": "frozen; event 4 has one snapshot and the log is in time order",
+            os.path.join("tools", "migrate_data_branch.py"): "counts rows for the migration check",
+        }
+        files = [f for f in os.listdir(here) if f.endswith(".py") and f != "test_fpl.py"]
+        if os.path.isdir(os.path.join(here, "tools")):
+            files += [os.path.join("tools", f) for f in os.listdir(os.path.join(here, "tools"))
+                      if f.endswith(".py")]
+        naming = [f for f in files
+                  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+        self.assertEqual(sorted(set(naming) - set(allowed)), [],
+                         "a new file reads projection_log.csv: route it through "
+                         "fpl_edge.forecasts(read_log(), d), then list it here")
 
     def test_one_snapshot_per_gameweek_reads_back_unchanged(self):
         rows = [self._row("2026-10-16T21:40:00+00:00", s, e, p, p / 10)
@@ -675,6 +749,34 @@ class ProjectionLogKey(unittest.TestCase):
         """Step 2.3: the duplicate-key test must find 0."""
         rows = E.read_log(os.path.join(self._real(), "projection_log.csv"))
         self.assertEqual(E.duplicate_keys(rows), {})
+
+    def _real_deadlines(self, data):
+        import sqlite3
+        con = sqlite3.connect("file:" + os.path.join(data, "fpl.sqlite") + "?mode=ro", uri=True)
+        events = [{"event": i, "deadline_time": t}
+                  for i, t in con.execute("SELECT id, deadline_time FROM events")]
+        con.close()
+        return {"events": events}
+
+    def test_the_real_log_never_goes_back_in_time(self):
+        """S2 amendment 1, point 5: the log is in made_at order, so the frozen
+        p1_eval.py, which keeps the last line per player, reads the last
+        snapshot."""
+        from datetime import datetime
+        rows = E.read_log(os.path.join(self._real(), "projection_log.csv"))
+        made = [datetime.fromisoformat(r["made_at"]) for r in rows]
+        back = sum(1 for a, b in zip(made, made[1:]) if b < a)
+        self.assertEqual(back, 0, f"{back} rows are older than the row before them")
+
+    def test_the_gameweeks_recorded_before_s2_read_back_unchanged(self):
+        """S2 amendment 1, point 5: GW4-GW7 were recorded one snapshot per
+        source each, so every reader - calibration included - gets exactly
+        the rows it read before S2."""
+        data = self._real()
+        rows = [r for r in E.read_log(os.path.join(data, "projection_log.csv"))
+                if int(r["event"]) <= 7]
+        self.assertGreater(len(rows), 0)
+        self.assertEqual(E.forecasts(rows, self._real_deadlines(data)), rows)
 
 
 class ProjectionLog(unittest.TestCase):
@@ -1891,7 +1993,7 @@ def _graded_world():
     """An export plus a log with one graded gameweek, for calibration tests."""
     d = make_export()
     gw = d["gameweek"]
-    log = [{"made_at": "x", "source": "xg", "event": str(gw),
+    log = [{"made_at": "2026-08-01T00:00:00+00:00", "source": "xg", "event": str(gw),
             "player_id": str(p["id"]), "web_name": p["web_name"],
             "predicted": str(2.0 + p["id"] % 5)} for p in d["all_players"][:40]]
     return d, gw, log
@@ -2012,8 +2114,8 @@ class SyncExportsSettledFlags(unittest.TestCase):
 
     def test_bootstrap_stores_data_checked_separately_from_finished(self):
         import sqlite3
-        ns = {}
         here = os.path.dirname(os.path.abspath(__file__))
+        ns = {"__file__": os.path.join(here, "fpl_sync.py")}
         src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
         exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
         ns["london_tz"] = lambda: UK_SUMMER
@@ -3658,8 +3760,8 @@ class SyncNetwork(unittest.TestCase):
 
     @staticmethod
     def _ns(full=False):
-        ns = {"__name__": "fpl_sync_under_test"}
         here = os.path.dirname(os.path.abspath(__file__))
+        ns = {"__name__": "fpl_sync_under_test", "__file__": os.path.join(here, "fpl_sync.py")}
         src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
         exec(compile(src if full else src.split("def main()")[0], "fpl_sync", "exec"), ns)
         ns["london_tz"] = lambda: UK_SUMMER
@@ -5442,6 +5544,7 @@ def _s2_sync_ns(now_iso="2026-10-17T21:40:00+00:00", tz=None):
     London zone (the tests need no time-zone database)."""
     ns = {"__name__": "fpl_sync_s2"}
     here = os.path.dirname(os.path.abspath(__file__))
+    ns["__file__"] = os.path.join(here, "fpl_sync.py")    # finds price_gaps_known.txt
     src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
     exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
     real = ns["datetime"]
@@ -5533,6 +5636,63 @@ class StepTwoSync(unittest.TestCase):
                        [(7, "2026-10-14", 55), (7, "2026-10-16", 55)])
         _, out = self._boot(ns, db, [_s2_element(7)])
         self.assertIn("PRICE DATES MISSING: 1 day(s) without a snapshot: 2026-10-15", out)
+
+    KNOWN_GAPS = ("2026-09-28", "2026-10-02", "2026-10-03", "2026-10-04")
+
+    def _gappy(self, ns, missing):
+        """A price history from 27 Sep to 16 Oct without the `missing` days;
+        the sync then adds 17 Oct."""
+        from datetime import date, timedelta
+        db = self._db(ns)
+        days = [str(date(2026, 9, 27) + timedelta(n)) for n in range(20)]
+        db.executemany("INSERT INTO price_history (player_id, date, now_cost) VALUES (?,?,?)",
+                       [(7, day, 55) for day in days if day not in missing])
+        return db
+
+    def test_a_planted_new_gap_warns_and_the_known_ones_do_not(self):
+        """S2 amendment 1, point 3."""
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._gappy(ns, self.KNOWN_GAPS + ("2026-10-07",))
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertIn("PRICE DATES MISSING: 1 day(s) without a snapshot: 2026-10-07", out)
+        for day in self.KNOWN_GAPS:
+            self.assertNotIn(day, out)
+        self.assertNotIn("UNREADABLE", out)
+
+    def test_only_known_gaps_print_no_warning(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._gappy(ns, self.KNOWN_GAPS)
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertNotIn("PRICE DATES MISSING", out)
+
+    def test_the_committed_list_holds_the_four_gaps_each_with_its_reason(self):
+        known, problem = _s2_sync_ns()["known_price_gaps"]()
+        self.assertIsNone(problem)
+        self.assertEqual(sorted(known), list(self.KNOWN_GAPS))
+        self.assertTrue(all(len(reason) > 10 for reason in known.values()))
+
+    def test_an_unreadable_list_warns_every_gap(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        ns["PRICE_GAPS_FILE"] = "no_such_list.txt"
+        db = self._gappy(ns, self.KNOWN_GAPS)
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertIn("PRICE GAPS LIST UNREADABLE: cannot read no_such_list.txt", out)
+        self.assertIn("PRICE DATES MISSING: 4 day(s) without a snapshot: "
+                      "2026-09-28, 2026-10-02, 2026-10-03, 2026-10-04", out)
+
+    def test_a_list_line_without_a_date_or_a_reason_lists_nothing(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        read = _s2_sync_ns()["known_price_gaps"]
+        for body, why in (("2026-09-28\n", "has no reason"),
+                          ("28 Sep no run\n", "is not a date"),
+                          ("# comment\n\n2026-09-28 no run\n2026-13-01 no run\n", "line 4")):
+            path = os.path.join(tmp, "gaps.txt")
+            with open(path, "w", encoding="utf-8", newline="") as fh:
+                fh.write(body)
+            known, problem = read(path)
+            self.assertEqual(known, {}, body)
+            self.assertIn(why, problem)
 
     def test_without_the_london_zone_the_sync_stops_with_a_clear_error(self):
         import zoneinfo

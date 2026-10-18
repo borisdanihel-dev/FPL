@@ -13,6 +13,7 @@ Edit LEAGUE_ID / MY_ENTRY below if they ever change.
 
 import argparse
 import json
+import os
 import sqlite3
 import sys
 import time
@@ -34,6 +35,8 @@ RULESET = "2026-27"         # the scoring rules of the season this sync pulls (S
 LONDON = "Europe/London"    # FPL prices change at 00:00 UK time (Step 2.4)
 EARLY_HOURS = 12            # a fetch before 12:00 London time came after that day's
                             # 00:00 UK price change: flagged (Step 2.4)
+PRICE_GAPS_FILE = "price_gaps_known.txt"   # days known to have no price snapshot, with
+                                           # their reason; next to this file (S2 amendment 1.3)
 _urlopen = urllib.request.urlopen
 _sleep = time.sleep
 
@@ -114,6 +117,36 @@ def missing_dates(dates):
     have_set = set(have)
     return [str(have[0] + timedelta(n)) for n in range((have[-1] - have[0]).days + 1)
             if have[0] + timedelta(n) not in have_set]
+
+
+def known_price_gaps(path=None):
+    """({date: reason}, problem) from the committed list of days known to
+    have no price snapshot (S2 amendment 1, point 3): one "YYYY-MM-DD reason"
+    per line; a line starting with "#" is a comment. PRICE DATES MISSING warns
+    only on a gap that is not listed. A list that cannot be read, or a line
+    without a date or a reason, is returned as `problem` with nothing listed,
+    so every gap is warned - never fewer."""
+    from datetime import date
+    path = path or os.path.join(os.path.dirname(os.path.abspath(__file__)), PRICE_GAPS_FILE)
+    name = os.path.basename(path)
+    try:
+        with open(path, encoding="utf-8", newline="") as fh:
+            lines = fh.read().splitlines()
+    except OSError as e:
+        return {}, f"cannot read {name}: {e.strerror}"
+    known = {}
+    for n, line in enumerate(lines, 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        day, _, reason = line.strip().partition(" ")
+        try:
+            day = date.fromisoformat(day).isoformat()
+        except ValueError:
+            return {}, f"{name} line {n}: {day!r} is not a date"
+        if not reason.strip():
+            return {}, f"{name} line {n}: {day} has no reason"
+        known[day] = reason.strip()
+    return known, None
 
 
 def deadline_gameweeks(events, now):
@@ -297,7 +330,12 @@ def sync_bootstrap(db):
     if early:
         print(f"PRICE DATE FLAG: fetched {now} = after 00:00 UK - this snapshot holds "
               f"the prices of London day {london_day}, not of the evening before")
-    gaps = missing_dates(r[0] for r in db.execute("SELECT DISTINCT date FROM price_history"))
+    # warned only for a day not on the committed known-gaps list (S2 amendment 1.3)
+    known, problem = known_price_gaps()
+    if problem:
+        print(f"PRICE GAPS LIST UNREADABLE: {problem} - every gap is warned")
+    gaps = [g for g in missing_dates(r[0] for r in db.execute("SELECT DISTINCT date FROM price_history"))
+            if g not in known]
     if gaps:
         print(f"PRICE DATES MISSING: {len(gaps)} day(s) without a snapshot: {', '.join(gaps)}")
     # the gameweek that has started = the last one whose deadline has passed;
