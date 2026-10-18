@@ -3083,7 +3083,12 @@ the heuristic's input, the bootstrap seed); mutations 23 of 23 red;
 - Live GW8–19 on real fixtures: V_BB 5.6–6.7, V_FH 3.5–5.8 every week;
   GW8 PLAY BB by +0.07 xP, 10% resample agreement (90% margin [−22.8,
   +3.3]). The chip call for GW8 is the chat's at Thursday's deadline pass.
-- Replay comparators (information only): REPLAY_EXTRA
+- Replay comparators (information only; pre-registered lines byte-identical
+  to the first run): both-late (FH GW18, BB GW19) −7.90 per squad (BB +2.40,
+  FH −10.30), calculator − it +24.46 [+18.96, +30.06]; BB GW5 + FH by the
+  heuristic 16.64 (BB +2.60, FH +14.04), calculator − it −0.08 [−1.26,
+  +0.96]. Free Hit timing carries the whole spread; Bench Boost gains sit at
+  +2.4 to +3.2 for every planned policy.
 - Verifier: VERIFIER_LINE.
 
 Report: `worklog/cc_2026-10-18_S7.md` (amendment section).
