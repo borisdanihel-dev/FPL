@@ -2766,3 +2766,49 @@ effort high (`worklog/verify_S2_a1.md`).
   per source, so its numbers cannot differ. The comparison itself runs once it
   settles.
 - On the real price history, `PRICE DATES MISSING` now prints nothing.
+
+---
+
+## 2026-10-18 — S2 amendment 2: whole-snapshot reader, tie rule, dry-run dispatch (`adf3d32` prereg, `s2-wip` `08f29fb`, `data-dryrun` `705ac42`)
+
+**Built on `s2-wip`; the merge to master follows in the next commits.**
+Verifier pre-check: **PASS** on Fable 5.1, effort high (`worklog/verify_S2_a2.md`).
+- Reader (points 3-4): `forecasts(rows, d)` returns, per (event, source),
+  the whole last snapshot (one `made_at`) before `events.deadline_time`;
+  the later row wins on a tie. `dropped_players()` counts players found only
+  in an earlier snapshot, and `--section calibration` prints that count.
+- Dry run (point 5):
+  - dispatch input `dry_run`, default true;
+  - one condition picks both the concurrency group (`nightly-dryrun`) and
+    `FPL_DRY_RUN`, and the weekly backup is skipped on a dry run;
+  - `fpl_publish.run_mode()`: any ref but master is dry; a scheduled run never is;
+  - `push_dry()` force-pushes to `data-dryrun` only.
+
+**Measured:**
+- Tests 366 → 378, green bare, with the data and a time zone (0 skips), and
+  under a dry-run environment.
+- The 13 new tests are red on `32d623c`. Mutations: mine 15 of 15 red, the
+  verifier's 16 of 16.
+- Recording path: with a frozen clock, `32d623c` and `08f29fb` write
+  byte-identical log, watch file, report, status and export.
+- Calibration on the same data, master against `08f29fb`: GW4–GW6 identical
+  to the last digit. The only additions are the Step 2.1 refusal wording and
+  the count line ("none").
+- **First dry run on GitHub** (`s2-wip`, 11:30 UTC, dry run 1 of 6 today):
+  - 378 tests OK; the 11 skips are Windows-only;
+  - the seven migrations; no `PRICE DATES MISSING`; four RECORD OK;
+    `STUCK CHECK OK`.
+- **Read back from `data-dryrun`:**
+  - the log blob begins with `data`'s byte for byte (+1055 rows, 0 CR), and
+    GW8 is read from the 18 Oct snapshot with the same 1055 keys;
+  - the export has 38 deadlines and 105 selling prices; the budget is £99.7m;
+  - the database only grew: the NULL counts are 25,214 / 3,883 / 42, and
+    `automatic_subs` is new with 0 rows;
+  - the gate, re-run on the dry content against `data`: `GATE OK`, identical
+    `fpl.sql`;
+  - no release was made, and `data` is unchanged at `e84bee6`.
+
+**Pending:**
+- the GW7 before/after comparison, after lockdown (point 1);
+- the scheduled-only behaviour (point 8);
+- the real dispatch after the merge.
