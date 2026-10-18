@@ -66,8 +66,9 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   calculator is not a decision input. Amendment built (`41ff6b4`): live
   table on real fixtures GW8–19 from `fpl.sqlite` (no proxies), two
   information-only replay comparators, the verifier's three test gaps
-  closed. Amended replay and verifier rerun: AMEND_STATE. Then the queue
-  continues with S5 (ruling point 4).
+  closed. Amended replay run and recorded; verifier rerun **PASS** (Fable 5.1),
+  write guard clean. S7 complete on `lane-b`; lands with S4 on Monday
+  after the dry run. The queue continues with S5 (ruling point 4).
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.

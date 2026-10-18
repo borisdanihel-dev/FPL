@@ -3089,6 +3089,10 @@ the heuristic's input, the bootstrap seed); mutations 23 of 23 red;
   heuristic 16.64 (BB +2.60, FH +14.04), calculator − it −0.08 [−1.26,
   +0.96]. Free Hit timing carries the whole spread; Bench Boost gains sit at
   +2.4 to +3.2 for every planned policy.
-- Verifier: VERIFIER_LINE.
+- Verifier: **PASS** (Fable 5.1, effort high, `worklog/verify_S7.md`): the
+  pre-registered lines byte-identical to the first run, the live GW8–13
+  values unchanged at full precision, the GW8–19 fixtures equal its own
+  query of `fpl.sqlite`; one test gap noted (an unsorted ticker is a no-op
+  on the toy). Write guard clean.
 
 Report: `worklog/cc_2026-10-18_S7.md` (amendment section).
