@@ -17,6 +17,7 @@ import os
 import sqlite3
 import sys
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
@@ -31,6 +32,17 @@ USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 RETRIES = 3                 # after the first attempt
 BACKOFF = 2.0               # seconds before the first retry, doubling: 2, 4, 8
 FAILED = []                 # urls that still failed after every retry
+# What tonight's sync saw, printed as one "SYNC STATS {json}" line at the end
+# of every sync, finished or not; checks.py reads it from the run log (S3,
+# Step 3 checks 1-5, 8 and 9). calls: [path, final status] per request -
+# 200, an HTTP code, "network" or "bad-json".
+STATS = {"calls": []}
+STATS_PREFIX = "SYNC STATS "
+# Step 3 check 8: the fields every element and event must carry, and their type
+REQUIRED_ELEMENT = {"id": int, "code": int, "team": int, "element_type": int,
+                    "now_cost": int, "status": str, "minutes": int, "total_points": int,
+                    "defensive_contribution": int}
+REQUIRED_EVENT = {"deadline_time": str, "data_checked": bool}
 RULESET = "2026-27"         # the scoring rules of the season this sync pulls (Step 2.7)
 LONDON = "Europe/London"    # FPL prices change at 00:00 UK time (Step 2.4)
 EARLY_HOURS = 12            # a fetch before 12:00 London time came after that day's
@@ -45,27 +57,57 @@ _sleep = time.sleep
 # ----------------------------------------------------------------------------
 
 def get(path):
-    """One API path as JSON: a browser-style User-Agent and up to RETRIES
-    retries with doubling backoff. A request that never succeeds is recorded in
-    FAILED and returns None - the sync saves what it can, and main() then exits
-    non-zero so a partial sync is never mistaken for a clean one."""
+    """One API path as JSON, with a browser-style User-Agent. Retried with
+    doubling backoff, up to RETRIES times, only on HTTP 429, a 5xx or a
+    network error; a 403 at most once; any other HTTP error, or a body that is
+    not JSON, not at all (Step 3, check 2). A request that never succeeds is
+    recorded in FAILED and returns None - the sync saves what it can, and
+    main() then exits non-zero so a partial sync is never mistaken for a clean
+    one. Every request's final status goes into STATS. PAUSE follows each
+    success: 0.4 s, inside the 0.3-0.5 s the check asks for between calls."""
     url = f"{BASE}/{path.lstrip('/')}"
     req = urllib.request.Request(url, headers={
         "User-Agent": USER_AGENT, "Accept": "application/json, text/plain, */*"})
+    forbidden = 0
     for attempt in range(RETRIES + 1):
         try:
             with _urlopen(req, timeout=30) as r:
                 data = json.load(r)
             _sleep(PAUSE)
+            STATS["calls"].append([path, 200])
             return data
-        except Exception as e:  # noqa: BLE001
-            if attempt == RETRIES:
-                print(f"  ! failed {path}: {e}")      # the path, never the full URL
-                FAILED.append(url)
-                return None
-            wait = BACKOFF * 2 ** attempt
-            print(f"  retry {attempt + 1}/{RETRIES} in {wait:.0f}s - {path}: {e}")
-            _sleep(wait)
+        except urllib.error.HTTPError as e:
+            status, why = e.code, str(e)
+            e.close()
+            if e.code == 403:
+                forbidden += 1
+            again = e.code == 429 or e.code >= 500 or (e.code == 403 and forbidden == 1)
+        except ValueError as e:                      # a body that is not JSON
+            status, why, again = "bad-json", str(e), False
+        except OSError as e:                         # URLError, timeouts, resets
+            status, why, again = "network", str(e), True
+        if not again or attempt == RETRIES:
+            print(f"  ! failed {path}: {why}")    # the path, never the full URL
+            FAILED.append(url)
+            STATS["calls"].append([path, status])
+            return None
+        wait = BACKOFF * 2 ** attempt
+        print(f"  retry {attempt + 1}/{RETRIES} in {wait:.0f}s - {path}: {why}")
+        _sleep(wait)
+
+
+def field_problems(items, spec, what):
+    """Every missing or mistyped required field in `items` (Step 3, check 8):
+    a list of "<what> <id>: <field> ..." strings. bool is not an int here."""
+    out = []
+    for it in items:
+        for field, kind in spec.items():
+            v = it.get(field)
+            ok = (isinstance(v, kind) and not (kind is int and isinstance(v, bool)))
+            if not ok:
+                out.append(f"{what} {it.get('id')}: {field} "
+                           f"{'missing' if v is None else 'is ' + type(v).__name__}")
+    return out
 
 def num(value, field):
     """A numeric API field as float. Many arrive as strings ("0.00"); each is
@@ -281,6 +323,14 @@ def sync_bootstrap(db):
     bs = get("bootstrap-static/")
     if not bs:
         sys.exit("cannot reach FPL API")
+    # what checks 3, 4, 8 and 9 need, taken before anything can raise
+    elements = bs.get("elements") or []
+    STATS["elements"] = len(elements)
+    STATS["element_ids"] = sorted(e.get("id") for e in elements if isinstance(e.get("id"), int))
+    STATS["element_keys"] = sorted(set().union(*(e.keys() for e in elements))) if elements else []
+    STATS["teams"] = len(bs.get("teams") or [])
+    STATS["field_problems"] = (field_problems(elements, REQUIRED_ELEMENT, "element")
+                               + field_problems(bs.get("events") or [], REQUIRED_EVENT, "event"))
     fetched = datetime.now(timezone.utc)
     now = fetched.isoformat(timespec="seconds")
     today, london_day, early = price_labels(fetched, london_tz())
@@ -354,6 +404,7 @@ def sync_bootstrap(db):
 def sync_fixtures(db):
     print("fixtures ...")
     fx = get("fixtures/") or []
+    STATS["fixtures"] = len(fx)
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     db.executemany("INSERT OR REPLACE INTO fixtures (id, event, kickoff_time, team_h, team_a, "
                    "team_h_difficulty, team_a_difficulty, team_h_score, team_a_score, "
@@ -729,17 +780,23 @@ def main():
     db.executescript(SCHEMA)
     migrate(db)
 
-    last_gw = sync_bootstrap(db)
-    sync_fixtures(db)
-    if last_gw == 0:
-        print("no finished gameweek yet")
-        return
-    sync_player_gw(db, last_gw, refetch=args.refetch)
-    if args.history:
-        sync_history(db)
-    entries = sync_league(db, last_gw)
-    sync_entries(db, entries, last_gw)
-    export(db, args.gw or last_gw)
+    try:
+        last_gw = sync_bootstrap(db)
+        sync_fixtures(db)
+        if last_gw == 0:
+            print("no finished gameweek yet")
+            return
+        sync_player_gw(db, last_gw, refetch=args.refetch)
+        if args.history:
+            sync_history(db)
+        entries = sync_league(db, last_gw)
+        sync_entries(db, entries, last_gw)
+        export(db, args.gw or last_gw)
+        STATS["finished"] = True
+    finally:
+        # one line, whatever happened above: what the checks read (S3)
+        STATS.setdefault("finished", False)
+        print(STATS_PREFIX + json.dumps(STATS, separators=(",", ":"), sort_keys=True))
     db.close()
     if FAILED:
         # the export above holds what was fetched; the exit code says it is partial

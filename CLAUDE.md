@@ -25,7 +25,12 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   timestamped, before the deadline that tests them; a frozen entry is never
   edited, only amended by a new one. A model drives a decision only after
   clearing its pre-stated bar. Nothing is tuned on the data that exposed it.
-- **Change protocol.** `python test_fpl.py` before and after. Build in a
+- **Hermetic tests** (S3 amendment 1): tests are hermetic; no test may rely on
+  global git config, the machine's timezone or locale, or files outside its
+  temporary folder.
+- **Change protocol.** The whole suite before and after, by discovery
+  (`test_fpl.py` plus `tests/`, FAST-TRACK item 5): `python -m unittest
+  discover -v -p "test*.py"` in `C:\GIT\FPL`. Build in a
   scratch copy; reintroduce each bug and watch its test go red; apply only a
   byte-identical copy; regenerate the forecasts and diff the log to prove the
   recording path did not move. Test at simulated GW10/20/38. Log what was
@@ -116,8 +121,9 @@ h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3)
   one. It writes nothing else and commits nothing. After it, the frozen
   `p1_eval.py` reads those working exports as before.
   The runner is the only writer: never run `fpl_sync.py`, `--record`, or
-  `fpl_nightly.py` without `--restore` here. `python C:\GIT\FPL\test_fpl.py`
-  needs no data; after `--restore`, with `$env:FPL_DATA_DIR =
+  `fpl_nightly.py` without `--restore` here. The suite (`python -m unittest
+  discover -v -p "test*.py" -s C:\GIT\FPL -t C:\GIT\FPL`: `test_fpl.py` plus
+  `tests/`) needs no data; after `--restore`, with `$env:FPL_DATA_DIR =
   "C:\GIT\FPL-data"`, it also checks the real export and database.
 - Once per clone: `python fpl_prepush.py --install` (the hook rejects a push to
   `master` that adds or changes a data path; deleting one is allowed).
