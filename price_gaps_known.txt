@@ -1,0 +1,7 @@
+# Days known to have no snapshot in price_history, each with its reason
+# (ruling S2 amendment 1, point 3). fpl_sync.py prints PRICE DATES MISSING
+# only for a gap that is not listed here. One line per day: YYYY-MM-DD reason
+2026-09-28 no sync ran: the local scheduled run left no log, export, report or price snapshot that day (CHANGELOG 2026-10-05, item J)
+2026-10-02 no sync ran: the local scheduled run left no log, export, report or price snapshot that day (CHANGELOG 2026-10-05, item J)
+2026-10-03 no sync ran: the local scheduled run left no log, export, report or price snapshot that day (CHANGELOG 2026-10-05, item J)
+2026-10-04 no sync ran: the local scheduled run left no log, export, report or price snapshot that day (CHANGELOG 2026-10-05, item J)

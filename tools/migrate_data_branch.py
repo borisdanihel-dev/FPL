@@ -116,9 +116,9 @@ def build():
 
 
 def compare(before_path, after_path):
-    with open(before_path, encoding="utf-8") as fh:
+    with open(before_path, encoding="utf-8", newline="") as fh:
         a = json.load(fh)
-    with open(after_path, encoding="utf-8") as fh:
+    with open(after_path, encoding="utf-8", newline="") as fh:
         b = json.load(fh)
     bad = 0
     print(f"{'':28s} {'before':>12s} {'after':>12s}")
@@ -144,7 +144,7 @@ def compare(before_path, after_path):
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["measure"] and len(argv) == 3:
-        with open(argv[2], "w", encoding="utf-8") as fh:
+        with open(argv[2], "w", encoding="utf-8", newline="") as fh:
             json.dump(measure(argv[1]), fh, indent=1, sort_keys=True)
         print(f"measured {argv[1]} -> {argv[2]}")
         return 0

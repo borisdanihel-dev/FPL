@@ -49,7 +49,7 @@ def newest_export(folder="."):
 
 
 def load(path):
-    with open(path, encoding="utf-8") as f:
+    with open(path, encoding="utf-8", newline="") as f:
         return json.load(f)
 
 
@@ -611,15 +611,83 @@ def sec_value(d, horizon, min_mins=135, top=12):
     print()
 
 
+FORMATION_MIN = {1: 1, 2: 3, 3: 2, 4: 1}    # every XI: 1 GK, 3+ DEF, 2+ MID, 1+ FWD
+
+
+def _now_utc():
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc)
+
+
+def rule_autosubs(rows):
+    """FPL's automatic substitutions applied to the minutes, for a gameweek
+    whose own list was never stored (Step 2.10): each starter who played 0
+    minutes, in slot order, is replaced by the first bench player in bench
+    order who played and keeps the XI legal (FORMATION_MIN); the keeper only
+    by the bench keeper. Returns [(bench row in, starter row out)]."""
+    from collections import Counter
+    xi = sorted((r for r in rows if r["slot"] <= 11), key=lambda r: r["slot"])
+    bench = sorted((r for r in rows if r["slot"] > 11), key=lambda r: r["slot"])
+    current, used, pairs = list(xi), set(), []
+    for out in xi:
+        if (out.get("minutes") or 0) > 0:
+            continue
+        for cand in bench:
+            if id(cand) in used or (cand.get("minutes") or 0) == 0:
+                continue
+            if (out["pos"] == 1) != (cand["pos"] == 1):
+                continue
+            trial = [r for r in current if r is not out] + [cand]
+            have = Counter(r["pos"] for r in trial)
+            if all(have[p] >= n for p, n in FORMATION_MIN.items()):
+                pairs.append((cand, out))
+                used.add(id(cand))
+                current = trial
+                break
+    return pairs
+
+
+def effective_lineup(d, rows):
+    """(xi, bench, n_subs, source) for one squad after its automatic
+    substitutions (Step 2.10). source "FPL": the list FPL applied, stored by
+    the sync with the picks (autosubs_known); "rules": the gameweek has no
+    stored list and all its fixtures are finished, so FPL's rules are applied
+    to the minutes; "pending": no stored list and matches still to play - a
+    starter on 0 minutes may yet play, so no substitution is made."""
+    xi = [r for r in rows if r["slot"] <= 11]
+    bench = [r for r in rows if r["slot"] > 11]
+    entry, event = (rows[0].get("entry_id") if rows else None), d.get("gameweek")
+    known = {(k["entry_id"], k["event"]) for k in d.get("autosubs_known", [])}
+    if entry is not None and (entry, event) in known:
+        by_pid = {r.get("player_id"): r for r in rows}
+        pairs = [(by_pid.get(a["element_in"]), by_pid.get(a["element_out"]))
+                 for a in d.get("automatic_subs", [])
+                 if a["entry_id"] == entry and a["event"] == event]
+        if any(i is None or o is None for i, o in pairs):
+            raise ValueError(f"automatic_subs of entry {entry} GW{event} name a "
+                             f"player who is not in its squad")
+        source = "FPL"
+    elif all(f.get("finished") for f in d.get("fixtures_status", [])
+             if f.get("event") == event and not _postponed(f, _now_utc())):
+        pairs, source = rule_autosubs(rows), "rules"
+    else:
+        pairs, source = [], "pending"
+    ins, outs = {id(i) for i, _ in pairs}, {id(o) for _, o in pairs}
+    return ([r for r in xi if id(r) not in outs] + [i for i, _ in pairs],
+            [r for r in bench if id(r) not in ins] + [o for _, o in pairs],
+            len(pairs), source)
+
+
 def sec_bench(d):
     print("=" * 78)
-    print("BENCH AUDIT")
+    print("BENCH AUDIT  (after automatic substitutions: FPL's list where stored, else its rules)")
     print("=" * 78)
     me = my_name(d)
     for entry in sorted({r["entry_name"] for r in d["squads"]}):
         rows = [r for r in d["squads"] if r["entry_name"] == entry]
-        bench = [r for r in rows if r["slot"] > 11]
-        xi = [r for r in rows if r["slot"] <= 11 and r["pos"] != 1]
+        # points that already counted through an auto-sub are not a bench gain
+        on, bench, n_subs, src = effective_lineup(d, rows)
+        xi = [r for r in on if r["pos"] != 1]
         lost = sum((r["gw_points"] or 0) for r in bench if r["pos"] != 1)
         worst = min(((r["gw_points"] or 0), r["web_name"]) for r in xi) if xi else (0, "-")
         best = max(((r["gw_points"] or 0), r["web_name"]) for r in bench
@@ -629,15 +697,37 @@ def sec_bench(d):
         # the keeper swap: the bench keeper for the starting one, if he scored more
         k_in = max((r for r in bench if r["pos"] == 1),
                    key=lambda r: r["gw_points"] or 0, default=None)
-        k_out = min((r for r in rows if r["slot"] <= 11 and r["pos"] == 1),
+        k_out = min((r for r in on if r["pos"] == 1),
                     key=lambda r: r["gw_points"] or 0, default=None)
         gk_gain = (max(0, (k_in["gw_points"] or 0) - (k_out["gw_points"] or 0))
                    if k_in and k_out else 0)
         keeper = k_in["web_name"] if k_in and k_out else "-"
-        print(f"{flag} {entry[:22]:22s} bench={lost:>3}  best benched {best[1][:12]:12s}"
+        print(f"{flag} {entry[:22]:22s} bench={lost:>3}  subs {n_subs} {src:5s}  "
+              f"best benched {best[1][:12]:12s}"
               f"({best[0]:>2})  worst XI {worst[1][:12]:12s}({worst[0]:>2})  "
               f"keeper {keeper[:12]:12s}+{gk_gain:<3} perfect-XI gain +{gain + gk_gain}")
     print()
+
+
+def selling_price(buy, now):
+    """FPL's selling price in tenths (Step 2.8): half of any rise, rounded
+    down; all of any fall. Bought at 7.5, now 7.8 -> sells for 7.6."""
+    return buy + (now - buy) // 2 if now > buy else now
+
+
+def selling_budget(d):
+    """(budget in GBP m, None): the bank plus the selling price of each of my
+    fifteen (Step 2.8). (None, reason) when the export does not carry them - a
+    budget is never read from `value`, which counts current prices."""
+    me = my_name(d)
+    stand = next((s for s in d.get("standings", []) if s["entry_name"] == me), None)
+    mine = [r for r in d.get("squads", []) if r["entry_name"] == me]
+    if stand is None or stand.get("bank") is None:
+        return None, "the export has no bank for my entry"
+    if not mine or any(r.get("selling_price") is None for r in mine):
+        return None, "the export has no selling prices for my squad - re-run fpl_sync.py"
+    tenths = stand["bank"] + sum(round(r["selling_price"] * 10) for r in mine)
+    return tenths / 10.0, None
 
 
 def days_since_last_pl_match(d, team, event):
@@ -732,11 +822,13 @@ def sec_brief(d, horizon):
         print(f"    {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{opp:>10} fdr{fdr}")
 
     weak = [r for r in xi if nextfx(r["team"])[2] >= 4]
-    if weak:
+    if weak and any(r.get("selling_price") is None for r in weak):
+        print("\n  UPGRADE SHORTLIST skipped: the export has no selling prices - re-run fpl_sync.py")
+    elif weak:
         budget = stand["bank"] / 10
-        print(f"\n  UPGRADE SHORTLIST  (fdr>=4 spots, budget £{budget:.1f}m + sale)")
+        print(f"\n  UPGRADE SHORTLIST  (fdr>=4 spots, bank £{budget:.1f}m + selling price)")
         for r in weak:
-            cash = budget + r["price"]
+            cash = budget + r["selling_price"]
             pool = [p for p in d["all_players"]
                     if p["pos"] == r["pos"] and p["price"] <= cash
                     and p["status"] == "a" and p["mins_last4"] >= 135
@@ -858,7 +950,7 @@ CANONICAL_PLAYER_FIELDS = frozenset({"player_id", "name", "pos", "team",
                                      "chance_next_round"})
 CANONICAL_ROW_FIELDS = frozenset({"player_id", "event", "minutes", "starts",
                                   "pts", "xg", "xa", "bps", "defcon",
-                                  "n_fixtures", "fixtures"})
+                                  "n_fixtures", "fixtures", "ruleset"})
 CANONICAL_FIXTURE_FIELDS = frozenset({"opponent", "was_home", "fixture_id"})
 CANONICAL_MATCH_FIELDS = frozenset({"event", "team", "opponent", "was_home",
                                     "goals_for", "goals_against", "fixture_id"})
@@ -887,6 +979,26 @@ def check_canonical(c):
     for m in c["team_matches"]:
         same(m, CANONICAL_MATCH_FIELDS, "team match")
     return c
+
+
+def ruleset_of(season):
+    """The scoring ruleset of a season - "2025/26" or "2025-26" -> "2025-26".
+    Every scored row carries it (Step 2.7)."""
+    s = str(season).replace("/", "-")
+    if len(s) != 7 or s[4] != "-" or not (s[:4] + s[5:]).isdigit():
+        raise ValueError(f"cannot read a ruleset from season {season!r}")
+    return s
+
+
+def one_ruleset(rows, what="rows"):
+    """The single ruleset of `rows`, or an error: BPS and bonus are never
+    compared across rulesets (Step 2.7) - 2025/26 and 2026/27 score them
+    differently."""
+    found = {r["ruleset"] for r in rows}
+    if len(found) > 1:
+        raise ValueError(f"{what} mix rulesets {sorted(found)} - BPS and bonus "
+                         f"are not comparable across rulesets")
+    return found.pop() if found else None
 
 
 def canonical_through(c, gw):
@@ -919,7 +1031,8 @@ def canonical_from_export(d, season="2026/27"):
                      "pts": r.get("pts") or 0, "xg": float(r.get("xg") or 0),
                      "xa": float(r.get("xa") or 0), "bps": r.get("bps") or 0,
                      "defcon": r.get("defcon") or 0,
-                     "n_fixtures": r.get("n_fixtures") or 1, "fixtures": fx})
+                     "n_fixtures": r.get("n_fixtures") or 1, "fixtures": fx,
+                     "ruleset": ruleset_of(season)})
     matches = []
     for f in d.get("fixtures_played") or []:
         matches.append({"event": f["event"], "team": f["home"], "opponent": f["away"],
@@ -967,6 +1080,7 @@ def measure_reliability(c, metrics=RELIABILITY_METRICS, min_mins=45,
     """
     if population not in ("appeared", "all"):
         raise ValueError(f"population must be 'appeared' or 'all', got {population!r}")
+    one_ruleset(c["rows"], "reliability rows")      # BPS within one ruleset only
     half = defaultdict(lambda: {0: defaultdict(float), 1: defaultdict(float)})
     for r in c["rows"]:
         h = half[r["player_id"]][r["event"] % 2]
@@ -1632,7 +1746,12 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     cands, weeks, excluded = wildcard_candidates(d, horizon)
     me = my_name(d)
     stand = next((s for s in d["standings"] if s["entry_name"] == me), None)
-    budget = stand["value"] / 10.0 if stand else 100.0   # value includes the bank
+    budget, why = selling_budget(d)
+    if budget is None:
+        print("=" * 78)
+        print(f"WILDCARD DRAFT  not built: {why}")
+        print("=" * 78)
+        return
     split_used = budget_split(d, budget, given=given)
     form_str = "-".join(str(n) for n in form)
     print("=" * 78)
@@ -1641,8 +1760,8 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     print("=" * 78)
     if not weeks:
         return
-    print(f"  budget £{budget:.1f}m = team value"
-          + (f" (bank £{stand['bank']/10:.1f}m included)" if stand else ""))
+    print(f"  budget £{budget:.1f}m = bank £{stand['bank']/10:.1f}m + the selling "
+          f"prices of the 15")
     print(f"  formation {form_str} (--formation): the XI is the top of each position's "
           "ordered list, never a choice on the sums")
     print("  split by position, " + ("--split scaled to the budget" if given else "current squad shape")
@@ -2461,10 +2580,15 @@ def start_probability(p, gws_played):
     else:
         window = min(4, gws_played)
     p_start = min(1.0, (starts or 0) / max(1, window))
-    chance = p.get("chance_next_round")
-    if chance is not None:
-        p_start *= float(chance) / 100.0
+    p_start *= chance_of_playing(p) / 100.0
     return p_start
+
+
+def chance_of_playing(p):
+    """The API's chance_of_playing_next_round: null means no flag, i.e. 100,
+    mapped explicitly - never `or 0` (Step 2.6)."""
+    chance = p.get("chance_next_round")
+    return 100.0 if chance is None else float(chance)
 
 
 def project_xg(p, fdr, gws_played, cs_table, cs_default, hist, ict_pct=0.5):
@@ -2526,12 +2650,108 @@ def next_deadline(d, event):
 
 
 def read_log(path=None):
+    """Every row of the log, as stored. Recording rewrites from this; every
+    other reader takes forecasts(read_log(), d)."""
     import csv
     path = path or LOG_PATH
     if not os.path.exists(path):
         return []
     with open(path, encoding="utf-8", newline="") as fh:
         return [r for r in csv.DictReader(fh)]
+
+
+def snapshot_date(row):
+    """The UTC date of a forecast's snapshot. made_at (UTC) is the snapshot
+    and fetch time (S2 ruling 2)."""
+    return row["made_at"][:10]
+
+
+def natural_key(row):
+    """(event, player_id, source, snapshot_date): one forecast per gameweek,
+    player, model and snapshot day (S2 ruling 2). fixture joins it only when
+    doubles arrive (Step 16), through a new log file, never by rewriting this
+    one."""
+    return (str(row["event"]), str(row["player_id"]), row["source"], snapshot_date(row))
+
+
+def _snapshots(rows, d=None):
+    """{(event, source): sorted made_at datetimes of its snapshots made
+    before that gameweek's deadline}. A snapshot is one recording run: the
+    rows sharing one made_at. `d` (the export) gives the deadlines
+    (event_deadline); without it, or for an event it has no deadline for, no
+    snapshot is dropped - the recorder writes none at or after a deadline
+    (Step 2.2) and a test checks the real log for that nightly."""
+    from datetime import datetime
+    deadline, snaps = {}, {}
+    for r in rows:
+        ev = str(r["event"])
+        if ev not in deadline:
+            deadline[ev] = event_deadline(d, int(ev)) if d is not None else None
+        made = datetime.fromisoformat(r["made_at"])
+        if deadline[ev] is None or made < deadline[ev]:
+            snaps.setdefault((ev, r["source"]), set()).add(made)
+    return {k: sorted(v) for k, v in snaps.items()}
+
+
+def forecasts(rows, d=None):
+    """The forecasts every reader uses (S2 amendment 2, point 4): for each
+    (event, source), the whole set of its last snapshot made before that
+    gameweek's deadline - what the log held before S2. A player who is only
+    in an earlier snapshot is not read (dropped_players counts them); a row
+    made at or after the deadline is never read. Within the set, a player
+    listed twice keeps the later row (the tie rule). Rows keep their order,
+    so a log with one snapshot per gameweek reads back unchanged."""
+    from datetime import datetime
+    last = {k: v[-1] for k, v in _snapshots(rows, d).items()}
+    keep = {}
+    for r in rows:
+        k = (str(r["event"]), r["source"])
+        if k in last and datetime.fromisoformat(r["made_at"]) == last[k]:
+            keep[(k, str(r["player_id"]))] = r
+    return list(keep.values())
+
+
+def dropped_players(rows, d=None):
+    """{(event, source): n} - the players in an earlier pre-deadline
+    snapshot of that gameweek and source who are missing from its last one.
+    They are not graded on the older forecast (S2 amendment 2, point 4); the
+    calibration prints this count. Only pairs with n > 0."""
+    from datetime import datetime
+    snaps = _snapshots(rows, d)
+    players = {}
+    for r in rows:
+        k = (str(r["event"]), r["source"])
+        made = datetime.fromisoformat(r["made_at"])
+        if k in snaps and made in snaps[k]:
+            players.setdefault(k, {}).setdefault(made, set()).add(str(r["player_id"]))
+    out = {}
+    for k, by_snap in players.items():
+        last = by_snap[snaps[k][-1]]
+        earlier = set().union(*(p for m, p in by_snap.items() if m != snaps[k][-1]))
+        if earlier - last:
+            out[k] = len(earlier - last)
+    return out
+
+
+def duplicate_keys(rows):
+    """{natural key: rows holding it} for keys held by more than one row.
+    Reported, never deleted (S2 ruling 2): the gate freezes past-deadline rows,
+    and forecasts() reads only the last snapshot of each."""
+    from collections import Counter
+    n = Counter(natural_key(r) for r in rows)
+    return {k: c for k, c in n.items() if c > 1}
+
+
+def event_deadline(d, event):
+    """UTC deadline of a gameweek: its events.deadline_time, which the sync
+    exports for every event (S2, Step 2.2/2.5). An export written before that
+    has none; then 90 minutes before the first kickoff, the rule the deadline
+    follows. None when neither is in the export."""
+    from datetime import datetime
+    for e in d.get("events", []):
+        if e.get("event") == event and e.get("deadline_time"):
+            return datetime.fromisoformat(e["deadline_time"].replace("Z", "+00:00"))
+    return next_deadline(d, event)
 
 
 WRITE_RETRIES = 3           # after the first attempt
@@ -2611,7 +2831,8 @@ def write_log_atomic(path, rows, retries=WRITE_RETRIES, wait=WRITE_WAIT):
     """
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=LOG_FIELDS)
+        # LF, not csv's default CRLF: the file holds no \r (S2, Step 2.9)
+        w = csv.DictWriter(fh, fieldnames=LOG_FIELDS, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     return _replace_with_retry(tmp, path, retries, wait)
@@ -2625,9 +2846,11 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
     or the log could not be written. A passed deadline is ok with n = 0 -
     that is the guard working, and it happens after every deadline.
 
-    Point-in-time discipline: refuses to write once the deadline has passed, so
-    the log can never contain a forecast made with knowledge of the result.
-    Re-running before the deadline replaces the entry with fresher data.
+    Point-in-time discipline: refuses to write at or after the deadline
+    (events.deadline_time), so the log can never contain a forecast made with
+    knowledge of the result. Rows are keyed (event, player_id, source,
+    snapshot_date): a re-run the same UTC day replaces that day's rows for this
+    source and gameweek; an earlier day's snapshot stays (S2 ruling 2).
     """
     import csv
     from datetime import datetime, timezone
@@ -2639,12 +2862,12 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
         return False, 0, (f"{os.path.basename(path)}.tmp holds {held} unpromoted "
                           f"rows and the log is locked - close it and re-run")
     target = d["gameweek"] + 1
-    dl = next_deadline(d, target)
+    dl = event_deadline(d, target)
     now = datetime.now(timezone.utc)
     if dl is None:
         print(f"  no fixtures for GW{target} in this export - nothing recorded")
         return True, 0, f"no fixtures for GW{target} in this export"
-    if now > dl:
+    if now >= dl:
         print(f"  GW{target} deadline passed ({dl:%Y-%m-%d %H:%M} UTC). "
               f"Refusing to record - it would not be a genuine forecast.")
         return True, 0, f"GW{target} deadline passed - nothing to record"
@@ -2737,9 +2960,14 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
                           f"deadline has not passed")
 
     existing = read_log(path)
-    keep = [r for r in existing
-            if not (r["source"] == source and int(r["event"]) == target)]
+    dups = duplicate_keys(existing)
+    if dups:
+        print(f"  LOG NOTE: {len(dups)} natural keys are held by more than one row "
+              f"({sum(dups.values()) - len(dups)} extra rows) - kept; readers use the last")
     stamp = now.isoformat(timespec="seconds")
+    keep = [r for r in existing
+            if not (r["source"] == source and int(r["event"]) == target
+                    and snapshot_date(r) == stamp[:10])]
     for pid, nm, val in rows:
         keep.append({"made_at": stamp, "source": source, "event": str(target),
                      "player_id": str(pid), "web_name": nm,
@@ -2762,16 +2990,42 @@ def record_projections(d, horizon, source="own", proj_path=None, path=None):
 
 
 STARTER_MINUTES = 60
+POSTPONED_AFTER_H = 3       # not started this long after kickoff = postponed (Step 2.1)
+STUCK_AFTER_H = 72          # not final this long after the last kickoff = stuck (Step 2.1)
 
 
-def gameweek_settled(d, event):
-    """(ok, blockers). A gameweek may be graded only when its points are final:
-    the event has data_checked = 1 AND every one of its fixtures has
-    finished = 1. `data_checked` is the API's "points and bonus are final"
-    flag and exists on events only; a fixture carries `finished`, which flips
-    earlier (observed GW5: fixtures 10/10 finished while the event was still
-    data_checked = 0). Grading before both hold records provisional points.
+def _kickoff(f):
+    from datetime import datetime
+    ko = f.get("kickoff_time")
+    return datetime.fromisoformat(ko.replace("Z", "+00:00")) if ko else None
+
+
+def _postponed(f, now):
+    """A fixture not started POSTPONED_AFTER_H hours after its kickoff, or with
+    no kickoff at all, counts as postponed. Without the `started` field (an
+    export before S2) a past fixture counts as started, so it must finish."""
+    from datetime import timedelta
+    ko = _kickoff(f)
+    if ko is None:
+        return True
+    return (now - ko >= timedelta(hours=POSTPONED_AFTER_H)
+            and f.get("started", 1) is not None and not f.get("started", 1))
+
+
+def gameweek_settled(d, event, now=None):
+    """(ok, blockers). A gameweek may be graded only when its points are final
+    (Step 2.1): the event has data_checked = 1 AND every one of its fixtures
+    whose kickoff is 3 h or more in the past has finished = 1. A fixture not
+    started 3 h after kickoff is postponed and excluded; a fixture whose event
+    is null never reaches fixtures_status. `data_checked` is the API's "points
+    and bonus are final" flag and exists on events only; a fixture carries
+    `finished`, which flips earlier (observed GW5: fixtures 10/10 finished
+    while the event was still data_checked = 0). In 2026/27 lockdown comes at
+    09:00 UK the morning after the last match, so the same night's run never
+    sees a gameweek as final.
     """
+    from datetime import datetime, timedelta, timezone
+    now = now or datetime.now(timezone.utc)
     if "events" not in d or "fixtures_status" not in d:
         return False, ["export has no events / fixtures_status section - "
                        "re-run fpl_sync.py to write one"]
@@ -2786,10 +3040,33 @@ def gameweek_settled(d, event):
     if not fixtures:
         blockers.append(f"no fixtures listed for GW{event}")
     for f in fixtures:
-        if not f.get("finished"):
+        if _postponed(f, now):
+            continue
+        if now - _kickoff(f) >= timedelta(hours=POSTPONED_AFTER_H) and not f.get("finished"):
             blockers.append(f"{f['home']} v {f['away']} ({f.get('kickoff_time')}) "
                             f"finished = 0")
     return not blockers, blockers
+
+
+def stuck_gameweeks(d, now=None):
+    """[(event, hours since its last kickoff, blockers)] for every gameweek not
+    final STUCK_AFTER_H hours after its last (not postponed) kickoff - the
+    "GW stuck" alarm (Step 2.1)."""
+    from datetime import datetime, timezone
+    now = now or datetime.now(timezone.utc)
+    stuck = []
+    for event in sorted({f["event"] for f in d.get("fixtures_status", []) if f.get("event")}):
+        kos = [_kickoff(f) for f in d["fixtures_status"]
+               if f["event"] == event and not _postponed(f, now)]
+        if not kos:
+            continue
+        hours = (now - max(kos)).total_seconds() / 3600
+        if hours < STUCK_AFTER_H:
+            continue
+        ok, blockers = gameweek_settled(d, event, now)
+        if not ok:
+            stuck.append((event, hours, blockers))
+    return stuck
 
 
 def grade_forecasts(d, log, detail=False):
@@ -2836,11 +3113,16 @@ def sec_calibration(d, horizon, path=None):
     print("=" * 78)
     print("CALIBRATION  (accumulated forecast record)")
     print("=" * 78)
-    log = read_log(path)
+    log = forecasts(read_log(path), d)
     if not log:
         print("\n  No forecasts recorded yet. Run before each deadline:")
         print("    python fpl_edge.py --record\n")
         return
+    dropped = dropped_players(read_log(path), d)
+    dropped_line = ("  players only in an earlier snapshot (not graded on an older forecast): "
+                    + (", ".join(f"{s} GW{e} {n}" for (e, s), n in
+                                 sorted(dropped.items(), key=lambda kv: (kv[0][1], int(kv[0][0]))))
+                       or "none"))
 
     graded, pending = grade_forecasts(d, log, detail=True)
 
@@ -2875,6 +3157,7 @@ def sec_calibration(d, horizon, path=None):
         if weeks:
             print(f"\n  {len(log)} forecasts recorded for GW{weeks} - "
                   f"not played yet.")
+        print(dropped_line)
         print()
         return
 
@@ -2927,8 +3210,8 @@ def sec_calibration(d, horizon, path=None):
 
     for (src, ev), cnt in sorted(pending.items()):
         print(f"  {cnt} forecasts pending for {src} GW{ev}")
-    if pending:
-        print()
+    print(dropped_line)
+    print()
 
 
 # ---------------------------------------------------------------------------
@@ -3008,10 +3291,10 @@ def bench_boost_table(d, squad_ids=None, horizon=6):
         if f["event"] in window:
             played[f["home"]] += 1
             played[f["away"]] += 1
-    stand = next((s for s in d["standings"] if s["entry_name"] == my_name(d)), None)
-    # the API's value = squad prices at the deadline + bank: it IS the budget
-    budget = (stand["value"] / 10.0 if stand
-              else sum(by_id[i]["price"] for i in ids))
+    # the money: the bank plus the selling prices of my 15, never `value` (Step 2.8)
+    budget, why = selling_budget(d)
+    if budget is None:
+        raise ValueError(f"no budget: {why}")
     available = [p for p in d["all_players"]
                  if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
 
@@ -3067,12 +3350,20 @@ def bench_boost_table(d, squad_ids=None, horizon=6):
 
 
 def sec_bench_boost(d, horizon, squad_ids=None):
-    t = bench_boost_table(d, squad_ids, horizon)
+    try:
+        t = bench_boost_table(d, squad_ids, horizon)
+    except ValueError as e:
+        if not str(e).startswith("no budget"):
+            raise
+        print("=" * 78)
+        print(f"BENCH BOOST SCREEN  not built: {e}")
+        print("=" * 78)
+        return
     print("=" * 78)
     print(f"BENCH BOOST SCREEN  (frozen three-layer rule, next {len(t['weeks'])} gameweeks)")
     print("=" * 78)
     print(f"  squad: {len(t['ids'])} players ({'--squad' if squad_ids else 'my current 15'})"
-          f"   budget £{t['budget']:.1f}m = team value (bank included)")
+          f"   budget £{t['budget']:.1f}m = bank + selling prices")
     print("  proj  GK/DEF: bottomup (P(start), xGI, Poisson clean sheet, DEFCON)")
     print("        MID/FWD: P(start) + xGI-per-90 x P(start), in points - bare xGI, no")
     print(f"        fixture term.  FLAG: minutes share <= {FLAG_SHARE_MAX} over the last four")
@@ -3112,7 +3403,7 @@ def read_watchlist(path):
     """One FPL player id per line; blank lines and '#' comments ignored. A line
     that is not an id is an error, not a silent skip."""
     ids = []
-    with open(path, encoding="utf-8") as fh:
+    with open(path, encoding="utf-8", newline="") as fh:
         for n, raw in enumerate(fh, 1):
             line = raw.split("#", 1)[0].strip()
             if not line:
@@ -3178,10 +3469,13 @@ def watch_report(d, log, ids, max_bytes=WATCH_MAX_BYTES, top=WATCH_TOP, news_wid
     the last line says how many."""
     event, _, _, _, made = _watch_context(d, log)
     rows, tops = watch_rows(d, log, ids), watch_top(d, log, top)
-    fh = free_hit_table(d, log)
-    fh_lines = ([f"FREE HIT SCREEN  budget £{fh['budget']:.1f}m; FH candidate: gap > {FH_GAP:g} "
-                 f"or {FH_NOT_A}+ of our XI not 'a' (item N)"] + free_hit_lines(fh)
-                if fh["weeks"] else [])
+    try:
+        fh = free_hit_table(d, log)
+        fh_lines = ([f"FREE HIT SCREEN  budget £{fh['budget']:.1f}m; FH candidate: gap > {FH_GAP:g} "
+                     f"or {FH_NOT_A}+ of our XI not 'a' (item N)"] + free_hit_lines(fh)
+                    if fh["weeks"] else [])
+    except ValueError as e:                  # no selling prices: no budget, no screen
+        fh_lines = [f"FREE HIT SCREEN  not built: {e}"]
     header = (f"  {'id':<6}{'player':15s}{'team':5s}{'pos':4s}{'£':>5} {'st':2s}{'ch%':>4}"
               f"{'own':>6}{'xg':>6}{'bu':>6}{'min':>6}  {'fixture':22s} news")
 
@@ -3484,11 +3778,11 @@ def free_hit_table(d, log):
     metric, the gap, how many of our XI are not status 'a', the flag."""
     weeks, pts, src = one_week_points(d, log)
     me = my_name(d)
-    stand = next((s for s in d["standings"] if s["entry_name"] == me), None)
     by_id = {p["id"]: p for p in d["all_players"]}
     ours_ids = [i for i in my_squad_ids(d) if i in by_id]
-    budget = (stand["value"] / 10.0 if stand
-              else sum(by_id[i]["price"] for i in ours_ids))
+    budget, why = selling_budget(d)     # never `value` (Step 2.8)
+    if budget is None:
+        raise ValueError(f"no budget: {why}")
     gate = [p for p in d["all_players"] if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
     spare = [p for p in d["all_players"] if p["status"] == "a"]
     out = {"budget": budget, "weeks": []}
@@ -3528,11 +3822,17 @@ def free_hit_lines(t):
 def sec_free_hit(d, horizon, log=None):
     """The Free Hit screen: one week at a time, the best legal XI the team
     value buys against our best XI, by the frozen one-week metric."""
-    t = free_hit_table(d, read_log() if log is None else log)
+    try:
+        t = free_hit_table(d, forecasts(read_log(), d) if log is None else log)
+    except ValueError as e:
+        print("=" * 78)
+        print(f"FREE HIT SCREEN  not built: {e}")
+        print("=" * 78)
+        return
     weeks = t["weeks"]
     print("=" * 78)
     print(f"FREE HIT SCREEN  (GW{weeks[0]['event']}-{weeks[-1]['event']}, one week at a time; "
-          f"budget £{t['budget']:.1f}m = team value)" if weeks
+          f"budget £{t['budget']:.1f}m = bank + selling prices)" if weeks
           else "FREE HIT SCREEN  (no upcoming fixtures in the export)")
     print("=" * 78)
     if not weeks:
@@ -3636,6 +3936,9 @@ def main():
                     help="label for --record, e.g. openfpl")
     ap.add_argument("--status",
                     help="with --record: append the RECORD OK/FAIL line to this file")
+    ap.add_argument("--stuck", action="store_true",
+                    help="exit 1 when a gameweek is not final 72 h after its last "
+                         "kickoff (the GW stuck alarm)")
     ap.add_argument("--watch",
                     help="watchlist file (one player id per line, # comments): "
                          "write the watch file to --out and stop")
@@ -3680,6 +3983,14 @@ def main():
     print(f"[reading {os.path.basename(path)}]\n")
 
     d = load(path)
+    if args.stuck:
+        stuck = stuck_gameweeks(d)
+        for event, hours, blockers in stuck:
+            print(f"GW STUCK: GW{event} not final {hours:.0f} h after its last kickoff: "
+                  + "; ".join(blockers))
+        if not stuck:
+            print(f"STUCK CHECK OK: no gameweek unsettled {STUCK_AFTER_H} h after its last kickoff")
+        sys.exit(1 if stuck else 0)
     if args.watch:
         if not args.out:
             sys.exit("--watch needs --out <file>")
@@ -3687,8 +3998,8 @@ def main():
             ids = read_watchlist(args.watch)
         except (OSError, ValueError) as e:
             sys.exit(f"WATCH FAILED: {e}")
-        text = watch_report(d, read_log(), ids)
-        with open(args.out, "w", encoding="utf-8") as fh:
+        text = watch_report(d, forecasts(read_log(), d), ids)
+        with open(args.out, "w", encoding="utf-8", newline="") as fh:
             fh.write(text)
         print(f"[watch file: {len(ids)} ids, {len(text.encode('utf-8'))} bytes -> {args.out}]")
         return
@@ -3704,7 +4015,7 @@ def main():
                 if ok else f"RECORD FAIL {args.source} {reason}")
         print(line)
         if args.status:
-            with open(args.status, "a", encoding="utf-8") as fh:
+            with open(args.status, "a", encoding="utf-8", newline="") as fh:
                 fh.write(line + "\n")
         if not ok:
             sys.exit(1)
@@ -3728,7 +4039,7 @@ def main():
             prev = load(ppath)
             print(f"[diffing against {os.path.basename(ppath)}]\n")
 
-    sink = open(args.out, "w", encoding="utf-8") if args.out else None
+    sink = open(args.out, "w", encoding="utf-8", newline="") if args.out else None
     real = sys.stdout
     try:
         if sink:

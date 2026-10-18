@@ -34,6 +34,12 @@ import fpl_publish as PUB                                       # noqa: E402
 TEAMS = ["ARS", "BHA", "CHE", "CRY", "HUL", "LIV", "MCI", "MUN", "NEW", "NFO"]
 ENTRIES = ["My Team", "Rival A", "Rival B", "Rival C"]
 MY_ID = 999
+# London time for the sync, injected: Windows has no time-zone database without
+# the tzdata package, and the tests must not depend on it (S2, Step 2.4)
+from datetime import timedelta as _td, timezone as _tz
+UK_SUMMER = _tz(_td(hours=1), "BST")
+UK_WINTER = _tz(_td(0), "GMT")
+
 UNICODE_NAMES = ["Muharemović", "Groß", "João Pedro", "Ødegaard", "Horníček"]
 
 
@@ -85,6 +91,7 @@ def make_export(gw=3, n_entries=4, with_gw_rows=True, with_all_players=True,
                 "entry_id": MY_ID if e_i == 0 else 100 + e_i,
                 "entry_name": entry, "slot": slot, "web_name": p["web_name"],
                 "team": p["team"], "pos": p["pos"], "price": p["price"],
+                "purchase_price": p["price"], "selling_price": p["price"],
                 "multiplier": (2 if slot == 10 else 1) if slot <= 11 else 0,
                 "is_captain": 1 if slot == 10 else 0,
                 "is_vice": 1 if slot == 9 else 0,
@@ -554,6 +561,242 @@ class ExternalProjections(unittest.TestCase):
             self.assertIn("unmatched", buf.getvalue())
         finally:
             shutil.rmtree(tmp)
+
+
+class ProjectionLogKey(unittest.TestCase):
+    """S2 (Step 2.2, 2.3, 2.9; ruling 2): the natural key (event, player_id,
+    source, snapshot_date), same-day upserts that keep earlier days, readers
+    that take the latest snapshot, duplicates reported and never deleted, the
+    deadline from events.deadline_time, and a log with no carriage return."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.log = os.path.join(self.tmp, "log.csv")
+
+    @staticmethod
+    def _row(made_at, source, event, pid, val, name="P"):
+        return {"made_at": made_at, "source": source, "event": str(event),
+                "player_id": str(pid), "web_name": name, "predicted": str(val)}
+
+    def _record(self, d, source="own"):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ok, n, why = E.record_status(d, 6, source, None, self.log)
+        return ok, n, buf.getvalue()
+
+    def test_a_new_snapshot_day_keeps_the_earlier_one(self):
+        d = _recordable_export()
+        target = d["gameweek"] + 1
+        old = [self._row("2026-10-16T21:40:00+00:00", "own", target, p["id"], 1.0)
+               for p in d["all_players"][:3]]
+        E.write_log_atomic(self.log, old)
+        ok, n, _ = self._record(d)
+        self.assertTrue(ok and n > 0)
+        rows = E.read_log(self.log)
+        days = {E.snapshot_date(r) for r in rows if r["source"] == "own"}
+        self.assertEqual(len(days), 2, "the earlier snapshot day was dropped")
+        self.assertEqual(sum(1 for r in rows if r["made_at"].startswith("2026-10-16")), 3)
+
+    def test_a_same_day_rerun_replaces_that_days_rows_only(self):
+        d = _recordable_export()
+        self._record(d)
+        first = E.read_log(self.log)
+        self._record(d)
+        second = E.read_log(self.log)
+        self.assertEqual(len(first), len(second), "a same-day re-run appended rows")
+        self.assertEqual(E.duplicate_keys(second), {})
+
+    def test_readers_take_the_whole_last_snapshot_per_event_and_source(self):
+        """S2 amendment 2, point 4: per (event, source), the whole set of the
+        last snapshot - a player missing from it is not read on an older
+        forecast, and is counted."""
+        rows = [self._row("2026-10-16T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-16T21:40:00+00:00", "own", 8, 2, 2.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 3.0),
+                self._row("2026-10-17T21:41:00+00:00", "own", 8, 1, 4.0),   # the last snapshot
+                self._row("2026-10-16T21:40:00+00:00", "xg", 8, 1, 5.0),
+                self._row("2026-10-09T21:40:00+00:00", "own", 7, 1, 6.0)]
+        got = [(r["source"], r["event"], r["player_id"], r["predicted"]) for r in E.forecasts(rows)]
+        self.assertEqual(got, [("own", "8", "1", "4.0"), ("xg", "8", "1", "5.0"),
+                               ("own", "7", "1", "6.0")])
+        self.assertEqual(E.dropped_players(rows), {("8", "own"): 1})
+
+    def test_two_forecasts_with_the_same_timestamp_the_later_row_wins(self):
+        """S2 amendment 2, point 3: the tie rule."""
+        rows = [self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 2, 2.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 3.0)]
+        got = [(r["player_id"], r["predicted"]) for r in E.forecasts(rows)]
+        self.assertEqual(got, [("1", "3.0"), ("2", "2.0")])
+        self.assertEqual(E.dropped_players(rows), {})
+
+    def test_a_snapshot_after_the_deadline_does_not_hide_the_last_one_before_it(self):
+        d = {"events": [{"event": 8, "deadline_time": "2026-10-23T17:30:00Z"}]}
+        rows = [self._row("2026-10-22T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-22T21:40:00+00:00", "own", 8, 2, 2.0),
+                self._row("2026-10-23T18:00:00+00:00", "own", 8, 1, 9.0)]   # after the deadline
+        got = [(r["player_id"], r["predicted"]) for r in E.forecasts(rows, d)]
+        self.assertEqual(got, [("1", "1.0"), ("2", "2.0")])
+        self.assertEqual(E.dropped_players(rows, d), {})
+
+    def test_the_last_snapshot_is_the_latest_made_at_not_the_last_line(self):
+        rows = [self._row("2026-10-18T21:40:00+00:00", "own", 8, 1, 2.0),
+                self._row("2026-10-17T21:40:00+00:00", "own", 8, 1, 1.0)]
+        self.assertEqual([r["predicted"] for r in E.forecasts(rows)], ["2.0"])
+
+    def test_a_row_at_or_after_the_deadline_is_never_read(self):
+        """S2 amendment 1, point 5: the last snapshot *before* the deadline,
+        from the export's events.deadline_time."""
+        d = {"events": [{"event": 8, "deadline_time": "2026-10-23T17:30:00Z"}]}
+        rows = [self._row("2026-10-22T21:40:00+00:00", "own", 8, 1, 1.0),
+                self._row("2026-10-23T17:30:00+00:00", "own", 8, 1, 9.0),   # at the deadline
+                self._row("2026-10-23T18:00:00+00:00", "own", 8, 2, 9.0)]   # after it
+        got = [(r["player_id"], r["predicted"]) for r in E.forecasts(rows, d)]
+        self.assertEqual(got, [("1", "1.0")])
+
+    def test_recording_keeps_the_log_in_time_order(self):
+        """Rows are only ever appended after the rows already there, so a
+        reader that keeps the last line per player (the frozen p1_eval.py)
+        also reads the last snapshot."""
+        d = _recordable_export()
+        target = d["gameweek"] + 1
+        old = [self._row("2026-10-16T21:40:00+00:00", "own", target, p["id"], 1.0)
+               for p in d["all_players"][:3]]
+        E.write_log_atomic(self.log, old)
+        self._record(d)
+        self._record(d)
+        made = [r["made_at"] for r in E.read_log(self.log)]
+        self.assertGreater(len(made), 3)
+        self.assertEqual(made, sorted(made))
+
+    def test_every_reader_goes_through_forecasts_with_the_export(self):
+        """S2 amendment 1, point 5: outside the recorder, fpl_edge.py reads
+        the log only as forecasts(read_log(...), d); and no other runner file
+        reads it without being listed here with its reason."""
+        import ast
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_edge.py"), encoding="utf-8").read()
+        tree = ast.parse(src)
+        parent = {c: p for p in ast.walk(tree) for c in ast.iter_child_nodes(p)}
+        raw_ok = {"record_status", "recover_stranded_log"}   # they rewrite the log itself
+        readers = {"forecasts", "dropped_players"}             # both apply the deadline from d
+        bad = []
+        for fn in ast.walk(tree):
+            if not isinstance(fn, ast.FunctionDef) or fn.name in raw_ok:
+                continue
+            for n in ast.walk(fn):
+                if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "read_log":
+                    p = parent[n]
+                    if not (isinstance(p, ast.Call) and getattr(p.func, "id", None) in readers
+                            and len(p.args) == 2 and getattr(p.args[1], "id", None) == "d"):
+                        bad.append(f"{fn.name} line {n.lineno}")
+        self.assertEqual(bad, [], "a reader skips forecasts(read_log(...), d)")
+        allowed = {
+            "fpl_edge.py": "the recorder and forecasts()",
+            "fpl_gate.py": "the integrity gate: whole rows, never forecasts",
+            "fpl_nightly.py": "docstrings only",
+            "fpl_prepush.py": "the data-path list of the hook",
+            "fpl_publish.py": "docstring only",
+            "fpl_ship.py": "copies the file, reads no row",
+            "p1_eval.py": "frozen; event 4 has one snapshot and the log is in time order",
+            os.path.join("tools", "migrate_data_branch.py"): "counts rows for the migration check",
+        }
+        files = [f for f in os.listdir(here) if f.endswith(".py") and f != "test_fpl.py"]
+        if os.path.isdir(os.path.join(here, "tools")):
+            files += [os.path.join("tools", f) for f in os.listdir(os.path.join(here, "tools"))
+                      if f.endswith(".py")]
+        naming = [f for f in files
+                  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+        self.assertEqual(sorted(set(naming) - set(allowed)), [],
+                         "a new file reads projection_log.csv: route it through "
+                         "fpl_edge.forecasts(read_log(), d), then list it here")
+
+    def test_one_snapshot_per_gameweek_reads_back_unchanged(self):
+        rows = [self._row("2026-10-16T21:40:00+00:00", s, e, p, p / 10)
+                for s in ("own", "xg") for e in (6, 7) for p in range(1, 6)]
+        self.assertEqual(E.forecasts(rows), rows)
+
+    def test_duplicates_are_reported_and_never_deleted(self):
+        d = _recordable_export()
+        dup = [self._row("2026-09-01T21:40:00+00:00", "own", 2, 7, 1.0),
+               self._row("2026-09-01T21:40:30+00:00", "own", 2, 7, 1.5)]
+        E.write_log_atomic(self.log, dup)
+        ok, n, out = self._record(d)
+        self.assertTrue(ok)
+        self.assertIn("LOG NOTE: 1 natural keys are held by more than one row (1 extra rows)", out)
+        kept = [r for r in E.read_log(self.log) if r["event"] == "2"]
+        self.assertEqual(len(kept), 2, "a duplicate row was deleted")
+
+    def test_the_deadline_is_events_deadline_time(self):
+        from datetime import datetime, timedelta, timezone
+        d = _recordable_export()                  # kickoffs three days ahead
+        target = d["gameweek"] + 1
+        passed = (datetime.now(timezone.utc) - timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        d["events"].append({"event": target, "finished": 0, "data_checked": 0,
+                            "deadline_time": passed})
+        ok, n, out = self._record(d)
+        self.assertEqual((ok, n), (True, 0), "recorded after events.deadline_time")
+        self.assertIn("Refusing", out)
+
+    def test_the_log_holds_no_carriage_return(self):
+        self._record(_recordable_export())
+        with open(self.log, "rb") as fh:
+            body = fh.read()
+        self.assertGreater(len(body), 100)
+        self.assertNotIn(b"\r", body)
+
+    def _real(self):
+        data = os.environ.get("FPL_DATA_DIR")
+        if not data or not os.path.exists(os.path.join(data, "projection_log.csv")):
+            self.skipTest("no real projection_log.csv in FPL_DATA_DIR")
+        return data
+
+    def test_the_real_log_has_no_row_at_or_after_its_deadline(self):
+        """Step 2.2: run nightly over the whole log; must find 0."""
+        import sqlite3
+        from datetime import datetime
+        data = self._real()
+        con = sqlite3.connect("file:" + os.path.join(data, "fpl.sqlite") + "?mode=ro", uri=True)
+        dl = {str(i): datetime.fromisoformat(t.replace("Z", "+00:00"))
+              for i, t in con.execute("SELECT id, deadline_time FROM events")}
+        con.close()
+        rows = E.read_log(os.path.join(data, "projection_log.csv"))
+        late = [r for r in rows if datetime.fromisoformat(r["made_at"]) >= dl[r["event"]]]
+        self.assertEqual(len(late), 0, f"{len(late)} rows made at or after their deadline")
+
+    def test_the_real_log_has_no_duplicate_natural_key(self):
+        """Step 2.3: the duplicate-key test must find 0."""
+        rows = E.read_log(os.path.join(self._real(), "projection_log.csv"))
+        self.assertEqual(E.duplicate_keys(rows), {})
+
+    def _real_deadlines(self, data):
+        import sqlite3
+        con = sqlite3.connect("file:" + os.path.join(data, "fpl.sqlite") + "?mode=ro", uri=True)
+        events = [{"event": i, "deadline_time": t}
+                  for i, t in con.execute("SELECT id, deadline_time FROM events")]
+        con.close()
+        return {"events": events}
+
+    def test_the_real_log_never_goes_back_in_time(self):
+        """S2 amendment 1, point 5: the log is in made_at order, so the frozen
+        p1_eval.py, which keeps the last line per player, reads the last
+        snapshot."""
+        from datetime import datetime
+        rows = E.read_log(os.path.join(self._real(), "projection_log.csv"))
+        made = [datetime.fromisoformat(r["made_at"]) for r in rows]
+        back = sum(1 for a, b in zip(made, made[1:]) if b < a)
+        self.assertEqual(back, 0, f"{back} rows are older than the row before them")
+
+    def test_the_gameweeks_recorded_before_s2_read_back_unchanged(self):
+        """S2 amendment 1, point 5: GW4-GW7 were recorded one snapshot per
+        source each, so every reader - calibration included - gets exactly
+        the rows it read before S2."""
+        data = self._real()
+        rows = [r for r in E.read_log(os.path.join(data, "projection_log.csv"))
+                if int(r["event"]) <= 7]
+        self.assertGreater(len(rows), 0)
+        self.assertEqual(E.forecasts(rows, self._real_deadlines(data)), rows)
 
 
 class ProjectionLog(unittest.TestCase):
@@ -1338,7 +1581,8 @@ def _canon(rows, extra_players=()):
         players[pid] = {"player_id": pid, "name": f"P{pid}", "pos": 3,
                         "team": "ALP", "chance_next_round": None}
     full = [dict({"starts": 1, "pts": 0, "xg": 0.0, "xa": 0.0, "bps": 0,
-                  "defcon": 0, "n_fixtures": 1, "fixtures": []}, **r) for r in rows]
+                  "defcon": 0, "n_fixtures": 1, "fixtures": [], "ruleset": "2026-27"}, **r)
+            for r in rows]
     return E.check_canonical({"source": "test", "season": "test", "through_gw":
                               max(r["event"] for r in full), "players": players,
                               "rows": full, "team_matches": [], "notes": []})
@@ -1599,7 +1843,7 @@ def _model_world(gws=8):
             rows.append({"player_id": pid, "event": ev, "minutes": 90 if st else 20,
                          "starts": st, "pts": 2 + (pid + ev) % 5, "xg": xg + jitter,
                          "xa": xa, "bps": 10, "defcon": dc + ev % 2,
-                         "n_fixtures": 1, "fixtures": []})
+                         "n_fixtures": 1, "fixtures": [], "ruleset": "2026-27"})
     for ev in range(1, gws + 1):
         ga = 0 if ev % 2 else 2
         matches.append({"event": ev, "team": "ALP", "opponent": "BET", "was_home": True,
@@ -1769,10 +2013,30 @@ def _graded_world():
     """An export plus a log with one graded gameweek, for calibration tests."""
     d = make_export()
     gw = d["gameweek"]
-    log = [{"made_at": "x", "source": "xg", "event": str(gw),
+    log = [{"made_at": "2026-08-01T00:00:00+00:00", "source": "xg", "event": str(gw),
             "player_id": str(p["id"]), "web_name": p["web_name"],
             "predicted": str(2.0 + p["id"] % 5)} for p in d["all_players"][:40]]
     return d, gw, log
+
+
+class SnapshotCount(unittest.TestCase):
+    """S2 amendment 2, point 4: calibration grades the whole last snapshot
+    and counts the players found only in an earlier one."""
+
+    def test_calibration_counts_players_only_in_an_earlier_snapshot(self):
+        d, gw, log = _graded_world()
+        early = [dict(r, made_at="2026-07-31T00:00:00+00:00") for r in log[:3]]
+        gone = dict(log[0], made_at="2026-07-31T00:00:00+00:00", player_id="99999",
+                    web_name="Gone", predicted="9.9")
+        out = _calibration(d, early + [gone] + log)
+        self.assertIn("players only in an earlier snapshot (not graded on an older "
+                      f"forecast): xg GW{gw} 1", out)
+        # the graded numbers are those of the last snapshot alone
+        base = _calibration(d, log)
+        keep = lambda s: [ln for ln in s.splitlines() if "earlier snapshot" not in ln]
+        self.assertEqual(keep(out), keep(base))
+        self.assertIn("players only in an earlier snapshot (not graded on an older "
+                      "forecast): none", base)
 
 
 def _calibration(d, log):
@@ -1890,10 +2154,11 @@ class SyncExportsSettledFlags(unittest.TestCase):
 
     def test_bootstrap_stores_data_checked_separately_from_finished(self):
         import sqlite3
-        ns = {}
         here = os.path.dirname(os.path.abspath(__file__))
+        ns = {"__file__": os.path.join(here, "fpl_sync.py")}
         src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
         exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        ns["london_tz"] = lambda: UK_SUMMER
         ev = lambda i, fin, chk, cur=False: {
             "id": i, "name": f"GW{i}", "deadline_time": "2026-09-01T00:00:00Z",
             "finished": fin, "data_checked": chk, "is_current": cur}
@@ -2454,6 +2719,17 @@ class HorizonTest(unittest.TestCase):
                 self.assertEqual(len(rows), 1, f"H={Hn} {pos}: expected one row with two rho cells")
 
 
+def _set_selling(d, total, bank=0):
+    """My fifteen's selling prices scaled to `total` GBP m (whole tenths), and
+    the bank (tenths) - the money every budget is now read from (S2, Step 2.8)."""
+    me = E.my_name(d)
+    mine = [r for r in d["squads"] if r["entry_name"] == me]
+    each, extra = divmod(round(total * 10), len(mine))
+    for i, r in enumerate(mine):
+        r["selling_price"] = (each + (1 if i < extra else 0)) / 10
+    next(s for s in d["standings"] if s["entry_name"] == me)["bank"] = bank
+
+
 def _fifteen(d, prefer=None):
     """A legal 15 from the export, preferring players of `prefer` team."""
     ids = []
@@ -2562,7 +2838,7 @@ class BenchBoost(unittest.TestCase):
         does (a top-projection XI wants ~100m; the cheapest legal XI is ~46m),
         and the fodder must be paid for before the XI is bought."""
         d = make_export()
-        d["standings"][0]["value"], d["standings"][0]["bank"] = 770, 0
+        _set_selling(d, 77.0, bank=0)               # the money binds at 77m
         t = E.bench_boost_table(d, _fifteen(d))
         self.assertAlmostEqual(t["budget"], 77.0, 9)
         for w in t["weeks"]:
@@ -2587,12 +2863,15 @@ class Budget(unittest.TestCase):
     """The API's entry value already includes the bank. On the GW4 and GW5
     deadline days, value = sum(prices of the 15) + bank to the tenth."""
 
-    def test_budget_is_team_value_alone(self):
-        d = make_export()                       # value 1003, bank 2
-        self.assertAlmostEqual(E.bench_boost_table(d, _fifteen(d))["budget"], 100.3, 9)
+    def test_budget_is_the_bank_plus_selling_prices_never_value(self):
+        """S2, Step 2.8: selling prices, never `value`, in every budget."""
+        d = make_export()
+        _set_selling(d, 98.7, bank=15)             # 98.7 + 1.5 = 100.2
+        d["standings"][0]["value"] = 1100          # a value that would say 110.0
+        self.assertAlmostEqual(E.bench_boost_table(d, _fifteen(d))["budget"], 100.2, 9)
         out = run("wildcard", d)
-        self.assertIn("budget £100.3m", out)
-        self.assertNotIn("£100.5m", out)
+        self.assertIn("budget £100.2m = bank £1.5m + the selling prices of the 15", out)
+        self.assertNotIn("£110.0m", out)
 
     def test_real_export_value_is_prices_plus_bank(self):
         """If a real export is sitting here: value - (sum of my 15's prices +
@@ -2809,7 +3088,7 @@ class WildcardThreeLayer(unittest.TestCase):
             self.assertEqual(l.count(" (H) ") + l.count(" (A) "), len(later), l)
         self.assertIn("XI six-week sum", out)
         self.assertIn("layer 1", out)
-        self.assertIn("budget £100.3m", out)
+        self.assertIn(f"budget £{E.selling_budget(d)[0]:.1f}m = bank", out)
 
 
 class WildcardCrossPosition(unittest.TestCase):
@@ -2988,7 +3267,7 @@ class WildcardCrossPosition(unittest.TestCase):
             self.assertAlmostEqual(even[k], 100.3 / 4, 9)
         heavy = E.budget_split(d, 100.3, given=E.parse_split("5,25,50,20.3"))
         self.assertAlmostEqual(heavy[3], 50.0, 9)
-        d["standings"][0]["value"] = 800              # £80.0m: the money binds
+        _set_selling(d, 79.8, bank=2)                 # £80.0m: the money binds
         out = self._wc(d, None, "1,1,1,1")
         quarter = f"£{80 / 4:.1f}m"
         self.assertIn(f"split by position, --split scaled to the budget: GK {quarter}  DEF {quarter}", out)
@@ -3004,7 +3283,7 @@ class WildcardCrossPosition(unittest.TestCase):
         starved = self._wc(d, None, "1,1,1,20")       # GK/DEF/MID shares below their cheapest fill
         self.assertIn("split repaired so every position can buy its cheapest fill", starved)
         self.assertRegex(starved, r"SQUAD  £([\d.]+)m of £80\.0m")
-        d["standings"][0]["value"] = 650              # below the cheapest legal 15: refused
+        _set_selling(d, 65.0, bank=0)                 # below the cheapest legal 15: refused
         self.assertIn("Could not assemble a legal 15 within £65.0m", self._wc(d))
         for bad in ("1,2,3", "1,2,3,0", "a,b,c,d"):
             with self.assertRaises(ValueError):
@@ -3521,10 +3800,11 @@ class SyncNetwork(unittest.TestCase):
 
     @staticmethod
     def _ns(full=False):
-        ns = {"__name__": "fpl_sync_under_test"}
         here = os.path.dirname(os.path.abspath(__file__))
+        ns = {"__name__": "fpl_sync_under_test", "__file__": os.path.join(here, "fpl_sync.py")}
         src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
         exec(compile(src if full else src.split("def main()")[0], "fpl_sync", "exec"), ns)
+        ns["london_tz"] = lambda: UK_SUMMER
         ns["sleeps"] = []
         ns["_sleep"] = ns["sleeps"].append
         return ns
@@ -3667,6 +3947,9 @@ NIGHTLY_EDGE_STUB = EDGE_STUB.replace(
     'if "--watch" in a:\n'
     '    if mode == "nowatch":\n        sys.exit(1)\n'
     '    open(a[a.index("--out") + 1], "w").write("WATCH STUB\\n")\n    sys.exit(0)\n'
+    'if "--stuck" in a:\n'
+    '    print("GW STUCK: GW9 stub" if mode == "stuck" else "STUCK CHECK OK stub")\n'
+    '    sys.exit(1 if mode == "stuck" else 0)\n'
     'if mode == "noreport":\n    sys.exit(1)\n'
     'print("EDGE", " ".join(a))')
 
@@ -3778,6 +4061,17 @@ class NightlyRunner(unittest.TestCase):
         self.assertTrue(any(l.startswith("EDGE --diff") for l in log))
         self.assertEqual(log[-1], "FINISHED WITH ERRORS: sync")
         self.assertEqual(code, 1, "on the runner a failed sync must turn the run red")
+
+    def test_a_stuck_gameweek_turns_the_run_red(self):
+        """S2, Step 2.1: the GW stuck alarm runs after the report."""
+        code, log, _ = self._run(self._world(mode="stuck"))
+        self.assertIn("GW STUCK: GW9 stub", log)
+        self.assertLess(log.index("building report ..."), log.index("checking for a stuck gameweek ..."))
+        self.assertEqual(log[-1], "FINISHED WITH ERRORS: stuck")
+        self.assertEqual(code, 1)
+        code, log, _ = self._run(self._world())
+        self.assertIn("STUCK CHECK OK stub", log)
+        self.assertEqual(code, 0)
 
     def test_report_failure_is_red(self):
         code, log, _ = self._run(self._world(mode="noreport"))
@@ -4096,7 +4390,8 @@ class NightlyWorkflow(unittest.TestCase):
         """S1 amendment 2, point 8: workflow_dispatch input force_backup,
         boolean, default false; the proof dispatch ticks it."""
         y = self._read(".github", "workflows", "nightly.yml")
-        self.assertIn("  workflow_dispatch:\n    inputs:\n      force_backup:\n", y)
+        inputs = y[y.index("  workflow_dispatch:\n    inputs:\n"):y.index("\npermissions:")]
+        self.assertIn("      force_backup:\n", inputs)
         block = y[y.index("      force_backup:"):y.index("\npermissions:")]
         self.assertIn("        type: boolean\n", block)
         self.assertIn("        default: false\n", block)
@@ -4105,7 +4400,8 @@ class NightlyWorkflow(unittest.TestCase):
         """D1 (Step 1.5, 1.6): one concurrency group, never cancelled; write
         access for the pushing job only; triggers schedule and dispatch only."""
         y = self._read(".github", "workflows", "nightly.yml")
-        self.assertIn("concurrency:\n  group: nightly-data\n  cancel-in-progress: false", y)
+        conc = y[y.index("\nconcurrency:\n"):y.index("\njobs:")]
+        self.assertIn("|| 'nightly-data' }}\n  cancel-in-progress: false", conc)
         top = y[:y.index("jobs:")]
         self.assertIn("\npermissions: {}", top)
         self.assertNotIn("contents: write", top)
@@ -4462,7 +4758,7 @@ class FreeHit(unittest.TestCase):
         t = E.free_hit_table(self.d, self.log)
         self.assertEqual([w["event"] for w in t["weeks"]],
                          sorted({f["event"] for f in self.d["fixtures_next6"]}))
-        self.assertAlmostEqual(t["budget"], self.d["standings"][0]["value"] / 10, 9)
+        self.assertAlmostEqual(t["budget"], E.selling_budget(self.d)[0], 9)
         by_id = {p["id"]: p for p in self.d["all_players"]}
         for w in t["weeks"]:
             fh = w["fh"]
@@ -5044,6 +5340,74 @@ class DataGate(unittest.TestCase):
         self.assertTrue("NOTHING COMMITTED TONIGHT" in out.getvalue())
 
 
+class DryRunMode(unittest.TestCase):
+    """S2 amendment 2, point 5: who is dry - in fpl_publish.py and in the
+    workflow, which must agree."""
+
+    def test_the_mode_table(self):
+        M = "refs/heads/master"
+        cases = [
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "schedule"}, "real"),
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "schedule", "FPL_DRY_RUN": "true"}, "real"),
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "workflow_dispatch", "FPL_DRY_RUN": "true"}, "dry"),
+            ({"GITHUB_REF": M, "GITHUB_EVENT_NAME": "workflow_dispatch", "FPL_DRY_RUN": "false"}, "real"),
+            ({"GITHUB_REF": "refs/heads/s2-wip", "GITHUB_EVENT_NAME": "workflow_dispatch",
+              "FPL_DRY_RUN": "false"}, "dry"),
+            ({"GITHUB_REF": "refs/heads/s2-wip", "GITHUB_EVENT_NAME": "schedule"}, "dry"),
+            ({"GITHUB_REF": "refs/tags/pre-S2", "FPL_DRY_RUN": "false"}, "dry"),
+            ({"GITHUB_REF": "refs/heads/master-copy"}, "dry"),
+            ({}, "real"),
+            ({"FPL_DRY_RUN": "TRUE"}, "dry"),
+        ]
+        for env, want in cases:
+            with self.subTest(env=env):
+                self.assertEqual(PUB.run_mode(env)[0], want)
+
+    @staticmethod
+    def _yml():
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, ".github", "workflows", "nightly.yml"), encoding="utf-8") as fh:
+            return fh.read()
+
+    DRY = "(github.ref != 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && inputs.dry_run))"
+
+    def test_the_dispatch_input_dry_run_is_ticked_by_default(self):
+        y = self._yml()
+        inputs = y[y.index("  workflow_dispatch:\n    inputs:\n"):y.index("\npermissions:")]
+        block = inputs[inputs.index("      dry_run:\n"):inputs.index("      force_backup:")]
+        self.assertIn("        type: boolean\n", block)
+        self.assertIn("        default: true\n", block)
+
+    def test_one_dry_condition_for_the_group_and_the_job(self):
+        """The same condition picks the concurrency group and sets
+        FPL_DRY_RUN: dry for any ref but master, or a ticked dispatch; a
+        scheduled run on master never. Its own group, so it never waits on the
+        nightly."""
+        y = self._yml()
+        self.assertIn("  group: ${{ " + self.DRY + " && 'nightly-dryrun' || 'nightly-data' }}\n", y)
+        job = y[y.index("\njobs:"):]
+        self.assertIn("      FPL_DRY_RUN: ${{ " + self.DRY + " && 'true' || 'false' }}\n", job)
+        self.assertLess(job.index("FPL_DRY_RUN:"), job.index("    steps:"))   # job-wide
+        self.assertEqual(y.count(self.DRY), 2)
+
+    def test_a_dry_run_creates_no_release_and_no_issue(self):
+        """Every step that runs gh release or gh issue is skipped on a dry run
+        and exits first thing if it starts anyway."""
+        y = self._yml()
+        steps = y[y.index("    steps:"):].split("\n      - ")[1:]
+        guarded = 0
+        for step in steps:
+            if "gh release" in step or "gh issue" in step:
+                guarded += 1
+                cond = next(l for l in step.splitlines() if l.strip().startswith("if:"))
+                self.assertIn("env.FPL_DRY_RUN != 'true'", cond, step[:60])
+                body = step[step.index("run: |"):]
+                first = [l.strip() for l in body.splitlines()[1:] if l.strip()][0]
+                self.assertEqual(first, 'if [ "$FPL_DRY_RUN" = "true" ]; then echo "BACKUP skipped: '
+                                        'dry run"; exit 0; fi', step[:60])
+        self.assertGreaterEqual(guarded, 1)
+
+
 class Publish(unittest.TestCase):
     """D1 (Step 1.1, 1.5, 1.6): the runner's commit to the data branch - the
     gate first, the secret scan on what is staged, then fetch + rebase + push
@@ -5106,11 +5470,77 @@ class Publish(unittest.TestCase):
         con.commit()
         con.close()
 
-    def _publish(self):
+    def _publish(self, env=None):
+        """A real run unless `env` says otherwise - never the environment of
+        the run executing the tests (a dry run on the runner sets GITHUB_REF)."""
         out, lines = io.StringIO(), []
         with redirect_stdout(out):
-            code = PUB.main([self.run_dir], sleep=lambda s: None, say=lines.append)
+            code = PUB.main([self.run_dir], sleep=lambda s: None, say=lines.append,
+                            env={} if env is None else env)
         return code, out.getvalue() + "\n".join(lines)
+
+    def _remote_ref(self, branch):
+        r = self._git(self.remote, "rev-parse", "--verify", "-q", f"refs/heads/{branch}")
+        return r.stdout.strip() if r.returncode == 0 else None
+
+    # --- the dry run (S2 amendment 2, point 5) ------------------------------
+
+    def test_a_non_master_ref_cannot_reach_data(self):
+        before = self._remote_head()
+        self._add_prices(self.run_dir)
+        self._put(self.run_dir, "logs/run_2026-10-18.log", "log\n")
+        code, out = self._publish({"GITHUB_REF": "refs/heads/s2-wip", "GITHUB_REF_NAME": "s2-wip",
+                                   "GITHUB_SHA": "0123456789abcdef", "GITHUB_EVENT_NAME":
+                                   "workflow_dispatch", "FPL_DRY_RUN": "false"})
+        self.assertEqual(code, 0, out)
+        self.assertIn("DRY RUN      ref refs/heads/s2-wip is not refs/heads/master", out)
+        self.assertEqual(self._remote_head(), before, "a non-master ref pushed to data")
+        dry = self._remote_ref("data-dryrun")
+        self.assertIsNotNone(dry)
+        msg = self._git(self.remote, "log", "-1", "--format=%s", "data-dryrun").stdout.strip()
+        self.assertRegex(msg, r"^dry run \d{4}-\d{2}-\d{2} s2-wip 0123456 \[skip ci\]$")
+        files = self._git(self.remote, "ls-tree", "-r", "--name-only", "data-dryrun").stdout.split()
+        self.assertIn("logs/run_2026-10-18.log", files)
+        self.assertIn("fpl.sql", files)                     # the gate ran and dumped
+
+    def test_a_dry_run_on_master_goes_to_data_dryrun_only(self):
+        before = self._remote_head()
+        self._add_prices(self.run_dir)
+        code, out = self._publish({"GITHUB_REF": "refs/heads/master",
+                                   "GITHUB_EVENT_NAME": "workflow_dispatch", "FPL_DRY_RUN": "true"})
+        self.assertEqual(code, 0, out)
+        self.assertIn("DRY RUN      dry_run is ticked", out)
+        self.assertEqual(self._remote_head(), before)
+        self.assertIsNotNone(self._remote_ref("data-dryrun"))
+
+    def test_a_dry_run_replaces_whatever_data_dryrun_held(self):
+        other = self._clone_new("other")
+        self._put(other, "x.txt", "unrelated\n")
+        self._git(other, "add", "-A")
+        self._git(other, "commit", "-q", "-m", "unrelated")
+        self._git(other, "push", "-q", "origin", "HEAD:refs/heads/data-dryrun")
+        self._add_prices(self.run_dir)
+        code, out = self._publish({"GITHUB_REF": "refs/heads/s2-wip"})
+        self.assertEqual(code, 0, out)
+        parent = self._git(self.remote, "rev-parse", "data-dryrun~1").stdout.strip()
+        self.assertEqual(parent, self._remote_head(), "data-dryrun is not the dry commit on data")
+
+    def test_a_scheduled_run_is_never_dry(self):
+        self._add_prices(self.run_dir)
+        code, out = self._publish({"GITHUB_REF": "refs/heads/master",
+                                   "GITHUB_EVENT_NAME": "schedule", "FPL_DRY_RUN": "true"})
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("DRY RUN", out)
+        msg = self._git(self.remote, "log", "-1", "--format=%s", "data").stdout.strip()
+        self.assertRegex(msg, r"^nightly \d{4}-\d{2}-\d{2} \[skip ci\]$")
+        self.assertIsNone(self._remote_ref("data-dryrun"))
+
+    def test_a_dry_run_with_nothing_new_still_reports_to_data_dryrun(self):
+        self.assertEqual(self._publish()[0], 0)               # a real night: commits fpl.sql
+        code, out = self._publish({"GITHUB_REF": "refs/heads/s2-wip"})
+        self.assertEqual(code, 0, out)
+        self.assertIn("nothing to commit", out)
+        self.assertEqual(self._remote_ref("data-dryrun"), self._remote_head())
 
     def _remote_files(self):
         r = self._git(self.remote, "ls-tree", "-r", "--name-only", "data")
@@ -5283,6 +5713,653 @@ class PrePush(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(wt, "fpl_prepush.py")))
         r = git("push", "-q", "origin", "HEAD:refs/heads/data")
         self.assertEqual(r.returncode, 0, r.stderr)
+
+
+def _s2_sync_ns(now_iso="2026-10-17T21:40:00+00:00", tz=None):
+    """fpl_sync's functions in a namespace with a frozen clock and an injected
+    London zone (the tests need no time-zone database)."""
+    ns = {"__name__": "fpl_sync_s2"}
+    here = os.path.dirname(os.path.abspath(__file__))
+    ns["__file__"] = os.path.join(here, "fpl_sync.py")    # finds price_gaps_known.txt
+    src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+    exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+    real = ns["datetime"]
+    fixed = real.fromisoformat(now_iso)
+
+    class Frozen(real):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed if tz else fixed.replace(tzinfo=None)
+
+    ns["datetime"] = Frozen
+    ns["london_tz"] = lambda: (tz or UK_SUMMER)
+    return ns
+
+
+def _s2_event(i, deadline, cur=False, nxt=False, fin=False, chk=False):
+    return {"id": i, "name": f"GW{i}", "deadline_time": deadline, "finished": fin,
+            "data_checked": chk, "is_current": cur, "is_next": nxt}
+
+
+def _s2_element(pid, **over):
+    el = {"id": pid, "web_name": f"P{pid}", "first_name": "A", "second_name": "B",
+          "team": 1, "element_type": 3, "now_cost": 55, "cost_change_start": 0,
+          "selected_by_percent": "1.5", "total_points": 10, "minutes": 270,
+          "goals_scored": 1, "assists": 0, "clean_sheets": 0, "bonus": 0,
+          "expected_goals": "0.90", "expected_assists": "0.20", "ict_index": "12.3",
+          "status": "a", "chance_of_playing_next_round": None, "news": "", "starts": 3,
+          "penalties_order": None, "corners_and_indirect_freekicks_order": None,
+          "direct_freekicks_order": None, "expected_goals_conceded": "1.10",
+          "transfers_in_event": 5, "transfers_out_event": 2, "form": "2.5",
+          "points_per_game": "3.3", "influence": "10.0", "creativity": "8.0",
+          "threat": "9.0"}
+    el.update(over)
+    return el
+
+
+GW_DEADLINES = {i: f"2026-{8 + (i + 1) // 5:02d}-{(i * 6) % 28 + 1:02d}T10:00:00Z" for i in range(1, 10)}
+
+
+class StepTwoSync(unittest.TestCase):
+    """S2 (Step 2.1, 2.4-2.7, 2.10; ruling 3), the sync side."""
+
+    EVENTS = [_s2_event(i, d) for i, d in sorted({
+        1: "2026-08-21T17:30:00Z", 6: "2026-10-10T10:00:00Z", 7: "2026-10-17T10:00:00Z",
+        8: "2026-10-23T17:30:00Z", 9: "2026-10-31T11:00:00Z"}.items())]
+
+    def _db(self, ns):
+        import sqlite3
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        ns["migrate"](db)
+        return db
+
+    def _boot(self, ns, db, elements=(), events=None, flags=(7, 8)):
+        evs = [dict(e, is_current=e["id"] == flags[0], is_next=e["id"] == flags[1])
+               for e in (events or self.EVENTS)]
+        ns["get"] = lambda path: {"teams": [], "elements": list(elements), "events": evs}
+        out = io.StringIO()
+        with redirect_stdout(out):
+            cur = ns["sync_bootstrap"](db)
+        return cur, out.getvalue()
+
+    # --- price dates (Step 2.4) ------------------------------------------------
+
+    def test_a_snapshot_carries_its_fetch_time_and_london_date(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._db(ns)
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertEqual(db.execute("SELECT player_id, date, now_cost, fetched_at_utc, london_date "
+                                    "FROM price_history").fetchall(),
+                         [(7, "2026-10-17", 55, "2026-10-17T21:40:00+00:00", "2026-10-17")])
+        self.assertNotIn("PRICE DATE FLAG", out)
+
+    def test_a_fetch_after_uk_midnight_is_flagged_in_summer_and_winter(self):
+        for now, tz, london, flagged in (("2026-10-17T23:30:00+00:00", UK_SUMMER, "2026-10-18", True),
+                                         ("2026-10-27T00:30:00+00:00", UK_WINTER, "2026-10-27", True),
+                                         ("2026-10-27T21:40:00+00:00", UK_WINTER, "2026-10-27", False)):
+            with self.subTest(now=now):
+                ns = _s2_sync_ns(now, tz)
+                db = self._db(ns)
+                _, out = self._boot(ns, db, [_s2_element(7)])
+                self.assertEqual(db.execute("SELECT london_date FROM price_history").fetchone()[0], london)
+                self.assertEqual("PRICE DATE FLAG" in out, flagged, out)
+
+    def test_a_missing_price_date_is_warned(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._db(ns)
+        db.executemany("INSERT INTO price_history (player_id, date, now_cost) VALUES (?,?,?)",
+                       [(7, "2026-10-14", 55), (7, "2026-10-16", 55)])
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertIn("PRICE DATES MISSING: 1 day(s) without a snapshot: 2026-10-15", out)
+
+    KNOWN_GAPS = ("2026-09-28", "2026-10-02", "2026-10-03", "2026-10-04")
+
+    def _gappy(self, ns, missing):
+        """A price history from 27 Sep to 16 Oct without the `missing` days;
+        the sync then adds 17 Oct."""
+        from datetime import date, timedelta
+        db = self._db(ns)
+        days = [str(date(2026, 9, 27) + timedelta(n)) for n in range(20)]
+        db.executemany("INSERT INTO price_history (player_id, date, now_cost) VALUES (?,?,?)",
+                       [(7, day, 55) for day in days if day not in missing])
+        return db
+
+    def test_a_planted_new_gap_warns_and_the_known_ones_do_not(self):
+        """S2 amendment 1, point 3."""
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._gappy(ns, self.KNOWN_GAPS + ("2026-10-07",))
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertIn("PRICE DATES MISSING: 1 day(s) without a snapshot: 2026-10-07", out)
+        for day in self.KNOWN_GAPS:
+            self.assertNotIn(day, out)
+        self.assertNotIn("UNREADABLE", out)
+
+    def test_only_known_gaps_print_no_warning(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._gappy(ns, self.KNOWN_GAPS)
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertNotIn("PRICE DATES MISSING", out)
+
+    def test_the_committed_list_holds_the_four_gaps_each_with_its_reason(self):
+        known, problem = _s2_sync_ns()["known_price_gaps"]()
+        self.assertIsNone(problem)
+        self.assertEqual(sorted(known), list(self.KNOWN_GAPS))
+        self.assertTrue(all(len(reason) > 10 for reason in known.values()))
+
+    def test_an_unreadable_list_warns_every_gap(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        ns["PRICE_GAPS_FILE"] = "no_such_list.txt"
+        db = self._gappy(ns, self.KNOWN_GAPS)
+        _, out = self._boot(ns, db, [_s2_element(7)])
+        self.assertIn("PRICE GAPS LIST UNREADABLE: cannot read no_such_list.txt", out)
+        self.assertIn("PRICE DATES MISSING: 4 day(s) without a snapshot: "
+                      "2026-09-28, 2026-10-02, 2026-10-03, 2026-10-04", out)
+
+    def test_a_list_line_without_a_date_or_a_reason_lists_nothing(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        read = _s2_sync_ns()["known_price_gaps"]
+        for body, why in (("2026-09-28\n", "has no reason"),
+                          ("28 Sep no run\n", "is not a date"),
+                          ("# comment\n\n2026-09-28 no run\n2026-13-01 no run\n", "line 4")):
+            path = os.path.join(tmp, "gaps.txt")
+            with open(path, "w", encoding="utf-8", newline="") as fh:
+                fh.write(body)
+            known, problem = read(path)
+            self.assertEqual(known, {}, body)
+            self.assertIn(why, problem)
+
+    def test_without_the_london_zone_the_sync_stops_with_a_clear_error(self):
+        import zoneinfo
+        ns = {"__name__": "fpl_sync_tz"}
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+        exec(compile(src.split("def main()")[0], "fpl_sync", "exec"), ns)
+
+        def gone(key):
+            raise zoneinfo.ZoneInfoNotFoundError(key)
+
+        real = zoneinfo.ZoneInfo
+        zoneinfo.ZoneInfo = gone
+        try:
+            with self.assertRaises(SystemExit) as cm:
+                ns["london_tz"]()
+        finally:
+            zoneinfo.ZoneInfo = real
+        self.assertIn("TIME ZONE MISSING", str(cm.exception.code))
+        self.assertIn("tzdata", str(cm.exception.code))
+
+    def test_the_real_london_zone_where_installed(self):
+        import zoneinfo
+        from datetime import datetime
+        try:
+            tz = zoneinfo.ZoneInfo("Europe/London")
+        except zoneinfo.ZoneInfoNotFoundError:
+            self.skipTest("no time-zone database here (Windows without tzdata)")
+        ns = _s2_sync_ns()
+        labels = ns["price_labels"]
+        at = lambda s: datetime.fromisoformat(s)
+        self.assertEqual(labels(at("2026-10-17T21:40:00+00:00"), tz), ("2026-10-17", "2026-10-17", False))
+        self.assertEqual(labels(at("2026-10-17T23:30:00+00:00"), tz), ("2026-10-17", "2026-10-18", True))
+        self.assertEqual(labels(at("2026-10-26T23:30:00+00:00"), tz), ("2026-10-26", "2026-10-26", False))
+
+    # --- the gameweek by deadline_time (Step 2.5) ----------------------------------
+
+    def test_the_current_gameweek_comes_from_deadlines_not_flags(self):
+        ns = _s2_sync_ns("2026-10-18T09:00:00+00:00")         # after GW7's deadline
+        db = self._db(ns)
+        cur, out = self._boot(ns, db, flags=(6, 7))            # stale flags
+        self.assertEqual(cur, 7)
+        self.assertIn("GAMEWEEK FLAGS DISAGREE: by deadline_time current GW7, next GW8; "
+                      "the API flags say is_current GW6, is_next GW7", out)
+        cur, out = self._boot(ns, db, flags=(7, 8))
+        self.assertEqual(cur, 7)
+        self.assertNotIn("DISAGREE", out)
+
+    # --- field handling (Step 2.6) -----------------------------------------------
+
+    def test_numeric_strings_are_cast_and_a_missing_value_raises(self):
+        num = _s2_sync_ns()["num"]
+        self.assertEqual(num("0.35", "form"), 0.35)
+        self.assertEqual(num(4, "x"), 4.0)
+        with self.assertRaises(ValueError):
+            num(None, "form")
+        with self.assertRaises(ValueError):
+            num("n/a", "form")
+
+    def test_a_missing_required_field_raises_instead_of_zero(self):
+        ns = _s2_sync_ns()
+        db = self._db(ns)
+        with self.assertRaises(ValueError):
+            self._boot(ns, db, [_s2_element(7, minutes=None)])
+        events = [dict(e) for e in self.EVENTS]
+        del events[0]["data_checked"]
+        with self.assertRaises((ValueError, KeyError)):
+            self._boot(ns, db, events=events)
+        stats = {"minutes": 90, "total_points": 2, "goals_scored": 0, "assists": 0,
+                 "clean_sheets": 0, "goals_conceded": 1, "bonus": 0, "bps": 10, "saves": 0,
+                 "yellow_cards": 0, "red_cards": 0, "expected_goals": "0.1",
+                 "expected_assists": "0.0", "starts": 1}
+        db.execute("INSERT INTO events (id, finished) VALUES (7, 0)")
+        ns["get"] = lambda path: {"elements": [{"id": 7, "stats": stats}]}
+        with self.assertRaises(ValueError), redirect_stdout(io.StringIO()):
+            ns["sync_player_gw"](db, 7)
+
+    def test_scored_rows_carry_ruleset_and_fetch_time_one_per_gameweek(self):
+        ns = _s2_sync_ns("2026-10-17T21:40:00+00:00")
+        db = self._db(ns)
+        db.execute("INSERT INTO events (id, finished) VALUES (7, 0)")
+        stats = {"minutes": 180, "total_points": 9, "goals_scored": 1, "assists": 0,
+                 "clean_sheets": 0, "goals_conceded": 2, "bonus": 1, "bps": 30, "saves": 0,
+                 "yellow_cards": 0, "red_cards": 0, "expected_goals": "0.9",
+                 "expected_assists": "0.1", "defensive_contribution": 14, "starts": 2}
+        ns["get"] = lambda path: ({"elements": [{"id": 7, "stats": stats}]}
+                                  if path == "event/7/live/" else None)
+        with redirect_stdout(io.StringIO()):
+            ns["sync_player_gw"](db, 7)
+        self.assertEqual(db.execute("SELECT player_id, event, minutes, defensive_contribution, "
+                                    "fetched_at_utc, ruleset FROM player_gw").fetchall(),
+                         [(7, 7, 180, 14, "2026-10-17T21:40:00+00:00", "2026-27")])
+
+    # --- fixtures, automatic substitutions, the export ------------------------------
+
+    def _export(self, ns, db, gw):
+        cwd, tmp = os.getcwd(), tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.chdir(tmp)
+        try:
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, gw)
+            with open(f"fpl_export_gw{gw}.json", encoding="utf-8") as fh:
+                return json.load(fh)
+        finally:
+            os.chdir(cwd)
+
+    def test_fixtures_store_started_and_the_export_carries_it_and_every_deadline(self):
+        ns = _s2_sync_ns()
+        db = self._db(ns)
+        self._boot(ns, db)
+        db.executemany("INSERT INTO teams (id, short_name) VALUES (?,?)", [(1, "ARS"), (2, "CHE")])
+        fx = [{"id": 1, "event": 7, "kickoff_time": "2026-10-17T11:30:00Z", "team_h": 1,
+               "team_a": 2, "team_h_difficulty": 3, "team_a_difficulty": 3, "team_h_score": 1,
+               "team_a_score": 0, "finished": True, "started": True},
+              {"id": 2, "event": 7, "kickoff_time": "2026-10-17T14:00:00Z", "team_h": 2,
+               "team_a": 1, "team_h_difficulty": 3, "team_a_difficulty": 3, "team_h_score": None,
+               "team_a_score": None, "finished": False, "started": False}]
+        ns["get"] = lambda path: fx
+        with redirect_stdout(io.StringIO()):
+            ns["sync_fixtures"](db)
+        self.assertEqual(db.execute("SELECT id, started FROM fixtures ORDER BY id").fetchall(),
+                         [(1, 1), (2, 0)])
+        d = self._export(ns, db, 7)
+        self.assertEqual([f["started"] for f in d["fixtures_status"]], [1, 0])
+        self.assertEqual({e["event"]: e["deadline_time"] for e in d["events"]},
+                         {e["id"]: e["deadline_time"] for e in self.EVENTS},
+                         "every event's deadline_time must be exported")
+
+    def test_automatic_subs_are_stored_known_and_exported(self):
+        ns = _s2_sync_ns()
+        db = self._db(ns)
+        db.execute("INSERT INTO events (id, finished) VALUES (7, 0)")
+        hist = {"points": 50, "total_points": 400, "overall_rank": 1, "bank": 5, "value": 1000,
+                "event_transfers": 0, "event_transfers_cost": 0, "points_on_bench": 3}
+        picks = [{"element": i, "position": i, "multiplier": 1 if i <= 11 else 0,
+                  "is_captain": i == 1, "is_vice_captain": i == 2} for i in range(1, 16)]
+        ns["get"] = lambda path: ({"chips": []} if "history" in path else [] if "transfers" in path
+                                  else {"entry_history": hist, "active_chip": None, "picks": picks,
+                                        "automatic_subs": [{"element_in": 12, "element_out": 3}]}
+                                  if path == "entry/99/event/7/picks/" else None)
+        with redirect_stdout(io.StringIO()):
+            ns["sync_entries"](db, [99], 7)
+        self.assertEqual(db.execute("SELECT entry_id, event, element_in, element_out FROM "
+                                    "automatic_subs").fetchall(), [(99, 7, 12, 3)])
+        d = self._export(ns, db, 7)
+        self.assertEqual(d["automatic_subs"], [{"entry_id": 99, "event": 7, "element_in": 12,
+                                                "element_out": 3}])
+        self.assertEqual(d["autosubs_known"], [{"entry_id": 99, "event": 7}])
+
+    def test_rows_stored_before_s2_are_never_rewritten(self):
+        """S2 ruling 3: new columns by ALTER TABLE; old rows keep NULL there."""
+        import sqlite3
+        ns = _s2_sync_ns()
+        db = sqlite3.connect(":memory:")
+        db.executescript("""
+            CREATE TABLE price_history (player_id INTEGER, date TEXT, now_cost INTEGER,
+                                        PRIMARY KEY (player_id, date));
+            CREATE TABLE player_gw (player_id INTEGER, event INTEGER, minutes INTEGER,
+                total_points INTEGER, goals INTEGER, assists INTEGER, clean_sheets INTEGER,
+                goals_conceded INTEGER, bonus INTEGER, bps INTEGER, saves INTEGER,
+                yellow INTEGER, red INTEGER, expected_goals REAL, expected_assists REAL,
+                defensive_contribution INTEGER, starts INTEGER, PRIMARY KEY (player_id, event));
+            INSERT INTO price_history VALUES (7, '2026-10-01', 55), (7, '2026-10-02', 56);
+            INSERT INTO player_gw VALUES (7, 1, 90, 6, 1, 0, 0, 1, 1, 25, 0, 0, 0, 0.5, 0.1, 9, 1);
+        """)
+        before = (db.execute("SELECT * FROM price_history ORDER BY date").fetchall(),
+                  db.execute("SELECT * FROM player_gw").fetchall())
+        db.executescript(ns["SCHEMA"])
+        with redirect_stdout(io.StringIO()):
+            ns["migrate"](db)
+        after_p = db.execute("SELECT player_id, date, now_cost, fetched_at_utc, london_date "
+                             "FROM price_history ORDER BY date").fetchall()
+        after_g = db.execute("SELECT * FROM player_gw").fetchall()
+        self.assertEqual([r[:3] for r in after_p], before[0])
+        self.assertEqual({r[3:] for r in after_p}, {(None, None)})
+        self.assertEqual([r[:17] for r in after_g], before[1])
+        self.assertEqual(after_g[0][17:], (None, None))
+
+
+class StepTwoEdge(unittest.TestCase):
+    """S2 (Step 2.1, 2.6), the report side: the lockdown guard's 3-hour rule,
+    the GW stuck alarm, chance of playing null = 100, doubles counted once."""
+
+    NOW = None
+
+    def _world(self, fixtures, data_checked=1, event=7):
+        return {"events": [{"event": event, "finished": 1, "data_checked": data_checked}],
+                "fixtures_status": [dict(event=event, home=f"H{i}", away=f"A{i}", **f)
+                                    for i, f in enumerate(fixtures)]}
+
+    @staticmethod
+    def _ago(hours):
+        from datetime import datetime, timedelta, timezone
+        return (datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
+                - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    @property
+    def now(self):
+        from datetime import datetime, timezone
+        return datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
+
+    def test_a_fixture_not_started_three_hours_after_kickoff_is_postponed(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 1, "started": 1},
+                         {"kickoff_time": self._ago(5), "finished": 0, "started": 0}])
+        self.assertEqual(E.gameweek_settled(d, 7, self.now), (True, []))
+
+    def test_a_started_fixture_past_three_hours_must_be_finished(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 1, "started": 1},
+                         {"kickoff_time": self._ago(4), "finished": 0, "started": 1}])
+        ok, blockers = E.gameweek_settled(d, 7, self.now)
+        self.assertFalse(ok)
+        self.assertIn("H1 v A1", blockers[0])
+
+    def test_a_fixture_inside_three_hours_of_kickoff_does_not_block(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 1, "started": 1},
+                         {"kickoff_time": self._ago(1), "finished": 0, "started": 1}])
+        self.assertEqual(E.gameweek_settled(d, 7, self.now), (True, []))
+
+    def test_an_export_without_started_still_needs_every_past_fixture_finished(self):
+        d = self._world([{"kickoff_time": self._ago(30), "finished": 0}])
+        self.assertFalse(E.gameweek_settled(d, 7, self.now)[0])
+
+    def test_a_gameweek_not_final_72_hours_after_its_last_kickoff_is_stuck(self):
+        d = self._world([{"kickoff_time": self._ago(80), "finished": 1, "started": 1}],
+                        data_checked=0)
+        stuck = E.stuck_gameweeks(d, self.now)
+        self.assertEqual([(e, round(h)) for e, h, _ in stuck], [(7, 80)])
+        d = self._world([{"kickoff_time": self._ago(50), "finished": 1, "started": 1}],
+                        data_checked=0)
+        self.assertEqual(E.stuck_gameweeks(d, self.now), [])
+        d = self._world([{"kickoff_time": self._ago(80), "finished": 1, "started": 1}])
+        self.assertEqual(E.stuck_gameweeks(d, self.now), [], "a settled gameweek is not stuck")
+
+    def test_the_stuck_command_exits_one_and_names_the_gameweek(self):
+        d = make_export()
+        d["events"][-1]["data_checked"] = 0                  # its fixtures are weeks old
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        path = os.path.join(tmp, "fpl_export_gw3.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        here = os.path.dirname(os.path.abspath(__file__))
+        r = subprocess.run([sys.executable, os.path.join(here, "fpl_edge.py"), path, "--stuck"],
+                           capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn(f"GW STUCK: GW{d['events'][-1]['event']} not final", r.stdout)
+
+    def test_chance_of_playing_null_is_100_and_never_0(self):
+        self.assertEqual(E.chance_of_playing({"chance_next_round": None}), 100.0)
+        self.assertEqual(E.chance_of_playing({}), 100.0)
+        self.assertEqual(E.chance_of_playing({"chance_next_round": 0}), 0.0)
+        self.assertEqual(E.chance_of_playing({"chance_next_round": 75}), 75.0)
+        p = {"starts_last4": 3, "chance_next_round": None}
+        self.assertEqual(E.start_probability(p, 6), E.start_probability(dict(p, chance_next_round=100), 6))
+
+    def test_no_code_turns_a_null_chance_into_zero(self):
+        import re
+        here = os.path.dirname(os.path.abspath(__file__))
+        for name in ("fpl_edge.py", "fpl_sync.py", "fpl_hist.py"):
+            src = open(os.path.join(here, name), encoding="utf-8").read()
+            self.assertIsNone(re.search(r"chance\w*[\"']?\)?\]?\s+or\s+0", src), name)
+
+    def test_a_double_gameweek_is_one_row_with_two_fixtures(self):
+        """Step 2.6: player_gw holds the gameweek total once; the export counts
+        the fixtures (n_fixtures) without fanning the row out."""
+        ns = _s2_sync_ns()
+        import sqlite3
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        db.executemany("INSERT INTO teams (id, short_name) VALUES (?,?)", [(1, "ARS"), (2, "CHE"), (3, "LIV")])
+        db.execute("INSERT INTO players (id, web_name, team_id, position, now_cost) VALUES (7, 'Saka', 1, 3, 100)")
+        db.executemany("INSERT INTO fixtures (id, event, team_h, team_a, finished) VALUES (?,?,?,?,1)",
+                       [(1, 7, 1, 2), (2, 7, 3, 1)])
+        db.execute("INSERT INTO player_gw (player_id, event, minutes, total_points) VALUES (7, 7, 170, 15)")
+        cwd, tmp = os.getcwd(), tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.chdir(tmp)
+        try:
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, 7)
+            d = json.load(open("fpl_export_gw7.json", encoding="utf-8"))
+        finally:
+            os.chdir(cwd)
+        rows = [r for r in d["player_gw_recent"] if r["player_id"] == 7]
+        self.assertEqual([(r["pts"], r["mins"], r["n_fixtures"]) for r in rows], [(15, 170, 2)])
+
+
+class StepTwoBenchAudit(unittest.TestCase):
+    """S2, Step 2.10: points that already counted through an automatic
+    substitution are not a bench gain - FPL's list where the sync stored it,
+    else FPL's rules applied to the minutes."""
+
+    def _world(self):
+        d = make_export()
+        slots = _legal_lineup(d)              # 1 GK, 2-5 DEF, 6-9 MID, 10-11 FWD; 12 GK, 13 DEF, 14 MID, 15 FWD
+        for s, r in slots.items():
+            r["gw_points"], r["minutes"], r["player_id"] = 4, 90, 1000 + s
+        slots[2]["gw_points"], slots[2]["minutes"] = 0, 0         # a starter who did not play
+        slots[13]["gw_points"] = 7                                # the bench DEF who came on
+        return d, slots
+
+    def _line(self, d):
+        return BenchAudit._audit(d)
+
+    def test_a_zero_minute_starter_whose_bench_player_came_on_shows_no_gain(self):
+        d, slots = self._world()
+        a = self._line(d)
+        self.assertEqual(a["gain"], 0, "an auto-sub's points counted as a bench gain")
+        self.assertIn("subs 1 rules", run("bench", d))
+
+    def test_fpl_s_stored_list_is_the_authority(self):
+        d, slots = self._world()
+        me = slots[1]["entry_id"]
+        d["autosubs_known"] = [{"entry_id": me, "event": d["gameweek"]}]
+        d["automatic_subs"] = [{"entry_id": me, "event": d["gameweek"],
+                                "element_in": 1013, "element_out": 1002}]
+        self.assertEqual(self._line(d)["gain"], 0)
+        self.assertIn("subs 1 FPL", run("bench", d))
+        d["automatic_subs"] = []          # FPL made no sub: the rules are not applied over it
+        self.assertEqual(self._line(d)["gain"], 7)
+
+    def test_bench_order_decides_and_the_keeper_only_swaps_with_the_keeper(self):
+        d, slots = self._world()            # bench 13 DEF and 14 MID both played; 4 DEF in the XI
+        pairs = E.rule_autosubs(list(slots.values()))
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(13, 2)],
+                         "the first eligible bench player in bench order comes on")
+        # keeper: a 0-minute keeper is replaced only by the bench keeper
+        d, slots = self._world()
+        slots[2]["minutes"], slots[2]["gw_points"] = 90, 4
+        slots[1]["minutes"], slots[1]["gw_points"] = 0, 0
+        pairs = E.rule_autosubs(list(slots.values()))
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(12, 1)])
+
+    def test_a_defender_short_xi_takes_the_bench_defender_not_the_midfielder(self):
+        d, slots = self._world()
+        slots[5]["pos"] = 3                                # XI now 3 DEF (2, 3, 4) + 5 MID
+        rows = sorted(slots.values(), key=lambda r: r["slot"])
+        # bench order: 12 GK, 13 MID (played), 14 DEF (played), 15 FWD
+        slots[13]["pos"], slots[14]["pos"] = 3, 2
+        pairs = E.rule_autosubs(rows)
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(14, 2)])
+
+    def test_a_gameweek_still_in_play_gets_no_rule_substitution(self):
+        """A starter on 0 minutes may yet play: without FPL's list, no sub
+        until every fixture of the gameweek is finished."""
+        d, slots = self._world()
+        f = next(x for x in d["fixtures_status"] if x["event"] == d["gameweek"])
+        f["finished"] = 0
+        self.assertEqual(self._line(d)["gain"], 7)
+        self.assertIn("subs 0 pending", run("bench", d))
+
+    def test_a_bench_player_who_did_not_play_is_not_brought_on(self):
+        d, slots = self._world()
+        slots[13]["minutes"] = 0
+        pairs = E.rule_autosubs(list(slots.values()))
+        self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(14, 2)])
+
+
+class StepTwoSelling(unittest.TestCase):
+    """S2, Step 2.8: selling prices from the purchase prices, and every budget
+    from them - never from `value`."""
+
+    def test_the_formula_in_tenths(self):
+        ns = _s2_sync_ns()
+        for buy, now, sell in ((75, 78, 76), (75, 75, 75), (75, 73, 73), (75, 76, 75), (75, 79, 77)):
+            with self.subTest(buy=buy, now=now):
+                self.assertEqual(E.selling_price(buy, now), sell)
+                self.assertEqual(ns["selling_price"](buy, now), sell)
+
+    def _db(self, first_event=1):
+        import sqlite3
+        ns = _s2_sync_ns()
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        db.execute("INSERT INTO entries VALUES (1, 'My Team', 'Me')")
+        db.execute("INSERT INTO teams (id, short_name) VALUES (1, 'ARS')")
+        db.executemany("INSERT INTO players (id, web_name, team_id, position, now_cost, "
+                       "cost_change_start) VALUES (?,?,1,3,?,?)",
+                       [(1, "Orig", 78, 3), (2, "Bought", 64, 2), (3, "NotFH", 70, 0),
+                        (4, "Rebought", 58, -1)])
+        db.executemany("INSERT INTO picks (entry_id, event, player_id, position) VALUES (1,?,?,?)",
+                       [(e, p, p) for e in range(first_event, 8) for p in (1, 2, 3, 4)])
+        db.executemany("INSERT INTO entry_gw (entry_id, event, active_chip) VALUES (1,?,?)",
+                       [(e, "freehit" if e == 5 else None) for e in range(first_event, 8)])
+        db.executemany("INSERT INTO transfers VALUES (1,?,?,?,?,?,?)", [
+            (3, "2026-09-12T08:00:00Z", 2, 9, 60, 55),        # bought at 6.0
+            (2, "2026-09-05T08:00:00Z", 3, 9, 65, 50),        # bought at 6.5 ...
+            (5, "2026-09-26T08:00:00Z", 3, 9, 72, 50),        # ... the Free Hit move does not count
+            (4, "2026-09-19T08:00:00Z", 4, 9, 50, 50),        # bought at 5.0, sold, ...
+            (6, "2026-10-03T08:00:00Z", 4, 9, 55, 50)])       # ... bought again at 5.5
+        return ns, db
+
+    def _squad(self, ns, db):
+        cwd, tmp = os.getcwd(), tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.chdir(tmp)
+        try:
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, 7)
+            d = json.load(open("fpl_export_gw7.json", encoding="utf-8"))
+        finally:
+            os.chdir(cwd)
+        return {r["web_name"]: (r["purchase_price"], r["selling_price"]) for r in d["squads"]}
+
+    def test_purchase_prices_come_from_transfers_or_the_season_start(self):
+        ns, db = self._db()
+        self.assertEqual(self._squad(ns, db), {
+            "Orig": (7.5, 7.6),        # start price 7.8 - 0.3; rose 0.3 -> sells 7.6
+            "Bought": (6.0, 6.2),      # rose 0.4 -> half of it
+            "NotFH": (6.5, 6.7),       # the Free Hit week's 7.2 is not the purchase price
+            "Rebought": (5.5, 5.6)})   # the latest purchase
+
+    def test_an_entry_that_joined_late_has_no_price_for_its_first_squad(self):
+        ns, db = self._db(first_event=3)
+        sq = self._squad(ns, db)
+        self.assertEqual(sq["Orig"], (None, None), "a price was guessed")
+        self.assertEqual(sq["Bought"], (6.0, 6.2))
+
+    def test_without_selling_prices_no_budget_is_built(self):
+        d = make_export()
+        for r in d["squads"]:
+            r["selling_price"] = None
+        self.assertEqual(E.selling_budget(d)[0], None)
+        self.assertIn("WILDCARD DRAFT  not built: the export has no selling prices", run("wildcard", d))
+        self.assertIn("FREE HIT SCREEN  not built", run("free_hit", d))
+        self.assertIn("BENCH BOOST SCREEN  not built", run("bench_boost", d))
+        for f in d["fixtures_next6"]:
+            f["h_fdr"] = f["a_fdr"] = 5           # every XI spot is an upgrade spot
+        self.assertIn("UPGRADE SHORTLIST skipped", run("brief", d))
+
+    def test_the_upgrade_shortlist_counts_what_a_player_sells_for(self):
+        d = make_export()
+        for f in d["fixtures_next6"]:
+            f["h_fdr"] = f["a_fdr"] = 5
+        out = run("brief", d)
+        self.assertIn("UPGRADE SHORTLIST  (fdr>=4 spots, bank £0.2m + selling price)", out)
+
+
+class StepTwoFiles(unittest.TestCase):
+    """S2, Step 2.9: every text file the runner code opens is opened with
+    encoding="utf-8" (utf-8-sig where a BOM may come in) and an explicit newline - Windows would otherwise turn
+    "\\n" into "\\r\\n" (the projection log's own no-\\r test is in
+    ProjectionLogKey). p1_eval.py is frozen and not checked."""
+
+    RUNNER = ("fpl_edge.py", "fpl_sync.py", "fpl_nightly.py", "fpl_gate.py", "fpl_publish.py",
+              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py")
+
+    def test_every_text_open_names_utf8_and_newline(self):
+        import re
+        here = os.path.dirname(os.path.abspath(__file__))
+        bad = []
+        for name in self.RUNNER:
+            for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+                                          newline=""), 1):
+                code = line.split("#")[0]
+                if not re.search(r"(?<![\w.])open\(", code):
+                    continue
+                if re.search(r"""["'](r|w|a)?b["']|["']r\+b["']""", code):
+                    continue                           # binary mode
+                if not re.search(r'encoding="utf-8(-sig)?"', code) or "newline=" not in code:
+                    bad.append(f"{name}:{n}: {line.strip()}")
+        self.assertEqual(bad, [])
+
+
+class StepTwoRuleset(unittest.TestCase):
+    """S2, Step 2.7: every scored row carries its ruleset, and BPS and bonus
+    are never compared across rulesets."""
+
+    def test_every_live_and_historical_row_carries_its_ruleset(self):
+        live = E.canonical_from_export(make_export())
+        self.assertEqual({r["ruleset"] for r in live["rows"]}, {"2026-27"})
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        hist = H.canonical_from_vaastav(_hist_folder(tmp), "2025/26")
+        self.assertEqual({r["ruleset"] for r in hist["rows"]}, {"2025-26"})
+
+    def test_reliability_refuses_rows_from_two_rulesets(self):
+        c = _canon([{"player_id": 1, "event": e, "minutes": 90} for e in (1, 2, 3, 4)])
+        E.measure_reliability(c, metrics=("bps",))
+        c["rows"][0]["ruleset"] = "2025-26"
+        with self.assertRaises(ValueError) as cm:
+            E.measure_reliability(c, metrics=("bps",))
+        self.assertIn("mix rulesets ['2025-26', '2026-27']", str(cm.exception))
+
+    def test_a_ruleset_is_read_from_the_season_or_refused(self):
+        self.assertEqual(E.ruleset_of("2025/26"), "2025-26")
+        self.assertEqual(E.ruleset_of("2026-27"), "2026-27")
+        for bad in ("tmpab12cd", "2025", "25/26"):
+            with self.assertRaises(ValueError):
+                E.ruleset_of(bad)
 
 
 class Hygiene(unittest.TestCase):

@@ -6,7 +6,7 @@ fpl_nightly.py  -  the nightly run as GitHub Actions executes it.
 
 The same steps as fpl_run.bat, in the same order, on any platform:
 
-    tests  ->  sync  ->  record own / xg / minutes / bottomup  ->  report
+    tests  ->  sync  ->  record own / xg / minutes / bottomup  ->  report  ->  stuck check
 
 with the Windows paths gone and the Google Drive shipping replaced by files the
 workflow commits back to the repository:
@@ -164,7 +164,7 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
     report_rel = os.path.join(REPORTS, f"fpl_{stamp}.txt")
     failed = []
 
-    with open(log_path, "a", encoding="utf-8") as log:      # append: a second run
+    with open(log_path, "a", encoding="utf-8", newline="") as log:      # append: a second run
         def say(line=""):                                    # the same day keeps the first
             log.write(line + "\n")
             log.flush()
@@ -210,16 +210,16 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
                 code = step("fpl_edge.py", "--record", "--source", src, "--status", status_rel)
                 if code != 0:
                     record_bad = True
-                    lines = (open(status, encoding="utf-8").read().splitlines()
+                    lines = (open(status, encoding="utf-8", newline="").read().splitlines()
                              if os.path.exists(status) else [])
                     if not any(l.startswith(f"RECORD FAIL {src} ") for l in lines):
-                        with open(status, "a", encoding="utf-8") as fh:
+                        with open(status, "a", encoding="utf-8", newline="") as fh:
                             fh.write(f"RECORD FAIL {src} python exited with an error before "
                                      f"reporting - see the run log\n")
         else:
             record_bad = True
             say("SKIPPED --record: test suite is red, no forecasts written")
-            with open(status, "a", encoding="utf-8") as fh:
+            with open(status, "a", encoding="utf-8", newline="") as fh:
                 for src in SOURCES:
                     fh.write(f"RECORD FAIL {src} skipped - test suite is red\n")
 
@@ -240,9 +240,15 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
             failed.append("report")
             say("EDGE FAILED")
 
+        # the GW stuck alarm: a gameweek not final 72 h after its last kickoff
+        # turns the run red (BUILD_PLAN.md Step 2.1)
+        say("checking for a stuck gameweek ...")
+        if step("fpl_edge.py", "--stuck") != 0:
+            failed.append("stuck")
+
         say("record summary:")
         if os.path.exists(status):
-            for line in open(status, encoding="utf-8").read().splitlines():
+            for line in open(status, encoding="utf-8", newline="").read().splitlines():
                 say(line)
         else:
             record_bad = True
