@@ -72,7 +72,7 @@ c. Text Boris pastes that starts with "RULING <item>:" is the chat's ruling. Pas
 
 d. Runner freeze: changes to the runner path (anything the nightly workflow runs or imports) are never pushed between 21:00 UTC and the end of that night's nightly run, and never within 30 hours before an FPL deadline (events.deadline_time in fpl.sqlite). If an item would land in that window, stop and say so.
 
-e. Stop and ask, changing nothing further, when: the plan and the code disagree; a test cannot be shown red before the fix; the verifier FAILs or WARNs; a decision is not covered by the plan or a ruling; anything would touch secrets, force-push, rewrite history, or delete anything except your own scratch branches.
+e. Stop and ask, changing nothing further, when: the plan and the code disagree; a test cannot be shown red before the fix; the verifier FAILs or WARNs; a decision is not covered by the plan or a ruling; anything would touch secrets, force-push, rewrite history, or delete anything except your own scratch branches. Exception: the dry-run workflow force-pushes to data-dryrun only. Claude Code itself never force-pushes, and nothing ever force-pushes to master or data.
 
 f. After each item, the chat reply is at most 15 lines: what changed, commit range, tests before and after, verifier verdict, and a numbered "Decisions for the chat" list. Detail goes in the report file.
 
