@@ -51,11 +51,9 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Current item:** S4 (code `4eab638`, amendment 2 fix `973b3f8`, docs
   `5ae7f4a` on `lane-b`, nothing on master). First verifier run FAIL
   (club-map leak in the frozen adapter); RULING S4 amendment 2 →
-  `tools/hist_pit.py`, numbers recomputed; the second verifier run was in
-  progress when the pause arrived — its result, or "interrupted", is
-  recorded in `worklog/verify_S4.md` and the report. **On resume:** if the
-  second run is recorded as interrupted, rerun the verifier first; after
-  PASS and a clean write guard, land S4 by the branch-handling ruling
+  `tools/hist_pit.py`, numbers recomputed; **second verifier run PASS**
+  (Fable 5.1, `worklog/verify_S4.md`), write guard clean. S4 is complete on
+  `lane-b` and waits only for the merge. **On resume:** land S4 by the branch-handling ruling
   (temporary branch from `origin/master`, cherry-pick `79d14ee`..HEAD and
   the S4 commits, full suite, push `HEAD:master`, merge master into
   `lane-b`), observing the standing rule below for `tests/`; then S7, S5,

@@ -2972,7 +2972,7 @@ and reads the decision squad's clubs from the same map; the frozen
 - Tests: `test_fpl.py` 386 → 386; `tests/test_S4.py` 24 → 32 (the club
   map, a planted transfer, the look-ahead probe, the team-column leak test,
   the component leak tests); mutations 26 of 26 red.
-- Verifier, second run: VERIFIER2_LINE.
+- Verifier, second run: **PASS** (Fable 5.1, effort high, `worklog/verify_S4.md`); write guard clean. **Not yet on master: RULING pause** (lane B paused at this checkpoint; S4 lands by the branch-handling ruling on resume, observing the `tests/` runner-path rule).
 
 The 2026-09-14 entries (Steps 3–5, the horizon test, the concentration
 test) were computed through the frozen adapter with end-of-season clubs;
