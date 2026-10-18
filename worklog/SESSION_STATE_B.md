@@ -76,7 +76,9 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   lands). Verifier on the amendment FAILed on check 3 only (console
   encoding); RULING S5 amendment fix (`9ea56c4`) → `tools/console_utf8.py`
   called by the three mains, cp1252 subprocess tests (`313bcb0`).
-  Verifier rerun: VERIFIER3_STATE. Then S6.
+  Verifier rerun **PASS** (Fable 5.1), write guard
+  clean. S5 complete on `lane-b`. **Current item: S6** (started under
+  auto-continue).
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
