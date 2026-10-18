@@ -459,6 +459,41 @@ def q(db, sql, args=()):
     return [dict(zip(cols, r)) for r in cur.fetchall()]
 
 
+def selling_price(buy, now):
+    """FPL's selling price in tenths (Step 2.8): half of any rise, rounded
+    down; all of any fall. Bought at 7.5, now 7.8 -> sells for 7.6."""
+    return buy + (now - buy) // 2 if now > buy else now
+
+
+def purchase_prices(db, entry, gw):
+    """{player_id: purchase price in tenths, or None} for `entry`'s squad in
+    gameweek `gw` (Step 2.8). A player's purchase price is the cost of his
+    last transfer in up to `gw` - wildcard moves included, the moves of a
+    Free Hit week not, as that squad reverted - else, for a squad picked
+    before GW1, his season-start price (now_cost - cost_change_start: prices
+    do not move before the GW1 deadline). An entry that joined later has no
+    recorded price for its first squad: None, never a guess."""
+    fh = {ev for (ev,) in db.execute(
+        "SELECT event FROM entry_gw WHERE entry_id=? AND active_chip='freehit'", (entry,))}
+    fh.discard(gw)                       # in a Free Hit week its own squad is the one shown
+    first = db.execute("SELECT MIN(event) FROM picks WHERE entry_id=?", (entry,)).fetchone()[0]
+    out = {}
+    for (pid,) in db.execute("SELECT player_id FROM picks WHERE entry_id=? AND event=?",
+                             (entry, gw)):
+        bought = [c for ev, c in db.execute(
+            "SELECT event, cost_in FROM transfers WHERE entry_id=? AND player_in=? AND event<=? "
+            "ORDER BY time DESC", (entry, pid, gw)) if ev not in fh]
+        if bought:
+            out[pid] = bought[0]
+        elif first == 1:
+            row = db.execute("SELECT now_cost - cost_change_start FROM players WHERE id=?",
+                             (pid,)).fetchone()
+            out[pid] = row[0] if row else None
+        else:
+            out[pid] = None
+    return out
+
+
 def export(db, gw):
     out = {"schema": 2,
            "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -484,6 +519,17 @@ def export(db, gw):
         JOIN players pl ON pl.id=p.player_id JOIN teams t ON t.id=pl.team_id
         LEFT JOIN player_gw g ON g.player_id=p.player_id AND g.event=p.event
         WHERE p.event=? ORDER BY e.entry_name, p.position""", (gw,))
+    # selling prices, never `value`, for every budget (Step 2.8)
+    now_cost = dict(db.execute("SELECT id, now_cost FROM players"))
+    bought = {}
+    for r in out["squads"]:
+        if r["entry_id"] not in bought:
+            bought[r["entry_id"]] = purchase_prices(db, r["entry_id"], gw)
+        buy = bought[r["entry_id"]].get(r["player_id"])
+        now = now_cost.get(r["player_id"])
+        r["purchase_price"] = buy / 10.0 if buy is not None else None
+        r["selling_price"] = (selling_price(buy, now) / 10.0
+                              if buy is not None and now is not None else None)
 
     out["transfers"] = q(db, """
         SELECT e.entry_name, tr.event, pi.web_name AS player_in, po.web_name AS player_out,

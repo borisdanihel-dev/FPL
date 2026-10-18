@@ -91,6 +91,7 @@ def make_export(gw=3, n_entries=4, with_gw_rows=True, with_all_players=True,
                 "entry_id": MY_ID if e_i == 0 else 100 + e_i,
                 "entry_name": entry, "slot": slot, "web_name": p["web_name"],
                 "team": p["team"], "pos": p["pos"], "price": p["price"],
+                "purchase_price": p["price"], "selling_price": p["price"],
                 "multiplier": (2 if slot == 10 else 1) if slot <= 11 else 0,
                 "is_captain": 1 if slot == 10 else 0,
                 "is_vice": 1 if slot == 9 else 0,
@@ -2576,6 +2577,17 @@ class HorizonTest(unittest.TestCase):
                 self.assertEqual(len(rows), 1, f"H={Hn} {pos}: expected one row with two rho cells")
 
 
+def _set_selling(d, total, bank=0):
+    """My fifteen's selling prices scaled to `total` GBP m (whole tenths), and
+    the bank (tenths) - the money every budget is now read from (S2, Step 2.8)."""
+    me = E.my_name(d)
+    mine = [r for r in d["squads"] if r["entry_name"] == me]
+    each, extra = divmod(round(total * 10), len(mine))
+    for i, r in enumerate(mine):
+        r["selling_price"] = (each + (1 if i < extra else 0)) / 10
+    next(s for s in d["standings"] if s["entry_name"] == me)["bank"] = bank
+
+
 def _fifteen(d, prefer=None):
     """A legal 15 from the export, preferring players of `prefer` team."""
     ids = []
@@ -2684,7 +2696,7 @@ class BenchBoost(unittest.TestCase):
         does (a top-projection XI wants ~100m; the cheapest legal XI is ~46m),
         and the fodder must be paid for before the XI is bought."""
         d = make_export()
-        d["standings"][0]["value"], d["standings"][0]["bank"] = 770, 0
+        _set_selling(d, 77.0, bank=0)               # the money binds at 77m
         t = E.bench_boost_table(d, _fifteen(d))
         self.assertAlmostEqual(t["budget"], 77.0, 9)
         for w in t["weeks"]:
@@ -2709,12 +2721,15 @@ class Budget(unittest.TestCase):
     """The API's entry value already includes the bank. On the GW4 and GW5
     deadline days, value = sum(prices of the 15) + bank to the tenth."""
 
-    def test_budget_is_team_value_alone(self):
-        d = make_export()                       # value 1003, bank 2
-        self.assertAlmostEqual(E.bench_boost_table(d, _fifteen(d))["budget"], 100.3, 9)
+    def test_budget_is_the_bank_plus_selling_prices_never_value(self):
+        """S2, Step 2.8: selling prices, never `value`, in every budget."""
+        d = make_export()
+        _set_selling(d, 98.7, bank=15)             # 98.7 + 1.5 = 100.2
+        d["standings"][0]["value"] = 1100          # a value that would say 110.0
+        self.assertAlmostEqual(E.bench_boost_table(d, _fifteen(d))["budget"], 100.2, 9)
         out = run("wildcard", d)
-        self.assertIn("budget £100.3m", out)
-        self.assertNotIn("£100.5m", out)
+        self.assertIn("budget £100.2m = bank £1.5m + the selling prices of the 15", out)
+        self.assertNotIn("£110.0m", out)
 
     def test_real_export_value_is_prices_plus_bank(self):
         """If a real export is sitting here: value - (sum of my 15's prices +
@@ -2931,7 +2946,7 @@ class WildcardThreeLayer(unittest.TestCase):
             self.assertEqual(l.count(" (H) ") + l.count(" (A) "), len(later), l)
         self.assertIn("XI six-week sum", out)
         self.assertIn("layer 1", out)
-        self.assertIn("budget £100.3m", out)
+        self.assertIn(f"budget £{E.selling_budget(d)[0]:.1f}m = bank", out)
 
 
 class WildcardCrossPosition(unittest.TestCase):
@@ -3110,7 +3125,7 @@ class WildcardCrossPosition(unittest.TestCase):
             self.assertAlmostEqual(even[k], 100.3 / 4, 9)
         heavy = E.budget_split(d, 100.3, given=E.parse_split("5,25,50,20.3"))
         self.assertAlmostEqual(heavy[3], 50.0, 9)
-        d["standings"][0]["value"] = 800              # £80.0m: the money binds
+        _set_selling(d, 79.8, bank=2)                 # £80.0m: the money binds
         out = self._wc(d, None, "1,1,1,1")
         quarter = f"£{80 / 4:.1f}m"
         self.assertIn(f"split by position, --split scaled to the budget: GK {quarter}  DEF {quarter}", out)
@@ -3126,7 +3141,7 @@ class WildcardCrossPosition(unittest.TestCase):
         starved = self._wc(d, None, "1,1,1,20")       # GK/DEF/MID shares below their cheapest fill
         self.assertIn("split repaired so every position can buy its cheapest fill", starved)
         self.assertRegex(starved, r"SQUAD  £([\d.]+)m of £80\.0m")
-        d["standings"][0]["value"] = 650              # below the cheapest legal 15: refused
+        _set_selling(d, 65.0, bank=0)                 # below the cheapest legal 15: refused
         self.assertIn("Could not assemble a legal 15 within £65.0m", self._wc(d))
         for bad in ("1,2,3", "1,2,3,0", "a,b,c,d"):
             with self.assertRaises(ValueError):
@@ -4599,7 +4614,7 @@ class FreeHit(unittest.TestCase):
         t = E.free_hit_table(self.d, self.log)
         self.assertEqual([w["event"] for w in t["weeks"]],
                          sorted({f["event"] for f in self.d["fixtures_next6"]}))
-        self.assertAlmostEqual(t["budget"], self.d["standings"][0]["value"] / 10, 9)
+        self.assertAlmostEqual(t["budget"], E.selling_budget(self.d)[0], 9)
         by_id = {p["id"]: p for p in self.d["all_players"]}
         for w in t["weeks"]:
             fh = w["fh"]
@@ -5866,6 +5881,86 @@ class StepTwoBenchAudit(unittest.TestCase):
         slots[13]["minutes"] = 0
         pairs = E.rule_autosubs(list(slots.values()))
         self.assertEqual([(i["slot"], o["slot"]) for i, o in pairs], [(14, 2)])
+
+
+class StepTwoSelling(unittest.TestCase):
+    """S2, Step 2.8: selling prices from the purchase prices, and every budget
+    from them - never from `value`."""
+
+    def test_the_formula_in_tenths(self):
+        ns = _s2_sync_ns()
+        for buy, now, sell in ((75, 78, 76), (75, 75, 75), (75, 73, 73), (75, 76, 75), (75, 79, 77)):
+            with self.subTest(buy=buy, now=now):
+                self.assertEqual(E.selling_price(buy, now), sell)
+                self.assertEqual(ns["selling_price"](buy, now), sell)
+
+    def _db(self, first_event=1):
+        import sqlite3
+        ns = _s2_sync_ns()
+        db = sqlite3.connect(":memory:")
+        db.executescript(ns["SCHEMA"])
+        db.execute("INSERT INTO entries VALUES (1, 'My Team', 'Me')")
+        db.execute("INSERT INTO teams (id, short_name) VALUES (1, 'ARS')")
+        db.executemany("INSERT INTO players (id, web_name, team_id, position, now_cost, "
+                       "cost_change_start) VALUES (?,?,1,3,?,?)",
+                       [(1, "Orig", 78, 3), (2, "Bought", 64, 2), (3, "NotFH", 70, 0),
+                        (4, "Rebought", 58, -1)])
+        db.executemany("INSERT INTO picks (entry_id, event, player_id, position) VALUES (1,?,?,?)",
+                       [(e, p, p) for e in range(first_event, 8) for p in (1, 2, 3, 4)])
+        db.executemany("INSERT INTO entry_gw (entry_id, event, active_chip) VALUES (1,?,?)",
+                       [(e, "freehit" if e == 5 else None) for e in range(first_event, 8)])
+        db.executemany("INSERT INTO transfers VALUES (1,?,?,?,?,?,?)", [
+            (3, "2026-09-12T08:00:00Z", 2, 9, 60, 55),        # bought at 6.0
+            (2, "2026-09-05T08:00:00Z", 3, 9, 65, 50),        # bought at 6.5 ...
+            (5, "2026-09-26T08:00:00Z", 3, 9, 72, 50),        # ... the Free Hit move does not count
+            (4, "2026-09-19T08:00:00Z", 4, 9, 50, 50),        # bought at 5.0, sold, ...
+            (6, "2026-10-03T08:00:00Z", 4, 9, 55, 50)])       # ... bought again at 5.5
+        return ns, db
+
+    def _squad(self, ns, db):
+        cwd, tmp = os.getcwd(), tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        os.chdir(tmp)
+        try:
+            with redirect_stdout(io.StringIO()):
+                ns["export"](db, 7)
+            d = json.load(open("fpl_export_gw7.json", encoding="utf-8"))
+        finally:
+            os.chdir(cwd)
+        return {r["web_name"]: (r["purchase_price"], r["selling_price"]) for r in d["squads"]}
+
+    def test_purchase_prices_come_from_transfers_or_the_season_start(self):
+        ns, db = self._db()
+        self.assertEqual(self._squad(ns, db), {
+            "Orig": (7.5, 7.6),        # start price 7.8 - 0.3; rose 0.3 -> sells 7.6
+            "Bought": (6.0, 6.2),      # rose 0.4 -> half of it
+            "NotFH": (6.5, 6.7),       # the Free Hit week's 7.2 is not the purchase price
+            "Rebought": (5.5, 5.6)})   # the latest purchase
+
+    def test_an_entry_that_joined_late_has_no_price_for_its_first_squad(self):
+        ns, db = self._db(first_event=3)
+        sq = self._squad(ns, db)
+        self.assertEqual(sq["Orig"], (None, None), "a price was guessed")
+        self.assertEqual(sq["Bought"], (6.0, 6.2))
+
+    def test_without_selling_prices_no_budget_is_built(self):
+        d = make_export()
+        for r in d["squads"]:
+            r["selling_price"] = None
+        self.assertEqual(E.selling_budget(d)[0], None)
+        self.assertIn("WILDCARD DRAFT  not built: the export has no selling prices", run("wildcard", d))
+        self.assertIn("FREE HIT SCREEN  not built", run("free_hit", d))
+        self.assertIn("BENCH BOOST SCREEN  not built", run("bench_boost", d))
+        for f in d["fixtures_next6"]:
+            f["h_fdr"] = f["a_fdr"] = 5           # every XI spot is an upgrade spot
+        self.assertIn("UPGRADE SHORTLIST skipped", run("brief", d))
+
+    def test_the_upgrade_shortlist_counts_what_a_player_sells_for(self):
+        d = make_export()
+        for f in d["fixtures_next6"]:
+            f["h_fdr"] = f["a_fdr"] = 5
+        out = run("brief", d)
+        self.assertIn("UPGRADE SHORTLIST  (fdr>=4 spots, bank £0.2m + selling price)", out)
 
 
 class StepTwoRuleset(unittest.TestCase):

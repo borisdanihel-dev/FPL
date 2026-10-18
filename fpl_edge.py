@@ -699,6 +699,27 @@ def sec_bench(d):
     print()
 
 
+def selling_price(buy, now):
+    """FPL's selling price in tenths (Step 2.8): half of any rise, rounded
+    down; all of any fall. Bought at 7.5, now 7.8 -> sells for 7.6."""
+    return buy + (now - buy) // 2 if now > buy else now
+
+
+def selling_budget(d):
+    """(budget in GBP m, None): the bank plus the selling price of each of my
+    fifteen (Step 2.8). (None, reason) when the export does not carry them - a
+    budget is never read from `value`, which counts current prices."""
+    me = my_name(d)
+    stand = next((s for s in d.get("standings", []) if s["entry_name"] == me), None)
+    mine = [r for r in d.get("squads", []) if r["entry_name"] == me]
+    if stand is None or stand.get("bank") is None:
+        return None, "the export has no bank for my entry"
+    if not mine or any(r.get("selling_price") is None for r in mine):
+        return None, "the export has no selling prices for my squad - re-run fpl_sync.py"
+    tenths = stand["bank"] + sum(round(r["selling_price"] * 10) for r in mine)
+    return tenths / 10.0, None
+
+
 def days_since_last_pl_match(d, team, event):
     """Days from the team's previous Premier League kickoff to its first
     kickoff in `event`. A calendar fact, not a signal: whether short rest costs
@@ -791,11 +812,13 @@ def sec_brief(d, horizon):
         print(f"    {POS[r['pos']]:4s}{r['web_name'][:14]:15s}{opp:>10} fdr{fdr}")
 
     weak = [r for r in xi if nextfx(r["team"])[2] >= 4]
-    if weak:
+    if weak and any(r.get("selling_price") is None for r in weak):
+        print("\n  UPGRADE SHORTLIST skipped: the export has no selling prices - re-run fpl_sync.py")
+    elif weak:
         budget = stand["bank"] / 10
-        print(f"\n  UPGRADE SHORTLIST  (fdr>=4 spots, budget £{budget:.1f}m + sale)")
+        print(f"\n  UPGRADE SHORTLIST  (fdr>=4 spots, bank £{budget:.1f}m + selling price)")
         for r in weak:
-            cash = budget + r["price"]
+            cash = budget + r["selling_price"]
             pool = [p for p in d["all_players"]
                     if p["pos"] == r["pos"] and p["price"] <= cash
                     and p["status"] == "a" and p["mins_last4"] >= 135
@@ -1713,7 +1736,12 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     cands, weeks, excluded = wildcard_candidates(d, horizon)
     me = my_name(d)
     stand = next((s for s in d["standings"] if s["entry_name"] == me), None)
-    budget = stand["value"] / 10.0 if stand else 100.0   # value includes the bank
+    budget, why = selling_budget(d)
+    if budget is None:
+        print("=" * 78)
+        print(f"WILDCARD DRAFT  not built: {why}")
+        print("=" * 78)
+        return
     split_used = budget_split(d, budget, given=given)
     form_str = "-".join(str(n) for n in form)
     print("=" * 78)
@@ -1722,8 +1750,8 @@ def sec_wildcard(d, horizon, formation=None, split=None):
     print("=" * 78)
     if not weeks:
         return
-    print(f"  budget £{budget:.1f}m = team value"
-          + (f" (bank £{stand['bank']/10:.1f}m included)" if stand else ""))
+    print(f"  budget £{budget:.1f}m = bank £{stand['bank']/10:.1f}m + the selling "
+          f"prices of the 15")
     print(f"  formation {form_str} (--formation): the XI is the top of each position's "
           "ordered list, never a choice on the sums")
     print("  split by position, " + ("--split scaled to the budget" if given else "current squad shape")
@@ -3204,10 +3232,10 @@ def bench_boost_table(d, squad_ids=None, horizon=6):
         if f["event"] in window:
             played[f["home"]] += 1
             played[f["away"]] += 1
-    stand = next((s for s in d["standings"] if s["entry_name"] == my_name(d)), None)
-    # the API's value = squad prices at the deadline + bank: it IS the budget
-    budget = (stand["value"] / 10.0 if stand
-              else sum(by_id[i]["price"] for i in ids))
+    # the money: the bank plus the selling prices of my 15, never `value` (Step 2.8)
+    budget, why = selling_budget(d)
+    if budget is None:
+        raise ValueError(f"no budget: {why}")
     available = [p for p in d["all_players"]
                  if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
 
@@ -3263,12 +3291,20 @@ def bench_boost_table(d, squad_ids=None, horizon=6):
 
 
 def sec_bench_boost(d, horizon, squad_ids=None):
-    t = bench_boost_table(d, squad_ids, horizon)
+    try:
+        t = bench_boost_table(d, squad_ids, horizon)
+    except ValueError as e:
+        if not str(e).startswith("no budget"):
+            raise
+        print("=" * 78)
+        print(f"BENCH BOOST SCREEN  not built: {e}")
+        print("=" * 78)
+        return
     print("=" * 78)
     print(f"BENCH BOOST SCREEN  (frozen three-layer rule, next {len(t['weeks'])} gameweeks)")
     print("=" * 78)
     print(f"  squad: {len(t['ids'])} players ({'--squad' if squad_ids else 'my current 15'})"
-          f"   budget £{t['budget']:.1f}m = team value (bank included)")
+          f"   budget £{t['budget']:.1f}m = bank + selling prices")
     print("  proj  GK/DEF: bottomup (P(start), xGI, Poisson clean sheet, DEFCON)")
     print("        MID/FWD: P(start) + xGI-per-90 x P(start), in points - bare xGI, no")
     print(f"        fixture term.  FLAG: minutes share <= {FLAG_SHARE_MAX} over the last four")
@@ -3374,10 +3410,13 @@ def watch_report(d, log, ids, max_bytes=WATCH_MAX_BYTES, top=WATCH_TOP, news_wid
     the last line says how many."""
     event, _, _, _, made = _watch_context(d, log)
     rows, tops = watch_rows(d, log, ids), watch_top(d, log, top)
-    fh = free_hit_table(d, log)
-    fh_lines = ([f"FREE HIT SCREEN  budget £{fh['budget']:.1f}m; FH candidate: gap > {FH_GAP:g} "
-                 f"or {FH_NOT_A}+ of our XI not 'a' (item N)"] + free_hit_lines(fh)
-                if fh["weeks"] else [])
+    try:
+        fh = free_hit_table(d, log)
+        fh_lines = ([f"FREE HIT SCREEN  budget £{fh['budget']:.1f}m; FH candidate: gap > {FH_GAP:g} "
+                     f"or {FH_NOT_A}+ of our XI not 'a' (item N)"] + free_hit_lines(fh)
+                    if fh["weeks"] else [])
+    except ValueError as e:                  # no selling prices: no budget, no screen
+        fh_lines = [f"FREE HIT SCREEN  not built: {e}"]
     header = (f"  {'id':<6}{'player':15s}{'team':5s}{'pos':4s}{'£':>5} {'st':2s}{'ch%':>4}"
               f"{'own':>6}{'xg':>6}{'bu':>6}{'min':>6}  {'fixture':22s} news")
 
@@ -3680,11 +3719,11 @@ def free_hit_table(d, log):
     metric, the gap, how many of our XI are not status 'a', the flag."""
     weeks, pts, src = one_week_points(d, log)
     me = my_name(d)
-    stand = next((s for s in d["standings"] if s["entry_name"] == me), None)
     by_id = {p["id"]: p for p in d["all_players"]}
     ours_ids = [i for i in my_squad_ids(d) if i in by_id]
-    budget = (stand["value"] / 10.0 if stand
-              else sum(by_id[i]["price"] for i in ours_ids))
+    budget, why = selling_budget(d)     # never `value` (Step 2.8)
+    if budget is None:
+        raise ValueError(f"no budget: {why}")
     gate = [p for p in d["all_players"] if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
     spare = [p for p in d["all_players"] if p["status"] == "a"]
     out = {"budget": budget, "weeks": []}
@@ -3724,11 +3763,17 @@ def free_hit_lines(t):
 def sec_free_hit(d, horizon, log=None):
     """The Free Hit screen: one week at a time, the best legal XI the team
     value buys against our best XI, by the frozen one-week metric."""
-    t = free_hit_table(d, forecasts(read_log()) if log is None else log)
+    try:
+        t = free_hit_table(d, forecasts(read_log()) if log is None else log)
+    except ValueError as e:
+        print("=" * 78)
+        print(f"FREE HIT SCREEN  not built: {e}")
+        print("=" * 78)
+        return
     weeks = t["weeks"]
     print("=" * 78)
     print(f"FREE HIT SCREEN  (GW{weeks[0]['event']}-{weeks[-1]['event']}, one week at a time; "
-          f"budget £{t['budget']:.1f}m = team value)" if weeks
+          f"budget £{t['budget']:.1f}m = bank + selling prices)" if weeks
           else "FREE HIT SCREEN  (no upcoming fixtures in the export)")
     print("=" * 78)
     if not weeks:
