@@ -87,10 +87,11 @@ jobs:
           git -C data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python fpl_publish.py data
 
-      # Sundays (or a dispatch with force_backup ticked): fpl.sqlite and fpl.sql
-      # as assets of release backup-<date> on the data branch; the newest 8
-      # backup releases are kept. A dispatch that backs up on a Sunday makes
-      # that evening's scheduled run skip as "exists".
+      # One backup per Sunday, made by the scheduled run; a manual dispatch
+      # backs up only with force_backup ticked, on any day (S2 decisions,
+      # point 2): fpl.sqlite and fpl.sql as assets of release backup-<date> on
+      # the data branch; the newest 8 backup releases are kept. A release that
+      # already exists for the day is skipped with a log line, never a red run.
       - name: Weekly backup
         if: always() && steps.publish.outcome == 'success' && env.FPL_DRY_RUN != 'true'
         env:
@@ -98,9 +99,16 @@ jobs:
           FORCE_BACKUP: ${{ inputs.force_backup }}
         run: |
           if [ "$FPL_DRY_RUN" = "true" ]; then echo "BACKUP skipped: dry run"; exit 0; fi
-          if [ "$FORCE_BACKUP" != "true" ] && [ "$(date -u +%u)" != 7 ]; then echo "BACKUP skipped: not Sunday"; exit 0; fi
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            if [ "$(date -u +%u)" != 7 ]; then echo "BACKUP skipped: not Sunday"; exit 0; fi
+          elif [ "$FORCE_BACKUP" != "true" ]; then
+            echo "BACKUP skipped: a manual dispatch backs up only with force_backup ticked"; exit 0
+          fi
           tag="backup-$(date -u +%F)"
           if gh release view "$tag" >/dev/null 2>&1; then echo "BACKUP skipped: $tag exists"; exit 0; fi
-          gh release create "$tag" data/fpl.sqlite data/fpl.sql --target data --title "$tag" --notes "Weekly backup of fpl.sqlite and fpl.sql from the data branch."
+          if ! gh release create "$tag" data/fpl.sqlite data/fpl.sql --target data --title "$tag" --notes "Weekly backup of fpl.sqlite and fpl.sql from the data branch."; then
+            if gh release view "$tag" >/dev/null 2>&1; then echo "BACKUP skipped: $tag exists"; exit 0; fi
+            echo "BACKUP FAILED: $tag could not be created"; exit 1
+          fi
           gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^backup-' | sort -r | tail -n +9 | while read -r old; do gh release delete "$old" --yes --cleanup-tag; done
           echo "BACKUP OK    $tag"

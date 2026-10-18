@@ -4418,7 +4418,9 @@ class NightlyWorkflow(unittest.TestCase):
         b = y[y.index("name: Weekly backup"):]
         self.assertIn("if: always() && steps.publish.outcome == 'success'", b)
         self.assertIn("GH_TOKEN: ${{ github.token }}", b)
-        self.assertIn('if [ "$FORCE_BACKUP" != "true" ] && [ "$(date -u +%u)" != 7 ]; then', b)
+        self.assertIn('if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then', b)
+        self.assertIn('if [ "$(date -u +%u)" != 7 ]; then echo "BACKUP skipped: not Sunday"; exit 0; fi', b)
+        self.assertIn('elif [ "$FORCE_BACKUP" != "true" ]; then', b)
         self.assertIn("FORCE_BACKUP: ${{ inputs.force_backup }}", b)
         self.assertIn('tag="backup-$(date -u +%F)"', b)
         self.assertIn('gh release create "$tag" data/fpl.sqlite data/fpl.sql --target data', b)
@@ -5338,6 +5340,121 @@ class DataGate(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertTrue("::error title=Secret scan blocked the commit::" in out.getvalue())
         self.assertTrue("NOTHING COMMITTED TONIGHT" in out.getvalue())
+
+
+class BackupStep(unittest.TestCase):
+    """S2 decisions, point 2: the weekly backup step's own script, run under
+    bash with stand-ins for gh and date. One backup per Sunday, made by the
+    scheduled run; a manual dispatch backs up only with force_backup ticked;
+    a release that already exists for the day is skipped with a log line and
+    never fails the run."""
+
+    GH = ("#!/usr/bin/env bash\n"
+          'echo "gh $*" >> "$FAKE_LOG"\n'
+          'case "$1 $2" in\n'
+          '  "release view")\n'
+          '    n=$(cat "$FAKE_STATE" 2>/dev/null || echo 0); echo $((n + 1)) > "$FAKE_STATE"\n'
+          '    exit "$(echo "$FAKE_VIEW" | cut -d, -f$((n + 1)))" ;;\n'
+          '  "release create") exit "$FAKE_CREATE" ;;\n'
+          '  "release list") echo backup-2026-10-18 ;;\n'
+          'esac\n'
+          'exit 0\n')
+    DATE = ("#!/usr/bin/env bash\n"
+            'case "$*" in\n'
+            '  "-u +%u") echo "$FAKE_DOW" ;;\n'
+            '  "-u +%F") echo 2026-10-18 ;;\n'
+            '  *) exit 9 ;;\n'
+            'esac\n')
+
+    def setUp(self):
+        import shutil
+        bash = shutil.which("bash")
+        if not bash or "system32" in bash.lower():
+            self.skipTest("no POSIX bash here")
+        self.bash = bash
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, ".github", "workflows", "nightly.yml"), encoding="utf-8") as fh:
+            y = fh.read()
+        step = y[y.index("      - name: Weekly backup"):]
+        body = step[step.index("        run: |\n") + len("        run: |\n"):]
+        lines = []
+        for line in body.splitlines():
+            if line.strip() and not line.startswith(" " * 10):
+                break
+            lines.append(line[10:])
+        self.script = os.path.join(self.tmp, "backup.sh")
+        # the runner's shell for a run step: bash -e -o pipefail
+        self._write(self.script, "set -eo pipefail\n" + "\n".join(lines) + "\n")
+        self.bin = os.path.join(self.tmp, "bin")
+        os.makedirs(self.bin)
+        self._write(os.path.join(self.bin, "gh"), self.GH)
+        self._write(os.path.join(self.bin, "date"), self.DATE)
+
+    @staticmethod
+    def _write(path, text):
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+        os.chmod(path, 0o755)
+
+    def _run(self, event, force="false", dow="7", view="1,1", create="0", dry="false"):
+        log, state = os.path.join(self.tmp, "gh.log"), os.path.join(self.tmp, "gh.state")
+        for p in (log, state):
+            if os.path.exists(p):
+                os.remove(p)
+        env = dict(os.environ, PATH=self.bin + os.pathsep + os.environ.get("PATH", ""),
+                   GITHUB_EVENT_NAME=event, FORCE_BACKUP=force, FPL_DRY_RUN=dry, FAKE_DOW=dow,
+                   FAKE_VIEW=view, FAKE_CREATE=create, FAKE_LOG=log, FAKE_STATE=state, GH_TOKEN="x")
+        r = subprocess.run([self.bash, self.script.replace("\\", "/")], env=env, cwd=self.tmp,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
+        calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+        return r.returncode, r.stdout, calls
+
+    def test_the_scheduled_run_backs_up_on_sunday(self):
+        code, out, calls = self._run("schedule")
+        self.assertEqual(code, 0, out)
+        self.assertIn("BACKUP OK    backup-2026-10-18", out)
+        self.assertIn("gh release create backup-2026-10-18 data/fpl.sqlite data/fpl.sql", calls)
+
+    def test_the_scheduled_run_skips_other_days(self):
+        code, out, calls = self._run("schedule", dow="3")
+        self.assertEqual((code, calls), (0, ""), out)
+        self.assertIn("BACKUP skipped: not Sunday", out)
+
+    def test_a_manual_dispatch_on_sunday_without_force_backup_makes_no_backup(self):
+        code, out, calls = self._run("workflow_dispatch", force="false", dow="7")
+        self.assertEqual((code, calls), (0, ""), out)
+        self.assertIn("BACKUP skipped: a manual dispatch backs up only with force_backup ticked", out)
+
+    def test_a_manual_dispatch_with_force_backup_backs_up_any_day(self):
+        code, out, calls = self._run("workflow_dispatch", force="true", dow="3")
+        self.assertEqual(code, 0, out)
+        self.assertIn("gh release create backup-2026-10-18", calls)
+
+    def test_a_release_that_exists_is_skipped_and_never_fails(self):
+        for event, force in (("schedule", "false"), ("workflow_dispatch", "true")):
+            with self.subTest(event=event):
+                code, out, calls = self._run(event, force=force, view="0,0")
+                self.assertEqual(code, 0, out)
+                self.assertIn("BACKUP skipped: backup-2026-10-18 exists", out)
+                self.assertNotIn("release create", calls)
+
+    def test_a_release_made_meanwhile_is_skipped_and_never_fails(self):
+        # not there at the check, there when the create fails
+        code, out, calls = self._run("schedule", view="1,0", create="1")
+        self.assertEqual(code, 0, out)
+        self.assertIn("BACKUP skipped: backup-2026-10-18 exists", out)
+
+    def test_a_create_that_fails_for_another_reason_is_red(self):
+        code, out, calls = self._run("schedule", view="1,1", create="1")
+        self.assertEqual(code, 1, out)
+        self.assertIn("BACKUP FAILED: backup-2026-10-18 could not be created", out)
+
+    def test_a_dry_run_calls_no_gh(self):
+        code, out, calls = self._run("workflow_dispatch", force="true", dry="true")
+        self.assertEqual((code, calls), (0, ""), out)
+        self.assertIn("BACKUP skipped: dry run", out)
 
 
 class DryRunMode(unittest.TestCase):
