@@ -45,23 +45,24 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   RULING lane B go appended as Amendment 1 to each (`94fbc36`). Order under
   auto-continue: S4, S7, S5, S6. No prereg is edited after any of its
   evaluation numbers exist.
-- **Current item:** S4, **verifier FAIL** on 2026-10-18 (code `4eab638` on
-  `lane-b`, not merged; report `worklog/cc_2026-10-18_S4.md`, verifier
-  `worklog/verify_S4.md`). Stopped under operating mode (e) and FAST item 6;
-  waiting for the chat's ruling on the fix (a per-gameweek club map in the
-  harness vs. in the frozen adapter `fpl_hist.py`) and on the CHANGELOG
-  amendment for the 2026-09-14 2025/26 bottomup results, which carry the
-  same club-map defect. Auto-continue is suspended until S4 passes. Next in
-  the queue after that: S7, S5, S6.
+- **Current item:** S4 (code `4eab638`, amendment 2 fix `973b3f8` on
+  `lane-b`). First verifier run FAIL (club-map leak in the frozen adapter);
+  RULING S4 amendment 2 → `tools/hist_pit.py`; second verifier run:
+  pending at the time of this commit — the report and CHANGELOG carry
+  VERIFIER2 placeholders until it returns. Merge by the branch-handling
+  ruling only after PASS; auto-continue (S7, S5, S6) resumes only then.
 - **S4 facts the next items use:** `tools/backtest.py` — `Harness(season,
   data_dir, hist_dir)`, `.compare(a, b, filt)`, `.rows(ev, source, filt)`,
   `.decision(ev, source)`; `bootstrap_mean(values, b, seed)`,
   `power_gameweeks(s_d, delta)`, `holm`, `benjamini_hochberg`;
   `rebuild_2526(hist, t)` (bottomup/minutes from rounds < t, with P(cs) and
-  P(DEFCON) per fixture); `best_fifteen(cands, budget)` (exact legal 15 by a
-  metric). Residuals for S7 come from `Harness.rows()` (actual − forecast).
-  Power: starters Spearman s_d = 0.103 (G = 165 gameweeks for Δ = 0.02),
-  whole population 0.021 (G = 7), decision metric 6.3 points.
+  P(DEFCON) per fixture, players at their point-in-time club via
+  `tools/hist_pit.py` — every 2025/26 replay in S7, S5, S6 goes through
+  `canonical_at(hist, g)` / `hist_pit.club_at`); `best_fifteen(cands, budget)`
+  (exact legal 15 by a metric). Residuals for S7 come from `Harness.rows()` (actual − forecast).
+  Power: starters Spearman s_d = 0.103 (G = 163 gameweeks for Δ = 0.02),
+  whole population 0.022 (G = 7), decision metric 5.7 points (G = 50 for
+  Δ = 2 points).
 - **Historical data:** `C:\GIT\FPL-b\historical\2025-26` (gitignored copy
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
