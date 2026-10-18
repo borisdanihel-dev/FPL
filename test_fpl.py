@@ -5438,7 +5438,10 @@ class BackupStep(unittest.TestCase):
                    FAKE_VIEW=view, FAKE_CREATE=create, FAKE_LOG=log, FAKE_STATE=state, GH_TOKEN="x")
         r = subprocess.run([self.bash, self.script.replace("\\", "/")], env=env, cwd=self.tmp,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
-        calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+        calls = ""
+        if os.path.exists(log):
+            with open(log, encoding="utf-8") as fh:     # closed: no ResourceWarning
+                calls = fh.read()
         return r.returncode, r.stdout, calls
 
     def test_the_scheduled_run_backs_up_on_sunday(self):
