@@ -47,6 +47,7 @@ import fpl_edge as E                                              # noqa: E402
 import fpl_hist as H                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
 import hist_pit as PIT                                            # noqa: E402
+from console_utf8 import utf8_console                             # noqa: E402
 
 BENCH_W = (0.30, 0.10, 0.03)      # outfield bench, in forecast order
 SUBGK_W = 0.03
@@ -663,6 +664,7 @@ def replay(hist_dir, n_squads=N_SQUADS, seed=SQUAD_SEED, out=print, boot_seed=SE
 
 
 def main(argv=None):
+    utf8_console()                       # RULING S5 amendment fix: never stop on a console code page
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
