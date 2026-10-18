@@ -5965,7 +5965,7 @@ class StepTwoSelling(unittest.TestCase):
 
 class StepTwoFiles(unittest.TestCase):
     """S2, Step 2.9: every text file the runner code opens is opened with
-    encoding="utf-8" and an explicit newline - Windows would otherwise turn
+    encoding="utf-8" (utf-8-sig where a BOM may come in) and an explicit newline - Windows would otherwise turn
     "\\n" into "\\r\\n" (the projection log's own no-\\r test is in
     ProjectionLogKey). p1_eval.py is frozen and not checked."""
 
@@ -5984,7 +5984,7 @@ class StepTwoFiles(unittest.TestCase):
                     continue
                 if re.search(r"""["'](r|w|a)?b["']|["']r\+b["']""", code):
                     continue                           # binary mode
-                if 'encoding="utf-8"' not in code or "newline=" not in code:
+                if not re.search(r'encoding="utf-8(-sig)?"', code) or "newline=" not in code:
                     bad.append(f"{name}:{n}: {line.strip()}")
         self.assertEqual(bad, [])
 
