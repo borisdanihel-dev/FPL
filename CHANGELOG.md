@@ -3227,3 +3227,38 @@ Tests: `test_fpl.py` 386 → 386; `tests/test_S6.py` 8 new; mutations 13 of
 13 red.
 
 Report: `worklog/cc_2026-10-18_S6.md`; verifier `worklog/verify_S6.md`.
+
+## 2026-10-18 — S9: league variance, relative xP, captain table — offline part (`98ebddd` prereg, `1dc2263` code; lane B)
+
+RULING Step 9 (verbatim in `prereg/S9.md`): `tools/league.py` (standard
+library only; the nightly never imports it; the LEAGUE ODDS section and
+`fetched_at` on the league tables are lane A's W2), `tests/test_S9.py`.
+Descriptive: no adoption bar. Verifier: VERIFIER_LINE. Not on master.
+
+**Definitions, as pre-registered.** Net points = `entry_gw.points −
+transfers_cost`, settled gameweeks only; σ_i, σ_d,j, ρ_ij per rival; pooled
+σ_d = root mean square of σ_d,j (primary), without chip weeks as
+information; bootstrap over gameweeks (B = 10,000, 90%, seed 20261018);
+P(we finish above j) = Φ(−gap_j / (σ_d √n)), n = 38 − last settled, zero
+drift; the variance line gap_j > σ_d √n; the drift version over six
+gameweeks as information; threat set = rivals ahead (or, leading, P ≥
+0.05), weights P(j above us) normalised; league EO from the threat set's
+last settled picks (starter 1, captain 2, TC 3, bench 0, BB bench 1, the
+multiplier field cross-checked); relative xP = (our multiplier − EO) × own;
+free variance under 0.3 xP; the captain table with the allowance (0.5
+before GW25, 1.0 from GW25) and the DEF/GK count. The "next gameweek" is
+the coming deadline (GW8), gaps and n rest on settled gameweeks (GW6).
+
+**Measured (settled through GW6, 32 left).** Pooled **σ_d 18.6 [10.5, 20.6]**
+points a gameweek; our σ 14.3; without chip weeks 18.8; the variance line
+105 points. Every rival inside the line (gaps +1 to +56 ahead of us, −50
+behind); P(we finish above): 0.30 against the leader (56 ahead) to 0.50
+against the nearest (1 ahead), 0.68 against the one behind. Threat set:
+the five managers ahead, weights 0.17–0.23. Our GW8 table (GW6 picks):
+Haaland own 5.43, EO 1.22, relative xP 4.22 as captain; no allowed
+differential within 0.5; a DEF or GK topped our XI's own in 1 of 3 graded
+gameweeks. Part C rule 1 (maximise xP) holds by this measurement.
+Tests: `test_fpl.py` 386 → 386; `tests/test_S9.py` 5 new; mutations 16 of
+16 red.
+
+Report: `worklog/cc_2026-10-18_S9.md`; verifier `worklog/verify_S9.md`.
