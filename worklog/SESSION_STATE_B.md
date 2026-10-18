@@ -82,7 +82,18 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   INCONCLUSIVE by construction; re-run `python tools/xp_v2.py --validate
   --cut 6` at the GW10 and GW19 checkpoints; the chat rules on the metric
   power before GW10.
-- **Current item:** S9 built (`tools/league.py`, `tests/test_S9.py`, code
+- **S9:** fixed under RULING S9 decisions (`629da70`, `5aceef2`); re-verification
+  running at the time of this commit (its verdict is recorded in the report
+  and here when it returns).
+- **Current item:** S8 built (`tools/planner.py`, `tests/test_S8.py`, prereg
+  `de7e1b3` with RULING Step 8 verbatim; code `51520ef`, `7f8ba52`, `22a179c`;
+  7 tests, mutations 19 of 19 red). The 50-squad replay is running in the
+  background (about two hours; output `tools/out/s8_run2/`); the report
+  `worklog/cc_2026-10-19_S8.md` is drafted with the live table. Then the
+  verifier, the docs, and the queue continues with S11 (prereg template rows
+  to fill), S12, S13 — the rulings are verbatim in `prereg/S11.md`, `S12.md`,
+  `S13.md`.
+- **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
   variance line. **Verifier FAIL** on a data finding: `entry_gw.points` is
