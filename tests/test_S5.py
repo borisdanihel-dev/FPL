@@ -5,9 +5,13 @@ tests/test_S5.py - the odds-implied lambda model (prereg/S5.md acceptance tests)
 """
 
 import csv
+import gzip
 import io
+import json
 import math
 import os
+import random
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -65,6 +69,138 @@ def toy_season(tmp, skip_fixture=None):
                         "Avg>2.5": f"{o[3]:.3f}", "Avg<2.5": f"{o[4]:.3f}",
                         "AvgCH": "9.99", "AvgCD": "9.99", "AvgCA": "9.99", "PSH": "9.99", "PSD": "9.99", "PSA": "9.99"})
     return odds
+
+
+API_NAMES = {"ARS": "Arsenal", "BOU": "Bournemouth", "BRE": "Brentford", "BHA": "Brighton and Hove Albion",
+             "CHE": "Chelsea", "EVE": "Everton"}
+CLUBS = list(API_NAMES)
+
+
+def toy_2627(tmp, post_deadline_export=True):
+    """A small 2026/27 data folder: six clubs, 30 players, GW4-7 played
+    (results before the GW8 deadline), GW8 settled with points, GW9 far in
+    the future; exports of gameweek 7 generated before and (optionally)
+    after the GW8 deadline, with different stats; a log with bottomup rows
+    for GW8; an odds CSV for GW8's fixtures. Returns the GW8 fixtures."""
+    rng = random.Random(5)
+    db = os.path.join(tmp, "fpl.sqlite")
+    c = sqlite3.connect(db)
+    c.executescript("""
+      create table teams(id integer, name text, short_name text);
+      create table events(id integer, deadline_time text, finished integer, data_checked integer);
+      create table fixtures(id integer, event integer, kickoff_time text, team_h integer, team_a integer,
+        team_h_difficulty integer, team_a_difficulty integer, team_h_score integer, team_a_score integer, finished integer);
+      create table players(id integer, position integer);
+      create table player_gw(player_id integer, event integer, total_points integer, minutes integer, starts integer,
+        clean_sheets integer, goals integer, bonus integer, defensive_contribution integer);
+      create table picks(entry_id integer, event integer, player_id integer, position integer);
+    """)
+    c.executemany("insert into teams values (?,?,?)", [(i, API_NAMES[s], s) for i, s in enumerate(CLUBS, 1)])
+    c.executemany("insert into events values (?,?,?,?)",
+                  [(ev, f"2026-10-{ev + 10:02d}T11:00:00Z", 1, 1) for ev in range(4, 9)] + [(9, "2099-01-01T12:00:00Z", 0, 0)])
+    fid, fixtures, gw8 = 0, [], []
+    for ev in range(4, 10):
+        pairs = [(1, 2), (3, 4), (5, 6)] if ev % 2 == 0 else [(2, 3), (4, 5), (6, 1)]
+        for h, a in pairs:
+            fid += 1
+            ko = f"2026-10-{ev + 10:02d}T14:00:00Z" if ev < 9 else "2099-01-02T14:00:00Z"
+            hs, as_ = (rng.choice([0, 1, 2, 3]), rng.choice([0, 1, 2])) if ev < 9 else (None, None)
+            fixtures.append((fid, ev, ko, h, a, 3, 3, hs, as_, 1 if ev < 9 else 0))
+            if ev == 8:
+                gw8.append({"id": fid, "home": CLUBS[h - 1], "away": CLUBS[a - 1], "hg": hs, "ag": as_})
+    c.executemany("insert into fixtures values (?,?,?,?,?,?,?,?,?,?)", fixtures)
+    players = []
+    pid = 0
+    for ti, club in enumerate(CLUBS, 1):
+        for pos, n in ((1, 1), (2, 2), (3, 1), (4, 1)):
+            for _ in range(n):
+                pid += 1
+                players.append({"id": pid, "web_name": f"P{pid}", "team": club, "pos": pos, "price": 4.5 + (pid % 4) * 0.5,
+                                "status": "a", "chance_next_round": None})
+    c.executemany("insert into players values (?,?)", [(p["id"], p["pos"]) for p in players])
+    for p in players:
+        for ev in range(4, 9):
+            mins = 90 if rng.random() < 0.8 else 0
+            c.execute("insert into player_gw values (?,?,?,?,?,?,?,?,?)",
+                      (p["id"], ev, rng.randint(0, 10) if mins else 0, mins, 1 if mins else 0,
+                       rng.choice([0, 1]) if mins else 0, 0, 0, rng.choice([5, 10, 13]) if mins else 0))
+    c.commit(); c.close()
+    # exports of gameweek 7: player_gw_recent GW4-7 with player_id; fixtures_next6 = GW8
+    def export(generated, boost):
+        rows = []
+        for p in players:
+            for ev in range(4, 8):
+                mins = 90 if rng.random() < 0.85 else 0
+                f = next(x for x in fixtures if x[1] == ev and (x[3] == CLUBS.index(p["team"]) + 1 or x[4] == CLUBS.index(p["team"]) + 1))
+                home = f[3] == CLUBS.index(p["team"]) + 1
+                rows.append({"event": ev, "player_id": p["id"], "web_name": p["web_name"], "team": p["team"], "pos": p["pos"],
+                             "pts": (rng.randint(1, 8) + boost) if mins else 0, "mins": mins, "starts": 1 if mins else 0,
+                             "g_": 0, "a_": 0, "cs": rng.choice([0, 1]) if mins else 0, "gc": 1, "bonus": 0, "bps": 10,
+                             "defcon": rng.choice([5, 11]) if mins else 0, "xg": round(rng.random() * 0.5 + boost * 0.1, 2) if mins else 0,
+                             "xa": 0.1 if mins else 0, "n_fixtures": 1, "opp": CLUBS[(f[4] if home else f[3]) - 1],
+                             "venue": "H" if home else "A", "fdr": 3, "opp_goals": 1})
+        allp = []
+        for p in players:
+            mine = [r for r in rows if r["player_id"] == p["id"]]
+            allp.append(dict(p, mins_last4=sum(r["mins"] for r in mine), starts_last4=sum(r["starts"] for r in mine),
+                             pts_last4=sum(r["pts"] for r in mine), minutes=sum(r["mins"] for r in mine),
+                             xg=sum(r["xg"] for r in mine), xa=sum(r["xa"] for r in mine), starts=sum(r["starts"] for r in mine)))
+        fx = [{"event": 8, "home": g["home"], "away": g["away"], "h_fdr": 3, "a_fdr": 3, "kickoff_time": "2026-10-18T14:00:00Z"} for g in gw8]
+        squads = [{"entry_id": 1, "entry_name": "Us", "slot": i + 1, "player_id": p["id"], "web_name": p["web_name"], "team": p["team"],
+                   "pos": p["pos"], "price": p["price"], "multiplier": 1, "is_captain": 0, "is_vice": 0, "gw_points": 0, "minutes": 0,
+                   "purchase_price": p["price"], "selling_price": p["price"]}
+                  for i, p in enumerate([players[0], players[5], players[1], players[2], players[6], players[11], players[16],
+                                         players[3], players[8], players[13], players[18], players[23], players[4], players[9], players[14]])]
+        return {"schema": 2, "generated": generated, "league_id": 1, "my_entry": 1, "gameweek": 7,
+                "standings": [{"entry_id": 1, "entry_name": "Us", "bank": 10, "value": 1000}], "chips_used": [],
+                "squads": squads, "all_players": allp, "player_history": [], "fixtures_played": [], "fixtures_next6": fx,
+                "player_gw_recent": rows, "events": [], "fixtures_status": [], "teams": [], "league_ownership": [], "transfers": []}
+    os.makedirs(os.path.join(tmp, "exports"))
+    with gzip.open(os.path.join(tmp, "exports", "fpl_export_gw7_2026-10-17.json.gz"), "wt", encoding="utf-8") as fh:
+        json.dump(export("2026-10-17T21:55:00+00:00", 0), fh)
+    if post_deadline_export:
+        with gzip.open(os.path.join(tmp, "exports", "fpl_export_gw7_2026-10-18.json.gz"), "wt", encoding="utf-8") as fh:
+            json.dump(export("2026-10-18T12:00:00+00:00", 3), fh)        # after the GW8 deadline: must never be used
+    with open(os.path.join(tmp, E.LOG_PATH), "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=E.LOG_FIELDS); w.writeheader()
+        for p in players[:5]:
+            w.writerow({"made_at": "2026-10-17T21:56:00+00:00", "source": "bottomup", "event": 8, "player_id": p["id"],
+                        "web_name": p["web_name"], "predicted": 2.5})
+    odds = os.path.join(tmp, "E0_toy27_fetched_2026-10-18.csv")
+    with open(odds, "w", newline="") as fh:
+        cols = ["Div", "Date", "Time", "HomeTeam", "AwayTeam", "AvgH", "AvgD", "AvgA", "Avg>2.5", "Avg<2.5"]
+        w = csv.DictWriter(fh, fieldnames=cols); w.writeheader()
+        for g in gw8:
+            o = odds_for(1.4, 1.0)
+            w.writerow({"Div": "E0", "Date": "18/10/2026", "Time": "15:00", "HomeTeam": API_NAMES[g["home"]], "AwayTeam": API_NAMES[g["away"]],
+                        "AvgH": f"{o[0]:.3f}", "AvgD": f"{o[1]:.3f}", "AvgA": f"{o[2]:.3f}", "Avg>2.5": f"{o[3]:.3f}", "Avg<2.5": f"{o[4]:.3f}"})
+    return gw8, odds
+
+
+def toy_snapshot(tmp, name, events, fetched_at=None):
+    os.makedirs(os.path.join(tmp, "odds"), exist_ok=True)
+    payload = {"fetched_at": fetched_at, "events": events} if fetched_at else events
+    with gzip.open(os.path.join(tmp, "odds", name), "wt", encoding="utf-8") as fh:
+        json.dump(payload, fh)
+
+
+def api_event(home, away, commence, books):
+    """books: [(key, h, d, a, over, under, lay)] - prices per bookmaker; None skips a market."""
+    ev = {"id": "x", "sport_key": "soccer_epl", "commence_time": commence, "home_team": API_NAMES[home],
+          "away_team": API_NAMES[away], "bookmakers": []}
+    for key, h, d, a, over, under, lay in books:
+        markets = []
+        if h is not None:
+            markets.append({"key": "h2h", "outcomes": [{"name": API_NAMES[home], "price": h}, {"name": API_NAMES[away], "price": a},
+                                                      {"name": "Draw", "price": d}]})
+        if lay:
+            markets.append({"key": "h2h_lay", "outcomes": [{"name": API_NAMES[home], "price": 50.0}, {"name": API_NAMES[away], "price": 50.0},
+                                                          {"name": "Draw", "price": 50.0}]})
+        if over is not None:
+            markets.append({"key": "totals", "outcomes": [{"name": "Over", "price": over, "point": 2.5}, {"name": "Under", "price": under, "point": 2.5},
+                                                         {"name": "Over", "price": 9.0, "point": 3.5}, {"name": "Under", "price": 1.1, "point": 3.5}]})
+        ev["bookmakers"].append({"key": key, "title": key, "markets": markets})
+    return ev
 
 
 class Maths(unittest.TestCase):
@@ -219,6 +355,94 @@ class Primary(unittest.TestCase):
             self.assertEqual(res["pass_a"], res["boot"]["mean"] >= 0.005 and res["boot"]["lo"] > 0)
 
 
+class Condition(unittest.TestCase):
+    def test_condition_uses_the_pre_deadline_export_and_the_starters_threshold(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gw8, odds = toy_2627(tmp)
+            exports = OL.dated_exports(tmp)
+            name_to_short, deadlines, fixtures, settled, actual = OL.sqlite_tables(tmp)
+            self.assertEqual(settled, {4, 5, 6, 7, 8})
+            ex = OL.pre_deadline_export(exports, deadlines[8], 8)
+            self.assertTrue(ex[1].endswith("fpl_export_gw7_2026-10-17.json.gz"))      # the post-deadline export is never chosen
+            self.assertIsNone(OL.pre_deadline_export(exports, datetime(2026, 10, 17, 12, tzinfo=timezone.utc), 8))
+            buf = io.StringIO()
+            res = OL.condition_2627(tmp, 0.1, lambda s: buf.write(s + chr(10)), odds_file=odds)
+            self.assertEqual(res["weeks"], [8])
+            text = buf.getvalue()
+            self.assertIn("fpl_export_gw7_2026-10-17.json.gz", text)
+            self.assertNotIn("2026-10-18.json.gz", text)
+            # the starters threshold: n equals the count of rebuilt DEF/GK with P(start) >= 0.8, below the full count
+            book = OL.OddsBook(OL.load_odds(odds, name_to_short))
+            reb = OL.rebuild_2627(ex[2], 8, book, OL.fit_fallback([], deadlines[8]))
+            want = sum(1 for pid, v in reb.items() if v[3] in (1, 2) and v[2] >= OL.STARTER_P and pid in actual[8])
+            all_gkdef = sum(1 for v in reb.values() if v[3] in (1, 2))
+            self.assertLess(want, all_gkdef)
+            line = next(l for l in text.splitlines() if "fpl_export_gw7_2026-10-17" in l)
+            self.assertEqual(int(line.split()[2]), want)
+            self.assertIn("rows, max |diff|", text)
+            # without any pre-deadline export the condition refuses
+            for f in os.listdir(os.path.join(tmp, "exports")):
+                os.remove(os.path.join(tmp, "exports", f))
+            with self.assertRaises(OL.MissingInput):
+                OL.condition_2627(tmp, 0.1, lambda s: None, odds_file=odds)
+
+
+class LiveMode(unittest.TestCase):
+    def test_aggregation_means_counts_and_exclusions(self):
+        ev = api_event("ARS", "CHE", "2099-01-02T14:00:00Z", [
+            ("b1", 2.0, 3.4, 3.8, 1.9, 1.9, True), ("b2", 2.2, 3.6, 3.4, 2.1, 1.7, False), ("b3", None, None, None, 2.0, 1.8, False)])
+        agg = OL.aggregate_event(ev)
+        self.assertEqual((agg["home"], agg["away"], agg["n_h2h"], agg["n_totals"]), ("ARS", "CHE", 2, 3))
+        self.assertAlmostEqual(agg["odds"]["H"], 2.1); self.assertAlmostEqual(agg["odds"]["D"], 3.5); self.assertAlmostEqual(agg["odds"]["A"], 3.6)
+        self.assertAlmostEqual(agg["odds"]["over"], 2.0); self.assertAlmostEqual(agg["odds"]["under"], 1.8)   # the 3.5 line and the lay market ignored
+        self.assertIsNone(OL.aggregate_event(api_event("ARS", "CHE", "2099-01-02T14:00:00Z", [("b1", 2.0, 3.4, 3.8, None, None, False)])))
+        bad = api_event("ARS", "CHE", "2099-01-02T14:00:00Z", [("b1", 2.0, 3.4, 3.8, 1.9, 1.9, False)])
+        bad["home_team"] = "Nowhere FC"
+        with self.assertRaises(OL.MissingInput):
+            OL.aggregate_event(bad)
+
+    def test_snapshot_time_and_selection(self):
+        self.assertEqual(OL.snapshot_time("odds_2026-10-22T21-50-00Z.json.gz", []), datetime(2026, 10, 22, 21, 50, tzinfo=timezone.utc))
+        self.assertEqual(OL.snapshot_time("odds_2026-10-22.json.gz", []), datetime(2026, 10, 22, 23, 59, 59, tzinfo=timezone.utc))
+        self.assertEqual(OL.snapshot_time("x.json.gz", {"fetched_at": "2026-10-22T10:00:00Z"}), datetime(2026, 10, 22, 10, tzinfo=timezone.utc))
+        self.assertIsNone(OL.snapshot_time("x.json.gz", []))
+        with tempfile.TemporaryDirectory() as tmp:
+            dl = datetime(2099, 1, 1, 12, tzinfo=timezone.utc)
+            e = [api_event("ARS", "CHE", "2099-01-02T14:00:00Z", [("b1", 2.0, 3.4, 3.8, 1.9, 1.9, False)])]
+            toy_snapshot(tmp, "odds_2098-12-30T10-00-00Z.json.gz", e)
+            toy_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", e)
+            toy_snapshot(tmp, "odds_2099-01-01T13-00-00Z.json.gz", e)           # after the deadline: ignored
+            path, payload, taken = OL.newest_snapshot(tmp, dl)
+            self.assertTrue(path.endswith("odds_2098-12-31T10-00-00Z.json.gz"))
+            self.assertIsNone(OL.newest_snapshot(tmp, datetime(2098, 1, 1, tzinfo=timezone.utc)))
+
+    def test_live_with_and_without_a_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gw8, _ = toy_2627(tmp, post_deadline_export=False)
+            now = datetime(2098, 12, 1, tzinfo=timezone.utc)
+            buf = io.StringIO()
+            res = OL.live(tmp, lambda s: buf.write(s + chr(10)), now=now)
+            self.assertEqual(res["target"], 9)
+            self.assertFalse(res["snapshot"])
+            self.assertIn("NO SNAPSHOT", buf.getvalue())
+            self.assertTrue(all(src == "fallback" for _, src in res["fixtures"].values()))
+            name_to_short, deadlines, fixtures, _, _ = OL.sqlite_tables(tmp)
+            gw9 = [f for f in fixtures if f["event"] == 9]
+            events = [api_event(f["home"], f["away"], f["kickoff"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                [("b1", 2.0, 3.4, 3.8, 1.9, 1.9, True), ("b2", 2.2, 3.6, 3.4, 2.1, 1.7, False)]) for f in gw9[:2]]
+            toy_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", events, fetched_at="2098-12-31T10:00:00Z")
+            buf = io.StringIO()
+            res = OL.live(tmp, lambda s: buf.write(s + chr(10)), now=now)
+            self.assertTrue(res["snapshot"])
+            srcs = {pair: src for pair, (_, src) in res["fixtures"].items()}
+            self.assertEqual(sorted(srcs.values()), ["fallback", "odds", "odds"])          # the third fixture is not in the snapshot
+            lam = res["fixtures"][(gw9[0]["home"], gw9[0]["away"])][0]
+            want = OL.lambdas_from_odds(2.1, 3.5, 3.6, 2.0, 1.8)
+            self.assertAlmostEqual(lam["lambda_home"], want["lambda_home"]); self.assertAlmostEqual(lam["lambda_away"], want["lambda_away"])
+            self.assertIn("2/2", buf.getvalue())                                            # bookmaker counts printed
+            self.assertIn("is for GW8, not GW9", buf.getvalue())                           # the toy export is a gameweek behind: no squad lines
+
+
 class CLI(unittest.TestCase):
     def test_cli_and_isolation(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -231,6 +455,13 @@ class CLI(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 rc = OL.main(["--season", "2026-27", "--condition", "--data", tmp, "--hist", tmp, "--odds", odds, "--out", out, "--s_d", "0.1"])
             self.assertEqual(rc, 2)                                   # no fpl.sqlite in the toy: refused
+        with tempfile.TemporaryDirectory() as tmp:
+            gw8, odds27 = toy_2627(tmp)
+            out = os.path.join(tmp, "out")
+            with redirect_stdout(io.StringIO()):
+                rc = OL.main(["--season", "2026-27", "--condition", "--data", tmp, "--odds", odds27, "--out", out, "--s_d", "0.1"])
+            self.assertEqual(rc, 0)
+            self.assertTrue(os.path.exists(os.path.join(out, "odds_lambda_condition_2026-27.txt")))
         code = ("import sys, os; import fpl_nightly, fpl_ship, fpl_edge, fpl_sync, fpl_gate, fpl_publish; "
                 "bad = [m for m, mod in sys.modules.items() if (getattr(mod, '__file__', None) or '')"
                 ".replace(os.sep, '/').find('/tools/') >= 0 or m.split('.')[0] in ('tools', 'analysis', 'odds_lambda', 'chips', 'backtest', 'hist_pit')]; "

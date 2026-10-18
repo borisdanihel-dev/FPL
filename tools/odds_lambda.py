@@ -7,6 +7,8 @@ CSVs (tools/odds/E0_<season>_fetched_<date>.csv, pre-closing columns only).
     python tools/odds_lambda.py --season 2025-26 --test        # the pre-registered primary test
     python tools/odds_lambda.py --season 2026-27 --condition   # the 2026/27 condition + its power
     python tools/odds_lambda.py --fixture ARS CHE               # lambda, source, P(cs) for one pairing
+    python tools/odds_lambda.py --live                          # the deadline pass: W1's newest odds snapshot before the
+                                                                # next deadline -> lambdas, P(cs), our GK/DEF (information only)
 
 Definitions, as pre-registered in prereg/S5.md (with amendment 1):
   odds       AvgH/AvgD/AvgA, Avg>2.5/Avg<2.5; where a row lacks them, B365.
@@ -24,6 +26,15 @@ Definitions, as pre-registered in prereg/S5.md (with amendment 1):
              lambda replaced by lambda_opp and a goals-conceded term
              -P(start) x E[floor(GC/2)] under Poisson(lambda_opp); MID and
              FWD unchanged.
+  live       (RULING S5 result, point 4) the newest odds/*.json.gz under the
+             data worktree taken before the next deadline, in The Odds API's
+             response shape (events with bookmakers -> markets -> outcomes;
+             W1 stores it). Aggregation, as close to football-data's Avg as
+             the API allows: the mean decimal price across bookmakers per
+             outcome for h2h (h2h_lay excluded) and for totals at the 2.5
+             line; a fixture lacking any of the five prices uses the
+             fallback, labelled. No snapshot before the deadline: the
+             fallback for every fixture, labelled.
   primary    2025/26 GW5-38, GK/DEF with 60+ minutes in the fixture: Brier of
              P(clean sheet), bottomup minus bottomup_lambda per gameweek,
              paired bootstrap (B = 10,000, 90%, seed 20261018); pass if the
@@ -40,10 +51,11 @@ import gzip
 import json
 import math
 import os
+import re
 import sqlite3
 import sys
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -515,6 +527,198 @@ def quintile_spread(rows, key, reverse=False):
 
 
 # ---------------------------------------------------------------------------
+# live: W1's odds snapshots (The Odds API response shape)
+# ---------------------------------------------------------------------------
+
+# The Odds API's team names -> FPL short names (both seasons' clubs)
+API_TEAMS = {
+    "Arsenal": "ARS", "Aston Villa": "AVL", "Bournemouth": "BOU", "AFC Bournemouth": "BOU",
+    "Brentford": "BRE", "Brighton and Hove Albion": "BHA", "Brighton & Hove Albion": "BHA", "Brighton": "BHA",
+    "Burnley": "BUR", "Chelsea": "CHE", "Coventry City": "COV", "Coventry": "COV", "Crystal Palace": "CRY",
+    "Everton": "EVE", "Fulham": "FUL", "Hull City": "HUL", "Hull": "HUL", "Ipswich Town": "IPS", "Ipswich": "IPS",
+    "Leeds United": "LEE", "Leeds": "LEE", "Liverpool": "LIV", "Manchester City": "MCI", "Man City": "MCI",
+    "Manchester United": "MUN", "Man Utd": "MUN", "Man United": "MUN", "Newcastle United": "NEW", "Newcastle": "NEW",
+    "Nottingham Forest": "NFO", "Nott'm Forest": "NFO", "Sunderland": "SUN", "Tottenham Hotspur": "TOT",
+    "Tottenham": "TOT", "Spurs": "TOT", "West Ham United": "WHU", "West Ham": "WHU",
+    "Wolverhampton Wanderers": "WOL", "Wolves": "WOL",
+}
+TOTALS_LINE = 2.5
+_STAMP = re.compile(r"(\d{4}-\d{2}-\d{2})(?:[T_ ]?(\d{2})[-:]?(\d{2})(?:[-:]?(\d{2}))?)?")
+
+
+def snapshot_time(path, payload):
+    """When the snapshot was taken, UTC: a fetch-time field in the payload
+    (fetched_at / fetched_at_utc / fetch_time / taken_at / generated), else
+    the timestamp in the file name (a date alone counts as the end of that
+    UTC day, so it is never read as earlier than it was), else None."""
+    if isinstance(payload, dict):
+        for k in ("fetched_at", "fetched_at_utc", "fetch_time", "taken_at", "generated"):
+            v = payload.get(k)
+            if v:
+                try:
+                    t = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+                    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+                except ValueError:
+                    pass
+    m = _STAMP.search(os.path.basename(path))
+    if not m:
+        return None
+    d = date.fromisoformat(m.group(1))
+    if m.group(2) is None:
+        return datetime(d.year, d.month, d.day, 23, 59, 59, tzinfo=timezone.utc)
+    return datetime(d.year, d.month, d.day, int(m.group(2)), int(m.group(3)), int(m.group(4) or 0), tzinfo=timezone.utc)
+
+
+def snapshot_events(payload):
+    """The list of events in a snapshot: the payload itself when it is a
+    list, else the first list under a known key."""
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        for k in ("events", "data", "response", "odds"):
+            if isinstance(payload.get(k), list):
+                return payload[k]
+    raise MissingInput("the odds snapshot holds no event list")
+
+
+def newest_snapshot(data_dir, deadline):
+    """(path, payload, taken) for the newest odds/*.json.gz (or .json) taken
+    before `deadline`; None when there is none."""
+    files = glob.glob(os.path.join(data_dir, "odds", "*.json.gz")) + glob.glob(os.path.join(data_dir, "odds", "*.json"))
+    best = None
+    for f in files:
+        op = gzip.open if f.endswith(".gz") else open
+        try:
+            with op(f, "rt", encoding="utf-8") as fh:
+                payload = json.load(fh)
+        except (OSError, ValueError) as e:
+            raise MissingInput(f"cannot read {f}: {e}")
+        taken = snapshot_time(f, payload)
+        if taken is None:
+            raise MissingInput(f"{f}: no fetch time in the file or its name")
+        if taken < deadline and (best is None or taken > best[2]):
+            best = (f, payload, taken)
+    return best
+
+
+def aggregate_event(ev):
+    """One event -> {date, home, away, odds, n_h2h, n_totals, commence} or
+    None when any of the five prices is missing. Mean decimal price across
+    bookmakers per outcome: h2h (h2h_lay excluded) and totals at 2.5."""
+    home, away = ev.get("home_team"), ev.get("away_team")
+    hs, as_ = API_TEAMS.get(home), API_TEAMS.get(away)
+    if hs is None or as_ is None:
+        raise MissingInput(f"odds snapshot: team {home if hs is None else away!r} is not in the team table")
+    sums = defaultdict(float)
+    counts = defaultdict(int)
+    for b in ev.get("bookmakers") or []:
+        for mk in b.get("markets") or []:
+            if mk.get("key") == "h2h":
+                got = {}
+                for o in mk.get("outcomes") or []:
+                    if o.get("name") == home:
+                        got["H"] = o.get("price")
+                    elif o.get("name") == away:
+                        got["A"] = o.get("price")
+                    elif str(o.get("name", "")).lower() == "draw":
+                        got["D"] = o.get("price")
+                if all(isinstance(got.get(k), (int, float)) and got[k] > 1 for k in ("H", "D", "A")):
+                    for k in ("H", "D", "A"):
+                        sums[k] += got[k]
+                    counts["h2h"] += 1
+            elif mk.get("key") == "totals":
+                got = {}
+                for o in mk.get("outcomes") or []:
+                    if o.get("point") == TOTALS_LINE:
+                        if str(o.get("name", "")).lower() == "over":
+                            got["over"] = o.get("price")
+                        elif str(o.get("name", "")).lower() == "under":
+                            got["under"] = o.get("price")
+                if all(isinstance(got.get(k), (int, float)) and got[k] > 1 for k in ("over", "under")):
+                    for k in ("over", "under"):
+                        sums[k] += got[k]
+                    counts["totals"] += 1
+    if not counts["h2h"] or not counts["totals"]:
+        return None
+    odds = {k: sums[k] / counts["h2h"] for k in ("H", "D", "A")}
+    odds.update({k: sums[k] / counts["totals"] for k in ("over", "under")})
+    commence = datetime.fromisoformat(str(ev.get("commence_time", "")).replace("Z", "+00:00")) if ev.get("commence_time") else None
+    return {"date": commence.date() if commence else None, "home": hs, "away": as_, "odds": odds, "cols": "api",
+            "n_h2h": counts["h2h"], "n_totals": counts["totals"], "commence": commence}
+
+
+def snapshot_book(payload):
+    """(OddsBook, aggregated events, skipped) from a snapshot payload."""
+    rows, skipped = [], []
+    for ev in snapshot_events(payload):
+        agg = aggregate_event(ev)
+        if agg is None or agg["date"] is None:
+            skipped.append(f"{ev.get('home_team')} v {ev.get('away_team')}")
+            continue
+        rows.append(agg)
+    return OddsBook(rows), rows, skipped
+
+
+def live(data_dir, out=print, now=None):
+    """RULING S5 result point 4: the deadline pass, information only."""
+    import chips as CH
+    now = now or datetime.now(timezone.utc)
+    name_to_short, deadlines, fixtures, settled, _ = sqlite_tables(data_dir)
+    upcoming = sorted((dl, ev) for ev, dl in deadlines.items() if dl > now)
+    if not upcoming:
+        raise MissingInput("no deadline after now in events")
+    dl, target = upcoming[0]
+    snap = newest_snapshot(data_dir, dl)
+    out(f"ODDS LAMBDA LIVE  next deadline GW{target} {dl:%Y-%m-%d %H:%M} UTC; information only (no decision input until adopted)")
+    out("  method: per fixture the mean decimal price across bookmakers for h2h (home, draw, away; h2h_lay excluded)")
+    out(f"  and for totals at the {TOTALS_LINE} line (over, under); power de-margin; lambda_total from P(under {TOTALS_LINE})")
+    out("  by bisection on the Poisson CDF at 2, the home/away split by bisection on P(home win); P(cs) = exp(-lambda_opp).")
+    if snap is None:
+        book, rows, skipped = None, [], []
+        out(f"  NO SNAPSHOT before the deadline under {os.path.join(data_dir, 'odds')}: every fixture uses the time-decayed fallback (labelled)")
+    else:
+        path, payload, taken = snap
+        book, rows, skipped = snapshot_book(payload)
+        out(f"  snapshot {os.path.basename(path)} taken {taken:%Y-%m-%d %H:%M} UTC ({(dl - taken).total_seconds() / 3600:.1f} h before the deadline): "
+            f"{len(rows)} events aggregated" + (f", {len(skipped)} without the five prices: {', '.join(skipped)}" if skipped else ""))
+    results = [(f["kickoff"], f["home"], f["away"], f["hg"], f["ag"]) for f in fixtures if f["finished"] and f["kickoff"] < dl]
+    model = fit_fallback(results, dl)
+    week = sorted((f for f in fixtures if f["event"] == target), key=lambda f: f["kickoff"])
+    if not week:
+        raise MissingInput(f"no fixtures for GW{target}")
+    out("")
+    out(f"  {'kickoff':<17} {'home':>4} {'away':>4} {'lam_h':>6} {'lam_a':>6} {'P(cs home)':>10} {'P(cs away)':>10} {'books h2h/tot':>13}  source")
+    by_pair = {}
+    for f in week:
+        lam, src = fixture_lambdas(book, model, f["kickoff"], f["home"], f["away"])
+        r = book.find(f["kickoff"], f["home"], f["away"]) if book is not None else None
+        books = f"{r['n_h2h']}/{r['n_totals']}" if r else "-"
+        by_pair[(f["home"], f["away"])] = (lam, src)
+        out(f"  {f['kickoff']:%Y-%m-%d %H:%M} {f['home']:>4} {f['away']:>4} {lam['lambda_home']:6.2f} {lam['lambda_away']:6.2f} "
+            f"{p_clean_sheet(lam['lambda_away']):10.3f} {p_clean_sheet(lam['lambda_home']):10.3f} {books:>13}  {src}")
+    # our 15's GK/DEF from the newest export
+    d, path = CH.newest_export(data_dir)
+    if d["gameweek"] + 1 != target:
+        out(f"  export {os.path.basename(path)} is for GW{d['gameweek'] + 1}, not GW{target}: no squad lines")
+        return {"target": target, "snapshot": snap is not None, "fixtures": by_pair}
+    squad = CH.my_squad(d)
+    reb = rebuild_2627(d, target, book, model)
+    out("")
+    out(f"  our GK/DEF for GW{target} (export {os.path.basename(path)}): bottomup, bottomup_lambda, P(cs) of each fixture, source")
+    for r in squad:
+        if r["pos"] not in (1, 2):
+            continue
+        v = reb.get(r["id"])
+        if v is None:
+            out(f"    {r['name']:<16} {r['team']:>4}  no forecast (blank, gate or status)")
+            continue
+        fx = [f for f in week if r["team"] in (f["home"], f["away"])]
+        pcs = ", ".join(f"{p_clean_sheet(by_pair[(f['home'], f['away'])][0]['lambda_away' if f['home'] == r['team'] else 'lambda_home']):.3f}" for f in fx)
+        out(f"    {r['name']:<16} {r['team']:>4}  bottomup {v[0]:5.2f}  bottomup_lambda {v[1]:5.2f}  P(cs) {pcs}  {v[4]}")
+    return {"target": target, "snapshot": snap is not None, "fixtures": by_pair, "squad": reb}
+
+
+# ---------------------------------------------------------------------------
 # 2026/27: the condition on starters-only DEF/GK Spearman
 # ---------------------------------------------------------------------------
 
@@ -677,6 +881,7 @@ def main(argv=None):
     ap.add_argument("--condition", action="store_true")
     ap.add_argument("--s_d", type=float, default=None, help="s_d for the condition's power (default: measured by --test)")
     ap.add_argument("--fixture", nargs=2, metavar=("HOME", "AWAY"))
+    ap.add_argument("--live", action="store_true")
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
     lines = []
@@ -698,6 +903,9 @@ def main(argv=None):
         elif args.fixture:
             fixture_report(args.data, args.fixture[0], args.fixture[1], out, odds_file=args.odds)
             name = f"odds_lambda_fixture_{args.fixture[0]}_{args.fixture[1]}.txt"
+        elif args.live:
+            live(args.data, out)
+            name = "odds_lambda_live.txt"
         else:
             ap.print_help()
             return 0
