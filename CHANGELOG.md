@@ -3050,7 +3050,8 @@ origin), realised chip points, paired bootstrap over squads (B = 10,000,
   heuristic **−0.18, 90% CI [−1.26, +0.72]**: the lower bound clears −3, the
   mean does not reach 0. Calculator − both-early +5.76 [+1.00, +10.60]
   (information). The two planned policies chose the same BB week for 45 of
-  50 squads and the same FH week for 47. Not adopted; the chat rules
+  50 squads and the same FH week for 47; BB gains identical (+3.20), the
+  whole difference is Free Hit timing (+13.36 vs +13.54). Not adopted; the chat rules
   (report, Decisions).
 - Live (export 2026-10-18, next GW8, chips BB and FH, budget £99.7m): V_BB
   5.6–6.7 and V_FH 3.5–5.8 across GW8–13; **GW8: PLAY BB by +0.07 xP**,
