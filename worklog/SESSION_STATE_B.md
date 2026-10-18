@@ -73,7 +73,13 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   (**edit the Part C line in BUILD_PLAN.md at the landing**). Amendment
   built (`fa05534`): the `condition_2627` toy test and `--live` for the
   Thursday deadline pass (W1's snapshots; reader shape to confirm when W1
-  lands). Verifier on the amendment: AMEND_STATE. Then S6.
+  lands). Verifier on the amendment: **FAIL** on check 3
+  only — the `--live` command crashes on a cp1252 console (UnicodeEncodeError
+  on a player name) and writes no file; numbers unaffected. Stopped under
+  operating mode (e). Proposed fix for the ruling: write the file before
+  echoing and reconfigure stdout to UTF-8 with replacement in the `main` of
+  `odds_lambda.py`, `chips.py` and `backtest.py`, plus a cp1252-stream test;
+  then rerun the verifier (checks 2, 3, 6 on the live path). Then S6.
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
@@ -114,6 +120,6 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
 - **Items since the last chat review:** 3 of 6 (S4, S7, S5).
-- **Open for the chat:** S5 Decision 1 (adopt `bottomup_lambda`?) and whether S6 starts; the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
+- **Open for the chat:** the S5 amendment FAIL (the console-encoding fix); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
