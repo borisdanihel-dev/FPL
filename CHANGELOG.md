@@ -2980,3 +2980,42 @@ G = ((1.645 + 0.842) s_d / Δ)².
   fixed in the tests).
 
 Report: `worklog/cc_2026-10-18_S4.md`; verifier `worklog/verify_S4.md`.
+
+## 2026-10-18 — S4 amendment 2: the point-in-time club map (`79d14ee` prereg, `973b3f8` code; lane B)
+
+RULING S4 amendment 2 (verbatim in `prereg/S4.md`) after the verifier's
+FAIL above. `tools/hist_pit.py` (offline): a player's club in gameweek g is
+the home team of his row's fixture if `was_home`, else the away team,
+cross-checked against the row's `team` column (a mismatch stops the run;
+the real file has none); a blank carries the last known club forward; before
+his first row a player does not exist. 2025/26 has 29 mid-season club
+changes, five of them from GW2. `tools/backtest.py` rebuilds gameweek g on
+the adapter's slice with players replaced by `hist_pit.players_at(c, cm, g)`
+and reads the decision squad's clubs from the same map; the frozen
+`fpl_hist.py` and `fpl_edge.py` are untouched. S7, S5 and S6 replays use it.
+
+**Measured, recomputed (the pre-fix numbers are marked invalid in the report):**
+- Truncation check, GW5 / GW20 / GW38 rebuilt from copies cut to rounds
+  ≤ g: max |difference| 0.0 on every player, same most-selected 15.
+- Power on 2025/26 (bottomup − minutes, GW5–38): starters Spearman
+  s_d = 0.1028 → G = 654 / 163 / 73 for Δ = 0.01 / 0.02 / 0.03; whole
+  population s_d = 0.0215 → 29 / 7 / 3; decision metric s_d = 5.68 points
+  → 200 / 50 / 22 for Δ = 1 / 2 / 3 points.
+- 2025/26, bottomup − minutes, 34 gameweeks: starters Spearman +0.095
+  [+0.067, +0.123] (levels +0.123 vs +0.028); whole population +0.000
+  [−0.006, +0.006] (both +0.313); Kendall whole population −0.021 [−0.026,
+  −0.016]; XI + captain on the most-selected 15 **+2.12 points a gameweek
+  [+0.56, +3.71]**; regret1 −1.74 [−2.94, −0.65], regret11 −7.1 [−12.1,
+  −2.1]. P(cs) Brier 0.1977 (n = 5,969), P(DEFCON) 0.1317, P(start) 0.2035.
+  The leak moved the headline rank metrics by < 0.001 and the decision
+  metric by +0.09 a gameweek; individual players moved by up to 2.1 points.
+- Self-test and the 2026/27 figures: unchanged (0.777 / 0.068; the 2026/27
+  report section is byte-identical).
+- Tests: `test_fpl.py` 386 → 386; `tests/test_S4.py` 24 → 32 (the club
+  map, a planted transfer, the look-ahead probe, the team-column leak test,
+  the component leak tests); mutations 26 of 26 red.
+- Verifier, second run: VERIFIER2_LINE.
+
+The 2026-09-14 entries (Steps 3–5, the horizon test, the concentration
+test) were computed through the frozen adapter with end-of-season clubs;
+they are frozen and not re-run here (report, Decisions 0).
