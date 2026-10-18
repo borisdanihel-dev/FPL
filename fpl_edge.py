@@ -2838,6 +2838,9 @@ def write_log_atomic(path, rows, retries=WRITE_RETRIES, wait=WRITE_WAIT):
     return _replace_with_retry(tmp, path, retries, wait)
 
 
+RECORD_SKIP = "skip"        # fpl_ep without ep_next: a WARN, never a FAIL (W1)
+
+
 def record_status(d, horizon, source="own", proj_path=None, path=None):
     """Store this model's forecast for the NEXT gameweek, before it is played.
 
@@ -2872,7 +2875,7 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
               f"Refusing to record - it would not be a genuine forecast.")
         return True, 0, f"GW{target} deadline passed - nothing to record"
 
-    rows = []
+    rows, note = [], ""
     if proj_path:
         ext, err = load_projections(proj_path)
         if err:
@@ -2891,7 +2894,16 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
     elif source == "fpl_ep":
         # FPL's own expected points for the next gameweek, as the API gives
         # them tonight (ep_next): an external benchmark, recorded as it is, for
-        # every player that has one (BUILD_PLAN.md Step 4 item 2; W1)
+        # every player that has one (BUILD_PLAN.md Step 4 item 2; W1). A
+        # missing ep_next never costs the night (RULING W1 decisions, point 3):
+        # absent, or null for every player, is a SKIP; some null players are
+        # counted in the line and the rest recorded.
+        missing = sum(1 for p in d["all_players"] if p.get("ep_next") is None)
+        if missing == len(d["all_players"]):
+            print("  the export has no ep_next for any player - fpl_ep skipped tonight")
+            return RECORD_SKIP, 0, "the export has no ep_next for any player"
+        if missing:
+            note = f"{missing} without ep_next"
         for p in d["all_players"]:
             if p.get("ep_next") is not None:
                 rows.append((p["id"], p["web_name"], round(float(p["ep_next"]), 3)))
@@ -2988,7 +3000,7 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
                           f"are kept in {name}.tmp")
     print(f"  recorded {len(rows)} forecasts for GW{target} as '{source}' "
           f"({dl - now} before deadline)")
-    return True, len(rows), ""
+    return True, len(rows), note
 
 
 def record_projections(d, horizon, source="own", proj_path=None, path=None):
@@ -4018,8 +4030,11 @@ def main():
             import traceback
             traceback.print_exc()
             ok, n, reason = False, 0, f"{type(e).__name__}: {e}"
-        line = (f"RECORD OK {args.source} {n}" + (f" ({reason})" if reason else "")
-                if ok else f"RECORD FAIL {args.source} {reason}")
+        if ok == RECORD_SKIP:
+            line = f"RECORD SKIP {args.source} {reason}"
+        else:
+            line = (f"RECORD OK {args.source} {n}" + (f" ({reason})" if reason else "")
+                    if ok else f"RECORD FAIL {args.source} {reason}")
         print(line)
         if args.status:
             with open(args.status, "a", encoding="utf-8", newline="") as fh:

@@ -112,13 +112,54 @@ class FplEp(unittest.TestCase):
         ok, n, why, rows = self._record(d, "fpl_ep")
         self.assertEqual((ok, n, rows), (True, 0, []))
 
-    def test_an_export_without_ep_next_is_a_record_fail_never_a_guess(self):
+    def test_a_missing_ep_next_is_a_skip_never_a_lost_night(self):
+        """RULING W1 decisions, point 3: absent, or null for every player."""
+        for how in ("absent", "null"):
+            with self.subTest(how=how):
+                d = _recordable_export()
+                for p in d["all_players"]:
+                    if how == "absent":
+                        p.pop("ep_next", None)
+                    else:
+                        p["ep_next"] = None
+                ok, n, why, rows = self._record(d, "fpl_ep")
+                self.assertEqual((ok, n, rows), (E.RECORD_SKIP, 0, []))
+                self.assertEqual(why, "the export has no ep_next for any player")
+
+    def test_some_null_players_are_counted_and_the_rest_recorded(self):
+        d = _recordable_export()
+        for p in d["all_players"][:3]:
+            p["ep_next"] = None
+        ok, n, why, rows = self._record(d, "fpl_ep")
+        self.assertIs(ok, True)
+        self.assertEqual(n, len(d["all_players"]) - 3)
+        self.assertEqual(why, "3 without ep_next")
+
+    def test_the_cli_writes_record_skip_and_exits_zero(self):
+        import subprocess
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
         d = _recordable_export()
         for p in d["all_players"]:
             p.pop("ep_next", None)
-        ok, n, why, rows = self._record(d, "fpl_ep")
-        self.assertEqual((ok, n, rows), (False, 0, []))
-        self.assertIn("no forecasts produced", why)
+        with open(os.path.join(tmp, f"fpl_export_gw{d['gameweek']}.json"), "w", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        r = subprocess.run([sys.executable, os.path.join(HERE, "fpl_edge.py"), "--record", "--source",
+                            "fpl_ep", "--status", "st.txt"], cwd=tmp, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout[-500:] + r.stderr[-500:])
+        with open(os.path.join(tmp, "st.txt"), encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), "RECORD SKIP fpl_ep the export has no ep_next for any player\n")
+
+    def test_the_frozen_four_stay_strict(self):
+        d = _recordable_export()
+        d["all_players"] = []
+        for source in ("own", "xg", "minutes", "bottomup"):
+            ok, n, why, rows = self._record(d, source)
+            self.assertIs(ok, False, source)
+
+    def test_ep_next_is_not_a_required_field(self):
+        self.assertNotIn("ep_next", S.REQUIRED_ELEMENT)
+        self.assertNotIn("ep_next", S.REQUIRED_EVENT)
 
     def test_the_frozen_four_record_the_same_with_or_without_ep_next(self):
         with_ep, without = _recordable_export(), _recordable_export()
@@ -236,6 +277,32 @@ class OddsCollector(unittest.TestCase):
                          "ODDS SKIPPED no ODDS_API_KEY in this run - no snapshot tonight")
         self.assertEqual(seen, [])
 
+    def test_a_dry_run_calls_the_api_only_with_odds_live(self):
+        """RULING W1 decisions, point 1."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        for env, calls in (({"GITHUB_REF": "refs/heads/w1-wip"}, 0),
+                           ({"GITHUB_REF": "refs/heads/master", "FPL_DRY_RUN": "true"}, 0),
+                           ({"GITHUB_REF": "refs/heads/w1-wip", "FPL_ODDS_LIVE": "false"}, 0),
+                           ({"GITHUB_REF": "refs/heads/w1-wip", "FPL_ODDS_LIVE": "true"}, 1),
+                           ({"GITHUB_REF": "refs/heads/master", "GITHUB_EVENT_NAME": "schedule"}, 1)):
+            with self.subTest(env=env):
+                seen, lines = [], []
+                env = dict(env, ODDS_API_KEY=fake_key())
+                O.main(env, say=lines.append, db_path=os.path.join(tmp, "f.sqlite"), opener=self._opener(seen))
+                self.assertEqual(len(seen), calls)
+                if not calls:
+                    self.assertEqual(lines, ["ODDS SKIPPED (dry run): odds_live not ticked - no Odds API call"])
+
+    def test_the_workflow_input_odds_live(self):
+        with open(os.path.join(HERE, ".github", "workflows", "nightly.yml"), encoding="utf-8") as fh:
+            y = fh.read()
+        block = y[y.index("      odds_live:\n"):y.index("      force_backup:")]
+        self.assertIn("        type: boolean\n", block)
+        self.assertIn("        default: false\n", block)
+        step = y[y.index("name: Nightly run"):y.index("name: Commit outputs")]
+        self.assertIn("FPL_ODDS_LIVE: ${{ inputs.odds_live }}", step)
+
     def test_a_body_that_is_not_a_list_is_a_failure(self):
         self.assertTrue(O.collect(_db(), fake_key(), NOW, self._opener([], payload={"message": "x"}))
                         .startswith("ODDS FAILED  the answer is not a list"))
@@ -262,10 +329,103 @@ class OddsCheck(unittest.TestCase):
         self.assertEqual(C.NAMES[30], "odds snapshot")
         self.assertEqual(C.SEVERITY[30], C.WARN)
 
+    def test_a_skipped_fpl_ep_is_a_warn_and_a_skipped_frozen_source_a_fail(self):
+        base = ("record summary:\nRECORD OK own 5\nRECORD OK xg 5\nRECORD OK minutes 5\n"
+                "RECORD OK bottomup 5\n")
+        skip = base + "RECORD SKIP fpl_ep the export has no ep_next for any player\narchiving ...\n"
+        self.assertEqual(C.c29(C.Ctx(run_log=skip)),
+                         (C.WARN, "fpl_ep skipped: the export has no ep_next for any player; the four recorded"))
+        frozen = skip.replace("RECORD OK xg 5", "RECORD SKIP xg no reason")
+        self.assertEqual(C.c29(C.Ctx(run_log=frozen))[0], C.FAIL)
+
+    def test_credits_below_60_are_a_warn(self):
+        line = "ODDS OK      20 events (20 with totals), 1200 prices fetched x; credits used 441, remaining {}, this request 4"
+        self.assertEqual(C.c30(C.Ctx(run_log=line.format(59)))[0], C.WARN)
+        self.assertIn("credits remaining 59 (< 60)", C.c30(C.Ctx(run_log=line.format(59)))[1])
+        self.assertEqual(C.c30(C.Ctx(run_log=line.format(60)))[0], C.OK)
+
     def test_a_missing_fpl_ep_record_fails_check_29(self):
         text = ("record summary:\nRECORD OK own 5\nRECORD OK xg 5\nRECORD OK minutes 5\n"
                 "RECORD OK bottomup 5\narchiving the export ...\n")
         self.assertEqual(C.c29(C.Ctx(run_log=text)), (C.FAIL, "fpl_ep missing"))
+
+
+class OddsNeverCostsTheNight(unittest.TestCase):
+    """RULING W1 decisions, point 2: fpl_odds.py raising mid-run is a WARN only -
+    the night is green, the data commits, the failure issue stays shut."""
+
+    def test_a_crashing_collector_and_the_night_still_commits(self):
+        import subprocess
+        # the commit's identity comes from this test, never the machine (S3
+        # amendment 1): fpl_publish.py's git inherits os.environ
+        ident = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+                 "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+        saved = {k: os.environ.get(k) for k in ident}
+        os.environ.update(ident)
+        self.addCleanup(lambda: [os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+                                 for k, v in saved.items()])
+        import fpl_alert as A
+        import fpl_publish as PUB
+        from test_fpl import NIGHTLY_EDGE_STUB
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        git = lambda repo, *a: subprocess.run(["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t",
+                                               "-c", "core.autocrlf=false", *a], capture_output=True, text=True)
+        remote, seed, data, code = (os.path.join(tmp, n) for n in ("remote.git", "seed", "data", "code"))
+        subprocess.run(["git", "init", "-q", "--bare", remote], check=True)
+        subprocess.run(["git", "init", "-q", seed], check=True)
+        con = sqlite3.connect(os.path.join(seed, "fpl.sqlite"))
+        con.executescript("CREATE TABLE price_history (player_id INTEGER, date TEXT, now_cost INTEGER);"
+                          "CREATE TABLE events (id INTEGER PRIMARY KEY, deadline_time TEXT);"
+                          "INSERT INTO price_history VALUES (1, '2026-10-17', 50);")
+        con.commit()
+        con.close()
+        with open(os.path.join(seed, "projection_log.csv"), "w", encoding="utf-8", newline="") as fh:
+            fh.write("made_at,source,event,player_id,web_name,predicted\n")
+        with open(os.path.join(seed, ".gitignore"), "w", encoding="utf-8", newline="") as fh:
+            fh.write("/fpl_export_gw*.json\nreports/record_status.tmp\n")
+        git(seed, "add", "-A")
+        git(seed, "commit", "-q", "-m", "first")
+        git(seed, "push", "-q", remote, "HEAD:refs/heads/data")
+        subprocess.run(["git", "clone", "-q", "--branch", "data", "file://" + remote.replace("\\", "/"), data],
+                       check=True)
+        before = git(remote, "rev-parse", "data").stdout.strip()
+        os.makedirs(code)
+        stubs = {"test_fpl.py": "import unittest\n\n\nclass T(unittest.TestCase):\n    def test(self):\n        pass\n",
+                 "fpl_sync.py": "print('sync')\n",
+                 "fpl_odds.py": "print('collecting ...')\nraise RuntimeError('planted mid-run')\n",
+                 "fpl_edge.py": NIGHTLY_EDGE_STUB, "MODE": "clean",
+                 "checks.py": ("import os\nos.makedirs('reports', exist_ok=True)\n"
+                               "open(os.path.join('reports', 'status.txt'), 'w').write("
+                               "'STATUS WARN | generated 2026-10-18T21:50:00Z | x\\n30 WARN odds snapshot: x\\n')\n")}
+        for name, body in stubs.items():
+            with open(os.path.join(code, name), "w", encoding="utf-8") as fh:
+                fh.write(body)
+        with open(os.path.join(data, "fpl_export_gw3.json"), "w", encoding="utf-8") as fh:
+            fh.write("{}")
+        shutil.copy(os.path.join(code, "MODE"), os.path.join(data, "MODE"))
+        lines = []
+        code_rc = N.nightly(root=code, data=data, stamp="2026-10-18", echo=lines.append)
+        self.assertEqual(code_rc, 0, lines[-5:])                       # never red
+        self.assertIn("ODDS FAILED  fpl_odds.py exited 1 - no snapshot tonight", lines)
+        x = C.Ctx(run_log="\n".join(lines))
+        self.assertEqual(C.c30(x)[0], C.WARN)
+        out = []
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(PUB.main([data], sleep=lambda s: None, say=out.append,
+                                      env={}), 0)
+        self.assertNotEqual(git(remote, "rev-parse", "data").stdout.strip(), before, "the night did not commit")
+
+        class NoCalls:
+            def open_issues(self):
+                return []
+
+            def call(self, *a):
+                raise AssertionError("a green night touched the issue API")
+        said = []
+        A.main([data], env={"RUN_OUTCOMES": "nightly=success publish=success backup=skipped",
+                            "GITHUB_REPOSITORY": "o/r"}, say=said.append, gh=NoCalls())
+        self.assertEqual(said, ["ALERT none: the run is green and no issue is open"])
 
 
 class NightlyOrder(unittest.TestCase):

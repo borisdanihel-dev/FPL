@@ -18,6 +18,10 @@ status only. Without a key, or when the request fails, it says so in one line
 - ODDS SKIPPED or ODDS FAILED - and exits 0: tonight's other data still
 commits, and checks.py (check 30) turns the line into a WARN.
 
+A dry run (fpl_publish.run_mode) never calls the API unless its dispatch
+ticked odds_live (FPL_ODDS_LIVE=true): otherwise ODDS SKIPPED (dry run). A
+real run always calls it (RULING W1 decisions, point 1).
+
 Credits: the x-requests-used / -remaining / -last headers of the response go
 into the ODDS OK line (Step 5: "log the credits used"), with the number of
 events that carry a totals market (Step 5: "confirm totals coverage").
@@ -99,8 +103,13 @@ def collect(db, key, now=None, opener=None):
 
 
 def main(env=None, say=print, db_path=DB_PATH, opener=None):
+    import fpl_publish
     import fpl_sync
     env = os.environ if env is None else env
+    mode, _ = fpl_publish.run_mode(env)
+    if mode == "dry" and (env.get("FPL_ODDS_LIVE") or "").strip().lower() != "true":
+        say("ODDS SKIPPED (dry run): odds_live not ticked - no Odds API call")
+        return 0
     db = sqlite3.connect(db_path)
     try:
         db.executescript(fpl_sync.SCHEMA)

@@ -222,10 +222,13 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
             say("SYNC FAILED - continuing with existing data")
 
         # tonight's odds snapshot (W1, Step 5's collector): one line, ODDS OK,
-        # ODDS SKIPPED or ODDS FAILED; a failure is a WARN (check 30), not red
+        # ODDS SKIPPED or ODDS FAILED. Every odds problem - a crash or a
+        # non-zero exit too - is a WARN only (check 30): never red, never a
+        # lost commit, never the failure issue (RULING W1 decisions, point 2)
         say("collecting odds ...")
-        if step("fpl_odds.py") != 0:
-            failed.append("odds")
+        code = step("fpl_odds.py")
+        if code != 0:
+            say(f"ODDS FAILED  fpl_odds.py exited {code} - no snapshot tonight")
 
         # one status line per source, written by fpl_edge.py and summarised below
         record_bad = False

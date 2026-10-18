@@ -983,7 +983,11 @@ class Hermetic(unittest.TestCase):
     whose home is an empty folder and whose git reads no system or global
     config, and with no git identity in its environment."""
 
-    FILES = ("test_fpl.py", os.path.join("tests", "test_S3.py"))
+    # every test file: test_fpl.py and each tests/test_<item>.py (W1: a new
+    # file is covered the day it lands)
+    FILES = ("test_fpl.py",) + tuple(sorted(
+        os.path.join("tests", f) for f in os.listdir(os.path.join(HERE, "tests"))
+        if f.startswith("test_") and f.endswith(".py")))
 
     def _git_classes(self):
         import ast

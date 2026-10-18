@@ -78,6 +78,7 @@ SEVERITY = {1: FAIL, 2: FAIL, 3: FAIL, 4: FAIL, 5: FAIL, 6: WARN, 7: WARN, 8: FA
             18: FAIL, 19: WARN, 20: FAIL, 21: WARN, 22: WARN, 23: FAIL, 24: FAIL, 25: WARN,
             26: WARN, 27: SKIP, 28: FAIL, 29: FAIL, 30: WARN}
 SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # as fpl_nightly.SOURCES
+CREDITS_WARN = 60           # Odds API credits left below this: check 30 WARNs (W1 decisions)
 
 Result = collections.namedtuple("Result", "n name level detail")
 
@@ -507,21 +508,25 @@ def c28(x):
 def c29(x):
     """Every source recorded: the record summary of the run log has RECORD OK
     for each of SOURCES; a RECORD FAIL - a failure, or a source skipped because
-    the suite was red - or a missing source fails."""
+    the suite was red - or a missing source fails. fpl_ep's RECORD SKIP (no
+    ep_next in the export) is a WARN only (RULING W1 decisions, point 3)."""
     text = x.run_log or ""
     i = text.rfind("record summary:")
     if i < 0:
         return FAIL, "no record summary in tonight's run log"
     got = {}
     for line in text[i:].splitlines()[1:]:
-        m = re.match(r"RECORD (OK|FAIL) (\S+) ?(.*)", line.strip())
+        m = re.match(r"RECORD (OK|FAIL|SKIP) (\S+) ?(.*)", line.strip())
         if not m:
             break
         got[m.group(2)] = (m.group(1), m.group(3))
-    bad = [f"{s} {why}" for s, (st, why) in got.items() if st == "FAIL"]
+    bad = [f"{s} {why}" for s, (st, why) in got.items()
+           if st == "FAIL" or (st == "SKIP" and s != "fpl_ep")]
     bad += [f"{s} missing" for s in SOURCES if s not in got]
     if bad:
         return FAIL, _short(bad)
+    if got["fpl_ep"][0] == "SKIP":
+        return WARN, f"fpl_ep skipped: {got['fpl_ep'][1]}; the four recorded"
     return OK, ", ".join(f"{s} {got[s][1]}" for s in SOURCES)
 
 
@@ -534,6 +539,9 @@ def c30(x):
     if not lines:
         return WARN, "no odds line in tonight's run log: the collector did not run"
     if lines[-1].startswith("ODDS OK"):
+        left = re.search(r"remaining (\d+)", lines[-1])
+        if left and int(left.group(1)) < CREDITS_WARN:
+            return WARN, f"credits remaining {left.group(1)} (< {CREDITS_WARN}): {lines[-1]}"
         return OK, lines[-1][len("ODDS OK"):].strip()
     return WARN, lines[-1]
 

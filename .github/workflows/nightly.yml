@@ -35,6 +35,10 @@ on:
         description: "Dry run: the whole pipeline, result force-pushed to data-dryrun only (always dry on a branch other than master)"
         type: boolean
         default: true
+      odds_live:
+        description: "Dry run only: also call the Odds API (4 credits); a real run always does"
+        type: boolean
+        default: false
       force_backup:
         description: "Run the release backup now, whatever the weekday"
         type: boolean
@@ -99,6 +103,7 @@ jobs:
           PYTHONIOENCODING: utf-8
           GH_TOKEN: ${{ github.token }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          FPL_ODDS_LIVE: ${{ inputs.odds_live }}
           FPL_DATA_DIR: data
         run: python fpl_nightly.py
 
