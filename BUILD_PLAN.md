@@ -104,7 +104,8 @@ Path: `.claude/agents/backtest-verifier.md`. Exact content:
 name: backtest-verifier
 description: Independent verifier for FPL model and data changes. Use proactively after any work item that changes forecasts, the data pipeline, the backtest harness or decision calculators, before the item's report is written.
 tools: Read, Glob, Grep, Bash, Write
-model: inherit
+model: fable
+effort: high
 ---
 You verify; you never implement. You did not write this code: assume it is
 wrong until the evidence says otherwise. Never edit source files. Write only
@@ -116,6 +117,8 @@ committed before the first code commit of the item; if not, verdict FAIL.
 Never read session transcripts or chat logs. The rulings you check are the
 verbatim text in prereg/<item>.md; if a ruling is not there, report that as a
 FAIL of check 4.
+
+Mask key-like strings in your report: the first 4 characters, then '...'.
 
 Checks, each PASS/FAIL with evidence:
 1. Point-in-time leak check, for any item that produces a forecast, feature
@@ -222,7 +225,7 @@ Item D1. Acceptance tests are listed per point.
    - Never log full request URLs.
    - Give `permissions: contents: write` to the pushing job only.
    - Triggers are only `schedule` and `workflow_dispatch`.
-   - Run `gitleaks` once locally over the full history and report the findings without printing any secret value.
+   - gitleaks runs in `.github/workflows/secret-scan.yml` (no local download): every push to master, a weekly full-history scan of every branch, and on dispatch; findings are reported without printing any secret value.
 7. Verifier → report → commit → push.
 
 ## Step 2 — silent-error fixes

@@ -6,7 +6,7 @@ API into `fpl.sqlite` and exports `fpl_export_gwN.json`; `fpl_edge.py` reports
 and records point-in-time forecasts to `projection_log.csv`. The repo lives at
 `C:\GIT\FPL` (github.com/borisdanihel-dev/FPL, branch `master`). The only
 nightly writer is the GitHub Actions workflow `nightly` (21:40 UTC: tests →
-sync → record → watch file → report, committed back). `fpl_run.bat` and the
+sync → record → watch file → report, committed to the `data` branch). `fpl_run.bat` and the
 `FPL_SYnc` scheduled task are retired and must not be run. Do `git pull`
 before any local session.
 Windows, Python 3.14. The measured findings are the product; the code serves them.
@@ -50,6 +50,10 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
 - **Rulings.** The chat's ruling text for an item is pasted verbatim into
   `prereg/<item>.md` before any code.
 - **Verifier launch.** Every verifier launch starts with: "Read .claude/agents/backtest-verifier.md from disk first; where it differs from your loaded instructions, the file on disk governs."
+- **Verifier model** (S1 closing ruling): model fable, effort high, as the agent
+  file says. If Fable is unavailable or Claude Code asks for usage credits,
+  decline the credits and run the verifier with model opus at effort xhigh; the
+  verifier report states which ran.
 - **Secrets.** `ODDS_API_KEY` is a GitHub Actions repository secret,
   optionally also a local environment variable. Never write it, or any URL or
   header containing it, to a file, a log or a report.
@@ -73,6 +77,8 @@ e. Stop and ask, changing nothing further, when: the plan and the code disagree;
 f. After each item, the chat reply is at most 15 lines: what changed, commit range, tests before and after, verifier verdict, and a numbered "Decisions for the chat" list. Detail goes in the report file.
 
 g. If the session gets long or you notice you are losing earlier instructions, update worklog/SESSION_STATE.md, push, and tell Boris to start a fresh session with: "Read CLAUDE.md, BUILD_PLAN.md and worklog/SESSION_STATE.md, then wait for the next instruction."
+
+h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3), high for model steps, medium for docs-only items. Steps 4, 7, 15, 16 and 17 may run the main session on Fable if Boris switches it; the report names the model used.
 
 ## Data branch (BUILD_PLAN.md Step 1)
 - Generated data lives on branch `data`: `fpl.sqlite`, `fpl.sql` (its text
@@ -120,6 +126,9 @@ g. If the session gets long or you notice you are losing earlier instructions, u
 - Raw URLs: `https://raw.githubusercontent.com/borisdanihel-dev/FPL/data/reports/watch_<date>.txt`
   and `.../data/reports/fpl_<date>.txt`.
 - Rollback: tag `pre-data-branch` is `master` before the migration.
+- **No manual nightly dispatch within 1 hour either side of an FPL deadline.** A
+  dispatch across a deadline fails the gate (its forecasts were recorded before
+  it, the gate runs after) and commits nothing that night.
 
 ## Where things are
 - `CLAUDE_fable chat.md` — project handoff: data flow, design rules, FPL context.

@@ -4164,7 +4164,9 @@ class NightlyWorkflow(unittest.TestCase):
         self.assertTrue(hour.isdigit() and 0 <= int(hour) < 24)
         self.assertIn("fetch-depth: 0", code)
         self.assertIn("permissions:\n  contents: read\n", code)
-        for banned in ("write", "secrets.", "GITLEAKS_LICENSE", "pull_request", "inputs", "ref:"):
+        self.assertIn("    runs-on: ubuntu-24.04\n", code)        # S1 closing ruling, point 4
+        for banned in ("write", "secrets.", "GITLEAKS_LICENSE", "pull_request", "inputs", "ref:",
+                       "ubuntu-latest"):
             self.assertNotIn(banned, code)
 
     def test_gitleaksignore_holds_exact_fingerprints_only(self):
@@ -4663,6 +4665,16 @@ class VerifierAgent(unittest.TestCase):
         self.assertGreater(len(agent), 1000)
         self.assertEqual(block, agent,
                          "the verifier block in BUILD_PLAN.md and the agent file differ")
+
+    def test_the_verifier_runs_on_fable_at_high_effort_and_masks_keys(self):
+        """S1 closing ruling, points 1-2: model fable, effort high, and the
+        masking sentence (the fallback to opus/xhigh is CLAUDE.md's)."""
+        agent = self._bytes(".claude", "agents", "backtest-verifier.md").decode()
+        head = agent.split("---" + chr(10))[1].splitlines()
+        self.assertIn("model: fable", head)
+        self.assertIn("effort: high", head)
+        self.assertIn("Mask key-like strings in your report: the first 4 characters, then '...'.",
+                      agent)
 
     def test_the_agent_reads_rulings_from_the_prereg_only(self):
         agent = " ".join(self._bytes(".claude", "agents", "backtest-verifier.md").decode().split())
