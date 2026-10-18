@@ -459,7 +459,8 @@ class Reconciliation(unittest.TestCase):
         x.export = _export(locked=True)
         x.now = deadline(7) + timedelta(days=3)
         for pid, pos, mult, cap, vice in picks:
-            x.db.execute("INSERT INTO picks VALUES (1, 7, ?, ?, ?, ?, ?)", (pid, pos, mult, cap, vice))
+            x.db.execute("INSERT INTO picks (entry_id, event, player_id, position, multiplier, is_captain, "
+                         "is_vice) VALUES (1, 7, ?, ?, ?, ?, ?)", (pid, pos, mult, cap, vice))
             x.db.execute("INSERT INTO player_gw (player_id, event, minutes, total_points) VALUES (?,7,?,?)",
                          (pid, (minutes or {}).get(pid, 90), points[pid]))
         for inn, out in subs:
