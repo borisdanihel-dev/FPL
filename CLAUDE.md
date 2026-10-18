@@ -61,6 +61,12 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   first 4 characters, then "...".
 - **When `BUILD_PLAN.md` and the code disagree, stop and report** instead of
   guessing.
+- **Fast track** (RULING FAST-TRACK, `prereg/FAST.md`; all nine items in
+  BUILD_PLAN.md Part E). Items 1, 4, 5 and 6, verbatim:
+  1. Two kinds of work. Runner work = anything the nightly workflow runs or imports, or the workflow itself: the fast-lane merge rule, dry run, Boris's real dispatch and the freeze windows apply. Offline work = new modules under tools/ or analysis/ that the runner does not import; they read a local copy of data (C:\GIT\FPL-data, pulled, read-only) and never write to data. Offline items merge to master after tests, verifier PASS and the write guard; no dry run, no dispatch, no freeze restriction. A test proves the nightly imports nothing under tools/ or analysis/.
+  4. Two lanes. Lane A works in C:\GIT\FPL: runner work, wiring items and history items. Lane B works in a second worktree, C:\GIT\FPL-b (lane A creates it with git worktree add, on its own branch): offline items. One Claude Code session per lane, never two sessions in one folder. Each lane keeps worklog/SESSION_STATE_A.md or worklog/SESSION_STATE_B.md. Either lane may merge its own items: fetch, rebase onto master, rerun the full test suite, push; never force. On a CHANGELOG conflict, keep both entries.
+  5. Tests: new items put their tests in tests/test_<item>.py. S3 switches the nightly gate and local runs to test discovery (test_fpl.py plus tests/). Only lane A edits test_fpl.py.
+  6. Auto-continue: after an offline item with verifier PASS, a clean write guard and no open decision, the lane starts its next queued item without waiting; it still prints its 15-line summary. It stops on FAIL, WARN, an open decision, a model result that would change a live decision (adoption needs Boris's acceptance in chat), or after 6 items without a chat review.
 
 ## Session operating mode
 

@@ -93,6 +93,21 @@ It lives in the repo root as `BUILD_PLAN.md`.
 
 **If time is short:** the minimum is Steps 0, 1, 2, 4 and 7.
 
+## Part E — Fast track
+
+RULING FAST-TRACK, 2026-10-18, verbatim (`prereg/FAST.md`). It applies from
+S3 on; where it differs from the parts above, it governs.
+
+1. Two kinds of work. Runner work = anything the nightly workflow runs or imports, or the workflow itself: the fast-lane merge rule, dry run, Boris's real dispatch and the freeze windows apply. Offline work = new modules under tools/ or analysis/ that the runner does not import; they read a local copy of data (C:\GIT\FPL-data, pulled, read-only) and never write to data. Offline items merge to master after tests, verifier PASS and the write guard; no dry run, no dispatch, no freeze restriction. A test proves the nightly imports nothing under tools/ or analysis/.
+2. Wiring: an offline tool reaches the nightly only through a wiring item (W1, W2, ...), which is runner work. Batch several tools per wiring item; at most one wiring merge a day; never inside a freeze window.
+3. Collect first. W1 lands by Wed 21 Oct 20:00 UTC: record FPL's ep_next nightly as source fpl_ep (Step 4 item 2), and store Odds API snapshots with their fetch time (Step 5's collector only; ODDS_API_KEY reaches the runner here, under S1 amendment 1 item 1). Models that use them come later, offline.
+4. Two lanes. Lane A works in C:\GIT\FPL: runner work, wiring items and history items. Lane B works in a second worktree, C:\GIT\FPL-b (lane A creates it with git worktree add, on its own branch): offline items. One Claude Code session per lane, never two sessions in one folder. Each lane keeps worklog/SESSION_STATE_A.md or worklog/SESSION_STATE_B.md. Either lane may merge its own items: fetch, rebase onto master, rerun the full test suite, push; never force. On a CHANGELOG conflict, keep both entries.
+5. Tests: new items put their tests in tests/test_<item>.py. S3 switches the nightly gate and local runs to test discovery (test_fpl.py plus tests/). Only lane A edits test_fpl.py.
+6. Auto-continue: after an offline item with verifier PASS, a clean write guard and no open decision, the lane starts its next queued item without waiting; it still prints its 15-line summary. It stops on FAIL, WARN, an open decision, a model result that would change a live decision (adoption needs Boris's acceptance in chat), or after 6 items without a chat review.
+7. Pre-registration up front: the chat sends the rulings for Steps 4-7 together; each prereg is committed before its item starts and is never edited after any of its evaluation numbers exist.
+8. Queues. Lane A: S3, W1, Step 10, W2 (after the GW8 deadline: chip calculator, Free Hit screen, league odds into the report), Step 16, W3, Steps 17-18, W4. Lane B: Step 4 (harness, offline part), Step 7, Step 5 (model and backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
+9. Usage: the verifier runs on Fable for model tests (Steps 4-7, 11-18) and on Opus at xhigh for tooling and wiring items. If the weekly allowance runs low, lane B pauses first.
+
 ---
 
 ## Verifier agent (created in Step 0)
