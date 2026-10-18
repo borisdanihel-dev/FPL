@@ -3019,3 +3019,45 @@ and reads the decision squad's clubs from the same map; the frozen
 The 2026-09-14 entries (Steps 3–5, the horizon test, the concentration
 test) were computed through the frozen adapter with end-of-season clubs;
 they are frozen and not re-run here (report, Decisions 0).
+
+## 2026-10-18 — S7: the first-half chip calculator and Free Hit screen (`f9ca3d0` prereg, `94fbc36` amendment 1, `d0fc715` code; lane B)
+
+Lane B's second item, started under auto-continue after S4's PASS (RULING S7
+and RULING lane B go point 4, verbatim in `prereg/S7.md`). `tools/chips.py`
+(standard library only; the nightly never imports it — wiring is lane A's
+W2) and `tests/test_S7.py`; builds on S4's harness and `hist_pit`, and on
+the frozen `fpl_edge` pieces (`project()`, `_best_xi`, the item N Free Hit
+solver and screen, `rule_autosubs`, `selling_budget`). Verifier: VERIFIER_LINE.
+Not on master (RULING lane B landing: lands with S4 after a green dry run).
+
+**Definitions, as pre-registered.** xP source `own`: the recorded row for
+the next gameweek, `project()` on each later fixture-known week, proxies
+beyond the export's six weeks. V_BB = Σ bench xP × (1 − w), w = 0.30 / 0.10
+/ 0.03 outfield in forecast order and 0.03 sub keeper. V_FH = the item N
+Free Hit XI under the selling budget minus our best XI, "no transfers
+assumed". Backward induction over (gameweek, chips left) to GW19, one chip a
+week, FH never in GW19, worth 0 after; a tie goes to playing. Uncertainty:
+residuals by position (2026/27 `own`, GW4–6), 1,000 resamples, XIs held
+fixed. Replay: 2025/26 GW5–19, 50 squads sampled from GW1 ownership (seed
+7), squads fixed, point-in-time `bottomup` (the S4 harness, clubs of the
+origin), realised chip points, paired bootstrap over squads (B = 10,000,
+90%, seed 20261018) against the heuristic; bar: mean ≥ 0 and lower bound
+> −3.
+
+**Measured.**
+- **Replay: FAIL on the pre-registered bar.** Realised chip points per
+  squad: calculator 16.56, heuristic 16.74, both-early 10.80. Calculator −
+  heuristic **−0.18, 90% CI [−1.26, +0.72]**: the lower bound clears −3, the
+  mean does not reach 0. Calculator − both-early +5.76 [+1.00, +10.60]
+  (information). The two planned policies chose the same BB week for 45 of
+  50 squads and the same FH week for 47. Not adopted; the chat rules
+  (report, Decisions).
+- Live (export 2026-10-18, next GW8, chips BB and FH, budget £99.7m): V_BB
+  5.6–6.7 and V_FH 3.5–5.8 across GW8–13; **GW8: PLAY BB by +0.07 xP**,
+  residual resamples agree in 18% (margin 90% [−22.5, +7.0]) — a coin
+  flip, information only. Free Hit screen: no candidate week (gaps +2.7 to
+  +5.8). Bench prep for GW8: four single transfers worth +0.9 to +1.35 each.
+- Tests: `test_fpl.py` 386 → 386; `tests/test_S7.py` 13 new; mutations
+  18 of 18 red.
+
+Report: `worklog/cc_2026-10-18_S7.md`; verifier `worklog/verify_S7.md`.
