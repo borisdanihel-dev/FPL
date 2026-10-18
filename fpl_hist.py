@@ -93,6 +93,9 @@ def canonical_from_vaastav(folder, season=None):
                         "team": short_by_name.get(r["team"], r["team"]),
                         "chance_next_round": None}
 
+    # every row carries its season's scoring ruleset (Step 2.7); read after
+    # the files, so a missing file is reported first
+    ruleset = E.ruleset_of(season or os.path.basename(folder.rstrip("/\\")))
     rows = []
     for (pid, event), group in sorted(by_key.items()):
         fx = []
@@ -110,7 +113,8 @@ def canonical_from_vaastav(folder, season=None):
             "xa": sum(_num(r.get("expected_assists")) for r in group),
             "bps": sum(_num(r.get("bps")) for r in group),
             "defcon": sum(_num(r.get("defensive_contribution")) for r in group),
-            "n_fixtures": len(group), "fixtures": fx})
+            "n_fixtures": len(group), "fixtures": fx,
+            "ruleset": ruleset})
 
     matches = []
     for f in fixtures.values():

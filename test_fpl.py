@@ -1458,7 +1458,8 @@ def _canon(rows, extra_players=()):
         players[pid] = {"player_id": pid, "name": f"P{pid}", "pos": 3,
                         "team": "ALP", "chance_next_round": None}
     full = [dict({"starts": 1, "pts": 0, "xg": 0.0, "xa": 0.0, "bps": 0,
-                  "defcon": 0, "n_fixtures": 1, "fixtures": []}, **r) for r in rows]
+                  "defcon": 0, "n_fixtures": 1, "fixtures": [], "ruleset": "2026-27"}, **r)
+            for r in rows]
     return E.check_canonical({"source": "test", "season": "test", "through_gw":
                               max(r["event"] for r in full), "players": players,
                               "rows": full, "team_matches": [], "notes": []})
@@ -1719,7 +1720,7 @@ def _model_world(gws=8):
             rows.append({"player_id": pid, "event": ev, "minutes": 90 if st else 20,
                          "starts": st, "pts": 2 + (pid + ev) % 5, "xg": xg + jitter,
                          "xa": xa, "bps": 10, "defcon": dc + ev % 2,
-                         "n_fixtures": 1, "fixtures": []})
+                         "n_fixtures": 1, "fixtures": [], "ruleset": "2026-27"})
     for ev in range(1, gws + 1):
         ga = 0 if ev % 2 else 2
         matches.append({"event": ev, "team": "ALP", "opponent": "BET", "was_home": True,
@@ -5803,6 +5804,34 @@ class StepTwoEdge(unittest.TestCase):
             os.chdir(cwd)
         rows = [r for r in d["player_gw_recent"] if r["player_id"] == 7]
         self.assertEqual([(r["pts"], r["mins"], r["n_fixtures"]) for r in rows], [(15, 170, 2)])
+
+
+class StepTwoRuleset(unittest.TestCase):
+    """S2, Step 2.7: every scored row carries its ruleset, and BPS and bonus
+    are never compared across rulesets."""
+
+    def test_every_live_and_historical_row_carries_its_ruleset(self):
+        live = E.canonical_from_export(make_export())
+        self.assertEqual({r["ruleset"] for r in live["rows"]}, {"2026-27"})
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        hist = H.canonical_from_vaastav(_hist_folder(tmp), "2025/26")
+        self.assertEqual({r["ruleset"] for r in hist["rows"]}, {"2025-26"})
+
+    def test_reliability_refuses_rows_from_two_rulesets(self):
+        c = _canon([{"player_id": 1, "event": e, "minutes": 90} for e in (1, 2, 3, 4)])
+        E.measure_reliability(c, metrics=("bps",))
+        c["rows"][0]["ruleset"] = "2025-26"
+        with self.assertRaises(ValueError) as cm:
+            E.measure_reliability(c, metrics=("bps",))
+        self.assertIn("mix rulesets ['2025-26', '2026-27']", str(cm.exception))
+
+    def test_a_ruleset_is_read_from_the_season_or_refused(self):
+        self.assertEqual(E.ruleset_of("2025/26"), "2025-26")
+        self.assertEqual(E.ruleset_of("2026-27"), "2026-27")
+        for bad in ("tmpab12cd", "2025", "25/26"):
+            with self.assertRaises(ValueError):
+                E.ruleset_of(bad)
 
 
 class Hygiene(unittest.TestCase):

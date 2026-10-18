@@ -858,7 +858,7 @@ CANONICAL_PLAYER_FIELDS = frozenset({"player_id", "name", "pos", "team",
                                      "chance_next_round"})
 CANONICAL_ROW_FIELDS = frozenset({"player_id", "event", "minutes", "starts",
                                   "pts", "xg", "xa", "bps", "defcon",
-                                  "n_fixtures", "fixtures"})
+                                  "n_fixtures", "fixtures", "ruleset"})
 CANONICAL_FIXTURE_FIELDS = frozenset({"opponent", "was_home", "fixture_id"})
 CANONICAL_MATCH_FIELDS = frozenset({"event", "team", "opponent", "was_home",
                                     "goals_for", "goals_against", "fixture_id"})
@@ -887,6 +887,26 @@ def check_canonical(c):
     for m in c["team_matches"]:
         same(m, CANONICAL_MATCH_FIELDS, "team match")
     return c
+
+
+def ruleset_of(season):
+    """The scoring ruleset of a season - "2025/26" or "2025-26" -> "2025-26".
+    Every scored row carries it (Step 2.7)."""
+    s = str(season).replace("/", "-")
+    if len(s) != 7 or s[4] != "-" or not (s[:4] + s[5:]).isdigit():
+        raise ValueError(f"cannot read a ruleset from season {season!r}")
+    return s
+
+
+def one_ruleset(rows, what="rows"):
+    """The single ruleset of `rows`, or an error: BPS and bonus are never
+    compared across rulesets (Step 2.7) - 2025/26 and 2026/27 score them
+    differently."""
+    found = {r["ruleset"] for r in rows}
+    if len(found) > 1:
+        raise ValueError(f"{what} mix rulesets {sorted(found)} - BPS and bonus "
+                         f"are not comparable across rulesets")
+    return found.pop() if found else None
 
 
 def canonical_through(c, gw):
@@ -919,7 +939,8 @@ def canonical_from_export(d, season="2026/27"):
                      "pts": r.get("pts") or 0, "xg": float(r.get("xg") or 0),
                      "xa": float(r.get("xa") or 0), "bps": r.get("bps") or 0,
                      "defcon": r.get("defcon") or 0,
-                     "n_fixtures": r.get("n_fixtures") or 1, "fixtures": fx})
+                     "n_fixtures": r.get("n_fixtures") or 1, "fixtures": fx,
+                     "ruleset": ruleset_of(season)})
     matches = []
     for f in d.get("fixtures_played") or []:
         matches.append({"event": f["event"], "team": f["home"], "opponent": f["away"],
@@ -967,6 +988,7 @@ def measure_reliability(c, metrics=RELIABILITY_METRICS, min_mins=45,
     """
     if population not in ("appeared", "all"):
         raise ValueError(f"population must be 'appeared' or 'all', got {population!r}")
+    one_ruleset(c["rows"], "reliability rows")      # BPS within one ruleset only
     half = defaultdict(lambda: {0: defaultdict(float), 1: defaultdict(float)})
     for r in c["rows"]:
         h = half[r["player_id"]][r["event"] % 2]
