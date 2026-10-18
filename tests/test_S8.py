@@ -161,7 +161,8 @@ class Score(unittest.TestCase):
         self.assertFalse(P.legal(squad, -0.1))
         four_mid = squad[:7] + [dict(r, team="ARS") for r in squad[7:11]] + squad[11:]
         self.assertFalse(P.legal(four_mid, 1.0))
-        three_gkdef = [dict(squad[0], team="CHE"), squad[1], dict(squad[2], team="CHE"), dict(squad[3], team="CHE")] + squad[4:]
+        three_gkdef = ([dict(squad[0], team="CHE"), squad[1], dict(squad[2], team="CHE"), dict(squad[3], team="CHE")]
+                       + [dict(r, team="ARS") if r["team"] == "CHE" else r for r in squad[4:]])   # exactly three CHE, all GK/DEF
         self.assertFalse(P.legal(three_gkdef, 1.0))
         self.assertTrue(P.legal(squad, 0.0))
         # the pool is the top 25 per position by decayed xP
