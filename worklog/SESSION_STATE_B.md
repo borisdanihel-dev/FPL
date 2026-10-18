@@ -100,6 +100,24 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
+- **Overnight mode (Boris's instruction of 2026-10-19 ~00:30 UTC, verbatim
+  below): ask nothing until about 08:00 Prague; park anything needing Boris
+  here under "Needs Boris (morning)"; lane-b only, no landings, merges or
+  dispatch requests; the usual gates; stop on FAIL, WARN, an open decision
+  or after 6 items; one report block per finished item in the morning.**
+- **Needs Boris (morning), in order:** (filled as items finish)
+  1. The Monday landing: after W1's green dispatch, the landing branch
+     (revert of `32bf218` + lane-b's items + the BUILD_PLAN Part C line) is
+     pushed and needs the dry-run click.
+
+  Boris is asleep until about 08:00 Prague. Until then:
+  - Ask nothing. Anything that needs me (a click, a download approval, a decision) gets parked in your SESSION_STATE file with the exact question, and you move on to the next queued item that doesn't need it.
+  - Work on your own branches only. Nothing goes to master except preregs and your SESSION_STATE file. No landings, merges or dispatch requests.
+  - Keep the usual gates: prereg first, tests, mutations, Fable verifier, write guard. Stop on FAIL, WARN, an open decision, or after 6 items without a chat review.
+  - If you hit a usage limit, stop cleanly and record where you are.
+  - Morning: one report block per finished item, then your list of what needs me, in order.
+  END
+
 - **Standing rule (RULING pause, verbatim below):** once S3 is on master
   the nightly runs `tests/` by discovery and a failing test fails the gate,
   so any push to master that adds or changes a file under `tests/` is

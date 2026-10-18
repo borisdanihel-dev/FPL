@@ -31,7 +31,7 @@ HITS = {US: [0, 4, 0, 0, 0], RIVAL_A: [0, 0, 0, 0, 0], RIVAL_B: [0, 0, 4, 0, 0]}
 CHIPS = {(RIVAL_A, 3): "3xc", (RIVAL_B, 2): "bboost", (US, 5): "wildcard"}
 
 
-def toy_league(tmp, unsettled_gw6=True, a_total_gap=None, gaps=None):
+def toy_league(tmp, unsettled_gw6=True, a_total_gap=None, gaps=None, provisional=None):
     """Three managers, GW1-5 settled (GW6 present but unsettled), 15 players
     each, own rows for GW1-6 made before each deadline, a post-deadline
     own snapshot for GW6, and GW6 picks that must never be used."""
@@ -66,11 +66,15 @@ def toy_league(tmp, unsettled_gw6=True, a_total_gap=None, gaps=None):
             total += net
             c.execute("insert into entry_gw values (?,?,?,?,?,?,?,?)", (eid, ev, gross, total, 1, HITS[eid][i], 5, CHIPS.get((eid, ev))))
         c.execute("insert into entry_gw values (?,?,?,?,?,?,?,?)", (eid, 6, 99, total + 99, 0, 0, 0, None))   # unsettled: never counted
+    for (eid, ev), short in (provisional or {}).items():     # a row fetched before lockdown: points and its own total both short
+        c.execute("update entry_gw set points = points - ?, total_points = total_points - ? where entry_id = ? and event = ?", (short, short, eid, ev))
     gaps = dict(gaps or {})
     if a_total_gap is not None:
         gaps[RIVAL_A] = a_total_gap
-    for eid, gap in gaps.items():                     # move a rival's total so the gap is exactly `gap`
-        c.execute("update entry_gw set total_points = (select total_points from entry_gw where entry_id = ? and event = 5) + ? where entry_id = ? and event = 5", (US, gap, eid))
+    for eid, gap in gaps.items():                     # a genuine GW1 score change so the GW5 gap is exactly `gap` (no provisional row)
+        shift = sum(PTS[US]) + gap - sum(PTS[eid])
+        c.execute("update entry_gw set points = points + ? where entry_id = ? and event = 1", (shift, eid))
+        c.execute("update entry_gw set total_points = total_points + ? where entry_id = ? and event >= 1", (shift, eid))
     # picks: everyone holds players 1-15 in order (GK 1,2 DEF 3-7 MID 10-14 FWD 17-19 -> positions 1..15 by slot)
     squad = [1, 3, 4, 5, 6, 10, 11, 12, 13, 17, 18, 2, 7, 14, 19]
     for eid in (US, RIVAL_A, RIVAL_B):
@@ -133,16 +137,18 @@ class Variance(unittest.TestCase):
             var = L.variance_table(data)
             line = var["sigma_d"] * math.sqrt(var["n_left"])
             gap_on_line = int(math.floor(line))               # just inside; the next integer is beyond
-        with tempfile.TemporaryDirectory() as tmp:
-            toy_league(tmp, a_total_gap=gap_on_line)
-            var = L.variance_table(L.load(tmp))
-            r = {x["entry"]: x for x in var["rows"]}[RIVAL_A]
-            self.assertEqual(r["line"], "inside")
-            self.assertAlmostEqual(r["p_above"], L.phi(-gap_on_line / line))
-        with tempfile.TemporaryDirectory() as tmp:
-            toy_league(tmp, a_total_gap=gap_on_line + 1)
-            var = L.variance_table(L.load(tmp))
-            self.assertEqual({x["entry"]: x for x in var["rows"]}[RIVAL_A]["line"], "beyond the line")
+        for gap in (gap_on_line, gap_on_line + 1, 2 * gap_on_line):
+            with tempfile.TemporaryDirectory() as tmp:
+                toy_league(tmp, a_total_gap=gap)
+                data = L.load(tmp)
+                self.assertEqual(data["provisional"], [])                        # the gap change is a genuine score, not a stale row
+                var = L.variance_table(data)
+                r = {x["entry"]: x for x in var["rows"]}[RIVAL_A]
+                this_line = var["sigma_d"] * math.sqrt(var["n_left"])
+                self.assertEqual(r["gap"], gap)
+                self.assertEqual(r["line"], L.line_label(gap, this_line))
+                self.assertAlmostEqual(r["p_above"], L.phi(-gap / this_line))
+            self.assertEqual(L.line_label(2 * gap_on_line, line), "beyond the line")
 
     def test_point_in_time(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -206,8 +212,7 @@ class Variance(unittest.TestCase):
             self.assertEqual(res["next_gw"], 6)
             ranked = sorted(res["xi"], key=lambda r: (-r["proj"], r["id"]))
             self.assertEqual([r["id"] for r in ranked[:3]], [10, 17, 3])                 # own 6.0, 5.8, 5.6
-            self.assertIn("allowance 0.5 xP (before GW25)", text)
-            self.assertIn("allowed differential", text)                                  # 17 at cost 0.2
+            self.assertIn("allowed differential = cost <= 0.5 xP (before GW25)", text)
             self.assertIn("a DEF or GK topped our XI's own xP in 0 of 5", text)
         with tempfile.TemporaryDirectory() as tmp:                                    # B the only threat: B captains 10, so 17 is a free variance
             toy_league(tmp, gaps={RIVAL_B: 10})
@@ -218,8 +223,61 @@ class Variance(unittest.TestCase):
             self.assertIn("allowed differential", line17)
             line3 = next(l for l in buf.getvalue().splitlines() if " P3 " in l and "DEF" in l and "0.40" in l)
             self.assertNotIn("free variance", line3)                                  # cost 0.4 is not under 0.3
+            self.assertIn("allowed differential", line3)                              # cost 0.4 <= 0.5 and a lower EO than 10
+        with tempfile.TemporaryDirectory() as tmp:                                    # A the only threat: A captains 17, so 17 is no differential
+            toy_league(tmp, gaps={RIVAL_A: 10})
+            buf = io.StringIO()
+            L.report(tmp, out=lambda s: buf.write(s + chr(10)), today=datetime(2026, 9, 16, tzinfo=timezone.utc))
+            line17 = next(l for l in buf.getvalue().splitlines() if " P17 " in l and "FWD" in l and "0.20" in l)
+            self.assertNotIn("allowed differential", line17)
+            self.assertNotIn("free variance", line17)
             self.assertIn("hidden until its deadline", text)
             self.assertEqual(L.allowance(24), 0.5); self.assertEqual(L.allowance(25), 1.0)
+
+
+class TotalsChain(unittest.TestCase):
+    def test_chain_corrects_a_provisional_row_and_reports_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_league(tmp, provisional={(RIVAL_A, 3): 7})
+            data = L.load(tmp)
+            self.assertEqual(data["gw"][RIVAL_A][3]["net"], PTS[RIVAL_A][2])                 # the chain restores the final score
+            self.assertEqual(data["provisional"], [(RIVAL_A, 3, PTS[RIVAL_A][2] - 7, PTS[RIVAL_A][2])])
+            self.assertEqual(data["excluded"], [])
+            var = L.variance_table(data)
+            r = {x["entry"]: x for x in var["rows"]}[RIVAL_A]
+            self.assertAlmostEqual(r["sigma_dj"], hand_sd([u - a for u, a in zip(PTS[US], PTS[RIVAL_A])]))
+            self.assertEqual(r["gap"], sum(PTS[RIVAL_A]) - sum(PTS[US]))
+            buf = io.StringIO()
+            L.report(tmp, out=lambda s: buf.write(s + chr(10)), today=datetime(2026, 9, 16, tzinfo=timezone.utc))
+            self.assertIn("WARN provisional: Rival A GW3 stored", buf.getvalue())
+            self.assertIn("(+7)", buf.getvalue())
+
+    def test_uncorrectable_row_is_excluded_and_counted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_league(tmp)
+            c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
+            c.execute("delete from entry_gw where entry_id = ? and event = 6", (RIVAL_B,))      # no later row for B's GW5
+            c.commit(); c.close()
+            data = L.load(tmp)
+            self.assertEqual(data["excluded"], [(RIVAL_B, 5)])
+            self.assertNotIn(5, data["gw"][RIVAL_B])
+            var = L.variance_table(data)
+            self.assertEqual({x["entry"]: x for x in var["rows"]}[RIVAL_B]["n"], 4)
+            buf = io.StringIO()
+            L.report(tmp, out=lambda s: buf.write(s + chr(10)), today=datetime(2026, 9, 16, tzinfo=timezone.utc))
+            self.assertIn("1 rows the chain cannot correct, excluded", buf.getvalue())
+            self.assertIn("excluded: Rival B GW5", buf.getvalue())
+
+    def test_every_sigma_and_p_has_an_interval(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            toy_league(tmp)
+            var = L.variance_table(L.load(tmp))
+            self.assertTrue(var["sigma_me_ci"][0] <= var["sigma_me"] <= var["sigma_me_ci"][1])
+            self.assertTrue(var["sigma_d_nochip_ci"][0] <= var["sigma_d_nochip"] <= var["sigma_d_nochip_ci"][1])
+            for r in var["rows"]:
+                self.assertTrue(r["sigma_j_ci"][0] <= r["sigma_j"] <= r["sigma_j_ci"][1])
+                self.assertTrue(r["p_above_ci"][0] <= r["p_above"] <= r["p_above_ci"][1])
+                self.assertLess(r["p_above_ci"][0], r["p_above_ci"][1])
 
 
 class CLI(unittest.TestCase):
