@@ -45,19 +45,24 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   RULING lane B go appended as Amendment 1 to each (`94fbc36`). Order under
   auto-continue: S4, S7, S5, S6. No prereg is edited after any of its
   evaluation numbers exist.
-- **PAUSED (RULING pause, 2026-10-18, verbatim below).** Land nothing on
-  master and start no item until Boris says resume. Work in progress is
-  committed on `lane-b` and pushed as a fast-forward only.
-- **Current item:** S4 (code `4eab638`, amendment 2 fix `973b3f8`, docs
-  `5ae7f4a` on `lane-b`, nothing on master). First verifier run FAIL
-  (club-map leak in the frozen adapter); RULING S4 amendment 2 →
-  `tools/hist_pit.py`, numbers recomputed; **second verifier run PASS**
-  (Fable 5.1, `worklog/verify_S4.md`), write guard clean. S4 is complete on
-  `lane-b` and waits only for the merge. **On resume:** land S4 by the branch-handling ruling
-  (temporary branch from `origin/master`, cherry-pick `79d14ee`..HEAD and
-  the S4 commits, full suite, push `HEAD:master`, merge master into
-  `lane-b`), observing the standing rule below for `tests/`; then S7, S5,
-  S6 under auto-continue.
+- **Resumed 2026-10-18 18:50 UTC** (Boris: "resume"). S4 was pushed to
+  master as `70f026d` at 18:49 UTC (temporary branch rebased onto S3's
+  `1af9644`, CHANGELOG conflict kept both entries, 491 tests OK by
+  discovery). **RULING lane B landing arrived two minutes later: S4 does not
+  land tonight.** Master was reverted at 18:51 UTC by one revert commit
+  `32bf218` (no history rewrite): its tree is byte-identical to `1af9644`,
+  the tree the S3 dry run tested, so tonight's nightly runs S2 + S3 only.
+  S4 stays complete on `lane-b` (and in master's history under the revert).
+- **Monday landing (RULING lane B landing, verbatim below):** after tonight's
+  nightly has finished and outside 9d: temporary branch from
+  `origin/master`, `git revert 32bf218` (restores the S4 files exactly), then
+  S7 and whatever else is clean, full suite locally, push the landing
+  branch, ask Boris for the dry-run click, land only on green. **Until
+  then never merge `origin/master` into `lane-b`** (it would carry the
+  revert and delete S4 from lane-b); after the landing, merge master into
+  lane-b as usual. Dry runs are capped at 6 a day; batch items.
+- **Current item:** S7 (`tools/chips.py`, `prereg/S7.md` with amendment 1),
+  started under auto-continue after S4's PASS. Then S5, S6.
 - **Standing rule (RULING pause, verbatim below):** once S3 is on master
   the nightly runs `tests/` by discovery and a failing test fails the gate,
   so any push to master that adds or changes a file under `tests/` is
@@ -68,6 +73,11 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   no `C:\GIT\FPL-data`, no real git identity. `tests/test_S4.py` complies:
   toy data in temp folders; one test reads the repo's gitignored
   `historical/2025-26` copy and is skipped where it is absent (the runner).
+
+  RULING lane B landing (S3 is now on master):
+  S4 does not land tonight. Tonight is the first scheduled run with S2 and S3 together plus the Sunday backup, and the nightly now runs tests/: a test that fails on the Linux runner would block tonight's record. Continue S7 on lane-b (it may build on S4).
+  From now on, a landing that adds or changes anything under tests/ needs a green dry run of the temporary landing branch first (it runs the whole suite on the runner), and lands outside 9d. Batch items into one landing where you can (dry runs are capped at 6 a day). First landing: Monday after tonight's nightly has finished, S4 plus whatever is clean by then; push the landing branch and ask me for the dry-run click.
+  END RULING
 
   RULING pause (Boris away, connection unreliable):
   Finish the step you are in, then stop at a clean checkpoint. Land nothing on master and start no new item until I say resume. Commit work in progress; push lane-b only as a fast-forward (no rebase, no force). A verifier run cut off by the connection is recorded as interrupted (not FAIL) and rerun on resume. Update worklog/SESSION_STATE_B.md, then wait.
@@ -90,6 +100,6 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
 - **Items since the last chat review:** 1 of 6 (S4).
-- **Open for the chat:** the S4 fix ruling (report, Decisions 0 and 1).
+- **Open for the chat:** S4 report Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
