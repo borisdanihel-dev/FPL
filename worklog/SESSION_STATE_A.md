@@ -5,10 +5,11 @@ Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
 before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
 this file, then waits for the next instruction.
 
-- **Current item:** S3 (Step 3, D3), ruling in `prereg/S3.md`. Started 18 Oct
-  on Boris's instruction after RULING FAST-TRACK, including FAST-TRACK item 5
-  (test discovery: `test_fpl.py` plus `tests/`). Branch `s3-wip`. Merge by the
-  fast lane by Wed 21 Oct 20:00 UTC, else after the GW8 deadline.
+- **Current item:** S3 (Step 3, D3) with Amendment 1, on branch `s3-wip`
+  (`8149abd`). Prereg `prereg/S3.md` (`5727db2`, Amendment 1 `d5aa4d2`).
+  Dry run `f23d74a` green; verifier pre-check PASS (`worklog/verify_S3_pre.md`).
+  Next: tag `pre-S3`, merge, Boris's real dispatch, final verifier. Report
+  `worklog/cc_2026-10-18_S3.md`. Latest merge Wed 21 Oct 20:00 UTC.
 - **S2: closed** (RULING FAST-TRACK: "S2 is closed"). On master since `9b4a462`
   and `50abf60`; final verifier PASS (`worklog/verify_S2.md`); report
   `worklog/cc_2026-10-18_S2.md`. Revert tags `pre-S2` (`1cddca9`) and
@@ -27,11 +28,13 @@ this file, then waits for the next instruction.
 - **Queue (FAST-TRACK item 8):** S3, W1 (by Wed 21 Oct 20:00 UTC: fpl_ep and the
   Odds API collector), Step 10, W2 (after the GW8 deadline), Step 16, W3,
   Steps 17-18, W4.
+  - **Step 10 addition** (RULING Step 10 addition, 18 Oct, verbatim; also in
+    BUILD_PLAN.md Step 10): once lane B has merged tools/hist_pit.py, re-measure the earlier 2025/26 findings that used fpl_hist.canonical_from_vaastav (the horizon test H=6, the F test, backtest_2025-26 and concentration_2025-26) with the point-in-time club map. Descriptive only: report old against new side by side; no rule changes unless a pre-registered test calls for one.
 - **Models (FAST-TRACK amendment 1):** lane A's main session stays on Opus
   5.5; the verifier runs on Fable for every item, falling back to Opus at
   xhigh only if the Fable weekly bar is above 80% before its reset. Each
   report names the models used.
-- **Dry runs used:** 18 Oct: 2 of 6.
+- **Dry runs used:** 18 Oct: 4 of 6.
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_A.md`).
 - **Runner freeze window (9d):** not active. Runner-path changes are never
