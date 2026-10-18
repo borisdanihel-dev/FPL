@@ -2697,3 +2697,37 @@ because the pre-delete check was broken by Git Bash path conversion.
 
 **Pending before Step 2:** the first scheduled nightly on the new layout
 ("nightly 2026-10-18", 21:40 UTC). Report: `worklog/cc_2026-10-18_S1-closing.md`.
+
+---
+
+## 2026-10-18 — S2 (Step 2, D2): built on `s2-wip`, pre-check PASS, merge pending (`9694334` prereg, `s2-wip` `04acd7d`)
+
+**State.** All of Step 2 (points 1-10) is built on `s2-wip`, not on master.
+Ruling S2 point 1 gates the merge on tonight's scheduled nightly on the S1
+layout. Planned merge Mon 19 Oct as one byte-identical commit, then a proof
+dispatch and the final verifier. Verifier pre-check: **PASS** on Fable 5.1,
+effort high (`worklog/verify_S2_pre.md`).
+
+**Measured:**
+- Tests 309 → 355, green. The new tests against master's code give 16
+  failures and 62 errors; the verifier's 31 one-line mutations are all red.
+- Recording path, same inputs and frozen clock: `forecasts()` of the s2 log
+  equals the master-code log row for row (4679 rows, `69d3...`). The s2 log
+  begins with the committed blob byte for byte. `p1_eval.py` output is
+  identical. The rehearsal data commit is `projection_log.csv` +1055 / −0.
+- Rehearsal nightly and publish against a copy of `data`: exit 0, seven ALTER
+  TABLE columns, `GATE OK ... 14 tables, frozen forecasts unchanged`.
+  `PRICE DATES MISSING` found 4 real gaps (2026-09-28, 2026-10-02..04).
+- **Rows that could not be backfilled (ruling 3):** `fetched_at_utc` stays
+  NULL on 25,214 `price_history`, 3,883 `player_gw` and 42 `entry_gw` rows
+  (29,139 in all); their fetch time was never recorded. `fixtures` is
+  re-fetched nightly: 380/380 filled.
+- **A9:** 15 of 15 selling prices match the Transfers page. The budget is
+  £99.7m (bank + selling prices). The old `value` budget was £100.2m, £0.5m
+  too high, in the wildcard, bench boost, Free Hit and upgrade screens.
+- Step 2.6: doubles were already one row per (player, gameweek); per-fixture
+  scoring needed no code. No fix, so not counted as one.
+
+**Open for the chat:** four decisions in `worklog/cc_2026-10-18_S2.md`:
+`made_at` as record time; `fetched_at_utc` coverage; the nightly missing-dates
+warning; log growth (~15 MB a season).
