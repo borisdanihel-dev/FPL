@@ -3195,7 +3195,9 @@ Lane B's fourth item, under auto-continue after S5 (RULING S6 and RULING
 lane B go points 3 and 5, verbatim in `prereg/S6.md`; `bottomup_lambda` as
 the bottomup half by RULING S5 result). `tools/xp_v2.py` (standard library
 only; the nightly never imports it; it never writes the projection log),
-`tests/test_S6.py`. Verifier: VERIFIER_LINE. Not on master (lands with S4,
+`tests/test_S6.py`. Verifier: **PASS** (Fable 5.1, `worklog/verify_S6.md`;
+two write-up corrections and one wording reading noted in the report). Not
+on master (lands with S4,
 S7, S5 after a green dry run).
 
 **Definitions, as pre-registered and amended.** `xp_v2 = P(start) × mean(
@@ -3221,7 +3223,7 @@ DEF 1.1, MID 1.2, FWD 1.5; s_d 0.030 over two gameweeks → G 13.6 at
 settled after the cut; nothing adopted; the same evaluation is re-run at
 the GW10 and GW19 checkpoints (amendment 1 point 5c). `fpl_ep` not yet
 recorded. GW8 forecast (fallback odds, information only) printed.
-Tests: `test_fpl.py` 386 → 386; `tests/test_S6.py` 9 new; mutations 13 of
+Tests: `test_fpl.py` 386 → 386; `tests/test_S6.py` 8 new; mutations 13 of
 13 red.
 
 Report: `worklog/cc_2026-10-18_S6.md`; verifier `worklog/verify_S6.md`.

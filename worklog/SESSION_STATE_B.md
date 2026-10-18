@@ -82,9 +82,13 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   `8bb22a8`): development cut GW6, development GW5–6 in-sample, validation
   empty → INCONCLUSIVE by construction; nothing adopted; re-run with the
   same cut at the GW10 and GW19 checkpoints (`python tools/xp_v2.py
-  --validate --cut 6`). Verifier: VERIFIER_STATE. Next in the queue: Step 9
-  (league variance), then Step 8 — but **items since the last chat review:
-  4 of 6**; the lane stops for review after 6.
+  --validate --cut 6`). Verifier **PASS** (Fable 5.1), write guard clean. S6
+  complete on `lane-b`. Next in the queue: Step 9
+  (league variance), then Step 8 — **stopped: Step 9 has no ruling yet** (a
+  prereg with the chat's ruling verbatim precedes any code), and items
+  since the last chat review are 4 of 6. Also open: the replacement-rule
+  wording in `xp_v2.validate()` (report), the BUILD_PLAN Part C line and the
+  Monday landing (S4 + S7 + S5 + S6).
 - **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
   hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
   (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
