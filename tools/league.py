@@ -6,8 +6,13 @@ nightly never imports it (the LEAGUE ODDS section is lane A's W2).
     python tools/league.py                 # -> tools/out/league_<date>.txt (descriptive, information only)
 
 Definitions, as pre-registered in prereg/S9.md:
-  points      a manager's gameweek points net of hits = entry_gw.points - transfers_cost,
-              settled gameweeks only (lockdown rule)
+  points      a manager's gameweek points net of hits, settled gameweeks only (lockdown rule),
+              read from the totals chain (RULING S9 decisions, point 2): net_g = final_total_g -
+              final_total_{g-1}, final_total_g = the next row's total_points - its net points
+              (a row's own total and points are fetched together, so the pair is consistent even
+              when provisional). The stored entry_gw.points - transfers_cost is compared with it:
+              a difference is printed as "provisional" (a WARN once lane A's S2b lands); a row
+              without a later row cannot be corrected and is excluded and counted.
   sigma_i     sample SD of i's net points; d_j = ours - j's; sigma_d,j = SD of d_j; rho_ij Pearson
   sigma_d     pooled = root mean square of sigma_d,j over every rival (primary); per pair as information;
               without chip weeks (either side's active_chip set) as information
@@ -24,7 +29,9 @@ Definitions, as pre-registered in prereg/S9.md:
   captain     every player of our XI ranked by own xP, any position; the differential allowance
               <= 0.5 xP before GW25, <= 1.0 from GW25, against the threat-set EO; a running count
               of how often a DEF or GK topped the table on settled gameweeks
-  intervals   bootstrap over gameweeks, B = 10,000, 90%, seed 20261018
+  intervals   bootstrap over gameweeks, B = 10,000, 90%, seed 20261018, for every sigma and every P
+  flags       "allowed differential" = cost <= the allowance AND a lower threat-set EO than the top
+              (Part C rule 3); "free variance" = cost < 0.3 AND a lower EO (the ruling's reading)
 """
 
 import argparse
@@ -128,11 +135,11 @@ def load(data_dir):
     entries = {i: (name, player) for i, name, player in c.execute("select id, entry_name, player_name from entries")}
     if MY_ENTRY not in entries:
         raise MissingInput(f"entry {MY_ENTRY} is not in entries")
-    gw = defaultdict(dict)                 # entry -> event -> {net, total, chip}
+    stored = defaultdict(dict)             # entry -> event -> {net, total, chip} as fetched (every event)
     for eid, ev, pts, total, cost, chip in c.execute(
             "select entry_id, event, points, total_points, transfers_cost, active_chip from entry_gw"):
-        if ev in settled:
-            gw[eid][ev] = {"net": (pts or 0) - (cost or 0), "gross": pts or 0, "total": total, "chip": chip}
+        stored[eid][ev] = {"net": (pts or 0) - (cost or 0), "gross": pts or 0, "total": total, "chip": chip}
+    gw, provisional, excluded = totals_chain(stored, settled)
     picks = defaultdict(lambda: defaultdict(list))   # entry -> event -> [(pid, position, multiplier, is_captain)]
     for eid, ev, pid, pos, mult, cap in c.execute("select entry_id, event, player_id, position, multiplier, is_captain from picks"):
         if ev in settled:
@@ -149,7 +156,41 @@ def load(data_dir):
             own[int(r["event"])][int(r["player_id"])] = float(r["predicted"])
     check_multipliers(gw, picks)
     return {"entries": entries, "gw": gw, "picks": picks, "players": players, "own": own,
-            "settled": sorted(settled), "deadlines": deadlines}
+            "settled": sorted(settled), "deadlines": deadlines, "provisional": provisional, "excluded": excluded}
+
+
+def totals_chain(stored, settled):
+    """Settled gameweek scores from the totals chain. For entry e and
+    settled gameweek g: final_total[g] = stored[g+1].total - stored[g+1].net
+    (the next row, settled or not); final_total[g-1] likewise from row g
+    (0 before GW1); net[g] = final_total[g] - final_total[g-1]. Returns
+    (gw, provisional, excluded): gw[e][g] = {net, total, chip}; provisional
+    = [(e, g, stored net, chain net)] where they differ; excluded = [(e, g)]
+    rows the chain cannot correct (no later row)."""
+    gw = defaultdict(dict)
+    provisional, excluded = [], []
+    for eid, rows in stored.items():
+        def final_total(g):
+            nxt = rows.get(g + 1)
+            if nxt is None or nxt["total"] is None:
+                return None
+            return nxt["total"] - nxt["net"]
+        for ev in sorted(rows):
+            if ev not in settled:
+                continue
+            ft = final_total(ev)
+            if ft is None:
+                excluded.append((eid, ev))
+                continue
+            prev = 0 if ev == 1 else (rows[ev]["total"] - rows[ev]["net"] if rows[ev]["total"] is not None else None)
+            if prev is None:
+                excluded.append((eid, ev))
+                continue
+            net = ft - prev
+            if net != rows[ev]["net"]:
+                provisional.append((eid, ev, rows[ev]["net"], net))
+            gw[eid][ev] = {"net": net, "gross": net + (rows[ev]["gross"] - rows[ev]["net"]), "total": ft, "chip": rows[ev]["chip"]}
+    return gw, provisional, excluded
 
 
 def expected_multiplier(position, is_captain, chip):
@@ -207,16 +248,29 @@ def variance_table(data):
         pts_me = [ours[ev]["net"] for ev in common[j]]
         s_j, s_dj = sd(pts_j), sd(diffs[j])
         lo_j, hi_j = bootstrap_stat({ev: ours[ev]["net"] - gw[j][ev]["net"] for ev in common[j]}, lambda smp: sd(smp))
+        lo_sj, hi_sj = bootstrap_stat({ev: gw[j][ev]["net"] for ev in common[j]}, lambda smp: sd(smp))
         gap = gw[j][last]["total"] - ours[last]["total"] if last in gw[j] else None
         p_above = phi(-gap / (sigma_d * math.sqrt(n_left))) if gap is not None and n_left > 0 else (1.0 if gap is not None and gap < 0 else 0.0)
-        rows.append({"entry": j, "name": entries[j][0], "n": len(common[j]), "sigma_j": s_j,
+        if gap is not None and n_left > 0:          # the interval of P follows the resampled pooled sigma_d
+            lo_p, hi_p = bootstrap_stat({ev: ev for ev in all_gws},
+                                        lambda smp, g=gap: (phi(-g / (pooled_of(smp) * math.sqrt(n_left))) if pooled_of(smp) else None))
+        else:
+            lo_p, hi_p = p_above, p_above
+        rows.append({"entry": j, "name": entries[j][0], "n": len(common[j]), "sigma_j": s_j, "sigma_j_ci": (lo_sj, hi_sj),
                      "sigma_dj": s_dj, "sigma_dj_ci": (lo_j, hi_j), "rho": pearson(pts_me, pts_j),
-                     "gap": gap, "p_above": p_above,
+                     "gap": gap, "p_above": p_above, "p_above_ci": (lo_p, hi_p),
                      "line": None if gap is None else line_label(gap, sigma_d * math.sqrt(n_left)),
                      "sigma_dj_nochip": sd(diffs_nochip[j]) if len(diffs_nochip[j]) >= 2 else None})
     sigma_me = sd([ours[ev]["net"] for ev in all_gws])
+    lo_me, hi_me = bootstrap_stat({ev: ours[ev]["net"] for ev in all_gws}, lambda smp: sd(smp))
+
+    def pooled_nochip_of(sample):
+        return pooled_sigma_d({j: [ours[ev]["net"] - gw[j][ev]["net"] for ev in sample
+                                   if ev in gw.get(j, {}) and not ours[ev]["chip"] and not gw[j][ev]["chip"]] for j in rivals})
+    lo_nc, hi_nc = bootstrap_stat({ev: ev for ev in all_gws}, pooled_nochip_of) if sigma_d_nochip is not None else (None, None)
     return {"last": last, "n_left": n_left, "sigma_d": sigma_d, "sigma_d_ci": (lo, hi), "sigma_d_nochip": sigma_d_nochip,
-            "sigma_me": sigma_me, "rows": rows, "our_total": ours[last]["total"]}
+            "sigma_d_nochip_ci": (lo_nc, hi_nc), "sigma_me": sigma_me, "sigma_me_ci": (lo_me, hi_me), "rows": rows,
+            "our_total": ours[last]["total"]}
 
 
 def threat_set(var):
@@ -306,19 +360,29 @@ def report(data_dir, out=print, today=None):
         + (f" (GW{', GW'.join(str(g) for g in range(last + 1, next_gw))} played, not yet settled)" if next_gw > last + 1 else "")
         + f"; points net of hits; B={B}, 90% CI, seed {SEED}; information only")
     lo, hi = var["sigma_d_ci"]
+    out("  scores from the totals chain (RULING S9 decisions, point 2): "
+        + (f"{len(data['provisional'])} stored rows were provisional" if data["provisional"] else "every stored row equals the chain")
+        + (f"; {len(data['excluded'])} rows the chain cannot correct, excluded" if data["excluded"] else ""))
+    for eid, ev, stored_net, chain_net in data["provisional"]:
+        out(f"    WARN provisional: {data['entries'][eid][0]} GW{ev} stored {stored_net}, chain {chain_net} ({chain_net - stored_net:+d})")
+    for eid, ev in data["excluded"]:
+        out(f"    excluded: {data['entries'][eid][0]} GW{ev} (no later row to correct it)")
+    nc = var["sigma_d_nochip"]
     out(f"  pooled sigma_d = {var['sigma_d']:.2f} [{lo:.2f}, {hi:.2f}] points a gameweek (root mean square over rivals); "
-        f"our sigma = {var['sigma_me']:.2f}; without chip weeks sigma_d = "
-        + (f"{var['sigma_d_nochip']:.2f}" if var["sigma_d_nochip"] is not None else "n/a"))
+        f"our sigma = {var['sigma_me']:.2f} [{var['sigma_me_ci'][0]:.2f}, {var['sigma_me_ci'][1]:.2f}]; without chip weeks sigma_d = "
+        + (f"{nc:.2f} [{var['sigma_d_nochip_ci'][0]:.2f}, {var['sigma_d_nochip_ci'][1]:.2f}]" if nc is not None and var["sigma_d_nochip_ci"][0] is not None else (f"{nc:.2f}" if nc is not None else "n/a")))
     out(f"  variance line = sigma_d x sqrt(n) = {var['sigma_d'] * math.sqrt(n_left):.1f} points")
     out("")
-    out(f"  {'rival':<22}{'n':>3}{'sigma_j':>9}{'sigma_dj':>10}{'90% CI':>16}{'rho':>7}{'gap':>6}{'P(above j)':>12}  line")
+    out(f"  {'rival':<22}{'n':>3}{'sigma_j [90%]':>22}{'sigma_dj [90%]':>22}{'rho':>7}{'gap':>6}{'P(above j) [90%]':>24}  line")
     for r in var["rows"]:
-        ci = f"[{r['sigma_dj_ci'][0]:.1f}, {r['sigma_dj_ci'][1]:.1f}]" if r["sigma_dj_ci"][0] is not None else "n/a"
-        out(f"  {r['name']:<22}{r['n']:>3}{r['sigma_j']:9.2f}{r['sigma_dj']:10.2f}{ci:>16}{(r['rho'] if r['rho'] is not None else float('nan')):7.2f}"
-            f"{(r['gap'] if r['gap'] is not None else 0):6d}{r['p_above']:12.3f}  {r['line']}")
+        ci = f"{r['sigma_dj']:.2f} [{r['sigma_dj_ci'][0]:.1f}, {r['sigma_dj_ci'][1]:.1f}]" if r["sigma_dj_ci"][0] is not None else f"{r['sigma_dj']:.2f}"
+        cj = f"{r['sigma_j']:.2f} [{r['sigma_j_ci'][0]:.1f}, {r['sigma_j_ci'][1]:.1f}]" if r["sigma_j_ci"][0] is not None else f"{r['sigma_j']:.2f}"
+        cp = f"{r['p_above']:.3f} [{r['p_above_ci'][0]:.3f}, {r['p_above_ci'][1]:.3f}]" if r["p_above_ci"][0] is not None else f"{r['p_above']:.3f}"
+        out(f"  {r['name']:<22}{r['n']:>3}{cj:>22}{ci:>22}{(r['rho'] if r['rho'] is not None else float('nan')):7.2f}"
+            f"{(r['gap'] if r['gap'] is not None else 0):6d}{cp:>24}  {r['line']}")
     threats, weights = threat_set(var)
     out("")
-    out("  threat set (" + ("rivals ahead of us" if any(r["gap"] > 0 for r in var["rows"]) else f"we lead: rivals with P(j above us) >= {THREAT_MIN_P}") + "): "
+    out("  threat set (" + ("rivals ahead of us" if any(r["gap"] is not None and r["gap"] > 0 for r in var["rows"]) else f"we lead: rivals with P(j above us) >= {THREAT_MIN_P}") + "): "
         + ", ".join(f"{r['name']} w={weights[r['entry']]:.3f}" for r in threats))
     # drift version, information only
     ev_me, xi, mult_me, own = our_xi(data, next_gw)
@@ -349,8 +413,9 @@ def report(data_dir, out=print, today=None):
         out(f"  {name:<16}{BT.POS_NAME.get(pos, '?'):>4}{r['proj']:6.2f}{mult_me[r['id']]:5d}{eo.get(r['id'], 0.0):6.2f}{rel:8.2f}{note}")
     # captain table
     out("")
-    out(f"  CAPTAIN TABLE GW{next_gw}: our XI by own xP, any position; allowance {allow:.1f} xP (" +
-        ("before" if next_gw < ALLOWANCE_SWITCH else "from") + f" GW{ALLOWANCE_SWITCH}); threat-set EO; free variance when two options differ by < {FREE_VARIANCE}")
+    out(f"  CAPTAIN TABLE GW{next_gw}: our XI by own xP, any position; allowed differential = cost <= {allow:.1f} xP (" +
+        ("before" if next_gw < ALLOWANCE_SWITCH else "from") + f" GW{ALLOWANCE_SWITCH}) and a lower threat-set EO than the top; "
+        f"free variance = cost < {FREE_VARIANCE} and a lower EO")
     ranked = sorted(xi, key=lambda r: (-r["proj"], r["id"]))
     top = ranked[0]["proj"] if ranked else 0.0
     out(f"  {'rank':>4} {'player':<16}{'pos':>4}{'own':>6}{'EO':>6}{'cost':>6}  flags")
@@ -358,7 +423,7 @@ def report(data_dir, out=print, today=None):
         name, team, pos = data["players"].get(r["id"], ("?", "?", 0))
         cost = top - r["proj"]
         flags = []
-        if i > 1 and cost <= allow:
+        if i > 1 and cost <= allow and eo.get(r["id"], 0.0) < eo.get(ranked[0]["id"], 0.0):
             flags.append("allowed differential")
         if i > 1 and cost < FREE_VARIANCE and eo.get(r["id"], 0.0) < eo.get(ranked[0]["id"], 0.0):
             flags.append("free variance")
