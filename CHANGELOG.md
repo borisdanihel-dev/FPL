@@ -2665,3 +2665,35 @@ landed:
 **Verifier:** pre-check 1 FAIL (F1–F3), pre-check 2 PASS, final **PASS**
 (`worklog/verify_S1.md`). Write guard after each: only the verifier's file
 changed. Report: `worklog/cc_2026-10-18_S1.md`.
+
+---
+
+## 2026-10-18 — S1-closing: verifier on Fable, model and effort rules, docs (`44358a0` prereg, `69b360d`)
+
+**Verifier.** The agent file and the `BUILD_PLAN.md` block now say
+`model: fable` and `effort: high`, plus the masking sentence. They are still
+byte-identical (2,897 bytes). The fallback (decline credits; opus at effort
+xhigh; the report names the model) is in `CLAUDE.md`. First run on Fable 5.1:
+**PASS**, with no credit prompt (`worklog/verify_S1-closing.md`).
+
+**`CLAUDE.md`:**
+- Session operating mode item h: Opus 5.5; effort xhigh, high or medium by
+  step type; Fable allowed for Steps 4, 7, 15, 16 and 17 if Boris switches.
+- No manual nightly dispatch within 1 hour either side of a deadline.
+- Line 9 now says the nightly output goes to `data`.
+
+**Elsewhere:** `BUILD_PLAN.md` 1.6 says gitleaks runs in `secret-scan.yml`;
+`secret-scan.yml` has `runs-on: ubuntu-24.04`. The local `scratch/s1-wip` is
+deleted. `dddcb92` carries it 12/12 blob for blob, re-checked after the delete,
+because the pre-delete check was broken by Git Bash path conversion.
+
+**Measured:**
+- Tests 308 → 309, identity test green.
+- New tests red against the old files; one-word agent mutation red; the
+  verifier's 7 mutations red.
+- Frozen-time recording logs byte-identical (`69d3...`).
+- The first scheduled secret scan (Sun 18 Oct, run 39098380500) succeeded,
+  starting 04:48Z for the 04:23Z cron.
+
+**Pending before Step 2:** the first scheduled nightly on the new layout
+("nightly 2026-10-18", 21:40 UTC). Report: `worklog/cc_2026-10-18_S1-closing.md`.
