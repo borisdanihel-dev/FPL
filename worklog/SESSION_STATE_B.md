@@ -61,8 +61,16 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   then never merge `origin/master` into `lane-b`** (it would carry the
   revert and delete S4 from lane-b); after the landing, merge master into
   lane-b as usual. Dry runs are capped at 6 a day; batch items.
-- **Current item:** S7 (`tools/chips.py`, `prereg/S7.md` with amendment 1),
-  started under auto-continue after S4's PASS. Then S5, S6.
+- **Current item:** S7 built (`tools/chips.py`, `tests/test_S7.py`, code
+  `d0fc715` on `lane-b`). **The pre-registered replay test FAILS on its
+  bar** (calculator − heuristic −0.18 per squad, 90% CI [−1.26, +0.72]; mean
+  not ≥ 0); recorded, not tuned. Verifier: VERIFIER_STATE. Auto-continue
+  stops here (a model result that would change a live decision, and an
+  open decision): S5 starts only on the chat's word. S7 lands with S4 on
+  Monday (RULING lane B landing) if the chat wants the code on master.
+- **S7 facts for later items:** `chips.live(data_dir)`, `chips.replay(
+  hist_dir)`, `induction(v_bb, v_fh, first, last, chips)`, `Replay`
+  (origin-t forecasts on `canonical_at`), `sample_squads(seed=7)`.
 - **Standing rule (RULING pause, verbatim below):** once S3 is on master
   the nightly runs `tests/` by discovery and a failing test fails the gate,
   so any push to master that adds or changes a file under `tests/` is
@@ -99,7 +107,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 1 of 6 (S4).
-- **Open for the chat:** S4 report Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs).
+- **Items since the last chat review:** 2 of 6 (S4, S7).
+- **Open for the chat:** S7 Decisions 1–2 (the failed chip test; whether S5 starts); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
