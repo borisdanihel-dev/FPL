@@ -3188,3 +3188,40 @@ the name byte-exact in the output file (`backtest --report` prints no
 names: exit 0 and valid UTF-8 only, stated). The reconfigure mutation goes
 red. No number changed. Verifier: **PASS** (Fable 5.1, `worklog/verify_S5.md`);
 write guard clean. S5 complete on `lane-b`; S6 continues.
+
+## 2026-10-18 — S6: xP rebuild and blend, `xp_v2` (`f9ca3d0` prereg, `94fbc36` amendment 1, `8bb22a8` code; lane B)
+
+Lane B's fourth item, under auto-continue after S5 (RULING S6 and RULING
+lane B go points 3 and 5, verbatim in `prereg/S6.md`; `bottomup_lambda` as
+the bottomup half by RULING S5 result). `tools/xp_v2.py` (standard library
+only; the nightly never imports it; it never writes the projection log),
+`tests/test_S6.py`. Verifier: VERIFIER_LINE. Not on master (lands with S4,
+S7, S5 after a green dry run).
+
+**Definitions, as pre-registered and amended.** `xp_v2 = P(start) × mean(
+E_xg[pts | start], E_bl[pts | start]) + P(sub) × E[pts | sub]`: P(start) the
+recorded `minutes` row (never averaged in as points); E_xg = the recorded
+`xg` row / P(start); E_bl = `bottomup_lambda` / P(start), rebuilt from the
+newest export before the deadline (its P(start) equals the minutes row to
+0.000); P(sub) over the same four-gameweek window from `player_gw` before
+the deadline, scaled by `chance_next_round`; E[pts | sub] the measured mean
+points of sub appearances by position before the deadline. No penalty
+term (5a); candidates the equal-weight blend (primary) and the best single
+model chosen on the development set (5b); the blend replaced only by a
+validation win of ≥ 0.02 on starters Spearman and on decision points.
+**Development cut GW6**, the last settled gameweek on the day of the first
+code commit, written before any number.
+
+**Measured (development GW5–6, in-sample, 2 gameweeks — no conclusion):**
+starters Spearman own +0.187, blend +0.094 (own − 0.093), xg_only +0.075,
+bl_only +0.107 (the best single model, frozen); XI + captain − own: blend
++0.0, xg_only −1.0, bl_only −2.5; E[pts | sub] GK 0.00 (no observation),
+DEF 1.1, MID 1.2, FWD 1.5; s_d 0.030 over two gameweeks → G 13.6 at
+Δ = 0.02 (not a measurement). **Validation: INCONCLUSIVE** — no gameweek
+settled after the cut; nothing adopted; the same evaluation is re-run at
+the GW10 and GW19 checkpoints (amendment 1 point 5c). `fpl_ep` not yet
+recorded. GW8 forecast (fallback odds, information only) printed.
+Tests: `test_fpl.py` 386 → 386; `tests/test_S6.py` 9 new; mutations 13 of
+13 red.
+
+Report: `worklog/cc_2026-10-18_S6.md`; verifier `worklog/verify_S6.md`.
