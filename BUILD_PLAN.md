@@ -456,6 +456,9 @@ Item L1. Descriptive.
    - argmax xP across the whole XI (no MID/FWD restriction);
    - the differential allowance per Part C rule 3;
    - log how often a DEF or GK comes out on top.
+4. **`fetched_at_utc`** (ruling S2 amendment 1, point 2): `picks`, `transfers`,
+   `chips`, `standings` and `player_history` get it here. S2 put it on
+   `price_history`, `player_gw`, `fixtures` and `entry_gw` only.
 
 ## Step 10 — rule normaliser (needed before past seasons are used)
 
