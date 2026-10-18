@@ -18,13 +18,19 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   write to it. Run `python C:\GIT\FPL-b\fpl_nightly.py --restore` only in a
   scratch copy if working exports are needed; never `fpl_sync.py`,
   `--record`, or `fpl_nightly.py` without `--restore`.
-- **Merging an item (item 4):** tests, then the verifier (model per item 9),
-  write guard, report, CHANGELOG. Then `git fetch origin`, `git rebase
-  origin/master`, rerun the full suite (`test_fpl.py` plus `tests/`, by
-  discovery once S3 has landed), and `git push origin HEAD:master`. Never
-  force. Branch `lane-b` exists only locally: a rebased branch is never pushed
-  to GitHub, so no push ever needs force. On a CHANGELOG conflict, keep both
-  entries.
+- **Merging an item (item 4, as RULING lane B branch handling, 2026-10-18,
+  verbatim below):** tests, then the verifier, write guard, report,
+  CHANGELOG. `lane-b` stays on GitHub as a backup and is only ever
+  fast-forwarded; it is never rebased. To land an item on master: create a
+  temporary local branch from `origin/master`, bring the item's commits onto
+  it (cherry-pick or rebase that temporary branch, never `lane-b`), rerun
+  the full suite (`test_fpl.py` plus `tests/`), push `HEAD:master`. Then
+  merge `origin/master` into `lane-b` (a merge commit, no rebase) and push
+  `lane-b`. No force-push, ever. On a CHANGELOG conflict, keep both entries.
+
+  RULING lane B branch handling:
+  lane-b stays on GitHub as a backup and is only ever fast-forwarded; it is never rebased. To land an item on master: create a temporary local branch from origin/master, bring the item's commits onto it (cherry-pick or rebase that temporary branch, never lane-b), rerun the full suite, push HEAD:master. Then merge origin/master into lane-b (a merge commit, no rebase) and push lane-b. No force-push, ever. Record this in worklog/SESSION_STATE_B.md.
+  END RULING
 - **No dry run, no dispatch, no freeze restriction** for offline items (item 1).
 - **Auto-continue (item 6):** after an item with verifier PASS, a clean write
   guard and no open decision, start the next queued item and still print the

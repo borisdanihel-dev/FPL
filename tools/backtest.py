@@ -8,7 +8,7 @@ item S4, offline part). Standard library only; the nightly never imports it.
     python tools/backtest.py --power                  # s_d on 2025/26, G for 0.01/0.02/0.03
     python tools/backtest.py --selftest               # 400 replications, the two bars
 
-Data (read-only): --data (C:\GIT\FPL-data: the forecast log and fpl.sqlite)
+Data (read-only): --data (the FPL-data worktree: the forecast log and fpl.sqlite)
 and --hist (historical/2025-26, the vaastav CSVs). Everything written goes
 under --out (tools/out by default, gitignored).
 
@@ -19,8 +19,9 @@ Point-in-time, as pre-registered in prereg/S4.md:
            and every fixture finished = 1).
   2025/26  only sources that can be rebuilt from rows with round < g:
            bottomup and minutes, through fpl_edge.backtest_week (the frozen
-           rolling-origin rebuild). own, xg and fpl_ep are excluded, never
-           approximated (ruling 2, amendment 1 point 3).
+           rolling-origin rebuild) on players at their point-in-time club
+           (tools/hist_pit.py, amendment 2). own, xg and fpl_ep are excluded,
+           never approximated (ruling 2, amendment 1 point 3).
 """
 
 import argparse
@@ -37,6 +38,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 import fpl_edge as E                                              # noqa: E402
 import fpl_hist as H                                              # noqa: E402
+import hist_pit as PIT                                            # noqa: E402
 
 SEED = 20261018            # the bootstrap seed (prereg)
 SELFTEST_SEED = 4          # the self-test seed (prereg)
@@ -341,7 +343,18 @@ def load_2526(hist_dir):
         by_round[int(r["round"])].append(r)
     with open(os.path.join(hist_dir, "teams.csv"), encoding="utf-8", newline="") as fh:
         short = {t["id"]: t["short_name"] for t in csv.DictReader(fh)}
-    return {"c": c, "raw": by_round, "through": c["through_gw"], "short": short}
+    # the point-in-time club map (amendment 2): the adapter's players carry
+    # end-of-season clubs; every rebuild replaces them with club_at(g)
+    return {"c": c, "raw": by_round, "through": c["through_gw"], "short": short,
+            "cm": PIT.club_map(hist_dir)}
+
+
+def canonical_at(hist, g):
+    """The canonical slice with players as of gameweek g (amendment 2):
+    only players who exist by g, each at his club of rounds <= g. Rows and
+    team matches are untouched; callers still truncate to g-1 for training
+    (fpl_edge.backtest_week does)."""
+    return dict(hist["c"], players=PIT.players_at(hist["c"], hist["cm"], g))
 
 
 def _p_cs(inp, p, opp):
@@ -371,9 +384,9 @@ def rebuild_2526(hist, t):
     rolling-origin rebuild) plus the components bottomup exposes per fixture.
     Returns {"rows": {source: [(pid, pred, actual)]}, "components":
     {source: {component: [(prob, outcome)]}}, "p_start": {pid: p}}."""
-    c = hist["c"]
     if t < 2 or t > hist["through"]:
         raise MissingInput(f"GW{t} is outside the rebuildable range 2..{hist['through']}")
+    c = canonical_at(hist, t)                 # clubs as of gameweek t (rounds <= t)
     bt = E.backtest_week(c, t)
     train = E.canonical_through(c, t - 1)
     inp = E.reliability_inputs(train, gws_played=t - 1)
@@ -434,7 +447,8 @@ def squad_candidates(hist, g):
         if pid not in latest or pid in cands:
             continue
         p = c["players"][pid]
-        cands[pid] = {"id": pid, "pos": p["pos"], "team": p["team"],
+        club = PIT.club_at(hist["cm"], pid, g)       # the club of gameweek g's own row
+        cands[pid] = {"id": pid, "pos": p["pos"], "team": club,
                       "price": int(round(H._num(r["value"]))), "metric": latest[pid]}
     return list(cands.values())
 
@@ -844,7 +858,8 @@ def power_report(hist_dir, out=print):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--data", default=r"C:\GIT\FPL-data", help="the data branch worktree (read-only)")
+    ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"),
+                    help="the data branch worktree (read-only)")
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
     ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
     ap.add_argument("--season", default="2026-27", choices=("2025-26", "2026-27"))
