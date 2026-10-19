@@ -3897,3 +3897,17 @@ reach `core()`, which reads rounds below the target).
 11; lane B's handover named 2024/25.
 
 Report: `worklog/cc_2026-10-19_S6d.md`; verifier `worklog/verify_S6d.md`.
+
+## 2026-10-19 — GW5–7 retro reconciled with the official scores (RULING 19 Oct afternoon, point 6; no code change)
+
+The S6c/S6d print takes each gameweek's 15 from `picks` (GW6 = the
+post-wildcard squad), the official `player_gw` points (Σ multiplier × points
+= `entry_gw.points`: GW5 60, GW6 49) and `rule_autosubs` on minutes (FPL
+made no autosubs for us in GW5 or GW6, and all 15 played both weeks). The
+gap is selection on the same 15 only: GW6 own 59 (Verbruggen for Kelleher
++7, Thomas for Muharemović +2, Tarkowski captain +1), xp_v2 61 (the same
+two plus Rudoni for Thiago +3, Saka captain); GW5 both 54 (Kinsky for
+Verbruggen −4, Ndiaye for Mitchell −2). Found on the way:
+`entry_gw.points_on_bench` for GW6 reads 11 against a 22-point bench, a
+provisional row (`fetched_at_utc` NULL) that S2b re-fetches. Detail in
+`worklog/cc_2026-10-19_S6c.md` and `cc_2026-10-19_S6d.md`.
