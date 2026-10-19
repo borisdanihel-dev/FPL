@@ -3911,3 +3911,39 @@ Verbruggen −4, Ndiaye for Mitchell −2). Found on the way:
 `entry_gw.points_on_bench` for GW6 reads 11 against a 22-point bench, a
 provisional row (`fetched_at_utc` NULL) that S2b re-fetches. Detail in
 `worklog/cc_2026-10-19_S6c.md` and `cc_2026-10-19_S6d.md`.
+
+## 2026-10-19 — S14: points distributions, the PMF of xp_v2 as tested (`c896f99` ruling, `fc56fd5` option (a), `15e18fa` prereg rows, `0def550` code; the merged session)
+
+**What.** `tools/points_pmf.py`: per player-gameweek, P(start) × (½ X + ½ L)
++ P(sub) × U + the rest at 0.
+- X, the xg half: Poisson goals and assists at S11's per-fixture rates; a
+  Bernoulli clean sheet at S5's λ; DEFCON at the hit rate; the bonus
+  empirical by returns cell, tilted to 0.8 × the ICT percentile.
+- L, the bottomup half: `project_reliability`'s xGI; the GK/DEF clean sheet
+  and goals conceded from one Poisson count; logistic DEFCON.
+- U: the empirical sub points.
+- No saves term: "xp_v2 + saves" is a GW10-checkpoint item, BUILD_PLAN
+  Step 20.
+
+The mean is xp_v2 by construction. `xp_v2_live.core`'s detail now carries
+each fixture's terms (numbers unchanged). The bundle gains section 7, the
+captain table (mean, P(≥10), P(≥15), p90), information only.
+
+**Measured (2025/26 GW5–38 re-scored).**
+- Brier(per-position haul rate) − Brier(PMF) for P(≥10): **+0.00118 per
+  gameweek, 90% CI [+0.00070, +0.00178]** (p 0.0001; better in 27 of 34
+  gameweeks).
+- 10+ hauls predicted 403.6 against 449 actual (−10.1%, within ±15%).
+- **Both conditions met: PASS**, information only until Boris accepts.
+- Mean check: max |E[PMF] − xp_v2| 9.85e-12.
+- 15+ (information): +0.00006 [+0.00002, +0.00010], predicted 47.0 against
+  75: thin tails.
+- 49 player-gameweeks with P(start) + P(sub) > 1 took independent parts.
+- Output `tools/out/points_pmf/` with `run.txt` at `0def550`.
+- Live GW8 (data `bd724ca`): Saka mean 6.00, P(≥10) 0.186, P(≥15) 0.052,
+  p90 12 at the top of our 15.
+
+**Tests.** 676 → 686 by discovery (`tests/test_S14.py`, 10 tests);
+`test_fpl.py` untouched; mutations 18 of 18 red.
+
+Report: `worklog/cc_2026-10-19_S14.md`; verifier `worklog/verify_S14.md`.
