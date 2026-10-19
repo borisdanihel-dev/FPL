@@ -239,20 +239,169 @@ def normalise(out, hist=HIST, say=print):
     return units
 
 
+# ---------------------------------------------------------------------------
+# S10b (prereg/S10b.md; RULINGS PART F, F-C): earlier seasons
+# ---------------------------------------------------------------------------
+
+SEASONS_10B = ("2023-24", "2024-25")
+DEFCON_MISSING = "DEFCON missing"     # the season's rows hold no defensive-action counts
+
+
+def own_table(table):
+    """The claim under test: a season before 2025/26 scored with the 2026/27
+    table without the defensive-contribution category (DEFCON points began
+    in 2025/26). Every other category as the table has it."""
+    out = dict(table)
+    out["defensive_contribution"] = {p: 0 for p in POSITIONS}
+    return out
+
+
+def load_season(hist, season):
+    """The season's de-duplicated rows without manager rows (position AM),
+    the note, the 2026/27 table and whether the rows hold the DEFCON parts."""
+    import fpl_hist
+    with open(os.path.join(hist, season, "merged_gw.csv"), encoding="utf-8", newline="") as fh:
+        rows, note = fpl_hist.dedup_rows(list(csv.DictReader(fh)))
+    managers = sum(1 for r in rows if r["position"] not in CSV_POSITION)
+    rows = [r for r in rows if r["position"] in CSV_POSITION]
+    with open(os.path.join(hist, "2026-27", "game_config.json"), encoding="utf-8") as fh:
+        table = load_table(json.load(fh))
+    parts = bool(rows) and all(c in rows[0] for c in DEFCON_PARTS["MID"])
+    return rows, f"{note}; {managers} manager rows out", table, parts
+
+
+def codes_season(hist, season):
+    """{element id: (code, position)} of the season's players_raw.csv
+    (managers, element_type 5, left out)."""
+    with open(os.path.join(hist, season, "players_raw.csv"), encoding="utf-8", newline="") as fh:
+        return {int(r["id"]): (int(r["code"]), ELEMENT_TYPE[int(r["element_type"])])
+                for r in csv.DictReader(fh) if int(r["element_type"]) in ELEMENT_TYPE}
+
+
+def season_gameweeks(rows, pos_of, table, parts):
+    """As player_gameweeks; DEFCON from its parts when the rows hold them,
+    else 0 (the season has no counts: DEFCON missing, never invented)."""
+    out = {}
+    for r in rows:
+        key = (int(r["element"]), int(r["round"]))
+        pos = pos_of(r)
+        dc = defcon_count(r, pos) if parts else 0
+        pts = score(r, pos, table, 0 if dc is None else dc)
+        g = out.setdefault(key, {"round": key[1], "minutes": 0, "official": 0, "points": 0,
+                                 "parts": Counter(), "pos": pos})
+        g["minutes"] += int(r["minutes"])
+        g["official"] += int(r["total_points"])
+        g["points"] += sum(pts.values())
+        g["parts"].update(pts)
+    return out
+
+
+def test_season(hist, season, seed=20261019, say=print):
+    """The reproduction test for one earlier season (prereg/S10b.md): its own
+    table under its own positions, within +-1 among players who appeared."""
+    rows, note, table, parts = load_season(hist, season)
+    own = own_table(table)
+    say(f"rule normaliser - the reproduction test for {season} (prereg/S10b.md); {note}; "
+        f"own table = the 2026/27 table without the DEFCON category (the claim under test)")
+    units = list(season_gameweeks(rows, lambda r: CSV_POSITION[r["position"]], own, parts=False).values())
+    appeared = [u for u in units if u["minutes"] > 0]
+    primary = share(appeared, within)
+    lo, hi = bootstrap(appeared, within, seed=seed)
+    say(f"PRIMARY  {sum(1 for u in appeared if within(u))} of {len(appeared)} player-gameweeks with "
+        f"minutes > 0 within +-1: {primary:.4f}  90% CI {lo:.4f} - {hi:.4f}  "
+        f"(bar 0.99: {'PASS' if primary >= 0.99 else 'FAIL'})")
+    say(f"  all {len(units)} player-gameweeks within +-1: {share(units, within):.4f}; "
+        f"exact (appeared): {share(appeared, lambda u: u['points'] == u['official']):.4f}")
+    for pos in POSITIONS:
+        sub = [u for u in appeared if u["pos"] == pos]
+        say(f"  {pos}: {share(sub, within):.4f} of {len(sub)}")
+    miss = [u for u in appeared if not within(u)]
+    say(f"  misses by official - re-scored: {dict(sorted(Counter(u['official'] - u['points'] for u in miss).items()))}")
+    cats = Counter((u["pos"], c) for u in miss for c, v in u["parts"].items() if v and c not in ("appearance", "bonus"))
+    say("  misses by position and scoring category present (information): " +
+        (", ".join(f"{p} {c} {n}" for (p, c), n in sorted(cats.items())) or "none"))
+    say(f"  DEFCON parts in the rows: {'yes' if parts else 'no - ' + DEFCON_MISSING}")
+    say(f"  bonus: official, {season} BPS - no BPS re-score")
+    return primary
+
+
+def normalise_season(out, hist, season, say=print):
+    """The season re-scored under the 2026/27 table by the 2026/27 position
+    (by code), DEFCON from its parts or flagged missing, bonus official."""
+    rows, note, table, parts = load_season(hist, season)
+    codes, new_pos = codes_season(hist, season), positions_2627(hist)
+    factor, line = assists_line(table, table["assists"])
+    say(line)
+
+    def pos_of(r):
+        code = codes.get(int(r["element"]), (None, None))[0]
+        return new_pos.get(code, CSV_POSITION[r["position"]])
+    units = season_gameweeks(rows, pos_of, table, parts)
+    own_pos = {}
+    for r in rows:
+        own_pos.setdefault(int(r["element"]), CSV_POSITION[r["position"]])
+    flag = "" if parts else DEFCON_MISSING
+    moved, no_code = Counter(), 0
+    with open(out, "w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh, lineterminator="\n")
+        w.writerow(["season", "round", "element", "code", "position_own", "position_2627", "in_2627",
+                    "minutes", *CATEGORIES, "points_2627_rules", "official", "bonus_flag", "defcon_flag"])
+        for (el, rnd), u in sorted(units.items()):
+            code = codes.get(el, (None, None))[0]
+            inside = code in new_pos
+            no_code += code is None
+            moved[(own_pos[el], u["pos"])] += 1
+            p = dict(u["parts"])
+            p["assists"] = int(round(p["assists"] * factor))
+            w.writerow([season, rnd, el, "" if code is None else code, own_pos[el], u["pos"], int(inside), u["minutes"],
+                        *(p[c] for c in CATEGORIES), sum(p.values()), u["official"], f"{season} BPS", flag])
+    changed = {k: v for k, v in moved.items() if k[0] != k[1]}
+    say(f"normalised {len(units)} {season} player-gameweeks -> {out}; position changes ({season} -> 2026/27, "
+        f"player-gameweeks): {changed or 'none'}; without a code: {no_code}; DEFCON: "
+        f"{'from its parts' if parts else DEFCON_MISSING + ' (0 points, flagged on every row)'}")
+    return units
+
+
 def main(argv=None, say=print):
     ap = argparse.ArgumentParser(description="rule normaliser (Step 10)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     t = sub.add_parser("test")
     t.add_argument("--hist", default=HIST)
     t.add_argument("--seed", type=int, default=20261019)
+    t.add_argument("--season", default="2025-26", choices=("2025-26",) + SEASONS_10B)
+    t.add_argument("--out", default=None, help="S10b: write the lines and run.txt into this folder")
     n = sub.add_parser("normalise")
     n.add_argument("out")
     n.add_argument("--hist", default=HIST)
+    n.add_argument("--season", default="2025-26", choices=("2025-26",) + SEASONS_10B)
     a = ap.parse_args(argv)
-    if a.cmd == "test":
-        test(a.hist, a.seed, say)
-    else:
-        normalise(a.out, a.hist, say)
+    if a.season == "2025-26":                      # Step 10, unchanged
+        if a.cmd == "test":
+            test(a.hist, a.seed, say)
+        else:
+            normalise(a.out, a.hist, say)
+        return 0
+    if a.cmd == "normalise":
+        normalise_season(a.out, a.hist, a.season, say)
+        return 0
+    lines = []
+
+    def both(line):
+        say(line)
+        lines.append(line)
+    run = None
+    if a.out:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from provenance import Run
+        os.makedirs(a.out, exist_ok=True)
+        run = Run("tools/rules.py", a.out, argv)
+    test_season(a.hist, a.season, a.seed, both)
+    if run is not None:
+        path = os.path.join(a.out, f"rules_test_{a.season}.txt")
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write("\n".join(lines) + "\n")
+        run.wrote(path)
+        run.close()
     return 0
 
 
