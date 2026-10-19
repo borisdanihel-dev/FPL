@@ -19,8 +19,15 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
   - **W2 amendment 2 DONE** on `w2-wip` `eb9a143`: any exception inside a
     section ends SKIPPED with check 31's WARN; verifier PASS (Fable 5.1).
     The flag rule stays event 2.
-  - **W3 (F-B) BUILT** on `w3-wip` `09b3a50` (off `w2-wip` + the landing;
-    prereg master `ccb5882`); verifier running.
+  - **W3 (F-B) DONE** on `w3-wip` `5e8105d` (verifier PASS, Fable 5.1;
+    its surviving mutation closed in `3fe1076`). The parked questions
+    below hold, plus: "BAN RISK follows S12's rule (cautions in fixtures
+    FPL has marked finished); tonight GW7 is still finished = 0, so
+    Thiago's 4th caution is not counted. Count kicked-off fixtures
+    (provisional) instead, or keep S12's rule?" Thiago IS on 4 cautions
+    (GW4-7): a GW8 booking bans him for GW9.
+    (Built on `w3-wip` `09b3a50`, off `w2-wip` + the landing; prereg
+    master `ccb5882`.)
     - xp_v2 is the seventh source, from an AST port of xp_v2_live's
       closure, with the S11 prior in the committed
       `priors/s11_prior_2025-26.json` (`tools/make_prior.py`) and the
@@ -49,7 +56,23 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       by 0.40 a squad-gameweek, CI [−0.86, +0.05]) while S6c passed the
       switch on 2025/26. GW8 stays on xp_v2 as ruled unless you say
       otherwise; the GW10 revert rule decides."
-  - Next: S6e2 (prereg first), then F-F (S8b) and F-G (Step 15).
+  - **S6e2 BUILT, the test FAILS its bar** on `s6e2-wip` `d80644c`
+    (prereg master `f485223`; off `s6f-wip` + `s6e-wip`); verifier
+    running.
+    - 2024/25 keeper points (xp_v2 + Σ E[floor(S/3)] − xp_v2): +0.024
+      [−0.016, +0.066]; MAE +0.305 (worse).
+    - Choice differs 0.05; E[floor(S/3)] 0.767 v E[S]/3 1.100.
+    - Not adopted.
+  - **F-F (S8b) and F-G (Step 15) PARKED for Boris, the exact question:**
+    "Both need xp_v2 for gameweeks t+1..t+5 at origin t; S6b's replay and
+    the live forecast define only the next gameweek. Everything carries
+    over except the fixture lambda: football-data's prices are pre-closing,
+    so for weeks after t they were not known at the origin. Proposed: the
+    odds-implied lambda for week t (as S6b), and the fallback fitted on
+    results before the origin for t+1..t+5. Live, that is the Odds API
+    snapshot where it prices the fixture, else the fallback. OK, or the
+    fallback for all six weeks?" Neither is started.
+  - Items since the review: W2a2, W3, S6f, S6e2 = 4 of 6.
 
 - (Earlier) **NOW (19 Oct, 16:00 UTC on): W2, then Part F, overnight** (Boris, verbatim):
 
