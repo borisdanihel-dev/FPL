@@ -51,6 +51,15 @@ class Hand(unittest.TestCase):
         for slot, a, b in same["rows"]:
             self.assertEqual(a["id"], b["id"])
         self.assertEqual(same["rows"][11][1]["pos"], 1)                            # slot 12 is the sub keeper
+        # the captain tie rule (pinned): equal projections go to the lower id, in both columns
+        tied_own = {r["id"]: 3.0 for r in squad}                                   # every player 3.0: the XI's lowest id is captain
+        tied_v2 = dict(tied_own); tied_v2[15] = 3.0; tied_v2[14] = 3.0
+        tie = G.side_by_side(squad, tied_own, tied_v2)
+        xi_ids = {r["id"] for slot, r, _ in tie["rows"] if slot <= 11}
+        self.assertEqual(tie["captain"][0]["id"], min(xi_ids)); self.assertEqual(tie["captain"][1]["id"], min(xi_ids))
+        pair_own = {r["id"]: (5.0 if r["id"] in (9, 10) else 1.0) for r in squad}    # two midfielders tied at the top: 9 beats 10
+        pair = G.side_by_side(squad, pair_own, pair_own)
+        self.assertEqual((pair["captain"][0]["id"], pair["captain"][1]["id"]), (9, 9))
 
     def test_keeper_line_and_plan_text(self):
         ks = [r for r in squad15() if r["pos"] == 1]
