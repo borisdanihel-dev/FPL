@@ -20,6 +20,36 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
 
   Point 1 of the same message ("your reading stands, every other XI player
   within 0.3 xP of the captain") is in `prereg/S14.md`.
+
+  **W2 progress** (`w2-wip` off master `6a94467`, worked in the scratch
+  worktree `<session scratchpad>/w2`; scripts in the scratchpad:
+  `patch_w2a.py`, `make_fpl_lambda.py`, `patch_w2b*.py`, `check_w2a.py`,
+  `check_w2b.py`):
+  - **(a) done** `4d48697`: `fetched_at_utc` on transfers, chips,
+    standings and player_history; `players.code`; `standings.label_error`
+    flags the seven event-2 rows (total off the GW2 `entry_gw` chain), kept
+    byte for byte; the export skips `label_error = 1`. On a copy of the
+    real database: 7 flagged, 42 kept, the export identical to master's.
+    The positional inserts became named-column inserts.
+  - **(b) done** `aa5352a`: `fpl_lambda.py` (S5's live functions copied by
+    AST from `tools/odds_lambda.py`; the fallback's results come from the
+    export, so the record never opens the database); `record_status`
+    source `bottomup_lambda`; no snapshot → RECORD SKIP (WARN in check 29).
+    `SOURCES` gain it in `fpl_nightly.py` and `checks.py`; test_W1, test_S3
+    and test_fpl learn the sixth source. Real data: identical to the tool for
+    264 players; the five other sources identical to master.
+  - **(c) next:** the CHIPS and LEAGUE report sections. Port
+    `tools/chips.py` `live()` (with the part of `tools/backtest.py`'s
+    Harness that `residual_pools` uses) and `tools/league.py` `report()` into
+    the runner; byte-identical on the same data folder, seeds and
+    resamples. A missing input gives `<SECTION> SKIPPED: <why>` and the new
+    check 31 WARNs.
+  - Then: mutations for all three pieces, the full suite four ways (bare,
+    runner-like, stand-in zones, hermetic), a frozen-clock regeneration,
+    the verifier, the report, CHANGELOG (with the label_error note). No
+    merge: Saturday after the deadline, after `w2-wip` takes master with
+    S2b and W1b (expect conflicts in `fpl_sync.py`, `checks.py`,
+    `test_fpl.py` and tests with S2b's changes).
   Before the landing: merge master into `landing-2026-10-19b` (docs only
   since its verification) so master can fast-forward.
 
