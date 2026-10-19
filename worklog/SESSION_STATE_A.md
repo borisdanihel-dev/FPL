@@ -7,6 +7,105 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
+- **NOW (19 Oct, 16:00 UTC on): W2, then Part F, overnight** (Boris, verbatim):
+
+  > 2. Start W2 now on its own branch off master, as prereg/W2.md lays out; it merges Saturday 24 Oct after the GW8 deadline, outside 9d. Stop W2 at a clean point when Tuesday's S2b and landing work is due (after 00:00 UTC, once Boris has clicked the dry runs).
+  > 3. If W2 is done before then: continue with Part F in order (F-C and F-D are offline, so they may run before F-B; F-B builds on W2 and must merge by Thu 29 Oct). Overnight, park anything that needs Boris in the state file with the exact question and move to the next item; no merges or landings without him.
+
+  Verifier rule until the Fable reset, Tue 20 Oct 08:00 Prague (Boris,
+  verbatim): "keep running the verifier on Fable past 80%, up to its limit;
+  if a Fable run is refused for the usage limit, fall back to Opus at xhigh
+  and say so in the report. After the reset, the normal rule returns (Fable
+  unless the weekly bar is above 80%)."
+
+  Point 1 of the same message ("your reading stands, every other XI player
+  within 0.3 xP of the captain") is in `prereg/S14.md`.
+
+  **W2 progress** (`w2-wip` off master `6a94467`, worked in the scratch
+  worktree `<session scratchpad>/w2`; scripts in the scratchpad:
+  `patch_w2a.py`, `make_fpl_lambda.py`, `patch_w2b*.py`, `check_w2a.py`,
+  `check_w2b.py`):
+  - **(a) done** `4d48697`: `fetched_at_utc` on transfers, chips,
+    standings and player_history; `players.code`; `standings.label_error`
+    flags the seven event-2 rows (total off the GW2 `entry_gw` chain), kept
+    byte for byte; the export skips `label_error = 1`. On a copy of the
+    real database: 7 flagged, 42 kept, the export identical to master's.
+    The positional inserts became named-column inserts.
+  - **(b) done** `aa5352a`: `fpl_lambda.py` (S5's live functions copied by
+    AST from `tools/odds_lambda.py`; the fallback's results come from the
+    export, so the record never opens the database); `record_status`
+    source `bottomup_lambda`; no snapshot → RECORD SKIP (WARN in check 29).
+    `SOURCES` gain it in `fpl_nightly.py` and `checks.py`; test_W1, test_S3
+    and test_fpl learn the sixth source. Real data: identical to the tool for
+    264 players; the five other sources identical to master.
+  - **(c) done** `451ade6` (+ test `109e58a`): `fpl_chips.py`,
+    `fpl_league.py`, `fpl_bt.py` and `fpl_pit.py` (the AST closure of the
+    tools, verbatim, aliases kept; scratchpad `make_sections.py`);
+    `fpl_sections.py` appends CHIPS and LEAGUE to the night's report;
+    `<SECTION> SKIPPED:` and `SECTIONS FAILED` are WARNs in the new check
+    31, never a red night. Real data: identical to the tools (37 and 69
+    lines).
+  - Suite 614 → 625 bare. A runner-like run (`FPL_DATA_DIR`) was in
+    progress; stand-in zones not run (no zone data on this PC; the dry
+    run's Linux image covers it). Mutations 17 of 17. Verifier on Fable
+    running at about 17:00 UTC; then the report
+    `worklog/cc_2026-10-19_W2.md` and CHANGELOG (with the label_error note)
+    on `w2-wip`.
+  - **Dry run:** after W1b is live, push `dry/W2` (allowed in the GW8
+    freeze, RULING 19 Oct afternoon point 3); else Boris's manual dispatch.
+  - **W2 DONE on `w2-wip` `d0ac3f5`** (about 17:30 UTC): verifier PASS
+    (Fable 5.1, `worklog/verify_W2.md` on the branch); suite 625 bare and
+    625 runner-like; report `worklog/cc_2026-10-19_W2.md` and CHANGELOG on
+    the branch. Its notes: the standings flag rule must stay limited to
+    event 2 (other events' snapshots differ by 2–11 points too, worth an S9
+    look). Not merged: Saturday after the GW8 deadline, after a dry run.
+    Before merging, `w2-wip` takes master (S2b, W1b, the landing; expect
+    conflicts in `fpl_sync.py`, `checks.py`, `test_fpl.py`, `tests/`). Tag
+    `pre-W2`, merge, Boris's real dispatch.
+  - **Items since the last chat review** (Boris's W2 + Part F message):
+    W2 = 1 of 6.
+  - **S10b DONE** on `s10b-wip` `a454e09` (verifier PASS, Fable 5.1;
+    report `worklog/cc_2026-10-19_S10b.md` and CHANGELOG on the branch;
+    suite 692). Not landed: it rides with a later landing (offline; tests/
+    changes need a green dry run). Items since the last chat review: W2,
+    S10b = 2 of 6.
+  - **F-D (S6f) PARKED for Boris, the exact question:** "2023/24 and
+    2024/25 have no defensive-action counts, so DEFCON is missing both in
+    the models' inputs (bottomup's defcon90 and xp_v2's DEFCON hit rate read
+    0) and in the outcomes (the 2026/27 re-score's DEFCON points are 0,
+    flagged). F-D compares xp_v2 with own_rebuilt on those outcomes. Run it
+    with DEFCON missing on both sides (stated as a limitation), or score the
+    outcomes without the DEFCON category at all, or wait for a source of the
+    counts?" Without an answer, F-D is not started; F-E goes first.
+  - **Next: F-E (S6e, xp_v2 + saves)** on 2025/26 (and on 2024/25 after
+    F-C, which is done): prereg `prereg/S6e.md` with F-E's text verbatim
+    first.
+  - **F-C / S10b built** on `s10b-wip` (scratch worktree `s10b`; prereg
+    master `c0116fe`; downloads `5918f02` with the record
+    `worklog/downloads_2026-10-19b.md`; landing merged `4ddea35`; code
+    `a2902f9`). Reproduction PASS: 2023-24 11,086 of 11,086, 2024-25
+    11,431 of 11,431 (exact). Neither season had a goalkeeper goal, so the GK
+    goal value is untested. Re-scores in `tools/out/rules_<season>/` (28,742
+    and 26,919 rows; DEFCON missing, flagged). 2025/26 path byte-identical to
+    Step 10. Mutations 8 of 8. Still to do: the full suite, the verifier
+    (Fable), the report `cc_2026-10-19_S10b.md`, CHANGELOG, push. Then
+    F-D (S6f).
+  - (Earlier plan) **Part F, F-C first** (Step 10b, offline): prereg
+    `prereg/S10b.md` with F-C's text verbatim. The downloads are approved
+    in F-C (record the URL, fetch time and SHA-256; data only; read with
+    `python -I`): vaastav `data/2022-23`, `2023-24`, `2024-25`
+    (`merged_gw.csv`, `fixtures.csv`, `teams.csv`, `players_raw.csv`) and
+    football-data E0 2023-24 and 2024-25. Then F-D (S6f), F-E (S6e), then
+    F-B (W3, merge by Thu 29 Oct).
+  - Then: mutations for all three pieces, the full suite four ways (bare,
+    runner-like, stand-in zones, hermetic), a frozen-clock regeneration,
+    the verifier, the report, CHANGELOG (with the label_error note). No
+    merge: Saturday after the deadline, after `w2-wip` takes master with
+    S2b and W1b (expect conflicts in `fpl_sync.py`, `checks.py`,
+    `test_fpl.py` and tests with S2b's changes).
+  Before the landing: merge master into `landing-2026-10-19b` (docs only
+  since its verification) so master can fast-forward.
+
 - **CURRENT (19 Oct, about 16:00 UTC), after RULING S14 (Boris accepts) + Part F:**
   - S14 accepted as information (`prereg/S14.md`, master `677f34e`): the
     captain table prints in the GW8 bundle; the captain rule is unchanged;
