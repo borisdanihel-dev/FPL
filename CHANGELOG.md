@@ -3453,3 +3453,35 @@ file-writing tool only.
   the blank/double history labelled "void round". It is excluded from the
   base rates and counts, with both counts printed. This is built as the S16
   part 1 amendment.
+
+---
+
+## 2026-10-19 — S16 part 1: blank and double gameweek history, landed (`47142a3` prereg, `2ed24d6` code, merge on master)
+
+`tools/blank_double.py` counts each team's fixtures in each FPL `event` for
+2018/19 to 2025/26 (RULING lane A 19 Oct midday, point 2). A blank is 0
+fixtures, a double 2 or more. It is offline and run only as `python -I`.
+
+**Reproduction PASS:**
+- 2024-25 and 2025-26, 760 team-events each, every count equal to a straight
+  count of the official files;
+- 2025-26 also equal against `merged_gw.csv` (750 team-events);
+- the verifier's own reader agrees on all 6,080 team-events.
+
+**History** (team blanks / doubles):
+
+| Season | Blanks / doubles | Note |
+|---|---|---|
+| 2018-19 | 22 / 22 | |
+| 2019-20 | 6 / 6 | restart numbered GW39-47 |
+| 2020-21 | 44 / 43 | |
+| 2021-22 | 61 / 61 | |
+| 2022-23 | 22 / 42 | GW7 has no fixtures: the void round, labelled by the amendment |
+| 2023-24 | 23 / 23 | |
+| 2024-25 | 10 / 10 | |
+| 2025-26 | 10 / 10 | |
+
+**Tests and checks:**
+- tests 605 -> 613; mutations P1-P10 red;
+- verifier PASS (Fable 5.1, high);
+- landing dry run `43fea40` green.
