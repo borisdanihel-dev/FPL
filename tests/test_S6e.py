@@ -50,6 +50,7 @@ class ByHand(unittest.TestCase):
         rate = z * (9 / 135 * 90) + (1 - z) * mean90
         self.assertAlmostEqual(es, rate * (90 / 90) * (1.5 / 1.25) + rate * (1.0 / 1.25))
         self.assertAlmostEqual(SV.expected_saves(None, mean90, k, [1.25], 1.25, 80.0), mean90 * 80 / 90)   # no rows: the mean
+        self.assertAlmostEqual(SV.expected_saves(rates[1], mean90, k, [1.5], 1.25, 90.0), rate * 1.5 / 1.25)   # the lambda ratio counts
         rows = []
         for pid, rate90 in ((1, 2.0), (2, 3.0), (3, 4.0), (4, 5.0)):
             for rnd in range(1, 9):
@@ -90,7 +91,19 @@ class Toy(unittest.TestCase):
 
     def test_only_keepers_change_and_point_in_time(self):
         s = self.season()
+        lam = [v for l, _ in s.rp.s5.lambdas(5).values() for v in (l["lambda_home"], l["lambda_away"])]
+        lam_bar = sum(lam) / len(lam)
+        self.assertNotAlmostEqual(lam_bar, sum(l["lambda_home"] for l, _ in s.rp.s5.lambdas(5).values()) / len(s.rp.s5.lambdas(5)))   # both sides
         xp, plus, es, p_start, pos = s.forecasts(5)
+        rates, mean90 = SV.keeper_rates(s.rp.by_round, 5)
+        starts = [a[3] / a[2] for a in rates.values() if a[2]]
+        c5 = __import__("backtest").canonical_at(s.rp.hist, 5)
+        inp = __import__("fpl_edge").reliability_inputs(__import__("fpl_edge").canonical_through(c5, 4), gws_played=4)
+        pid = next(iter(es))
+        fx = s.rp.s11.club_fixtures(inp["players"][pid]["team"], 5)
+        want_es = SV.expected_saves(rates.get(pid), mean90, s.k, [s.rp.s5.lam_opp(fid, inp["players"][pid]["team"])[0] for fid, _ in fx],
+                                    lam_bar, sum(starts) / len(starts) if starts else 90.0)
+        self.assertAlmostEqual(es[pid], want_es)                                             # lambda-bar over both sides of every fixture
         want, _ = s.rp.xp_v2(5)
         self.assertEqual(xp, want)                                                          # xp_v2 as tested, unchanged
         for pid in xp:
@@ -121,6 +134,11 @@ class Toy(unittest.TestCase):
             self.fail(f"missing input on the toy: {e}")
         self.assertEqual([r["gw"] for r in res["per"]], [5, 6])
         self.assertEqual(res["pass"], res["boot"]["lo"] > 0)
+        from unittest import mock
+        with mock.patch.object(SV.BT, "bootstrap_mean", return_value={"mean": 0.1, "lo": -0.05, "hi": 0.3, "n": 2, "p": 0.3}):
+            r2 = SV.test_2526(self.tmp, self.tmp24, out=lambda x: None, odds_file=self.odds, first=5, last=6, n_squads=3,
+                              rescored=self.rescored)
+        self.assertFalse(r2["pass"])                                                        # the lower bound decides, not the upper
         self.assertIn("pre-registered bar: 90% lower bound > 0", buf.getvalue())
         with self.assertRaises(XR.MissingInput):
             SV.test_2526(self.tmp, self.tmp24, out=lambda x: None, odds_file=self.odds, first=5, last=6, n_squads=3)
