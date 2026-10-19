@@ -2974,3 +2974,39 @@ The verifier recomputed all four with zoneinfo.
 
 **Parked for missing inputs:** parts 1, 3 and 4. Part 1's download was
 approved on 19 Oct.
+
+---
+
+## 2026-10-19 — W1 done: fpl_ep and the Odds API collector, merged, real dispatch green, final verifier PASS (`20309df`; data `bd724ca`)
+
+**Merged** `20309df` (w1-wip `ab047c3`, blob-identical). Tag `pre-W1` =
+`5b38b41`.
+
+**Built:**
+- `fpl_ep` (FPL's `ep_next`) is recorded nightly as a fifth source; with no
+  `ep_next` it is a RECORD SKIP, a WARN.
+- `fpl_odds.py` writes one Odds API answer a night as append-only gzip under
+  `odds/` on data. It calls only inside Actions, and on a dry run only with
+  `odds_live`.
+- Check 30, odds: every problem is a WARN, and so are fewer than 60 credits
+  and a missing credit header.
+- Check 24 also WARNs on any data file over 50 MB.
+
+**Measured:**
+- tests 459 -> 499;
+- the frozen-clock regeneration is byte-identical;
+- dry runs `bf91cf5` and `f7c5706` green.
+- **The real dispatch,** `bd724ca` (06:13 UTC):
+  - STATUS OK 28/28; `+ players.ep_next`; `fpl_ep` 668.
+  - The first real odds file is 10,383 bytes: 21 events, all with totals;
+    2776 prices. Credits: 12 used, 488 left.
+  - `fpl.sqlite` 1,896,448 -> 1,945,600 bytes.
+  - The projection log grew append-only, +1745 rows.
+  - GATE OK on a re-run.
+
+**Verifiers** (Fable 5.1, high), all PASS:
+- the pre-check (`verify_W1_pre.md`);
+- the re-check on the delta (`verify_W1_recheck.md`);
+- the final (`verify_W1.md`).
+
+Report: `worklog/cc_2026-10-19_W1.md`.
