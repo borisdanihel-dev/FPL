@@ -240,5 +240,111 @@ class SixthSource(unittest.TestCase):
         self.assertFalse(names & {"odds_lambda", "tools", "backtest", "chips", "league"})
 
 
+class ReportSections(unittest.TestCase):
+    """The CHIPS and LEAGUE sections (prereg/W2.md acceptance 1): byte-identical
+    to tools/chips.py and tools/league.py on the same data folder; a missing
+    input is one SKIPPED line; check 31 WARNs and never fails the night."""
+
+    def tools(self):
+        sys.path.insert(0, os.path.join(HERE, "tools"))
+        import chips as CHt
+        import league as LGt
+        return CHt, LGt
+
+    def test_byte_identical_to_the_tools(self):
+        import shutil, tempfile
+        from datetime import datetime, timezone
+        import fpl_chips, fpl_league, fpl_sections as FS
+        CHt, LGt = self.tools()
+        from tests.test_S4 import toy_data
+        from tests.test_S7 import toy_export
+        from tests.test_S9 import toy_league
+        a, b = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            toy_data(a); toy_export(a)
+            ta, tb = [], []
+            CHt.live(a, out=ta.append); fpl_chips.live(a, out=tb.append)
+            self.assertGreater(len(ta), 10)
+            self.assertEqual(tb, ta)                                                       # same data, seed and resamples
+            toy_league(b)
+            today = datetime(2026, 9, 16, tzinfo=timezone.utc)
+            la, lb = [], []
+            LGt.report(b, out=la.append, today=today); fpl_league.report(b, out=lb.append, today=today)
+            self.assertGreater(len(la), 10)
+            self.assertEqual(lb, la)
+            res = dict((t, (lines, st)) for t, lines, st in FS.sections(b, now=today))
+            self.assertEqual(res["LEAGUE"][0], la)
+            self.assertEqual(res["LEAGUE"][1], f"LEAGUE OK {len(la)} lines")
+            self.assertTrue(res["CHIPS"][1].startswith("CHIPS SKIPPED: "))                # the league toy has no chip inputs
+        finally:
+            shutil.rmtree(a, ignore_errors=True); shutil.rmtree(b, ignore_errors=True)
+
+    def test_a_missing_input_is_one_skipped_line_and_the_report_is_appended(self):
+        import shutil, tempfile
+        import fpl_sections as FS
+        tmp = tempfile.mkdtemp()
+        try:
+            report = os.path.join(tmp, "fpl_x.txt")
+            with open(report, "w", encoding="utf-8", newline="") as fh:
+                fh.write("THE REPORT\n")
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                rc = FS.main(["--report", report, "--data", tmp])
+            self.assertEqual(rc, 0)
+            printed = buf.getvalue().splitlines()
+            self.assertEqual([l.split(":")[0] for l in printed], ["CHIPS SKIPPED", "LEAGUE SKIPPED"])
+            with open(report, encoding="utf-8", newline="") as fh:
+                text = fh.read()
+            self.assertTrue(text.startswith("THE REPORT\n"))
+            self.assertIn("CHIPS (W2: S7 chip calculator)", text); self.assertIn("LEAGUE (W2: S9 league)", text)
+            self.assertEqual(sum(1 for l in text.splitlines() if " SKIPPED: " in l), 2)
+            self.assertNotIn(chr(13), text)
+            self.assertFalse([f for f in os.listdir(tmp) if "sqlite" in f])               # read-only: no database created
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_check_31_warns_and_never_fails(self):
+        import checks as C
+        nl = chr(10)
+        ok = "adding the report sections ..." + nl + "CHIPS OK 37 lines" + nl + "LEAGUE OK 69 lines" + nl
+        self.assertEqual(C.c31(C.Ctx(run_log=ok)), (C.OK, "CHIPS 37 lines, LEAGUE 69 lines"))
+        skip = ok.replace("LEAGUE OK 69 lines", "LEAGUE SKIPPED: no fpl.sqlite")
+        self.assertEqual(C.c31(C.Ctx(run_log=skip)), (C.WARN, "LEAGUE SKIPPED: no fpl.sqlite"))
+        self.assertEqual(C.c31(C.Ctx(run_log="nothing" + nl))[0], C.WARN)                  # no lines: a WARN
+        crash = "SECTIONS FAILED  fpl_sections.py exited 1 - the report has no CHIPS or LEAGUE section tonight" + nl
+        self.assertEqual(C.c31(C.Ctx(run_log=crash)), (C.WARN, crash.strip()))
+        self.assertEqual((C.NAMES[31], C.SEVERITY[31], len(C.CHECKS)), ("report sections", C.WARN, 31))
+
+    def test_a_crash_never_reddens_the_night(self):
+        import shutil, tempfile
+        import fpl_nightly as N
+        from test_fpl import NIGHTLY_EDGE_STUB
+        tmp = tempfile.mkdtemp()
+        try:
+            stubs = {"test_fpl.py": "import unittest" + chr(10) * 3 + "class Stub(unittest.TestCase):" + chr(10)
+                                    + "    def test_stub(self):" + chr(10) + "        pass" + chr(10),
+                     "fpl_sync.py": "print('sync ran')" + chr(10),
+                     "checks.py": "print('CHECKS stub')" + chr(10),
+                     "fpl_odds.py": "print('ODDS SKIPPED stub')" + chr(10),
+                     "fpl_edge.py": NIGHTLY_EDGE_STUB, "MODE": "clean",
+                     "fpl_sections.py": "raise SystemExit(3)" + chr(10),
+                     "fpl_export_gw3.json": "{}"}
+            for name, body in stubs.items():
+                with open(os.path.join(tmp, name), "w", encoding="utf-8", newline="") as fh:
+                    fh.write(body)
+            os.makedirs(os.path.join(tmp, "reports"))
+            with open(os.path.join(tmp, "reports", "fpl_2026-10-05.txt"), "w", encoding="utf-8", newline="") as fh:
+                fh.write("THE REPORT" + chr(10))                                          # the stub edge writes none
+            log = []
+            code = N.nightly(root=tmp, stamp="2026-10-05", echo=log.append)
+            text = chr(10).join(log)
+            self.assertIn("SECTIONS FAILED  fpl_sections.py exited 3", text)
+            self.assertNotIn("sections", " ".join(l for l in log if l.startswith("FINISHED WITH ERRORS")))
+            import checks as C
+            self.assertEqual(C.c31(C.Ctx(run_log=text))[0], C.WARN)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()

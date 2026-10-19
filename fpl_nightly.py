@@ -271,6 +271,17 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
             failed.append("report")
             say("EDGE FAILED")
 
+        # the CHIPS and LEAGUE sections (W2): appended to the report; a missing
+        # input is one "<SECTION> SKIPPED:" line and a crash is logged - both a
+        # WARN in check 31, never a red night (RULING W2 build)
+        if os.path.exists(os.path.join(data, report_rel)):
+            say("adding the report sections ...")
+            code = step("fpl_sections.py", "--report", report_rel)
+            if code != 0:
+                say(f"SECTIONS FAILED  fpl_sections.py exited {code} - the report has no CHIPS or LEAGUE section tonight")
+        else:
+            say("SECTIONS FAILED  no report to add the sections to")
+
         # the GW stuck alarm: a gameweek not final 72 h after its last kickoff
         # turns the run red (BUILD_PLAN.md Step 2.1)
         say("checking for a stuck gameweek ...")

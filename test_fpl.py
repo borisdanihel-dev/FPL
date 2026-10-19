@@ -6462,7 +6462,8 @@ class StepTwoFiles(unittest.TestCase):
     ProjectionLogKey). p1_eval.py is frozen and not checked."""
 
     RUNNER = ("fpl_edge.py", "fpl_sync.py", "fpl_nightly.py", "fpl_gate.py", "fpl_publish.py",
-              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py", "checks.py", "fpl_alert.py", "fpl_lambda.py")
+              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py", "checks.py", "fpl_alert.py", "fpl_lambda.py",
+              "fpl_sections.py", "fpl_chips.py", "fpl_league.py", "fpl_bt.py", "fpl_pit.py")
 
     def test_every_text_open_names_utf8_and_newline(self):
         import re
