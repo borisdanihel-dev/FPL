@@ -3960,3 +3960,18 @@ Calafiori 5.83; Haaland 5.68 and Mbeumo 5.67 just outside. Suite 686 →
 RULINGS PART F are verbatim in BUILD_PLAN.md "Part F - queued rulings",
 queued after the GW8 queue. F-A (12 dry runs per UTC day) applies now, and
 W1b's cap moves to 12 when W1b is worked.
+
+## 2026-10-19 — S6e (F-E): xp_v2 + saves, the 2025/26 test FAILS (`16f6605` prereg, `87f6282` code; on `s6e-wip`)
+
+- **Model:** for goalkeepers, xp_v2 + P(start) × E[saves | start] / 3, with
+  S11's shrink (k from 2024/25 split-half, 33.3) and the λ_opp ratio.
+- **Primary** (keeper points on S7's 50 squads, + saves − xp_v2):
+  −0.101 per squad per gameweek, 90% CI [−0.197, −0.007] → **FAIL**; season
+  −3.4.
+- **Information:** keeper MAE +0.393 [+0.340, +0.444] (worse); the choice
+  differs in 13% of squad-gameweeks.
+- **Not adopted.** The ruled E[saves]/3 overstates E[floor(saves/3)]; a
+  discretised variant would need its own test. The 2024/25 run waits on
+  the harness (shared with the parked F-D).
+- **Checks:** suite 692; mutations 6 of 6 after the test-gap fix; verifier
+  PASS (`worklog/verify_S6e.md`).
