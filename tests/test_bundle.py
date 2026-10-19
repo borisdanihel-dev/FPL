@@ -88,6 +88,59 @@ class Hand(unittest.TestCase):
         self.assertEqual(b_text0, "roll")
 
 
+class NamedPlans(unittest.TestCase):
+    def setUp(self):
+        self.squad = squad15()
+        self.squad[13]["name"] = "Thiago"                                                 # forward 14 is Thiago
+        self.market = [dict(r, status="a") for r in self.squad] + [
+            {"id": 201, "name": "João Pedro", "team": "TOT", "pos": 4, "price": 7.8, "status": "a"},
+            {"id": 202, "name": "Cheap Mid", "team": "BOU", "pos": 3, "price": 4.5, "status": "a"},
+            {"id": 203, "name": "Star Fwd", "team": "BOU", "pos": 4, "price": 7.5, "status": "a"},   # affordable, but only for an XI forward
+            {"id": 204, "name": "Keeper", "team": "BOU", "pos": 1, "price": 4.5, "status": "a"}]
+        # XI players 2.0, the four bench slots (keeper 2, defender 7, midfielders 11 and 12) 1.0; week 0 only differs for the incomings
+        xp0 = {r["id"]: (1.0 if r["id"] in (2, 7, 11, 12) else 2.0) for r in self.squad}
+        xp0.update({201: 2.1, 202: 1.5, 203: 9.0, 204: 1.2})
+        later = {**{r["id"]: 2.0 for r in self.squad}, 201: 2.0, 202: 1.0, 203: 2.0, 204: 1.0}
+        self.xp = [xp0] + [dict(later) for _ in range(5)]
+        self.inp = {"squad": self.squad, "bank": 3.0, "k": 1, "market": self.market, "xp_weeks": self.xp, "weeks": list(range(8, 14))}   # 3.0 + 5.0 - 7.8 = 0.2 left
+
+    def test_named_swap_roll_and_the_bench_boost_upgrade(self):
+        rows = G.named_plans(self.inp, {}, 1)
+        self.assertEqual([r[0][:6] for r in rows], ["Thiago", "roll", "best s"])
+        label, ev, note = rows[0]
+        self.assertIsNone(note); self.assertEqual([i["id"] for i in ev["ins"]], [201])          # 'Joao Pedro' finds 'João Pedro'
+        want = P.evaluate(((self.squad[13],), (self.market[-4],)), self.squad, self.xp, P.DECAY, P.SCHEDULES["boris"], 1, {})
+        self.assertEqual(ev["score"], want["score"]); self.assertEqual(ev["gains"], want["gains"])  # the planner's own scorer
+        self.assertAlmostEqual(ev["gains"][0], 0.2)                                                 # 2.1 replaces a 2.0 forward in the XI (+0.1) and becomes the captain (+0.1)
+        _, roll, note = rows[1]
+        self.assertIsNone(note); self.assertEqual((roll["score"], roll["gain"], roll["hits"], roll["lost"]), (0.0, 0.0, 0, 0.0))
+        label, bb, note = rows[2]
+        self.assertIsNone(note); self.assertIn("Bench Boost", label)
+        self.assertIn(bb["outs"][0]["id"], (2, 7, 11, 12))                                          # a bench slot goes out ...
+        self.assertEqual(bb["ins"][0]["id"], 202)                                                   # ... for the cheap midfielder: 1.5 for a 1.0
+        self.assertAlmostEqual(bb["gains"][0], 0.5)                                                 # counts under Bench Boost ...
+        xi_based = P.evaluate(((bb["outs"][0],), (bb["ins"][0],)), self.squad, self.xp, P.DECAY, P.SCHEDULES["boris"], 1, {})
+        self.assertAlmostEqual(xi_based["gains"][0], 0.0)                                           # ... and not in the planner's XI valuation
+        self.assertNotEqual(bb["ins"][0]["id"], 203)                                                # the 9.0 forward would need an XI forward out: not a bench upgrade
+        # the roll is refused at the cap; a missing name and an unaffordable swap are reported, never scored
+        rows5 = G.named_plans(self.inp, {}, 5)
+        self.assertIsNone(rows5[1][1]); self.assertIn("never sit on 5", rows5[1][2])
+        rows_x = G.named_plans(self.inp, {}, 1, swap=("Thiago", "Nobody"))
+        self.assertIsNone(rows_x[0][1]); self.assertIn("missing input", rows_x[0][2]); self.assertIn("Nobody", rows_x[0][2])
+        dear = dict(self.inp, bank=-5.0)
+        rows_d = G.named_plans(dear, {}, 1)
+        self.assertIsNone(rows_d[0][1]); self.assertIn("over budget", rows_d[0][2])
+        two = [dict(r) for r in self.squad]; two[12]["name"] = "Thiago"
+        rows_2 = G.named_plans(dict(self.inp, squad=two), {}, 1)
+        self.assertIn("2 players named Thiago", rows_2[0][2])
+        self.assertEqual(G.norm_name("JOÃO Pedro "), "joao pedro"); self.assertEqual(G.CONFIRMED_FT, {8: 1})
+        self.assertIsNone(G.why_illegal(self.squad, 0.0))
+        self.assertIn("from CHE", G.why_illegal(self.squad[:14] + [dict(self.squad[14], id=99, team="CHE", pos=1)], 0.0))   # a fourth from CHE
+        bha3 = self.squad[:9] + [dict(self.squad[9], pos=2)] + self.squad[10:14] + [dict(self.squad[14], id=99, team="BHA", pos=2)]   # BHA: three defenders, three in all
+        self.assertIn("3 GK/DEF from BHA", G.why_illegal(bha3, 0.0))
+        self.assertIn("over budget", G.why_illegal(self.squad, -0.1))
+
+
 class Toy(unittest.TestCase):
     def test_bundle_on_the_toy_export_reports_missing_sections(self):
         tmp = tempfile.mkdtemp()
@@ -104,7 +157,8 @@ class Toy(unittest.TestCase):
             self.assertIn("BASELINE (best one-week move", text)                     # ... S7 and S8 run on the toy ...
             self.assertIn("NEXT GAMEWEEK GW8", text)
             self.assertIn("DEFAULT = the baseline", text + "the planner agrees")
-            self.assertTrue("section failed" in text or "missing input" in text)   # ... and the sections the toy cannot feed say so
+            self.assertIn("section failed", text)                                  # ... and the sections the toy cannot feed say so (its sqlite lacks the real schema)
+            self.assertIn("missing input: our squad: no player named Thiago", text)   # the named swap on a toy without him
             self.assertNotIn("Traceback", text)
             rec = PV.read_run(out)
             self.assertEqual(rec["tool"], "tools/gw_pass.py"); self.assertIn("gw8_pass.txt", rec["outputs"])

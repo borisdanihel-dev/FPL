@@ -25,7 +25,10 @@ bundle continues; nothing is substituted.
 """
 import argparse
 import os
+import sqlite3
 import sys
+import unicodedata
+from collections import Counter
 from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,6 +67,24 @@ def section(out, title, fn):
     except Exception as e:                       # a section's tool failed: said, never substituted; the pass goes on
         out(f"  section failed: {type(e).__name__}: {e}")
         return None
+
+
+def sqlite_deadline(data_dir, event):
+    """events.deadline_time of `event` from fpl.sqlite, as the runner reads
+    it (UTC); None when the database or the row is missing."""
+    db = os.path.join(data_dir, "fpl.sqlite")
+    if not os.path.exists(db):
+        return None
+    c = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        row = c.execute("select deadline_time from events where id = ?", (event,)).fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        c.close()
+    if not row or not row[0]:
+        return None
+    return datetime.fromisoformat(row[0].replace("Z", "+00:00"))
 
 
 def plan_text(outs, ins):
@@ -105,6 +126,100 @@ def baseline_note(results, inp):
     return plan_text(b_outs, b_ins), p_text, n_text, default
 
 
+CONFIRMED_FT = {8: 1}                      # Boris, 19 Oct: 1 free transfer for GW8 (the planner's estimate was right)
+NAMED_SWAP = ("Thiago", "Joao Pedro")      # bundle amendment 1, row (1)
+
+
+def norm_name(s):
+    """Accents and case stripped, so 'Joao Pedro' finds 'João Pedro'."""
+    return "".join(c for c in unicodedata.normalize("NFKD", s or "") if not unicodedata.combining(c)).lower().strip()
+
+
+def find_player(rows, name, where):
+    hits = [r for r in rows if norm_name(r["name"]) == norm_name(name)]
+    if not hits:
+        raise MissingInput(f"{where}: no player named {name}")
+    if len(hits) > 1:
+        raise MissingInput(f"{where}: {len(hits)} players named {name} ({', '.join(f'{r['name']} {r['team']}' for r in hits)})")
+    return hits[0]
+
+
+def why_illegal(rows15, bank_after):
+    """The reason a 15 is not allowed, or None."""
+    if bank_after < -1e-9:
+        return f"over budget by £{-bank_after:.1f}m"
+    clubs = Counter(r["team"] for r in rows15)
+    club, n = clubs.most_common(1)[0]
+    if n > PL.CLUB_MAX:
+        return f"{n} from {club} (cap {PL.CLUB_MAX})"
+    gkdef = Counter(r["team"] for r in rows15 if r["pos"] in (1, 2))
+    if gkdef and max(gkdef.values()) > PL.GKDEF_CLUB_MAX:
+        club, n = gkdef.most_common(1)[0]
+        return f"{n} GK/DEF from {club} (cap {PL.GKDEF_CLUB_MAX})"
+    return None
+
+
+def value_bb(rows15, xp):
+    """GW value with Bench Boost: all 15 count, plus the captain (the highest)."""
+    projs = [xp.get(r["id"], 0.0) for r in rows15]
+    return sum(projs) + max(projs)
+
+
+def evaluate_bb(plan, squad, xp_weeks, decay, schedule, k, p_start):
+    """planner.evaluate with the first week valued under Bench Boost."""
+    ev = PL.evaluate(plan, squad, xp_weeks, decay, schedule, k, p_start)
+    if ev is None:
+        return None
+    outs, ins = plan
+    rows = [r for r in squad if r["id"] not in {o["id"] for o in outs}] + list(ins)
+    g0 = value_bb(rows, xp_weeks[0]) - value_bb(squad, xp_weeks[0])
+    gains = [g0] + list(ev["gains"][1:])
+    gain = sum(decay ** t * g for t, g in enumerate(gains))
+    return dict(ev, gains=gains, gain=gain, score=gain - PL.HIT * ev["hits"] - ev["lost"])
+
+
+def named_plans(inp, p_start, k, decay=PL.DECAY, schedule=PL.SCHEDULES["boris"], swap=NAMED_SWAP):
+    """Bundle amendment 1: [(label, evaluation or None, note)] for (1) the
+    named swap, (2) the roll, (3) the best single bench upgrade under
+    Bench Boost in the first week (outgoing = one of the four bench slots
+    of the first week's XI by the same xP; incoming = any affordable
+    same-position market player)."""
+    squad, bank, market, xp_weeks = inp["squad"], inp["bank"], inp["market"], inp["xp_weeks"]
+    ids = {r["id"] for r in squad}
+    rows = []
+    label = f"{swap[0]} -> {swap[1]}"
+    try:
+        out = find_player(squad, swap[0], "our squad")
+        inc = find_player(market, swap[1], "the market")
+        new15 = [r for r in squad if r["id"] != out["id"]] + [inc]
+        why = why_illegal(new15, bank + out["selling"] - inc["price"])
+        if why:
+            rows.append((label, None, f"not allowed: {why}"))
+        else:
+            ev = PL.evaluate(((out,), (inc,)), squad, xp_weeks, decay, schedule, k, p_start)
+            rows.append((label, ev, None if ev else "not allowed by the hit rule (the gain, one fixture or an incoming P(start) < 0.8)"))
+    except MissingInput as e:
+        rows.append((label, None, f"missing input: {e}"))
+    ev = PL.evaluate(((), ()), squad, xp_weeks, decay, schedule, k, p_start)
+    rows.append(("roll", ev, None if ev else f"not allowed: {k} banked, never sit on {PL.MAX_FT}"))
+    xi, bench, gk = CH.xi_and_bench([dict(r) for r in squad], xp_weeks[0])
+    bench_ids = {gk["id"]} | {r["id"] for r in bench}
+    best = None
+    for out in [r for r in squad if r["id"] in bench_ids]:
+        for inc in market:
+            if inc["pos"] != out["pos"] or inc["id"] in ids:
+                continue
+            new15 = [r for r in squad if r["id"] != out["id"]] + [inc]
+            if why_illegal(new15, bank + out["selling"] - inc["price"]):
+                continue
+            ev = evaluate_bb(((out,), (inc,)), squad, xp_weeks, decay, schedule, k, p_start)
+            if ev and (best is None or (ev["score"], -inc["id"]) > (best["score"], -best["ins"][0]["id"])):
+                best = ev
+    rows.append(("best single bench upgrade under Bench Boost (the first week's term values all 15)", best,
+                 None if best else "no legal single bench upgrade"))
+    return rows
+
+
 def side_by_side(squad, own_pts, v2_pts):
     """[(slot, own row, xp_v2 row)] for the XI (1-11), the bench (12-15:
     the sub keeper then the outfield bench) and the captains; rows carry
@@ -131,8 +246,8 @@ def bundle(data_dir, out=print, now=None):
     log_rows = E.read_log(os.path.join(data_dir, E.LOG_PATH))
     target = d["gameweek"] + 1
     now = now or datetime.now(timezone.utc)
-    dl = E.event_deadline(d, target)
-    out(f"GW PASS  GW{target} (deadline {f'{dl:%Y-%m-%d %H:%M} UTC' if dl else 'unknown'}) from {os.path.basename(path)}; generated {now:%Y-%m-%d %H:%M} UTC; "
+    dl = sqlite_deadline(data_dir, target)                   # RULING landing + S11 item 3: fpl.sqlite events.deadline_time, as the runner reads it
+    out(f"GW PASS  GW{target} (deadline {f'{dl:%Y-%m-%d %H:%M} UTC' if dl else 'not in fpl.sqlite events'}) from {os.path.basename(path)}; generated {now:%Y-%m-%d %H:%M} UTC; "
         f"information only - no section here is adopted or recorded; the baseline is the default where the planner differs")
     section(out, SECTIONS[0], lambda: OL.live(data_dir, out, now=now))
     section(out, SECTIONS[1], lambda: CH.live(data_dir, out))
@@ -146,6 +261,23 @@ def bundle(data_dir, out=print, now=None):
         out(f"  planner top plan: {p_text}")
         out(f"  planner, no hits: {n_text}")
         out(f"  {default}")
+        k = CONFIRMED_FT.get(target, inp["k"])
+        d_ev = {"events": d.get("events") or []}
+        p_start = {int(r["player_id"]): float(r["predicted"]) for r in E.forecasts(log_rows, d_ev)
+                   if r["source"] == "minutes" and int(r["event"]) == target}
+        out("")
+        out(f"  NAMED PLANS (bundle amendment 1): free transfers {k}" + (" confirmed by Boris" if target in CONFIRMED_FT else " (the planner's estimate)")
+            + f", planner estimate {inp['k']}" + ("" if k == inp["k"] else "  [DIFFERS]")
+            + f"; score = decayed gain - 4 x hits - lost FT value, Boris's schedule, decay {PL.DECAY}")
+        out(f"  {'#':>2} {'score':>7} {'gain':>7} {'hits':>5} {'lostFT':>7}  {'weekly dxP':<36} plan")
+        for i, (label, ev, note) in enumerate(named_plans(inp, p_start, k), 1):
+            if ev is None:
+                out(f"  {i:>2} {'-':>7} {'-':>7} {'-':>5} {'-':>7}  {'':<36} {label}: {note}")
+                continue
+            plan = plan_text(ev["outs"], ev["ins"]) if ev["outs"] else "roll"
+            weekly = " ".join(f"{g:+5.1f}" for g in ev["gains"])
+            out(f"  {i:>2} {ev['score']:7.2f} {ev['gain']:7.2f} {ev['hits']:5d} {ev['lost']:7.2f}  {weekly:<36} {label}: {plan}"
+                + ("   (GW term 1 under Bench Boost)" if label.startswith("best single bench") else ""))
         return results
     section(out, SECTIONS[2], planner)
     section(out, SECTIONS[3], lambda: LG.report(data_dir, out, now))
