@@ -5,6 +5,32 @@ Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
 before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
 this file, then waits for the next instruction.
 
+- **Monday 19 Oct, later (RULING lane A 19 Oct midday, verbatim in prereg/S16.md):**
+  - **S10 landed** on master `349e1a7`, merge `63906e6`.
+    - Measurement PASS: 11,361 of 11,361; verifier PASS; landing dry run
+      `415c9a9`.
+    - It had merged lane B's landing of S4, S5, S6, S7 and S9 (`6bd378b`)
+      first.
+  - **Downloads are data, never code:** now a rule in `CLAUDE.md` (both lanes).
+    The 06:45 UTC incident is in CHANGELOG (`47142a3`).
+  - **S16 part 1** (blank and double history, 2018/19 on, from the `event`
+    field): built on `s16-wip` (`2ed24d6` code, `0bec736` report).
+    - Reproduction PASS, 2024-25 and 2025-26; verifier PASS.
+    - Waits for one green dry run of `s16-wip`, then the CHANGELOG entry and
+      the merge.
+  - **Open for the chat:**
+    - 2022-23 GW7: the whole-round blank reads as an unused number, so
+      2022-23 counts 22 blanks against 42 doubles;
+    - the goalkeeper goal: 6 in the frozen `bottomup` model, 10 in
+      `game_config`;
+    - check 30's "any of three" reading.
+  - **Next, by plan:**
+    - S2b on Tuesday: the dry run of `s2b-wip`, the verifier on the dry run
+      and the delta, tag `pre-S2b`, merge before 21:00 UTC, real dispatch,
+      after-measurement;
+    - W1b on Wednesday: merge master into `w1b-wip` first. `BUILD_PLAN.md`
+      changed on master in lane B's landing; W1b's Part E text must merge
+      cleanly.
 - **Monday 19 Oct (RULING morning 19 Oct, verbatim in the W1, S2b, W1b, S16
   and S10 preregs):**
   - **W1 done.**
