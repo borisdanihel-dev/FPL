@@ -1513,3 +1513,1668 @@ STATUS OK | generated 2026-10-19T06:13:12Z | next deadline GW8 2026-10-23 17:30 
 30 OK   odds snapshot: 21 events (21 with totals), 2776 prices, odds/odds_2026-10-19T0613Z.json.gz 10383 bytes; credits used 12, remaining 488, this request 4
 CHECKS OK  -> reports/status.txt
 Done. Report: reports/fpl_2026-10-19.txt
+==== run 2026-10-19 UTC, started 2026-10-19 22:03:36 UTC ====
+working dir: /home/runner/work/FPL/FPL
+data dir: /home/runner/work/FPL/FPL/data
+using: /opt/hostedtoolcache/Python/3.14.8/x64/bin/python
+RESTORED     fpl_export_gw3_2026-09-11.json -> fpl_export_gw3.json
+RESTORED     fpl_export_gw4_2026-09-17.json -> fpl_export_gw4.json
+RESTORED     fpl_export_gw5_2026-10-09.json -> fpl_export_gw5.json
+RESTORED     fpl_export_gw6_2026-10-16.json -> fpl_export_gw6.json
+RESTORED     fpl_export_gw7_2026-10-19.json.gz -> fpl_export_gw7.json
+running tests ...
+test_a_create_that_fails_for_another_reason_is_red (test_fpl.BackupStep.test_a_create_that_fails_for_another_reason_is_red) ... /home/runner/work/FPL/FPL/test_fpl.py:5435: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpdtgp7124/gh.log' mode='r' encoding='utf-8'>
+  calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_dry_run_calls_no_gh (test_fpl.BackupStep.test_a_dry_run_calls_no_gh) ... ok
+test_a_manual_dispatch_on_sunday_without_force_backup_makes_no_backup (test_fpl.BackupStep.test_a_manual_dispatch_on_sunday_without_force_backup_makes_no_backup) ... ok
+test_a_manual_dispatch_with_force_backup_backs_up_any_day (test_fpl.BackupStep.test_a_manual_dispatch_with_force_backup_backs_up_any_day) ... /home/runner/work/FPL/FPL/test_fpl.py:5435: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpx2pswk60/gh.log' mode='r' encoding='utf-8'>
+  calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_release_made_meanwhile_is_skipped_and_never_fails (test_fpl.BackupStep.test_a_release_made_meanwhile_is_skipped_and_never_fails) ... /home/runner/work/FPL/FPL/test_fpl.py:5435: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmppl68tjj2/gh.log' mode='r' encoding='utf-8'>
+  calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_release_that_exists_is_skipped_and_never_fails (test_fpl.BackupStep.test_a_release_that_exists_is_skipped_and_never_fails) ... /home/runner/work/FPL/FPL/test_fpl.py:5435: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp3zr6dgda/gh.log' mode='r' encoding='utf-8'>
+  calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_scheduled_run_backs_up_on_sunday (test_fpl.BackupStep.test_the_scheduled_run_backs_up_on_sunday) ... /home/runner/work/FPL/FPL/test_fpl.py:5435: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpb6muhls3/gh.log' mode='r' encoding='utf-8'>
+  calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_scheduled_run_skips_other_days (test_fpl.BackupStep.test_the_scheduled_run_skips_other_days) ... ok
+test_clean_run_says_done_and_exits_zero (test_fpl.BatchRecordCheck.test_clean_run_says_done_and_exits_zero) ... skipped 'runs fpl_run.bat under cmd.exe'
+test_every_source_gets_one_line_and_a_silent_crash_is_caught (test_fpl.BatchRecordCheck.test_every_source_gets_one_line_and_a_silent_crash_is_caught) ... skipped 'runs fpl_run.bat under cmd.exe'
+test_a_squad_without_a_bench_keeper_reads_a_dash (test_fpl.BenchAudit.test_a_squad_without_a_bench_keeper_reads_a_dash) ... ok
+test_a_worse_bench_keeper_adds_nothing (test_fpl.BenchAudit.test_a_worse_bench_keeper_adds_nothing) ... ok
+test_the_keeper_swap_alone (test_fpl.BenchAudit.test_the_keeper_swap_alone) ... ok
+test_the_keeper_swap_joins_the_outfield_swap (test_fpl.BenchAudit.test_the_keeper_swap_joins_the_outfield_swap) ... ok
+test_blank_week_gives_no_forecast (test_fpl.BenchBoost.test_blank_week_gives_no_forecast) ... ok
+test_default_squad_is_my_fifteen_and_ids_override (test_fpl.BenchBoost.test_default_squad_is_my_fifteen_and_ids_override) ... ok
+test_double_counts_twice (test_fpl.BenchBoost.test_double_counts_twice) ... ok
+test_fixture_term_moves_gk_def_and_not_mid_fwd (test_fpl.BenchBoost.test_fixture_term_moves_gk_def_and_not_mid_fwd)
+Concede more in the past -> a worse clean-sheet probability. That ... ok
+test_flag_constant_matches_the_frozen_p1_definition (test_fpl.BenchBoost.test_flag_constant_matches_the_frozen_p1_definition) ... ok
+test_flag_is_the_frozen_inclusive_two_thirds (test_fpl.BenchBoost.test_flag_is_the_frozen_inclusive_two_thirds) ... ok
+test_fodder_cost_comes_out_of_the_xi_budget_when_it_binds (test_fpl.BenchBoost.test_fodder_cost_comes_out_of_the_xi_budget_when_it_binds)
+With 100m the synthetic pool never touches the ceiling; at 77m it ... ok
+test_fodder_xi_has_the_same_formation_and_lives_within_budget (test_fpl.BenchBoost.test_fodder_xi_has_the_same_formation_and_lives_within_budget) ... ok
+test_gk_def_at_fdr4_counts_only_gk_and_def (test_fpl.BenchBoost.test_gk_def_at_fdr4_counts_only_gk_and_def) ... ok
+test_section_prints_two_labelled_numbers_per_week (test_fpl.BenchBoost.test_section_prints_two_labelled_numbers_per_week) ... ok
+test_a_bench_player_is_never_compared_across_positions (test_fpl.BenchVsXI.test_a_bench_player_is_never_compared_across_positions) ... ok
+test_a_blank_xi_player_is_the_one_to_swap (test_fpl.BenchVsXI.test_a_blank_xi_player_is_the_one_to_swap) ... ok
+test_bench_player_above_the_lowest_xi_of_his_position_is_a_swap (test_fpl.BenchVsXI.test_bench_player_above_the_lowest_xi_of_his_position_is_a_swap) ... ok
+test_flag_line_names_xi_players_under_the_frozen_flag (test_fpl.BenchVsXI.test_flag_line_names_xi_players_under_the_frozen_flag) ... ok
+test_projections_are_one_unit_the_full_model (test_fpl.BenchVsXI.test_projections_are_one_unit_the_full_model) ... ok
+test_wildcard_appends_the_screen_for_the_drafted_fifteen (test_fpl.BoostOnDraft.test_wildcard_appends_the_screen_for_the_drafted_fifteen) ... ok
+test_blank_gameweek_gets_no_forecast (test_fpl.BottomUpModel.test_blank_gameweek_gets_no_forecast)
+A team with no fixture must be skipped, not given a default FDR. ... ok
+test_both_models_log_side_by_side (test_fpl.BottomUpModel.test_both_models_log_side_by_side) ... ok
+test_cs_rate_falls_back_when_sample_too_small (test_fpl.BottomUpModel.test_cs_rate_falls_back_when_sample_too_small) ... ok
+test_cs_rate_handles_no_results (test_fpl.BottomUpModel.test_cs_rate_handles_no_results) ... ok
+test_defcon_is_not_double_counted (test_fpl.BottomUpModel.test_defcon_is_not_double_counted)
+defcon_expectation already returns points; adding 2 pts of DEFCON ... ok
+test_defenders_gain_more_from_easy_fixtures_than_forwards (test_fpl.BottomUpModel.test_defenders_gain_more_from_easy_fixtures_than_forwards)
+Clean sheet value is 4 for a defender, 0 for a forward. Uses an ... ok
+test_double_gameweek_sums_both_fixtures (test_fpl.BottomUpModel.test_double_gameweek_sums_both_fixtures)
+The summing lives in record_projections, so the assertion must come ... ok
+test_flat_cs_table_means_fixtures_do_not_move_defenders (test_fpl.BottomUpModel.test_flat_cs_table_means_fixtures_do_not_move_defenders)
+Guards the failure mode the previous test exposed. ... ok
+test_injury_doubt_scales_it_down (test_fpl.BottomUpModel.test_injury_doubt_scales_it_down) ... ok
+test_missing_starts_field_falls_back_to_season (test_fpl.BottomUpModel.test_missing_starts_field_falls_back_to_season) ... ok
+test_non_starter_projects_to_zero (test_fpl.BottomUpModel.test_non_starter_projects_to_zero) ... ok
+test_start_probability_does_not_decay_over_the_season (test_fpl.BottomUpModel.test_start_probability_does_not_decay_over_the_season)
+starts_last4 caps at 4, so the denominator must cap at 4 too. ... ok
+test_xg_drives_goals_by_position_value (test_fpl.BottomUpModel.test_xg_drives_goals_by_position_value)
+Same xG is worth more to a defender (6) than a forward (4). ... ok
+test_xg_rate_uses_season_minutes_not_last_four (test_fpl.BottomUpModel.test_xg_rate_uses_season_minutes_not_last_four)
+xG is a season total. Dividing by a 4-week window inflates it once ... ok
+test_zero_recent_starts_is_not_treated_as_missing (test_fpl.BottomUpModel.test_zero_recent_starts_is_not_treated_as_missing)
+A player who has stopped starting must not fall back to season ... ok
+test_blank_and_double_gameweeks (test_fpl.BottomupSource.test_blank_and_double_gameweeks) ... ok
+test_logged_value_is_project_reliability (test_fpl.BottomupSource.test_logged_value_is_project_reliability) ... ok
+test_budget_is_the_bank_plus_selling_prices_never_value (test_fpl.Budget.test_budget_is_the_bank_plus_selling_prices_never_value)
+S2, Step 2.8: selling prices, never `value`, in every budget. ... ok
+test_real_export_value_is_prices_plus_bank (test_fpl.Budget.test_real_export_value_is_prices_plus_bank)
+If a real export is sitting here: value - (sum of my 15's prices + ... ok
+test_both_adapters_emit_the_same_contract (test_fpl.CanonicalContract.test_both_adapters_emit_the_same_contract) ... ok
+test_check_canonical_rejects_a_renamed_field (test_fpl.CanonicalContract.test_check_canonical_rejects_a_renamed_field) ... ok
+test_export_without_ids_is_refused (test_fpl.CanonicalContract.test_export_without_ids_is_refused) ... ok
+test_arithmetic_on_five_games_with_one_spike (test_fpl.Concentration.test_arithmetic_on_five_games_with_one_spike) ... ok
+test_blanks_and_the_sixty_minute_gate (test_fpl.Concentration.test_blanks_and_the_sixty_minute_gate) ... ok
+test_columns_printed_in_the_shortlists_xi_and_squad_section (test_fpl.Concentration.test_columns_printed_in_the_shortlists_xi_and_squad_section) ... ok
+test_ordering_and_projection_ignore_the_variants (test_fpl.Concentration.test_ordering_and_projection_ignore_the_variants) ... ok
+test_an_undefined_variant_falls_back_to_raw (test_fpl.ConcentrationTest.test_an_undefined_variant_falls_back_to_raw) ... ok
+test_metrics_are_p_start_times_fixtures_times_rate_for_mid_fwd_only (test_fpl.ConcentrationTest.test_metrics_are_p_start_times_fixtures_times_rate_for_mid_fwd_only) ... ok
+test_paired_bootstrap_is_seeded_paired_and_finds_a_real_gain (test_fpl.ConcentrationTest.test_paired_bootstrap_is_seeded_paired_and_finds_a_real_gain) ... ok
+test_report_carries_both_horizons_the_pairs_and_the_verdict (test_fpl.ConcentrationTest.test_report_carries_both_horizons_the_pairs_and_the_verdict) ... ok
+test_rule_needs_both_positions_above_raw_with_intervals_excluding_zero (test_fpl.ConcentrationTest.test_rule_needs_both_positions_above_raw_with_intervals_excluding_zero) ... ok
+test_target_weeks_do_not_leak_and_incomplete_horizons_are_skipped (test_fpl.ConcentrationTest.test_target_weeks_do_not_leak_and_incomplete_horizons_are_skipped) ... ok
+test_best_xi_is_legal (test_fpl.Correctness.test_best_xi_is_legal) ... ok
+test_built_squad_respects_all_constraints (test_fpl.Correctness.test_built_squad_respects_all_constraints) ... ok
+test_free_transfer_estimate (test_fpl.Correctness.test_free_transfer_estimate) ... ok
+test_free_transfers_cap_at_five (test_fpl.Correctness.test_free_transfers_cap_at_five) ... ok
+test_identity_falls_back_without_entry_id (test_fpl.Correctness.test_identity_falls_back_without_entry_id) ... ok
+test_identity_uses_entry_id (test_fpl.Correctness.test_identity_uses_entry_id) ... ok
+test_projection_is_shrunk_not_raw (test_fpl.Correctness.test_projection_is_shrunk_not_raw)
+A three-game hot streak must not project at its raw rate. ... ok
+test_ticker_has_one_row_per_gameweek (test_fpl.Correctness.test_ticker_has_one_row_per_gameweek) ... ok
+test_a_changed_frozen_forecast_is_rejected (test_fpl.DataGate.test_a_changed_frozen_forecast_is_rejected) ... ok
+test_a_crlf_checkout_of_the_same_log_passes (test_fpl.DataGate.test_a_crlf_checkout_of_the_same_log_passes) ... ok
+test_a_database_that_reads_but_fails_integrity_check_is_rejected (test_fpl.DataGate.test_a_database_that_reads_but_fails_integrity_check_is_rejected) ... ok
+test_a_forecast_added_after_the_deadline_is_rejected (test_fpl.DataGate.test_a_forecast_added_after_the_deadline_is_rejected) ... ok
+test_a_gameweek_before_its_deadline_may_be_rewritten (test_fpl.DataGate.test_a_gameweek_before_its_deadline_may_be_rewritten) ... ok
+test_a_good_night_passes_and_writes_the_dump (test_fpl.DataGate.test_a_good_night_passes_and_writes_the_dump) ... ok
+test_a_gz_that_cannot_be_read_fails_the_commit (test_fpl.DataGate.test_a_gz_that_cannot_be_read_fails_the_commit) ... ok
+test_a_key_inside_a_gzipped_export_fails_the_commit (test_fpl.DataGate.test_a_key_inside_a_gzipped_export_fails_the_commit)
+S1 amendment 2, point 1: the scan reads .gz files decompressed. ... ok
+test_a_logged_gameweek_without_a_deadline_is_rejected (test_fpl.DataGate.test_a_logged_gameweek_without_a_deadline_is_rejected) ... ok
+test_a_missing_frozen_forecast_is_rejected (test_fpl.DataGate.test_a_missing_frozen_forecast_is_rejected) ... ok
+test_a_missing_table_is_rejected (test_fpl.DataGate.test_a_missing_table_is_rejected) ... ok
+test_a_new_block_for_a_past_gameweek_is_rejected (test_fpl.DataGate.test_a_new_block_for_a_past_gameweek_is_rejected) ... ok
+test_a_new_table_in_the_expected_list_passes (test_fpl.DataGate.test_a_new_table_in_the_expected_list_passes) ... ok
+test_a_new_table_outside_the_expected_list_is_rejected (test_fpl.DataGate.test_a_new_table_outside_the_expected_list_is_rejected) ... ok
+test_a_secret_hit_fails_loudly_on_the_runner (test_fpl.DataGate.test_a_secret_hit_fails_loudly_on_the_runner) ... ok
+test_a_truncated_database_is_rejected_and_nothing_is_dumped (test_fpl.DataGate.test_a_truncated_database_is_rejected_and_nothing_is_dumped) ... ok
+test_clean_staged_files_pass_the_secret_scan (test_fpl.DataGate.test_clean_staged_files_pass_the_secret_scan) ... ok
+test_emptying_any_grow_only_table_is_rejected (test_fpl.DataGate.test_emptying_any_grow_only_table_is_rejected) ... ok
+test_every_key_pattern_in_any_case_fails_the_commit (test_fpl.DataGate.test_every_key_pattern_in_any_case_fails_the_commit) ... ok
+test_fewer_price_rows_than_the_last_commit_is_rejected (test_fpl.DataGate.test_fewer_price_rows_than_the_last_commit_is_rejected) ... ok
+test_grow_only_holds_exactly_the_tables_the_sync_never_deletes_from (test_fpl.DataGate.test_grow_only_holds_exactly_the_tables_the_sync_never_deletes_from)
+S1 amendment 2, point 3: a table is grow-only only if fpl_sync.py ... ok
+test_no_database_in_the_last_commit_is_rejected (test_fpl.DataGate.test_no_database_in_the_last_commit_is_rejected) ... ok
+test_no_log_in_the_last_commit_or_now_is_rejected (test_fpl.DataGate.test_no_log_in_the_last_commit_or_now_is_rejected) ... ok
+test_the_dump_rebuilds_the_database_row_for_row (test_fpl.DataGate.test_the_dump_rebuilds_the_database_row_for_row) ... ok
+test_the_expected_list_is_exactly_the_sync_schema (test_fpl.DataGate.test_the_expected_list_is_exactly_the_sync_schema) ... ok
+test_the_key_value_fails_the_commit_and_is_never_printed (test_fpl.DataGate.test_the_key_value_fails_the_commit_and_is_never_printed) ... ok
+test_the_migration_writes_the_data_branch_attributes (test_fpl.DataGate.test_the_migration_writes_the_data_branch_attributes)
+S1 amendment 2, point 6: *.sqlite binary; the dump without EOL ... ok
+test_the_real_database_has_only_expected_tables (test_fpl.DataGate.test_the_real_database_has_only_expected_tables) ... ok
+test_arbitrage_without_threat (test_fpl.Degradation.test_arbitrage_without_threat) ... ok
+test_consistency_needs_gw_rows (test_fpl.Degradation.test_consistency_needs_gw_rows) ... ok
+test_empty_standings_does_not_crash (test_fpl.Degradation.test_empty_standings_does_not_crash) ... ok
+test_fdr_handles_null_scores (test_fpl.Degradation.test_fdr_handles_null_scores)
+Postponed fixtures come back with null scores and must be skipped. ... ok
+test_missing_all_players (test_fpl.Degradation.test_missing_all_players) ... ok
+test_missing_fixtures_played_fdr (test_fpl.Degradation.test_missing_fixtures_played_fdr) ... ok
+test_missing_gw_rows_backtest (test_fpl.Degradation.test_missing_gw_rows_backtest) ... ok
+test_missing_gw_rows_defcon (test_fpl.Degradation.test_missing_gw_rows_defcon) ... ok
+test_personal_prior_overrides_positional (test_fpl.Degradation.test_personal_prior_overrides_positional)
+A known player must be anchored to his own history, not the median. ... ok
+test_personal_priors_empty_without_history (test_fpl.Degradation.test_personal_priors_empty_without_history) ... ok
+test_personal_priors_read_history (test_fpl.Degradation.test_personal_priors_read_history) ... ok
+test_same_gameweek_diff_warns (test_fpl.Degradation.test_same_gameweek_diff_warns) ... ok
+test_sensitivity_needs_per_match_fdr (test_fpl.Degradation.test_sensitivity_needs_per_match_fdr) ... ok
+test_single_gameweek_backtest_declines (test_fpl.Degradation.test_single_gameweek_backtest_declines) ... ok
+test_a_dry_run_creates_no_release_and_no_issue (test_fpl.DryRunMode.test_a_dry_run_creates_no_release_and_no_issue)
+Every step that runs gh release or gh issue is skipped on a dry run ... ok
+test_one_dry_condition_for_the_group_and_the_job (test_fpl.DryRunMode.test_one_dry_condition_for_the_group_and_the_job)
+The same condition picks the concurrency group and sets ... ok
+test_the_dispatch_input_dry_run_is_ticked_by_default (test_fpl.DryRunMode.test_the_dispatch_input_dry_run_is_ticked_by_default) ... ok
+test_the_mode_table (test_fpl.DryRunMode.test_the_mode_table) ... ok
+test_captain_counts_two_bench_zero_triple_captain_two (test_fpl.EffectiveOwnership.test_captain_counts_two_bench_zero_triple_captain_two) ... ok
+test_captain_cover_is_mid_fwd_in_my_xi_by_projection (test_fpl.EffectiveOwnership.test_captain_cover_is_mid_fwd_in_my_xi_by_projection) ... ok
+test_net_is_mine_minus_theirs_per_point (test_fpl.EffectiveOwnership.test_net_is_mine_minus_theirs_per_point) ... ok
+test_per_rival_swing_is_multiplier_gap_times_the_full_projection (test_fpl.EffectiveOwnership.test_per_rival_swing_is_multiplier_gap_times_the_full_projection) ... ok
+test_double_gameweek_exports_one_row_per_player (test_fpl.ExportGrain.test_double_gameweek_exports_one_row_per_player)
+The fixtures join fanned a double out to two rows, each carrying the ... /home/runner/work/FPL/FPL/test_fpl.py:1498: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_real_export_if_present (test_fpl.ExportSchema.test_real_export_if_present)
+If a real export is sitting here (or in FPL_DATA_DIR, as on the ... /opt/hostedtoolcache/Python/3.14.8/x64/lib/python3.14/json/decoder.py:361: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b4c0>
+  obj, end = self.scan_once(s, idx)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_synthetic_export_has_required_keys (test_fpl.ExportSchema.test_synthetic_export_has_required_keys) ... ok
+test_last_four_form_columns_keep_their_window (test_fpl.ExportWindow.test_last_four_form_columns_keep_their_window) ... /home/runner/work/FPL/FPL/test_fpl.py:2204: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_rows_and_fixture_flags_cover_the_whole_season (test_fpl.ExportWindow.test_rows_and_fixture_flags_cover_the_whole_season) ... ok
+test_compare_reports_missing_file (test_fpl.ExternalProjections.test_compare_reports_missing_file) ... ok
+test_compare_warns_on_poor_match_rate (test_fpl.ExternalProjections.test_compare_warns_on_poor_match_rate) ... ok
+test_defcon_correction_recovers_missing_points (test_fpl.ExternalProjections.test_defcon_correction_recovers_missing_points)
+A projection that is perfect except for DEFCON must improve. ... ok
+test_defcon_expectation_bounds (test_fpl.ExternalProjections.test_defcon_expectation_bounds)
+Expected DEFCON points must sit between 0 and 2 per start. ... ok
+test_defcon_expectation_zero_for_keepers_and_forwards (test_fpl.ExternalProjections.test_defcon_expectation_zero_for_keepers_and_forwards) ... ok
+test_reads_id_and_xpts (test_fpl.ExternalProjections.test_reads_id_and_xpts) ... ok
+test_reads_name_and_alternative_header (test_fpl.ExternalProjections.test_reads_name_and_alternative_header) ... ok
+test_rejects_file_without_forecast_column (test_fpl.ExternalProjections.test_rejects_file_without_forecast_column) ... ok
+test_skips_unparseable_rows (test_fpl.ExternalProjections.test_skips_unparseable_rows) ... ok
+test_flags (test_fpl.FreeHit.test_flags) ... /home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e287e20>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b010>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e1293f0>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce0310>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce0220>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_gap_is_fh_minus_ours_by_the_same_metric (test_fpl.FreeHit.test_gap_is_fh_minus_ours_by_the_same_metric) ... ok
+test_metric_is_own_where_recorded_else_bottomup (test_fpl.FreeHit.test_metric_is_own_where_recorded_else_bottomup) ... ok
+test_pruning_never_changes_the_answer (test_fpl.FreeHit.test_pruning_never_changes_the_answer) ... ok
+test_report_and_watch_file_print_the_gap_per_gameweek (test_fpl.FreeHit.test_report_and_watch_file_print_the_gap_per_gameweek) ... /home/runner/work/FPL/FPL/test_fpl.py:4911: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp59ddpebs/report.txt' mode='r' encoding='utf-8'>
+  self.assertIn("FREE HIT SCREEN", open(report, encoding="utf-8").read(),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_club_limit_holds_when_one_club_tops_every_list (test_fpl.FreeHit.test_the_club_limit_holds_when_one_club_tops_every_list) ... ok
+test_the_fifteen_is_legal (test_fpl.FreeHit.test_the_fifteen_is_legal) ... ok
+test_the_market_is_the_recording_gate (test_fpl.FreeHit.test_the_market_is_the_recording_gate) ... ok
+test_the_optimizer_is_exact_against_brute_force (test_fpl.FreeHit.test_the_optimizer_is_exact_against_brute_force) ... ok
+test_backtest_keeps_benched_players_and_drops_blanks (test_fpl.Grading.test_backtest_keeps_benched_players_and_drops_blanks) ... ok
+test_benched_player_is_graded_as_zero (test_fpl.Grading.test_benched_player_is_graded_as_zero) ... ok
+test_players_sharing_a_web_name_are_graded_separately (test_fpl.Grading.test_players_sharing_a_web_name_are_graded_separately)
+17 web_names are shared this season. Keyed by name, both players' ... ok
+test_true_blank_is_not_graded (test_fpl.Grading.test_true_blank_is_not_graded) ... ok
+test_dedup_is_loud_and_names_the_player (test_fpl.HistoricalAdapter.test_dedup_is_loud_and_names_the_player)
+A silent de-dup that started dropping real rows after an upstream ... ok
+test_double_gameweek_survives_deduplication (test_fpl.HistoricalAdapter.test_double_gameweek_survives_deduplication)
+(element, round) would have deleted it; (element, fixture) keeps it. ... ok
+test_duplicate_row_is_not_counted_twice (test_fpl.HistoricalAdapter.test_duplicate_row_is_not_counted_twice) ... ok
+test_missing_file_stops_rather_than_substituting (test_fpl.HistoricalAdapter.test_missing_file_stops_rather_than_substituting) ... ok
+test_double_gameweek_counts_twice (test_fpl.HorizonTest.test_double_gameweek_counts_twice) ... ok
+test_h1_reproduces_the_single_week_backtest (test_fpl.HorizonTest.test_h1_reproduces_the_single_week_backtest) ... ok
+test_incomplete_horizon_is_skipped (test_fpl.HorizonTest.test_incomplete_horizon_is_skipped) ... ok
+test_report_prints_both_columns_with_intervals_for_every_h_and_position (test_fpl.HorizonTest.test_report_prints_both_columns_with_intervals_for_every_h_and_position) ... ok
+test_sums_fixtures_counts_blanks_as_zero_and_excludes_no_fixture_teams (test_fpl.HorizonTest.test_sums_fixtures_counts_blanks_as_zero_and_excludes_no_fixture_teams) ... ok
+test_target_weeks_do_not_leak_into_predictions (test_fpl.HorizonTest.test_target_weeks_do_not_leak_into_predictions) ... ok
+test_one_entry_league_does_not_crash_ownership (test_fpl.Hygiene.test_one_entry_league_does_not_crash_ownership) ... ok
+test_all_four_sources_log_side_by_side (test_fpl.MinutesBaseline.test_all_four_sources_log_side_by_side) ... ok
+test_blank_gameweek_gets_no_baseline_forecast (test_fpl.MinutesBaseline.test_blank_gameweek_gets_no_baseline_forecast) ... ok
+test_double_gameweek_counts_twice (test_fpl.MinutesBaseline.test_double_gameweek_counts_twice) ... ok
+test_injury_doubt_scales_it (test_fpl.MinutesBaseline.test_injury_doubt_scales_it) ... ok
+test_logged_value_is_start_probability_and_nothing_else (test_fpl.MinutesBaseline.test_logged_value_is_start_probability_and_nothing_else) ... ok
+test_minutes_row_shows_rho_only (test_fpl.MinutesIsAProbability.test_minutes_row_shows_rho_only) ... ok
+test_other_sources_still_print_mae (test_fpl.MinutesIsAProbability.test_other_sources_still_print_mae) ... ok
+test_a_second_run_the_same_day_appends_to_the_log (test_fpl.NightlyRunner.test_a_second_run_the_same_day_appends_to_the_log) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpj51qs40a/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_silent_record_crash_is_caught_and_the_run_is_red (test_fpl.NightlyRunner.test_a_silent_record_crash_is_caught_and_the_run_is_red) ... /home/runner/work/FPL/FPL/fpl_nightly.py:244: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp9l3mevy0/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  lines = (open(status, encoding="utf-8", newline="").read().splitlines()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp9l3mevy0/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_stuck_gameweek_turns_the_run_red (test_fpl.NightlyRunner.test_a_stuck_gameweek_turns_the_run_red)
+S2, Step 2.1: the GW stuck alarm runs after the report. ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkjhzib_3/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpr7g3dqjn/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_bat_and_nightly_write_the_same_forecasts_and_report (test_fpl.NightlyRunner.test_bat_and_nightly_write_the_same_forecasts_and_report) ... skipped 'runs fpl_run.bat under cmd.exe'
+test_clean_run_logs_reports_archives_and_exits_zero (test_fpl.NightlyRunner.test_clean_run_logs_reports_archives_and_exits_zero) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpuuh8fw1j/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_code_and_data_live_apart (test_fpl.NightlyRunner.test_code_and_data_live_apart) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpt3ep_1iw/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_fresh_checkout_restores_the_newest_dated_export_per_gameweek (test_fpl.NightlyRunner.test_fresh_checkout_restores_the_newest_dated_export_per_gameweek) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmph51k4sr2/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_missing_watchlist_is_skipped_not_red (test_fpl.NightlyRunner.test_missing_watchlist_is_skipped_not_red) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpmp2zy2dw/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_no_export_anywhere_fails_the_archive (test_fpl.NightlyRunner.test_no_export_anywhere_fails_the_archive) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpnkgvvxgs/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_on_one_date_the_gzipped_export_wins (test_fpl.NightlyRunner.test_on_one_date_the_gzipped_export_wins)
+Second pre-check O2: an old-layout .json and a new-layout .json.gz of ... ok
+test_red_tests_block_the_record_but_not_the_report (test_fpl.NightlyRunner.test_red_tests_block_the_record_but_not_the_report) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpsy77lwcx/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_report_failure_is_red (test_fpl.NightlyRunner.test_report_failure_is_red) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpi4v2anl0/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_restore_refuses_the_code_folder_and_a_folder_without_exports (test_fpl.NightlyRunner.test_restore_refuses_the_code_folder_and_a_folder_without_exports) ... ok
+test_restore_replaces_a_stale_working_export_and_then_does_nothing (test_fpl.NightlyRunner.test_restore_replaces_a_stale_working_export_and_then_does_nothing) ... ok
+test_restore_takes_fpl_data_dir_else_the_current_folder (test_fpl.NightlyRunner.test_restore_takes_fpl_data_dir_else_the_current_folder) ... ok
+test_restore_writes_only_the_working_exports_and_commits_nothing (test_fpl.NightlyRunner.test_restore_writes_only_the_working_exports_and_commits_nothing)
+S1 amendment 2, point 2: --restore reuses the nightly's restore step. ... ok
+test_sync_failure_continues_on_existing_data_and_is_red (test_fpl.NightlyRunner.test_sync_failure_continues_on_existing_data_and_is_red) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp60qcwug0/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_data_dir_comes_from_fpl_data_dir (test_fpl.NightlyRunner.test_the_data_dir_comes_from_fpl_data_dir) ... ok
+test_the_gzipped_archive_is_byte_stable (test_fpl.NightlyRunner.test_the_gzipped_archive_is_byte_stable) ... ok
+test_the_real_record_and_report_need_no_database (test_fpl.NightlyRunner.test_the_real_record_and_report_need_no_database) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp8swnv2qt/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_watch_failure_is_red_but_the_report_still_runs (test_fpl.NightlyRunner.test_watch_failure_is_red_but_the_report_still_runs) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpvsv8t67m/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_watch_file_is_written_after_the_record_and_before_the_report (test_fpl.NightlyRunner.test_watch_file_is_written_after_the_record_and_before_the_report) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpbssgcewu/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_dispatch_can_force_the_backup (test_fpl.NightlyWorkflow.test_a_dispatch_can_force_the_backup)
+S1 amendment 2, point 8: workflow_dispatch input force_backup, ... ok
+test_code_from_master_data_from_the_data_branch (test_fpl.NightlyWorkflow.test_code_from_master_data_from_the_data_branch)
+D1 (Step 1.4): master checked out for code, data into ./data, and ... ok
+test_gitleaksignore_holds_exact_fingerprints_only (test_fpl.NightlyWorkflow.test_gitleaksignore_holds_exact_fingerprints_only)
+S1 amendment 3, point 1: each accepted finding is one exact ... ok
+test_master_ignores_every_data_path (test_fpl.NightlyWorkflow.test_master_ignores_every_data_path)
+D1 (Step 1.4): generated data lives on the data branch only; master ... ok
+test_outputs_go_to_the_data_branch_even_from_a_red_run (test_fpl.NightlyWorkflow.test_outputs_go_to_the_data_branch_even_from_a_red_run)
+D1 (Step 1.1, 1.5): the run commits and pushes only through ... ok
+test_push_safety_and_least_privilege (test_fpl.NightlyWorkflow.test_push_safety_and_least_privilege)
+D1 (Step 1.5, 1.6): one concurrency group, never cancelled; write ... ok
+test_requirements_install_nothing (test_fpl.NightlyWorkflow.test_requirements_install_nothing) ... ok
+test_requirements_quote_the_current_rule (test_fpl.NightlyWorkflow.test_requirements_quote_the_current_rule) ... ok
+test_schedule_runner_and_steps (test_fpl.NightlyWorkflow.test_schedule_runner_and_steps) ... ok
+test_secret_scan_runs_the_pinned_gitleaks_action (test_fpl.NightlyWorkflow.test_secret_scan_runs_the_pinned_gitleaks_action)
+D1 (Step 1.6; S1 amendments 1 and 3): the official gitleaks action, ... ok
+test_weekly_backup_on_sundays_keeps_the_last_eight (test_fpl.NightlyWorkflow.test_weekly_backup_on_sundays_keeps_the_last_eight)
+D1 (Step 1.3): fpl.sqlite and fpl.sql as release assets, Sundays, ... ok
+test_own_model_skips_a_blank (test_fpl.OwnModelAtGW18.test_own_model_skips_a_blank) ... ok
+test_own_model_sums_a_double (test_fpl.OwnModelAtGW18.test_own_model_sums_a_double) ... ok
+test_a_screen_pointing_the_wrong_way_is_a_fail_not_unproven (test_fpl.P1Evaluation.test_a_screen_pointing_the_wrong_way_is_a_fail_not_unproven) ... ok
+test_benched_is_a_blank_but_a_blank_team_drops_the_player (test_fpl.P1Evaluation.test_benched_is_a_blank_but_a_blank_team_drops_the_player) ... ok
+test_boundary_is_inclusive (test_fpl.P1Evaluation.test_boundary_is_inclusive) ... ok
+test_interval_does_not_collapse_on_empty_cells (test_fpl.P1Evaluation.test_interval_does_not_collapse_on_empty_cells)
+The normal approximation gives 0 +- 0 for 0/20 vs 0/30: certainty ... ok
+test_newcombe_matches_the_published_example (test_fpl.P1Evaluation.test_newcombe_matches_the_published_example) ... ok
+test_no_prior_minutes_is_dropped_not_read_as_zero (test_fpl.P1Evaluation.test_no_prior_minutes_is_dropped_not_read_as_zero) ... ok
+test_post_export_without_ids_is_refused (test_fpl.P1Evaluation.test_post_export_without_ids_is_refused) ... ok
+test_predictor_comes_from_gw1_3_only (test_fpl.P1Evaluation.test_predictor_comes_from_gw1_3_only)
+The GW5-time window spans GW1-4 and contains GW4's outcome. ... ok
+test_the_60_minute_substitute_is_counted_as_a_cost (test_fpl.P1Evaluation.test_the_60_minute_substitute_is_counted_as_a_cost)
+Flagged at 180 (60 a game), never blanks, never plays every minute. ... ok
+test_thin_cells_and_the_power_caveat_are_printed (test_fpl.P1Evaluation.test_thin_cells_and_the_power_caveat_are_printed) ... ok
+test_a_code_push_and_the_migration_delete_pass (test_fpl.PrePush.test_a_code_push_and_the_migration_delete_pass) ... ok
+test_a_push_from_a_data_worktree_without_the_code_passes (test_fpl.PrePush.test_a_push_from_a_data_worktree_without_the_code_passes) ... ok
+test_a_push_to_master_adding_data_is_rejected (test_fpl.PrePush.test_a_push_to_master_adding_data_is_rejected) ... ok
+test_a_push_to_master_changing_data_is_rejected (test_fpl.PrePush.test_a_push_to_master_changing_data_is_rejected) ... ok
+test_data_may_go_to_the_data_branch (test_fpl.PrePush.test_data_may_go_to_the_data_branch) ... ok
+test_the_path_rules (test_fpl.PrePush.test_the_path_rules) ... ok
+test_calibration_grades_once_results_exist (test_fpl.ProjectionLog.test_calibration_grades_once_results_exist) ... ok
+test_calibration_reports_pending_before_results (test_fpl.ProjectionLog.test_calibration_reports_pending_before_results) ... ok
+test_empty_log_is_not_an_error (test_fpl.ProjectionLog.test_empty_log_is_not_an_error) ... ok
+test_records_before_deadline (test_fpl.ProjectionLog.test_records_before_deadline) ... ok
+test_refuses_after_deadline (test_fpl.ProjectionLog.test_refuses_after_deadline) ... ok
+test_rerun_replaces_rather_than_duplicates (test_fpl.ProjectionLog.test_rerun_replaces_rather_than_duplicates) ... ok
+test_sources_do_not_collide (test_fpl.ProjectionLog.test_sources_do_not_collide) ... ok
+test_a_new_snapshot_day_keeps_the_earlier_one (test_fpl.ProjectionLogKey.test_a_new_snapshot_day_keeps_the_earlier_one) ... ok
+test_a_row_at_or_after_the_deadline_is_never_read (test_fpl.ProjectionLogKey.test_a_row_at_or_after_the_deadline_is_never_read)
+S2 amendment 1, point 5: the last snapshot *before* the deadline, ... ok
+test_a_same_day_rerun_replaces_that_days_rows_only (test_fpl.ProjectionLogKey.test_a_same_day_rerun_replaces_that_days_rows_only) ... ok
+test_a_snapshot_after_the_deadline_does_not_hide_the_last_one_before_it (test_fpl.ProjectionLogKey.test_a_snapshot_after_the_deadline_does_not_hide_the_last_one_before_it) ... ok
+test_duplicates_are_reported_and_never_deleted (test_fpl.ProjectionLogKey.test_duplicates_are_reported_and_never_deleted) ... ok
+test_every_reader_goes_through_forecasts_with_the_export (test_fpl.ProjectionLogKey.test_every_reader_goes_through_forecasts_with_the_export)
+S2 amendment 1, point 5: outside the recorder, fpl_edge.py reads ... /home/runner/work/FPL/FPL/test_fpl.py:679: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_edge.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_edge.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_publish.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_prepush.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_hist.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_edge.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_odds.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/checks.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_ship.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_gate.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/p1_eval.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_alert.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_nightly.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/blank_double.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/chips.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/console_utf8.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/backtest.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/league.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/xp_v2.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/odds_lambda.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/hist_pit.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/rules.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/calendar_2627.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:712: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/tools/migrate_data_branch.py' mode='r' encoding='utf-8'>
+  if "projection_log" in open(os.path.join(here, f), encoding="utf-8").read()]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_one_snapshot_per_gameweek_reads_back_unchanged (test_fpl.ProjectionLogKey.test_one_snapshot_per_gameweek_reads_back_unchanged) ... ok
+test_readers_take_the_whole_last_snapshot_per_event_and_source (test_fpl.ProjectionLogKey.test_readers_take_the_whole_last_snapshot_per_event_and_source)
+S2 amendment 2, point 4: per (event, source), the whole set of the ... ok
+test_recording_keeps_the_log_in_time_order (test_fpl.ProjectionLogKey.test_recording_keeps_the_log_in_time_order)
+Rows are only ever appended after the rows already there, so a ... ok
+test_the_deadline_is_events_deadline_time (test_fpl.ProjectionLogKey.test_the_deadline_is_events_deadline_time) ... ok
+test_the_gameweeks_recorded_before_s2_read_back_unchanged (test_fpl.ProjectionLogKey.test_the_gameweeks_recorded_before_s2_read_back_unchanged)
+S2 amendment 1, point 5: GW4-GW7 were recorded one snapshot per ... ok
+test_the_last_snapshot_is_the_latest_made_at_not_the_last_line (test_fpl.ProjectionLogKey.test_the_last_snapshot_is_the_latest_made_at_not_the_last_line) ... ok
+test_the_log_holds_no_carriage_return (test_fpl.ProjectionLogKey.test_the_log_holds_no_carriage_return) ... ok
+test_the_real_log_has_no_duplicate_natural_key (test_fpl.ProjectionLogKey.test_the_real_log_has_no_duplicate_natural_key)
+Step 2.3: the duplicate-key test must find 0. ... ok
+test_the_real_log_has_no_row_at_or_after_its_deadline (test_fpl.ProjectionLogKey.test_the_real_log_has_no_row_at_or_after_its_deadline)
+Step 2.2: run nightly over the whole log; must find 0. ... ok
+test_the_real_log_never_goes_back_in_time (test_fpl.ProjectionLogKey.test_the_real_log_never_goes_back_in_time)
+S2 amendment 1, point 5: the log is in made_at order, so the frozen ... ok
+test_two_forecasts_with_the_same_timestamp_the_later_row_wins (test_fpl.ProjectionLogKey.test_two_forecasts_with_the_same_timestamp_the_later_row_wins)
+S2 amendment 2, point 3: the tie rule. ... ok
+test_a_dry_run_on_master_goes_to_data_dryrun_only (test_fpl.Publish.test_a_dry_run_on_master_goes_to_data_dryrun_only) ... ok
+test_a_dry_run_replaces_whatever_data_dryrun_held (test_fpl.Publish.test_a_dry_run_replaces_whatever_data_dryrun_held) ... ok
+test_a_dry_run_with_nothing_new_still_reports_to_data_dryrun (test_fpl.Publish.test_a_dry_run_with_nothing_new_still_reports_to_data_dryrun) ... ok
+test_a_failed_gate_commits_and_pushes_nothing (test_fpl.Publish.test_a_failed_gate_commits_and_pushes_nothing) ... ok
+test_a_good_night_is_committed_with_its_dump_and_pushed (test_fpl.Publish.test_a_good_night_is_committed_with_its_dump_and_pushed) ... ok
+test_a_non_master_ref_cannot_reach_data (test_fpl.Publish.test_a_non_master_ref_cannot_reach_data) ... ok
+test_a_push_refused_by_a_newer_origin_rebases_and_lands (test_fpl.Publish.test_a_push_refused_by_a_newer_origin_rebases_and_lands) ... ok
+test_a_rebase_conflict_fails_and_never_forces (test_fpl.Publish.test_a_rebase_conflict_fails_and_never_forces) ... ok
+test_a_scheduled_run_is_never_dry (test_fpl.Publish.test_a_scheduled_run_is_never_dry) ... ok
+test_a_staged_secret_commits_nothing_and_unstages (test_fpl.Publish.test_a_staged_secret_commits_nothing_and_unstages) ... ok
+test_nothing_new_is_not_a_failure (test_fpl.Publish.test_nothing_new_is_not_a_failure) ... ok
+test_rho_does_not_depend_on_row_order (test_fpl.RankCorrelation.test_rho_does_not_depend_on_row_order)
+Ties broken by input order let the export's points-DESC row order ... ok
+test_tied_values_share_their_average_rank (test_fpl.RankCorrelation.test_tied_values_share_their_average_rank) ... ok
+test_verdict_reads_the_interval_not_just_the_size (test_fpl.RankCorrelation.test_verdict_reads_the_interval_not_just_the_size)
++0.151 on 224 players was labelled 'noise' though its interval ... ok
+test_a_write_that_dies_halfway_leaves_the_old_log_intact (test_fpl.RecordResilience.test_a_write_that_dies_halfway_leaves_the_old_log_intact) ... skipped 'reproduces a Windows file lock'
+test_cli_failure_is_one_visible_line_and_a_nonzero_exit (test_fpl.RecordResilience.test_cli_failure_is_one_visible_line_and_a_nonzero_exit) ... skipped 'reproduces a Windows file lock'
+test_cli_success_line_carries_the_count (test_fpl.RecordResilience.test_cli_success_line_carries_the_count) ... skipped 'reproduces a Windows file lock'
+test_deadline_passed_is_ok_not_a_failure (test_fpl.RecordResilience.test_deadline_passed_is_ok_not_a_failure)
+It happens after every deadline; crying wolf nightly teaches you to ... skipped 'reproduces a Windows file lock'
+test_lock_released_during_a_wait_is_recovered (test_fpl.RecordResilience.test_lock_released_during_a_wait_is_recovered) ... skipped 'reproduces a Windows file lock'
+test_locked_log_is_retried_three_times_then_fails_visibly (test_fpl.RecordResilience.test_locked_log_is_retried_three_times_then_fails_visibly) ... skipped 'reproduces a Windows file lock'
+test_zero_rows_with_the_deadline_open_is_a_failure (test_fpl.RecordResilience.test_zero_rows_with_the_deadline_open_is_a_failure) ... skipped 'reproduces a Windows file lock'
+test_backtest_ignores_future_fixture_difficulty (test_fpl.Regressions.test_backtest_ignores_future_fixture_difficulty)
+Behavioural, not textual: changing only the FORWARD ticker must not ... ok
+test_backtest_uses_the_tested_gameweeks_own_difficulty (test_fpl.Regressions.test_backtest_uses_the_tested_gameweeks_own_difficulty)
+Changing the FDR attached to the target gameweek must move the model. ... ok
+test_blank_gameweek_is_labelled_not_mislabelled (test_fpl.Regressions.test_blank_gameweek_is_labelled_not_mislabelled)
+nextfx used to show a team's GW+2 fixture as if it were GW+1. ... ok
+test_diff_with_no_previous_export_still_reports (test_fpl.Regressions.test_diff_with_no_previous_export_still_reports)
+The report came out empty when --diff found nothing to compare. ... ok
+test_starts_last4_disagreement_is_detectable (test_fpl.Regressions.test_starts_last4_disagreement_is_detectable)
+starts_last4 was silently zero for un-refetched gameweeks. ... ok
+test_unicode_survives_a_cp1252_stream (test_fpl.Regressions.test_unicode_survives_a_cp1252_stream)
+A cp1252 console killed the whole run on a player named Muharemović. ... ok
+test_constant_metric_is_undefined_not_zero (test_fpl.Reliability.test_constant_metric_is_undefined_not_zero) ... ok
+test_minutes_is_not_measured_per_90 (test_fpl.Reliability.test_minutes_is_not_measured_per_90)
+Per 90 it divides minutes by minutes: the same constant for everyone. ... ok
+test_minutes_population_is_an_explicit_choice (test_fpl.Reliability.test_minutes_population_is_an_explicit_choice)
+Never-featuring players are a block of identical zeros that agrees ... ok
+test_spearman_brown_lifts_the_half_correlation (test_fpl.Reliability.test_spearman_brown_lifts_the_half_correlation) ... ok
+test_split_is_odd_even_not_first_half_second_half (test_fpl.Reliability.test_split_is_odd_even_not_first_half_second_half)
+Half the players improve after GW4 and half decline, by the same ... ok
+test_ablation_starts_from_p_start_alone (test_fpl.ReliabilityModel.test_ablation_starts_from_p_start_alone) ... ok
+test_blank_is_none_and_double_is_summed (test_fpl.ReliabilityModel.test_blank_is_none_and_double_is_summed) ... ok
+test_clean_sheet_is_poisson_on_the_opponent_and_zero_for_forwards (test_fpl.ReliabilityModel.test_clean_sheet_is_poisson_on_the_opponent_and_zero_for_forwards) ... ok
+test_defcon_is_logistic_on_the_threshold_and_absent_for_gk_and_fwd (test_fpl.ReliabilityModel.test_defcon_is_logistic_on_the_threshold_and_absent_for_gk_and_fwd) ... ok
+test_goal_value_depends_on_position (test_fpl.ReliabilityModel.test_goal_value_depends_on_position)
+Same xGI: a defender's goal is worth 6, a forward's 4. ... ok
+test_model_has_no_points_term (test_fpl.ReliabilityModel.test_model_has_no_points_term) ... ok
+test_never_starter_projects_to_zero (test_fpl.ReliabilityModel.test_never_starter_projects_to_zero) ... ok
+test_shrinkage_uses_the_measured_weight (test_fpl.ReliabilityModel.test_shrinkage_uses_the_measured_weight)
+Weight 0: everyone in the position sits on the prior. Weight 1: raw. ... ok
+test_interval_is_capped_at_one (test_fpl.ReliabilityTable.test_interval_is_capped_at_one) ... ok
+test_brief_states_the_limits_of_rest_days (test_fpl.RestDays.test_brief_states_the_limits_of_rest_days) ... ok
+test_rest_counts_from_the_previous_pl_kickoff (test_fpl.RestDays.test_rest_counts_from_the_previous_pl_kickoff) ... ok
+test_short_turnaround_is_measured (test_fpl.RestDays.test_short_turnaround_is_measured) ... ok
+test_benched_is_graded_as_zero_and_a_blank_team_is_dropped (test_fpl.RollingOrigin.test_benched_is_graded_as_zero_and_a_blank_team_is_dropped) ... ok
+test_every_baseline_and_ablation_stage_is_present (test_fpl.RollingOrigin.test_every_baseline_and_ablation_stage_is_present) ... ok
+test_target_week_outcomes_do_not_change_predictions (test_fpl.RollingOrigin.test_target_week_outcomes_do_not_change_predictions) ... ok
+test_data_checked_zero_blocks_even_when_every_match_is_finished (test_fpl.SettledGuard.test_data_checked_zero_blocks_even_when_every_match_is_finished)
+Observed on GW5: fixtures 10/10 finished, event finished = 0 and ... ok
+test_definitions_are_printed_with_the_numbers (test_fpl.SettledGuard.test_definitions_are_printed_with_the_numbers) ... ok
+test_export_without_flags_is_refused_not_trusted (test_fpl.SettledGuard.test_export_without_flags_is_refused_not_trusted) ... ok
+test_other_gameweeks_are_still_graded (test_fpl.SettledGuard.test_other_gameweeks_are_still_graded) ... ok
+test_settled_gameweek_is_graded (test_fpl.SettledGuard.test_settled_gameweek_is_graded) ... ok
+test_starters_column_counts_only_sixty_minute_players (test_fpl.SettledGuard.test_starters_column_counts_only_sixty_minute_players) ... ok
+test_unfinished_fixture_blocks_grading_and_is_named (test_fpl.SettledGuard.test_unfinished_fixture_blocks_grading_and_is_named) ... ok
+test_a_missing_file_is_a_visible_failure (test_fpl.Shipping.test_a_missing_file_is_a_visible_failure) ... /home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp9pz4103q/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp9pz4103q/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_archive_keeps_every_day_and_leaves_the_live_export (test_fpl.Shipping.test_archive_keeps_every_day_and_leaves_the_live_export) ... /home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkurki9gp/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkurki9gp/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2317: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkurki9gp/work/fpl_export_gw5.json' mode='w' encoding='UTF-8'>
+  open(live, "w").write(body)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2321: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkurki9gp/archive/fpl_export_gw5_2026-09-20.json' mode='r' encoding='UTF-8'>
+  self.assertEqual(open(os.path.join(arch, "fpl_export_gw5_2026-09-20.json")).read(),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2323: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkurki9gp/work/fpl_export_gw5.json' mode='r' encoding='UTF-8'>
+  self.assertEqual(open(live).read(), "monday")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_backup_keeps_the_last_seven (test_fpl.Shipping.test_backup_keeps_the_last_seven) ... /home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpz6k9_typ/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpz6k9_typ/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_every_file_lands_on_drive_and_gets_a_result_line (test_fpl.Shipping.test_every_file_lands_on_drive_and_gets_a_result_line) ... /home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp8er0jq2d/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp8er0jq2d/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_database_is_never_shipped (test_fpl.Shipping.test_the_database_is_never_shipped) ... /home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpwbhc9mq_/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpwbhc9mq_/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2302: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpwbhc9mq_/work/fpl.sqlite' mode='w' encoding='UTF-8'>
+  open(db, "w").write("x")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_unmounted_drive_holds_in_outbox_and_the_next_run_delivers (test_fpl.Shipping.test_unmounted_drive_holds_in_outbox_and_the_next_run_delivers) ... /home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp3kiy552o/work/projection_log.csv' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2265: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp3kiy552o/work/run_2026-09-21.log' mode='w' encoding='UTF-8'>
+  open(p, "w").write(name)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2291: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp3kiy552o/work/fpl_2026-09-22.txt' mode='w' encoding='UTF-8'>
+  open(late, "w").write("report")
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_all_sections_produce_output (test_fpl.Smoke.test_all_sections_produce_output) ... ok
+test_no_section_is_silent_in_full_report (test_fpl.Smoke.test_no_section_is_silent_in_full_report) ... ok
+test_calibration_counts_players_only_in_an_earlier_snapshot (test_fpl.SnapshotCount.test_calibration_counts_players_only_in_an_earlier_snapshot) ... ok
+test_a_bench_player_who_did_not_play_is_not_brought_on (test_fpl.StepTwoBenchAudit.test_a_bench_player_who_did_not_play_is_not_brought_on) ... ok
+test_a_defender_short_xi_takes_the_bench_defender_not_the_midfielder (test_fpl.StepTwoBenchAudit.test_a_defender_short_xi_takes_the_bench_defender_not_the_midfielder) ... ok
+test_a_gameweek_still_in_play_gets_no_rule_substitution (test_fpl.StepTwoBenchAudit.test_a_gameweek_still_in_play_gets_no_rule_substitution)
+A starter on 0 minutes may yet play: without FPL's list, no sub ... ok
+test_a_zero_minute_starter_whose_bench_player_came_on_shows_no_gain (test_fpl.StepTwoBenchAudit.test_a_zero_minute_starter_whose_bench_player_came_on_shows_no_gain) ... ok
+test_bench_order_decides_and_the_keeper_only_swaps_with_the_keeper (test_fpl.StepTwoBenchAudit.test_bench_order_decides_and_the_keeper_only_swaps_with_the_keeper) ... ok
+test_fpl_s_stored_list_is_the_authority (test_fpl.StepTwoBenchAudit.test_fpl_s_stored_list_is_the_authority) ... ok
+test_a_double_gameweek_is_one_row_with_two_fixtures (test_fpl.StepTwoEdge.test_a_double_gameweek_is_one_row_with_two_fixtures)
+Step 2.6: player_gw holds the gameweek total once; the export counts ... /home/runner/work/FPL/FPL/test_fpl.py:5869: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6298: ResourceWarning: unclosed file <_io.TextIOWrapper name='fpl_export_gw7.json' mode='r' encoding='utf-8'>
+  d = json.load(open("fpl_export_gw7.json", encoding="utf-8"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_fixture_inside_three_hours_of_kickoff_does_not_block (test_fpl.StepTwoEdge.test_a_fixture_inside_three_hours_of_kickoff_does_not_block) ... ok
+test_a_fixture_not_started_three_hours_after_kickoff_is_postponed (test_fpl.StepTwoEdge.test_a_fixture_not_started_three_hours_after_kickoff_is_postponed) ... ok
+test_a_gameweek_not_final_72_hours_after_its_last_kickoff_is_stuck (test_fpl.StepTwoEdge.test_a_gameweek_not_final_72_hours_after_its_last_kickoff_is_stuck) ... ok
+test_a_started_fixture_past_three_hours_must_be_finished (test_fpl.StepTwoEdge.test_a_started_fixture_past_three_hours_must_be_finished) ... ok
+test_an_export_without_started_still_needs_every_past_fixture_finished (test_fpl.StepTwoEdge.test_an_export_without_started_still_needs_every_past_fixture_finished) ... ok
+test_chance_of_playing_null_is_100_and_never_0 (test_fpl.StepTwoEdge.test_chance_of_playing_null_is_100_and_never_0) ... ok
+test_no_code_turns_a_null_chance_into_zero (test_fpl.StepTwoEdge.test_no_code_turns_a_null_chance_into_zero) ... /home/runner/work/FPL/FPL/test_fpl.py:6277: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_edge.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, name), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6277: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, name), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6277: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_hist.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, name), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_stuck_command_exits_one_and_names_the_gameweek (test_fpl.StepTwoEdge.test_the_stuck_command_exits_one_and_names_the_gameweek) ... ok
+test_every_text_open_names_utf8_and_newline (test_fpl.StepTwoFiles.test_every_text_open_names_utf8_and_newline) ... /home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_edge.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_nightly.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_gate.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_publish.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_prepush.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_hist.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_ship.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/checks.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:6470: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_alert.py' mode='r' encoding='utf-8'>
+  for n, line in enumerate(open(os.path.join(here, name), encoding="utf-8",
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_ruleset_is_read_from_the_season_or_refused (test_fpl.StepTwoRuleset.test_a_ruleset_is_read_from_the_season_or_refused) ... ok
+test_every_live_and_historical_row_carries_its_ruleset (test_fpl.StepTwoRuleset.test_every_live_and_historical_row_carries_its_ruleset) ... ok
+test_reliability_refuses_rows_from_two_rulesets (test_fpl.StepTwoRuleset.test_reliability_refuses_rows_from_two_rulesets) ... ok
+test_an_entry_that_joined_late_has_no_price_for_its_first_squad (test_fpl.StepTwoSelling.test_an_entry_that_joined_late_has_no_price_for_its_first_squad) ... /home/runner/work/FPL/FPL/test_fpl.py:6417: ResourceWarning: unclosed file <_io.TextIOWrapper name='fpl_export_gw7.json' mode='r' encoding='utf-8'>
+  d = json.load(open("fpl_export_gw7.json", encoding="utf-8"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_purchase_prices_come_from_transfers_or_the_season_start (test_fpl.StepTwoSelling.test_purchase_prices_come_from_transfers_or_the_season_start) ... ok
+test_the_formula_in_tenths (test_fpl.StepTwoSelling.test_the_formula_in_tenths) ... ok
+test_the_upgrade_shortlist_counts_what_a_player_sells_for (test_fpl.StepTwoSelling.test_the_upgrade_shortlist_counts_what_a_player_sells_for) ... ok
+test_without_selling_prices_no_budget_is_built (test_fpl.StepTwoSelling.test_without_selling_prices_no_budget_is_built) ... /home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12ba60>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b790>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/fpl_edge.py:1029: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b970>
+  rows.append({"player_id": int(r["player_id"]), "event": int(r["event"]),
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_fetch_after_uk_midnight_is_flagged_in_summer_and_winter (test_fpl.StepTwoSync.test_a_fetch_after_uk_midnight_is_flagged_in_summer_and_winter) ... ok
+test_a_list_line_without_a_date_or_a_reason_lists_nothing (test_fpl.StepTwoSync.test_a_list_line_without_a_date_or_a_reason_lists_nothing) ... ok
+test_a_missing_price_date_is_warned (test_fpl.StepTwoSync.test_a_missing_price_date_is_warned) ... ok
+test_a_missing_required_field_raises_instead_of_zero (test_fpl.StepTwoSync.test_a_missing_required_field_raises_instead_of_zero) ... ok
+test_a_planted_new_gap_warns_and_the_known_ones_do_not (test_fpl.StepTwoSync.test_a_planted_new_gap_warns_and_the_known_ones_do_not)
+S2 amendment 1, point 3. ... ok
+test_a_snapshot_carries_its_fetch_time_and_london_date (test_fpl.StepTwoSync.test_a_snapshot_carries_its_fetch_time_and_london_date) ... ok
+test_an_unreadable_list_warns_every_gap (test_fpl.StepTwoSync.test_an_unreadable_list_warns_every_gap) ... ok
+test_automatic_subs_are_stored_known_and_exported (test_fpl.StepTwoSync.test_automatic_subs_are_stored_known_and_exported) ... ok
+test_fixtures_store_started_and_the_export_carries_it_and_every_deadline (test_fpl.StepTwoSync.test_fixtures_store_started_and_the_export_carries_it_and_every_deadline) ... ok
+test_numeric_strings_are_cast_and_a_missing_value_raises (test_fpl.StepTwoSync.test_numeric_strings_are_cast_and_a_missing_value_raises) ... ok
+test_only_known_gaps_print_no_warning (test_fpl.StepTwoSync.test_only_known_gaps_print_no_warning) ... ok
+test_rows_stored_before_s2_are_never_rewritten (test_fpl.StepTwoSync.test_rows_stored_before_s2_are_never_rewritten)
+S2 ruling 3: new columns by ALTER TABLE; old rows keep NULL there. ... ok
+test_scored_rows_carry_ruleset_and_fetch_time_one_per_gameweek (test_fpl.StepTwoSync.test_scored_rows_carry_ruleset_and_fetch_time_one_per_gameweek) ... ok
+test_the_committed_list_holds_the_four_gaps_each_with_its_reason (test_fpl.StepTwoSync.test_the_committed_list_holds_the_four_gaps_each_with_its_reason) ... ok
+test_the_current_gameweek_comes_from_deadlines_not_flags (test_fpl.StepTwoSync.test_the_current_gameweek_comes_from_deadlines_not_flags) ... ok
+test_the_real_london_zone_where_installed (test_fpl.StepTwoSync.test_the_real_london_zone_where_installed) ... <frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b6a0>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b5b0>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b880>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12bb50>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e287d30>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b010>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b4c0>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce1030>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce1120>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce0220>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce16c0>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12bd30>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12be20>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap_external>:137: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce1b70>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_without_the_london_zone_the_sync_stops_with_a_clear_error (test_fpl.StepTwoSync.test_without_the_london_zone_the_sync_stops_with_a_clear_error) ... /home/runner/work/FPL/FPL/test_fpl.py:6022: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_locked_log_blocks_recording_rather_than_clobbering_the_tmp (test_fpl.StrandedTmp.test_locked_log_blocks_recording_rather_than_clobbering_the_tmp) ... skipped 'reproduces a Windows file lock'
+test_newer_tmp_is_promoted_before_a_post_deadline_record (test_fpl.StrandedTmp.test_newer_tmp_is_promoted_before_a_post_deadline_record) ... ok
+test_older_tmp_is_left_alone (test_fpl.StrandedTmp.test_older_tmp_is_left_alone) ... ok
+test_promotion_happens_before_a_pre_deadline_record_too (test_fpl.StrandedTmp.test_promotion_happens_before_a_pre_deadline_record_too) ... ok
+test_truncated_tmp_is_never_promoted_and_never_deleted (test_fpl.StrandedTmp.test_truncated_tmp_is_never_promoted_and_never_deleted) ... /home/runner/work/FPL/FPL/test_fpl.py:2577: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpqwcb5gmf/projection_log.csv.tmp' mode='r' encoding='utf-8'>
+  data = open(self.stranded, encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/test_fpl.py:2579: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpqwcb5gmf/projection_log.csv.tmp' mode='w' encoding='utf-8'>
+  open(self.stranded, "w", encoding="utf-8", newline="").write(data[:at])
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_bootstrap_stores_data_checked_separately_from_finished (test_fpl.SyncExportsSettledFlags.test_bootstrap_stores_data_checked_separately_from_finished) ... /home/runner/work/FPL/FPL/test_fpl.py:2161: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_export_carries_data_checked_and_unfinished_fixtures (test_fpl.SyncExportsSettledFlags.test_export_carries_data_checked_and_unfinished_fixtures) ... /home/runner/work/FPL/FPL/test_fpl.py:2128: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_migration_adds_data_checked_to_an_old_database (test_fpl.SyncExportsSettledFlags.test_migration_adds_data_checked_to_an_old_database) ... /home/runner/work/FPL/FPL/test_fpl.py:2181: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_clean_sync_exits_zero (test_fpl.SyncNetwork.test_a_clean_sync_exits_zero) ... /home/runner/work/FPL/FPL/test_fpl.py:3809: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_a_partial_sync_still_exports_and_exits_nonzero (test_fpl.SyncNetwork.test_a_partial_sync_still_exports_and_exits_nonzero) ... ok
+test_a_request_that_never_succeeds_gets_three_retries_and_is_counted (test_fpl.SyncNetwork.test_a_request_that_never_succeeds_gets_three_retries_and_is_counted) ... ok
+test_every_endpoint_is_public_no_login_needed (test_fpl.SyncNetwork.test_every_endpoint_is_public_no_login_needed) ... /home/runner/work/FPL/FPL/test_fpl.py:3937: ResourceWarning: unclosed file <_io.TextIOWrapper name='/home/runner/work/FPL/FPL/fpl_sync.py' mode='r' encoding='utf-8'>
+  src = open(os.path.join(here, "fpl_sync.py"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_log_names_the_path_never_the_full_url (test_fpl.SyncNetwork.test_the_log_names_the_path_never_the_full_url)
+D1 (Step 1.6): never log a full request URL - from Step 5 one may ... ok
+test_two_failures_then_success_backs_off_two_then_four_seconds (test_fpl.SyncNetwork.test_two_failures_then_success_backs_off_two_then_four_seconds) ... ok
+test_user_agent_is_a_browser_not_a_script (test_fpl.SyncNetwork.test_user_agent_is_a_browser_not_a_script) ... ok
+/opt/hostedtoolcache/Python/3.14.8/x64/lib/python3.14/ast.py:46: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b5b0>
+  return compile(source, filename, mode, flags,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/opt/hostedtoolcache/Python/3.14.8/x64/lib/python3.14/ast.py:46: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9e12b790>
+  return compile(source, filename, mode, flags,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/opt/hostedtoolcache/Python/3.14.8/x64/lib/python3.14/ast.py:46: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce18a0>
+  return compile(source, filename, mode, flags,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+test_every_export_query_executes (test_fpl.SyncSQL.test_every_export_query_executes) ... ok
+test_found_the_queries (test_fpl.SyncSQL.test_found_the_queries) ... ok
+test_insert_arity_matches_schema (test_fpl.SyncSQL.test_insert_arity_matches_schema)
+INSERT ... VALUES (?,?,...) must match the real column count. ... ok
+test_migration_is_idempotent (test_fpl.SyncSQL.test_migration_is_idempotent) ... ok
+test_the_agent_reads_rulings_from_the_prereg_only (test_fpl.VerifierAgent.test_the_agent_reads_rulings_from_the_prereg_only) ... ok
+test_the_plan_block_is_the_agent_file (test_fpl.VerifierAgent.test_the_plan_block_is_the_agent_file) ... ok
+test_the_verifier_runs_on_fable_at_high_effort_and_masks_keys (test_fpl.VerifierAgent.test_the_verifier_runs_on_fable_at_high_effort_and_masks_keys)
+S1 closing ruling, points 1-2: model fable, effort high, and the ... ok
+test_cli_writes_the_file_from_the_log (test_fpl.WatchFile.test_cli_writes_the_file_from_the_log) ... /home/runner/work/FPL/FPL/test_fpl.py:4645: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp1z81uk9f/watch_2026-10-07.txt' mode='r' encoding='utf-8'>
+  text = open(out, encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_file_stays_under_15kb (test_fpl.WatchFile.test_file_stays_under_15kb) ... ok
+test_repo_watchlist_holds_the_seed (test_fpl.WatchFile.test_repo_watchlist_holds_the_seed) ... ok
+test_rows_carry_the_recorded_forecasts_fixture_and_news (test_fpl.WatchFile.test_rows_carry_the_recorded_forecasts_fixture_and_news) ... ok
+test_top_twelve_per_position_by_own (test_fpl.WatchFile.test_top_twelve_per_position_by_own) ... ok
+test_watchlist_parses_ids_and_refuses_junk (test_fpl.WatchFile.test_watchlist_parses_ids_and_refuses_junk) ... ok
+test_a_defender_with_the_top_sum_is_never_captain (test_fpl.WildcardCrossPosition.test_a_defender_with_the_top_sum_is_never_captain) ... ok
+test_a_formation_the_sums_would_not_choose_is_honoured (test_fpl.WildcardCrossPosition.test_a_formation_the_sums_would_not_choose_is_honoured) ... ok
+test_bench_is_the_cheapest_who_pass_layer_one_with_the_fixture_tiebreak (test_fpl.WildcardCrossPosition.test_bench_is_the_cheapest_who_pass_layer_one_with_the_fixture_tiebreak) ... ok
+test_cli_formation_and_split_reach_the_section (test_fpl.WildcardCrossPosition.test_cli_formation_and_split_reach_the_section) ... ok
+test_split_parameter_is_scaled_to_the_budget_and_moves_the_money (test_fpl.WildcardCrossPosition.test_split_parameter_is_scaled_to_the_budget_and_moves_the_money) ... ok
+test_the_fifteen_sums_are_one_unit_the_full_model (test_fpl.WildcardCrossPosition.test_the_fifteen_sums_are_one_unit_the_full_model) ... ok
+test_layer_one_excludes_the_frozen_flag_and_the_unavailable (test_fpl.WildcardThreeLayer.test_layer_one_excludes_the_frozen_flag_and_the_unavailable) ... ok
+test_mid_ordering_is_expected_appearances_then_xgi_not_points (test_fpl.WildcardThreeLayer.test_mid_ordering_is_expected_appearances_then_xgi_not_points) ... ok
+test_mid_ties_on_appearances_break_on_xgi (test_fpl.WildcardThreeLayer.test_mid_ties_on_appearances_break_on_xgi) ... ok
+test_output_has_xi_captain_bench_sums_and_bench_fixtures (test_fpl.WildcardThreeLayer.test_output_has_xi_captain_bench_sums_and_bench_fixtures) ... ok
+test_roles_admit_but_never_rank (test_fpl.WildcardThreeLayer.test_roles_admit_but_never_rank)
+A three-role midfielder with the lower metric sits below a no-role ... ok
+test_split_is_the_current_squad_shape_not_a_global_vpm (test_fpl.WildcardThreeLayer.test_split_is_the_current_squad_shape_not_a_global_vpm) ... ok
+test_squad_is_legal_within_budget_and_clubs (test_fpl.WildcardThreeLayer.test_squad_is_legal_within_budget_and_clubs) ... ok
+test_the_build_takes_the_top_of_the_list_not_the_value_per_million_pick (test_fpl.WildcardThreeLayer.test_the_build_takes_the_top_of_the_list_not_the_value_per_million_pick)
+The dearest defender, given the best projection in his position, ... ok
+test_no_change_is_a_printed_no_op (tests.test_S10.Assists.test_no_change_is_a_printed_no_op) ... ok
+test_the_output (tests.test_S10.Normalise.test_the_output) ... ok
+test_the_reproduction_test_runs_on_toy_data (tests.test_S10.Normalise.test_the_reproduction_test_runs_on_toy_data) ... ok
+test_a_double_gameweek_is_one_unit (tests.test_S10.PlayerGameweeks.test_a_double_gameweek_is_one_unit) ... ok
+test_share_and_bootstrap (tests.test_S10.PlayerGameweeks.test_share_and_bootstrap) ... ok
+test_the_bootstrap_uses_its_seed (tests.test_S10.PlayerGameweeks.test_the_bootstrap_uses_its_seed) ... ok
+test_a_bench_card_counts_without_appearance (tests.test_S10.Score.test_a_bench_card_counts_without_appearance) ... ok
+test_appearance (tests.test_S10.Score.test_appearance) ... ok
+test_clean_sheet_needs_sixty_minutes (tests.test_S10.Score.test_clean_sheet_needs_sixty_minutes) ... ok
+test_defcon_rebuilt_from_its_parts (tests.test_S10.Score.test_defcon_rebuilt_from_its_parts) ... ok
+test_defensive_contribution_thresholds (tests.test_S10.Score.test_defensive_contribution_thresholds) ... ok
+test_goals_and_assists_by_position (tests.test_S10.Score.test_goals_and_assists_by_position) ... ok
+test_penalties_own_goals_cards_bonus (tests.test_S10.Score.test_penalties_own_goals_cards_bonus) ... ok
+test_per_two_conceded_and_per_three_saves (tests.test_S10.Score.test_per_two_conceded_and_per_three_saves) ... ok
+test_every_category_read_and_a_missing_one_raises (tests.test_S10.Table.test_every_category_read_and_a_missing_one_raises) ... ok
+test_a_missing_database_says_so (tests.test_S16.Database.test_a_missing_database_says_so) ... ok
+test_fixtures_are_counted_by_the_uk_day (tests.test_S16.Database.test_fixtures_are_counted_by_the_uk_day) ... ok
+test_the_database_is_opened_read_only (tests.test_S16.Database.test_the_database_is_opened_read_only) ... ok
+test_a_day_holding_a_deadline_is_ambiguous (tests.test_S16.Mapping.test_a_day_holding_a_deadline_is_ambiguous) ... ok
+test_a_day_inside_one_window (tests.test_S16.Mapping.test_a_day_inside_one_window) ... ok
+test_a_deadline_at_the_very_start_of_the_day_leaves_it_whole (tests.test_S16.Mapping.test_a_deadline_at_the_very_start_of_the_day_leaves_it_whole) ... ok
+test_a_deadline_just_after_uk_midnight_in_bst_belongs_to_that_day (tests.test_S16.Mapping.test_a_deadline_just_after_uk_midnight_in_bst_belongs_to_that_day) ... ok
+test_before_gw1_is_an_error_and_after_gw38_is_gw38 (tests.test_S16.Mapping.test_before_gw1_is_an_error_and_after_gw38_is_gw38) ... ok
+test_the_four_plan_dates_on_the_2026_27_deadlines (tests.test_S16.Mapping.test_the_four_plan_dates_on_the_2026_27_deadlines) ... ok
+test_both_switch_days (tests.test_S16.UkDay.test_both_switch_days) ... ok
+test_gmt_and_bst_days (tests.test_S16.UkDay.test_gmt_and_bst_days) ... ok
+test_the_offset_turns_at_one_utc (tests.test_S16.UkDay.test_the_offset_turns_at_one_utc) ... ok
+test_a_differing_count_fails_the_reproduction (tests.test_S16_part1.Counts.test_a_differing_count_fails_the_reproduction) ... ok
+test_blanks_doubles_triples_and_the_unscheduled (tests.test_S16_part1.Counts.test_blanks_doubles_triples_and_the_unscheduled) ... ok
+test_events_above_38_are_kept_and_flagged (tests.test_S16_part1.Counts.test_events_above_38_are_kept_and_flagged) ... ok
+test_files_are_only_read (tests.test_S16_part1.Counts.test_files_are_only_read) ... /home/runner/work/FPL/FPL/tests/test_S16_part1.py:126: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpphqheykt/2024-25/fixtures.csv'>
+  before = open(self.path, "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/home/runner/work/FPL/FPL/tests/test_S16_part1.py:129: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpphqheykt/2024-25/fixtures.csv'>
+  self.assertEqual(open(self.path, "rb").read(), before)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_history_and_the_table (tests.test_S16_part1.Counts.test_the_history_and_the_table) ... ok
+test_the_reproduction_test_on_toys (tests.test_S16_part1.Counts.test_the_reproduction_test_on_toys) ... ok
+test_the_straight_count_and_the_comparator (tests.test_S16_part1.Counts.test_the_straight_count_and_the_comparator) ... ok
+test_the_void_round_is_labelled_and_kept_outside_the_base_rates (tests.test_S16_part1.Counts.test_the_void_round_is_labelled_and_kept_outside_the_base_rates)
+RULING lane A open points 19 Oct, point 1: 2022-23 GW7. ... ok
+test_it_runs_isolated (tests.test_S16_part1.Isolated.test_it_runs_isolated) ... ok
+test_it_exits_without_writing_when_the_status_file_exists (tests.test_S3.BackupRun.test_it_exits_without_writing_when_the_status_file_exists) ... ok
+test_it_runs_when_the_status_file_is_missing_or_older_than_the_nightly (tests.test_S3.BackupRun.test_it_runs_when_the_status_file_is_missing_or_older_than_the_nightly) ... ok
+test_the_nightly_and_a_dispatch_are_always_due (tests.test_S3.BackupRun.test_the_nightly_and_a_dispatch_are_always_due) ... ok
+test_the_workflow_runs_every_step_only_when_due_in_the_one_group (tests.test_S3.BackupRun.test_the_workflow_runs_every_step_only_when_due_in_the_one_group) ... ok
+test_a_dry_run_never_writes_status_txt (tests.test_S3.ChecksMain.test_a_dry_run_never_writes_status_txt) ... ok
+test_a_fail_exits_one (tests.test_S3.ChecksMain.test_a_fail_exits_one) ... ok
+test_a_real_run_writes_status_txt_and_heads_the_report (tests.test_S3.ChecksMain.test_a_real_run_writes_status_txt_and_heads_the_report) ... ok
+test_a_dry_run_never_opens_or_closes_it (tests.test_S3.FailureIssue.test_a_dry_run_never_opens_or_closes_it) ... ok
+test_a_green_run_with_no_issue_does_nothing (tests.test_S3.FailureIssue.test_a_green_run_with_no_issue_does_nothing) ... ok
+test_a_planted_failure_opens_the_issue_and_the_next_green_run_closes_it (tests.test_S3.FailureIssue.test_a_planted_failure_opens_the_issue_and_the_next_green_run_closes_it) ... ok
+test_a_second_open_issue_is_closed_as_a_duplicate (tests.test_S3.FailureIssue.test_a_second_open_issue_is_closed_as_a_duplicate) ... ok
+test_an_api_failure_turns_a_red_run_red_and_leaves_a_green_one_green (tests.test_S3.FailureIssue.test_an_api_failure_turns_a_red_run_red_and_leaves_a_green_one_green) ... ok
+test_an_open_issue_is_updated_never_a_second_one (tests.test_S3.FailureIssue.test_an_open_issue_is_updated_never_a_second_one) ... ok
+test_the_workflow_grants_issues_write_and_contents_write_only (tests.test_S3.FailureIssue.test_the_workflow_grants_issues_write_and_contents_write_only) ... ok
+test_the_nightly_imports_nothing_under_tools_or_analysis (tests.test_S3.FastTrack.test_the_nightly_imports_nothing_under_tools_or_analysis) ... ok
+test_the_nightly_runs_the_checks_last_and_a_fail_turns_it_red (tests.test_S3.FastTrack.test_the_nightly_runs_the_checks_last_and_a_fail_turns_it_red) ... ok
+test_the_nightly_says_tests_ok_only_on_a_green_suite (tests.test_S3.FastTrack.test_the_nightly_says_tests_ok_only_on_a_green_suite)
+Check 28 reads these lines (S3 amendment 1, point 3). ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpqjnhzrkl/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_suite_runs_by_discovery_with_tests_included (tests.test_S3.FastTrack.test_the_suite_runs_by_discovery_with_tests_included) ... ok
+test_the_git_using_tests_pass_with_an_empty_home (tests.test_S3.Hermetic.test_the_git_using_tests_pass_with_an_empty_home) ... ok
+test_every_action_is_pinned_to_a_full_sha (tests.test_S3.PinnedActions.test_every_action_is_pinned_to_a_full_sha) ... ok
+test_the_versions (tests.test_S3.PinnedActions.test_the_versions) ... ok
+test_a_dry_run_with_a_fail_still_reports_to_data_dryrun (tests.test_S3.PublishOnAFail.test_a_dry_run_with_a_fail_still_reports_to_data_dryrun) ... ok
+test_a_fresh_fail_commits_nothing (tests.test_S3.PublishOnAFail.test_a_fresh_fail_commits_nothing) ... ok
+test_a_fresh_ok_is_committed (tests.test_S3.PublishOnAFail.test_a_fresh_ok_is_committed) ... ok
+test_a_status_not_written_tonight_does_not_block (tests.test_S3.PublishOnAFail.test_a_status_not_written_tonight_does_not_block) ... ok
+test_automatic_subs_bench_boost_and_triple_captain (tests.test_S3.Reconciliation.test_automatic_subs_bench_boost_and_triple_captain) ... ok
+test_equal_after_lockdown_is_ok_and_a_difference_is_a_warn (tests.test_S3.Reconciliation.test_equal_after_lockdown_is_ok_and_a_difference_is_a_warn) ... ok
+test_silent_mid_gameweek (tests.test_S3.Reconciliation.test_silent_mid_gameweek) ... ok
+test_the_vice_takes_the_armband_when_the_captain_does_not_play (tests.test_S3.Reconciliation.test_the_vice_takes_the_armband_when_the_captain_does_not_play) ... ok
+test_403_is_retried_once (tests.test_S3.RetryPolicy.test_403_is_retried_once) ... ok
+test_404_is_not_retried (tests.test_S3.RetryPolicy.test_404_is_not_retried) ... ok
+test_429_5xx_and_network_errors_are_retried (tests.test_S3.RetryPolicy.test_429_5xx_and_network_errors_are_retried) ... ok
+test_a_body_that_is_not_json_is_not_retried (tests.test_S3.RetryPolicy.test_a_body_that_is_not_json_is_not_retried) ... ok
+test_field_problems_finds_missing_and_mistyped_fields (tests.test_S3.RetryPolicy.test_field_problems_finds_missing_and_mistyped_fields) ... ok
+test_the_pause_between_calls_is_inside_0_3_to_0_5_seconds (tests.test_S3.RetryPolicy.test_the_pause_between_calls_is_inside_0_3_to_0_5_seconds) ... ok
+test_the_sync_prints_its_stats_even_when_it_stops_early (tests.test_S3.RetryPolicy.test_the_sync_prints_its_stats_even_when_it_stops_early) ... ok
+test_both_sides_of_the_25_october_change (tests.test_S3.StatusLine.test_both_sides_of_the_25_october_change) ... ok
+test_the_line_and_its_fields (tests.test_S3.StatusLine.test_the_line_and_its_fields) ... ok
+test_the_real_prague_zone_where_installed (tests.test_S3.StatusLine.test_the_real_prague_zone_where_installed) ... /home/runner/work/FPL/FPL/tests/test_S3.py:42: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f9f9dce1f30>
+  return GW1 + timedelta(days=7 * (g - 1))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_the_status_time_reads_back (tests.test_S3.StatusLine.test_the_status_time_reads_back) ... ok
+test_warn_and_fail_and_the_counts (tests.test_S3.StatusLine.test_warn_and_fail_and_the_counts) ... ok
+test_01_core_endpoints (tests.test_S3.TheChecks.test_01_core_endpoints) ... ok
+test_02_element_summary_failures (tests.test_S3.TheChecks.test_02_element_summary_failures) ... ok
+test_03_player_count (tests.test_S3.TheChecks.test_03_player_count) ... ok
+test_04_teams (tests.test_S3.TheChecks.test_04_teams) ... ok
+test_05_fixtures (tests.test_S3.TheChecks.test_05_fixtures) ... ok
+test_06_fixtures_per_gameweek (tests.test_S3.TheChecks.test_06_fixtures_per_gameweek) ... ok
+test_07_team_appearances (tests.test_S3.TheChecks.test_07_team_appearances) ... ok
+test_08_required_fields (tests.test_S3.TheChecks.test_08_required_fields) ... ok
+test_09_element_key_set (tests.test_S3.TheChecks.test_09_element_key_set) ... ok
+test_10_distinct_prices (tests.test_S3.TheChecks.test_10_distinct_prices) ... ok
+test_11_price_step (tests.test_S3.TheChecks.test_11_price_step) ... ok
+test_12_price_changes (tests.test_S3.TheChecks.test_12_price_changes) ... ok
+test_13_chance_of_playing_zero (tests.test_S3.TheChecks.test_13_chance_of_playing_zero) ... ok
+test_14_position_changes (tests.test_S3.TheChecks.test_14_position_changes) ... ok
+test_15_a_real_corrupt_file_is_a_fail (tests.test_S3.TheChecks.test_15_a_real_corrupt_file_is_a_fail) ... ok
+test_15_sqlite_integrity (tests.test_S3.TheChecks.test_15_sqlite_integrity) ... ok
+test_16_price_history_rows (tests.test_S3.TheChecks.test_16_price_history_rows) ... ok
+test_17_price_date_gaps (tests.test_S3.TheChecks.test_17_price_date_gaps) ... ok
+test_18_projection_log_growth (tests.test_S3.TheChecks.test_18_projection_log_growth) ... ok
+test_19_duplicate_keys (tests.test_S3.TheChecks.test_19_duplicate_keys) ... ok
+test_20_rows_after_the_deadline (tests.test_S3.TheChecks.test_20_rows_after_the_deadline) ... ok
+test_21_stuck_gameweek (tests.test_S3.TheChecks.test_21_stuck_gameweek) ... ok
+test_23_secret_in_the_files_to_commit (tests.test_S3.TheChecks.test_23_secret_in_the_files_to_commit) ... ok
+test_24_repo_size (tests.test_S3.TheChecks.test_24_repo_size) ... ok
+test_25_run_duration (tests.test_S3.TheChecks.test_25_run_duration) ... ok
+test_26_heartbeat (tests.test_S3.TheChecks.test_26_heartbeat) ... ok
+test_27_workflow_state_is_manual (tests.test_S3.TheChecks.test_27_workflow_state_is_manual) ... ok
+test_28_test_gate (tests.test_S3.TheChecks.test_28_test_gate)
+S3 amendment 1, point 3: a red suite fails the night. ... ok
+test_29_record (tests.test_S3.TheChecks.test_29_record) ... ok
+test_a_check_that_raises_is_a_warn_never_a_crash (tests.test_S3.TheChecks.test_a_check_that_raises_is_a_warn_never_a_crash) ... ok
+test_a_healthy_night_has_no_warn_and_no_fail (tests.test_S3.TheChecks.test_a_healthy_night_has_no_warn_and_no_fail) ... ok
+test_a_night_with_a_red_suite_never_reads_ok (tests.test_S3.TheChecks.test_a_night_with_a_red_suite_never_reads_ok)
+The dry run of 18 Oct said STATUS OK, 23/23, while three tests failed; ... ok
+test_cli_refuses_not_rebuildable_and_writes_only_under_out (tests.test_S4.CLI.test_cli_refuses_not_rebuildable_and_writes_only_under_out) ... ok
+test_nightly_imports_nothing_under_tools_or_analysis (tests.test_S4.CLI.test_nightly_imports_nothing_under_tools_or_analysis) ... ok
+test_blank_carries_forward_and_no_backfill (tests.test_S4.ClubMap.test_blank_carries_forward_and_no_backfill) ... ok
+test_cross_check_and_unknown_fixture_raise (tests.test_S4.ClubMap.test_cross_check_and_unknown_fixture_raise) ... ok
+test_every_row_club_is_one_of_its_fixture_teams (tests.test_S4.ClubMap.test_every_row_club_is_one_of_its_fixture_teams) ... ok
+test_look_ahead_probe (tests.test_S4.ClubMap.test_look_ahead_probe) ... ok
+test_planted_transfer_changes_club_in_exactly_that_gameweek (tests.test_S4.ClubMap.test_planted_transfer_changes_club_in_exactly_that_gameweek) ... ok
+test_real_season_rows_match_their_fixtures (tests.test_S4.ClubMap.test_real_season_rows_match_their_fixtures) ... skipped 'no 2025/26 copy'
+test_bootstrap_hand_cases (tests.test_S4.Metrics.test_bootstrap_hand_cases) ... ok
+test_decision_points (tests.test_S4.Metrics.test_decision_points) ... ok
+test_holm_and_bh (tests.test_S4.Metrics.test_holm_and_bh) ... ok
+test_kendall_tau_b_with_ties (tests.test_S4.Metrics.test_kendall_tau_b_with_ties) ... ok
+test_mae_brier_logloss (tests.test_S4.Metrics.test_mae_brier_logloss) ... ok
+test_power_formula (tests.test_S4.Metrics.test_power_formula) ... ok
+test_selftest_runs_through_the_rule (tests.test_S4.Metrics.test_selftest_runs_through_the_rule) ... ok
+test_spearman_is_the_repo_ruler (tests.test_S4.Metrics.test_spearman_is_the_repo_ruler) ... ok
+test_topk_regret_and_tie_break (tests.test_S4.Metrics.test_topk_regret_and_tie_break) ... ok
+test_compare_and_decision (tests.test_S4.Season2526.test_compare_and_decision) ... ok
+test_components_are_the_models_own_terms (tests.test_S4.Season2526.test_components_are_the_models_own_terms) ... ok
+test_components_leak_free_and_mutation_red (tests.test_S4.Season2526.test_components_leak_free_and_mutation_red)
+P(start), P(cs) and P(DEFCON) for gameweek 5 read nothing from ... ok
+test_leak_free_and_mutation_red (tests.test_S4.Season2526.test_leak_free_and_mutation_red) ... ok
+test_not_rebuildable_sources_refuse (tests.test_S4.Season2526.test_not_rebuildable_sources_refuse) ... ok
+test_rebuild_uses_the_club_of_that_gameweek (tests.test_S4.Season2526.test_rebuild_uses_the_club_of_that_gameweek)
+The team-column leak test: a transfer planted in round 6 leaves ... ok
+test_rebuilt_equals_backtest_week (tests.test_S4.Season2526.test_rebuilt_equals_backtest_week) ... ok
+test_starters_filter_is_forecast_p_start (tests.test_S4.Season2526.test_starters_filter_is_forecast_p_start) ... ok
+test_compare_needs_a_common_graded_week (tests.test_S4.Season2627.test_compare_needs_a_common_graded_week) ... ok
+test_decision_uses_our_picks_and_missing_forecast_is_zero (tests.test_S4.Season2627.test_decision_uses_our_picks_and_missing_forecast_is_zero) ... ok
+test_lockdown_guard (tests.test_S4.Season2627.test_lockdown_guard) ... ok
+test_reader_is_the_s2_rule (tests.test_S4.Season2627.test_reader_is_the_s2_rule) ... ok
+test_starters_and_components (tests.test_S4.Season2627.test_starters_and_components) ... ok
+test_best_fifteen_equals_brute_force (tests.test_S4.Squad.test_best_fifteen_equals_brute_force) ... ok
+test_candidates_use_previous_gameweek_selected (tests.test_S4.Squad.test_candidates_use_previous_gameweek_selected) ... ok
+test_cli_and_isolation (tests.test_S5.CLI.test_cli_and_isolation) ... ok
+test_condition_uses_the_pre_deadline_export_and_the_starters_threshold (tests.test_S5.Condition.test_condition_uses_the_pre_deadline_export_and_the_starters_threshold) ... ok
+test_backtest_report_on_cp1252 (tests.test_S5.ConsoleEncoding.test_backtest_report_on_cp1252) ... ok
+test_chips_live_on_cp1252 (tests.test_S5.ConsoleEncoding.test_chips_live_on_cp1252) ... ok
+test_helper_reconfigures_the_console (tests.test_S5.ConsoleEncoding.test_helper_reconfigures_the_console) ... ok
+test_odds_lambda_live_on_cp1252 (tests.test_S5.ConsoleEncoding.test_odds_lambda_live_on_cp1252) ... ok
+test_fit_uses_only_results_before_the_deadline (tests.test_S5.Fallback.test_fit_uses_only_results_before_the_deadline) ... ok
+test_strengths_and_decay (tests.test_S5.Fallback.test_strengths_and_decay) ... ok
+test_aggregation_means_counts_and_exclusions (tests.test_S5.LiveMode.test_aggregation_means_counts_and_exclusions) ... ok
+test_live_with_and_without_a_snapshot (tests.test_S5.LiveMode.test_live_with_and_without_a_snapshot) ... ok
+test_snapshot_time_and_selection (tests.test_S5.LiveMode.test_snapshot_time_and_selection) ... ok
+test_clean_sheet_moves_with_opponent_strength (tests.test_S5.Maths.test_clean_sheet_moves_with_opponent_strength) ... ok
+test_demargin (tests.test_S5.Maths.test_demargin) ... ok
+test_lambda_terms_and_forecast (tests.test_S5.Maths.test_lambda_terms_and_forecast) ... ok
+test_lambda_total_and_split (tests.test_S5.Maths.test_lambda_total_and_split) ... ok
+test_pre_closing_columns_only_and_team_map (tests.test_S5.OddsFiles.test_pre_closing_columns_only_and_team_map) ... ok
+test_real_files_map_every_team (tests.test_S5.OddsFiles.test_real_files_map_every_team) ... ok
+test_primary_test_runs_and_is_point_in_time (tests.test_S5.Primary.test_primary_test_runs_and_is_point_in_time) ... ok
+test_cli_cut_required_and_isolation (tests.test_S6.CLI.test_cli_cut_required_and_isolation) ... ok
+test_log_is_never_written (tests.test_S6.CLI.test_log_is_never_written) ... /home/runner/work/FPL/FPL/tests/test_S6.py:179: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpcofb7vec/projection_log.csv'>
+  before = open(log, "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_conditional_forecasts_hand_case (tests.test_S6.Components.test_conditional_forecasts_hand_case) ... ok
+test_sub_inputs_before_the_deadline_only (tests.test_S6.Components.test_sub_inputs_before_the_deadline_only) ... ok
+test_develop_validate_and_the_frozen_choice (tests.test_S6.SeasonTests.test_develop_validate_and_the_frozen_choice) ... ok
+test_lockdown_and_missing_source_refuse (tests.test_S6.SeasonTests.test_lockdown_and_missing_source_refuse) ... ok
+test_metrics_pair_on_starters_and_our_15 (tests.test_S6.SeasonTests.test_metrics_pair_on_starters_and_our_15) ... ok
+test_week_is_point_in_time (tests.test_S6.SeasonTests.test_week_is_point_in_time) ... ok
+test_cli_and_isolation (tests.test_S7.CLI.test_cli_and_isolation) ... ok
+test_hand_values (tests.test_S7.Induction.test_hand_values) ... ok
+test_three_week_toy_with_known_optimum (tests.test_S7.Induction.test_three_week_toy_with_known_optimum) ... ok
+test_tie_goes_to_playing_and_last_week_plays (tests.test_S7.Induction.test_tie_goes_to_playing_and_last_week_plays) ... ok
+test_live_runs_and_labels (tests.test_S7.Live.test_live_runs_and_labels) ... ok
+test_own_week_points_recorded_then_formula (tests.test_S7.Live.test_own_week_points_recorded_then_formula) ... ok
+test_squad_budget_and_chips (tests.test_S7.Live.test_squad_budget_and_chips) ... ok
+test_xi_bench_and_values (tests.test_S7.Live.test_xi_bench_and_values) ... ok
+test_club_of_the_origin_is_used (tests.test_S7.ReplayTests.test_club_of_the_origin_is_used) ... ok
+test_forecasts_point_in_time (tests.test_S7.ReplayTests.test_forecasts_point_in_time) ... ok
+test_realised_gains_hand_cases (tests.test_S7.ReplayTests.test_realised_gains_hand_cases) ... ok
+test_replay_runs_and_scores_every_policy (tests.test_S7.ReplayTests.test_replay_runs_and_scores_every_policy) ... ok
+test_squads_are_legal_and_reproducible (tests.test_S7.ReplayTests.test_squads_are_legal_and_reproducible) ... ok
+test_cli_writes_one_file_and_isolation (tests.test_S9.CLI.test_cli_writes_one_file_and_isolation) ... ok
+test_chain_corrects_a_provisional_row_and_reports_it (tests.test_S9.TotalsChain.test_chain_corrects_a_provisional_row_and_reports_it) ... ok
+test_every_sigma_and_p_has_an_interval (tests.test_S9.TotalsChain.test_every_sigma_and_p_has_an_interval) ... ok
+test_uncorrectable_row_is_excluded_and_counted (tests.test_S9.TotalsChain.test_uncorrectable_row_is_excluded_and_counted) ... ok
+test_captain_table_and_history (tests.test_S9.Variance.test_captain_table_and_history) ... ok
+test_multipliers_threat_set_and_eo (tests.test_S9.Variance.test_multipliers_threat_set_and_eo) ... ok
+test_point_in_time (tests.test_S9.Variance.test_point_in_time) ... ok
+test_sigmas_pooled_rho_phi_and_line (tests.test_S9.Variance.test_sigmas_pooled_rho_phi_and_line) ... ok
+test_a_big_file_is_found_and_named (tests.test_W1.BigFiles.test_a_big_file_is_found_and_named) ... ok
+test_check_24_names_a_big_file (tests.test_W1.BigFiles.test_check_24_names_a_big_file) ... ok
+test_a_missing_ep_next_is_a_skip_never_a_lost_night (tests.test_W1.FplEp.test_a_missing_ep_next_is_a_skip_never_a_lost_night)
+RULING W1 decisions, point 3: absent, or null for every player. ... ok
+test_an_old_players_table_gets_the_column_and_its_rows_keep_null (tests.test_W1.FplEp.test_an_old_players_table_gets_the_column_and_its_rows_keep_null) ... ok
+test_ep_next_is_not_a_required_field (tests.test_W1.FplEp.test_ep_next_is_not_a_required_field) ... ok
+test_fpl_ep_is_refused_at_the_deadline_like_every_source (tests.test_W1.FplEp.test_fpl_ep_is_refused_at_the_deadline_like_every_source) ... ok
+test_fpl_ep_records_ep_next_for_the_next_gameweek (tests.test_W1.FplEp.test_fpl_ep_records_ep_next_for_the_next_gameweek) ... ok
+test_some_null_players_are_counted_and_the_rest_recorded (tests.test_W1.FplEp.test_some_null_players_are_counted_and_the_rest_recorded) ... ok
+test_the_cli_writes_record_skip_and_exits_zero (tests.test_W1.FplEp.test_the_cli_writes_record_skip_and_exits_zero) ... ok
+test_the_export_carries_ep_next (tests.test_W1.FplEp.test_the_export_carries_ep_next) ... ok
+test_the_frozen_four_record_the_same_with_or_without_ep_next (tests.test_W1.FplEp.test_the_frozen_four_record_the_same_with_or_without_ep_next) ... ok
+test_the_frozen_four_stay_strict (tests.test_W1.FplEp.test_the_frozen_four_stay_strict) ... ok
+test_the_nightly_and_the_checks_know_the_fifth_source (tests.test_W1.FplEp.test_the_nightly_and_the_checks_know_the_fifth_source) ... ok
+test_the_sync_stores_ep_next_as_a_number_and_a_missing_one_as_null (tests.test_W1.FplEp.test_the_sync_stores_ep_next_as_a_number_and_a_missing_one_as_null) ... ok
+test_the_odds_step_has_the_key_and_the_suite_does_not (tests.test_W1.NightlyOrder.test_the_odds_step_has_the_key_and_the_suite_does_not) ... ok
+test_a_deleted_odds_file_fails_the_gate (tests.test_W1.OddsAppendOnly.test_a_deleted_odds_file_fails_the_gate) ... ok
+test_a_new_file_passes_and_the_old_one_untouched (tests.test_W1.OddsAppendOnly.test_a_new_file_passes_and_the_old_one_untouched) ... ok
+test_a_rewritten_odds_file_fails_the_gate (tests.test_W1.OddsAppendOnly.test_a_rewritten_odds_file_fails_the_gate) ... ok
+test_a_missing_fpl_ep_record_fails_check_29 (tests.test_W1.OddsCheck.test_a_missing_fpl_ep_record_fails_check_29) ... ok
+test_a_skipped_fpl_ep_is_a_warn_and_a_skipped_frozen_source_a_fail (tests.test_W1.OddsCheck.test_a_skipped_fpl_ep_is_a_warn_and_a_skipped_frozen_source_a_fail) ... ok
+test_credits_below_60_are_a_warn (tests.test_W1.OddsCheck.test_credits_below_60_are_a_warn) ... ok
+test_missing_credit_headers_are_a_warn (tests.test_W1.OddsCheck.test_missing_credit_headers_are_a_warn)
+RULING W1 pre-check decisions, point 2: any credit header missing is ... ok
+test_ok_skipped_failed_missing (tests.test_W1.OddsCheck.test_ok_skipped_failed_missing) ... ok
+test_a_body_that_is_not_a_list_is_a_failure_and_writes_nothing (tests.test_W1.OddsCollector.test_a_body_that_is_not_a_list_is_a_failure_and_writes_nothing) ... ok
+test_a_dry_run_calls_the_api_only_with_odds_live (tests.test_W1.OddsCollector.test_a_dry_run_calls_the_api_only_with_odds_live)
+RULING W1 decisions, point 1. ... ok
+test_a_failure_never_shows_the_url_or_the_key (tests.test_W1.OddsCollector.test_a_failure_never_shows_the_url_or_the_key) ... ok
+test_a_second_night_adds_a_file_and_keeps_the_first (tests.test_W1.OddsCollector.test_a_second_night_adds_a_file_and_keeps_the_first) ... ok
+test_an_answer_without_credit_headers_is_kept_and_a_warn (tests.test_W1.OddsCollector.test_an_answer_without_credit_headers_is_kept_and_a_warn)
+RULING W1 pre-check decisions, point 2, from the collector's own line. ... ok
+test_an_existing_file_is_never_rewritten (tests.test_W1.OddsCollector.test_an_existing_file_is_never_rewritten) ... ok
+test_no_key_no_request (tests.test_W1.OddsCollector.test_no_key_no_request) ... ok
+test_no_odds_go_to_sqlite (tests.test_W1.OddsCollector.test_no_odds_go_to_sqlite) ... ok
+test_one_row_per_price_and_lay_prices_only_when_asked (tests.test_W1.OddsCollector.test_one_row_per_price_and_lay_prices_only_when_asked) ... ok
+test_the_answer_is_written_byte_for_byte_as_deterministic_gzip (tests.test_W1.OddsCollector.test_the_answer_is_written_byte_for_byte_as_deterministic_gzip) ... ok
+test_the_api_is_called_only_in_github_actions (tests.test_W1.OddsCollector.test_the_api_is_called_only_in_github_actions)
+RULING W1 pre-check decisions, point 1: no call unless GITHUB_ACTIONS ... ok
+test_the_command_line_reads_github_actions_from_its_environment (tests.test_W1.OddsCollector.test_the_command_line_reads_github_actions_from_its_environment)
+main() with no env argument (python fpl_odds.py) reads os.environ. ... ok
+test_the_key_goes_to_the_api_and_nowhere_else (tests.test_W1.OddsCollector.test_the_key_goes_to_the_api_and_nowhere_else) ... ok
+test_the_reader_gives_the_fetch_minute_and_the_events (tests.test_W1.OddsCollector.test_the_reader_gives_the_fetch_minute_and_the_events) ... ok
+test_the_secret_scan_reads_inside_an_odds_file (tests.test_W1.OddsCollector.test_the_secret_scan_reads_inside_an_odds_file) ... ok
+test_the_workflow_input_odds_live (tests.test_W1.OddsCollector.test_the_workflow_input_odds_live) ... ok
+test_a_crashing_collector_and_the_night_still_commits (tests.test_W1.OddsNeverCostsTheNight.test_a_crashing_collector_and_the_night_still_commits) ... /home/runner/work/FPL/FPL/fpl_nightly.py:282: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp96t41lcj/data/reports/record_status.tmp' mode='r' encoding='utf-8'>
+  for line in open(status, encoding="utf-8", newline="").read().splitlines():
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+
+----------------------------------------------------------------------
+Ran 614 tests in 86.693s
+
+OK (skipped=12)
+TESTS OK
+syncing FPL API ...
+bootstrap-static ...
+fixtures ...
+live stats GW7 ...
+league standings ...
+entry 881799 ...
+entry 5826302 ...
+entry 18931 ...
+entry 4866471 ...
+entry 3073318 ...
+entry 2322726 ...
+entry 8690100 ...
+
+exported -> fpl_export_gw7.json  (upload this file to Claude)
+SYNC STATS {"calls":[["bootstrap-static/",200],["fixtures/",200],["event/7/live/",200],["leagues-classic/455565/standings/",200],["entry/881799/history/",200],["entry/881799/transfers/",200],["entry/881799/event/7/picks/",200],["entry/5826302/history/",200],["entry/5826302/transfers/",200],["entry/5826302/event/7/picks/",200],["entry/18931/history/",200],["entry/18931/transfers/",200],["entry/18931/event/7/picks/",200],["entry/4866471/history/",200],["entry/4866471/transfers/",200],["entry/4866471/event/7/picks/",200],["entry/3073318/history/",200],["entry/3073318/transfers/",200],["entry/3073318/event/7/picks/",200],["entry/2322726/history/",200],["entry/2322726/transfers/",200],["entry/2322726/event/7/picks/",200],["entry/8690100/history/",200],["entry/8690100/transfers/",200],["entry/8690100/event/7/picks/",200]],"element_ids":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,446,447,448,449,450,451,452,453,454,455,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471,472,473,474,475,476,477,478,479,480,481,482,483,484,485,486,487,488,489,490,491,492,493,494,495,496,497,498,499,500,501,502,503,504,505,506,507,508,509,510,511,512,513,514,515,516,517,518,519,520,521,522,523,524,525,526,527,528,529,530,531,532,533,534,535,536,537,538,539,540,541,542,543,544,545,546,547,548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565,566,567,568,569,570,571,572,573,574,575,576,577,578,579,580,581,582,583,584,585,586,587,588,589,590,591,592,593,594,595,596,597,598,599,600,601,602,603,604,605,606,607,608,609,610,611,612,613,614,615,616,617,618,619,620,621,622,623,624,625,626,627,628,629,630,631,632,633,634,635,636,637,638,639,640,641,642,643,644,645,646,647,648,649,650,651,652,653,654,655,656,657,658,659,660,661,662,663,664,665,666,667,668],"element_keys":["assists","birth_date","bonus","bps","can_select","can_transact","chance_of_playing_next_round","chance_of_playing_this_round","clean_sheets","clean_sheets_per_90","clearances_blocks_interceptions","code","corners_and_indirect_freekicks_order","corners_and_indirect_freekicks_text","cost_change_event","cost_change_event_fall","cost_change_start","cost_change_start_fall","creativity","creativity_rank","creativity_rank_type","defensive_contribution","defensive_contribution_per_90","direct_freekicks_order","direct_freekicks_text","dreamteam_count","element_type","ep_next","ep_this","event_points","expected_assists","expected_assists_per_90","expected_goal_involvements","expected_goal_involvements_per_90","expected_goals","expected_goals_conceded","expected_goals_conceded_per_90","expected_goals_per_90","first_name","form","form_rank","form_rank_type","goals_conceded","goals_conceded_per_90","goals_scored","has_temporary_code","ict_index","ict_index_rank","ict_index_rank_type","id","in_dreamteam","influence","influence_rank","influence_rank_type","known_name","minutes","news","news_added","now_cost","now_cost_rank","now_cost_rank_type","opta_code","own_goals","penalties_missed","penalties_order","penalties_saved","penalties_text","photo","points_per_game","points_per_game_rank","points_per_game_rank_type","price_change_calibrating","price_change_hourly_rate","price_change_locked_until","price_change_percent","price_change_projections","recoveries","red_cards","region","removed","saves","saves_per_90","scout_news_link","scout_risks","second_name","selected_by_percent","selected_rank","selected_rank_type","special","squad_number","starts","starts_per_90","status","tackles","team","team_code","team_join_date","threat","threat_rank","threat_rank_type","total_points","transfers_in","transfers_in_event","transfers_out","transfers_out_event","value_form","value_season","web_name","yellow_cards"],"elements":668,"field_problems":[],"finished":true,"fixtures":380,"teams":20}
+collecting odds ...
+ODDS OK      20 events (20 with totals), 3160 prices, odds/odds_2026-10-19T2205Z.json.gz 11642 bytes; credits used 16, remaining 484, this request 4
+recording forecasts for next GW ...
+[reading fpl_export_gw7.json]
+
+  recorded 281 forecasts for GW8 as 'own' (3 days, 19:24:41.579433 before deadline)
+RECORD OK own 281
+[reading fpl_export_gw7.json]
+
+  recorded 261 forecasts for GW8 as 'xg' (3 days, 19:24:41.421564 before deadline)
+RECORD OK xg 261
+[reading fpl_export_gw7.json]
+
+  recorded 261 forecasts for GW8 as 'minutes' (3 days, 19:24:41.258954 before deadline)
+RECORD OK minutes 261
+[reading fpl_export_gw7.json]
+
+  recorded 261 forecasts for GW8 as 'bottomup' (3 days, 19:24:41.100510 before deadline)
+RECORD OK bottomup 261
+[reading fpl_export_gw7.json]
+
+  recorded 668 forecasts for GW8 as 'fpl_ep' (3 days, 19:24:40.930185 before deadline)
+RECORD OK fpl_ep 668
+writing the watch file ...
+[reading fpl_export_gw7.json]
+
+[watch file: 19 ids, 6329 bytes -> reports/watch_2026-10-19.txt]
+building report ...
+[reading fpl_export_gw7.json]
+
+[diffing against fpl_export_gw6.json]
+
+==============================================================================
+DIFF  GW6 -> GW7
+==============================================================================
+
+  TABLE
+   Bruno Dos Tres         1( =)   495 (+62)  val 101.8 (+0.4)
+   Revelstoke FC          2( =)   487 (+68)  val 101.7 (+0.3)
+   ReturnOfTheDjedi FC    3( =)   480 (+74)  val 102.2 (+0.6)
+   No More Mr. Rice Guy   4(+1)   472 (+93)  val 100.8 (+0.5)
+>> 1. FC Kiripolcz        5(+1)   460 (+83)  val 100.2 (+0.2)
+   Skori FC               6(-2)   424 (+26)  val 101.1 (+0.2)
+   PyroNeniZlocin         7( =)   380 (+47)  val  99.8 (-0.2)
+
+  YOUR SQUAD: price moves
+    Calafiori      ARS   £5.9 -> £6.0  (+0.1)
+    Groß           BHA   £6.0 -> £6.1  (+0.1)
+    Haaland        MCI   £15.6 -> £15.7  (+0.1)
+    Mbeumo         MUN   £7.9 -> £7.8  (-0.1)
+    Thomas         COV   £5.5 -> £4.0  (-1.5)
+
+  NEW FLAGS (owned by anyone in the league)
+    !! Semenyo        MCI  i 0%  Knee injury - Unknown return date
+    !! Haaland        MCI  d 75%  Unspecified injury - 75% chance of playing
+
+  FORM MOVERS  (last-4 points, biggest gains, 60+ mins)
+    Dasilva        COV  £  4.0 L4  20 (+20)  own   1.5%
+    Kamara         AVL  £  5.0 L4  17 (+17)  own   0.3%
+    Neto           CHE  £  6.5 L4  24 (+13)  own   2.2%
+    Ayari          BHA  £  5.4 L4  27 (+11)  own   0.5%
+    Kostoulas      BHA  £  5.7 L4  33 (+10)  own   9.6%
+    Evanilson      BOU  £  6.1 L4  26 (+10)  own   4.3%
+    Iwobi          FUL  £  5.4 L4  23 (+9)  own   1.0%
+    Maddison       TOT  £  6.2 L4  12 (+9)  own   0.4%
+    Boscagli       BHA  £  4.5 L4  27 (+8)  own   0.4%
+    Hato           CHE  £  4.5 L4  11 (+8)  own   0.7%
+
+  CHIPS PLAYED SINCE
+    1. FC Kiripolcz        TC GW7
+    No More Mr. Rice Guy   TC GW7
+
+==============================================================================
+LEAGUE  (after GW7)
+==============================================================================
+   team                     GW   tot   gap    val bench  chips left (1st half)
+   Bruno Dos Tres           62   495     0  101.8    11  WC FH
+   Revelstoke FC            68   487    -8  101.7    15  WC FH BB
+   ReturnOfTheDjedi FC      74   480   -15  102.2     8  FH
+   No More Mr. Rice Guy     93   472   -23  100.8     5  FH BB
+>> 1. FC Kiripolcz          83   460   -35  100.2     8  FH BB
+   Skori FC                 30   424   -71  101.1    27  WC FH TC
+   PyroNeniZlocin           47   380  -115   99.8     2  WC FH BB
+
+==============================================================================
+MINI-LEAGUE OWNERSHIP
+==============================================================================
+
+  YOU DON'T OWN, THEY DO   (forward-looking: every point is a loss)
+  player         team pos      £  rivals  gap/pt
+  João Pedro     CHE  FWD    7.9    5/6   -0.83
+  Kinsky         TOT  GK     4.5    4/6   -0.67
+  Rogers         CHE  MID    7.9    4/6   -0.67
+  Raya           ARS  GK     6.1    3/6   -0.50
+  Gvardiol       MCI  DEF    5.8    3/6   -0.50
+  Calvert-Lewin  LEE  FWD    6.0    3/6   -0.50
+  De Cuyper      BHA  DEF    5.2    2/6   -0.33
+  Gibbs-White    NFO  MID    7.9    2/6   -0.33
+  Gonzalo        FUL  FWD    6.1    2/6   -0.33
+  Konsa          ARS  DEF    4.6    2/6   -0.33
+  Hall           NEW  DEF    5.3    2/6   -0.33
+  Tavernier      BOU  MID    6.2    2/6   -0.33
+
+  YOU OWN, THEY MOSTLY DON'T   (your differentials)
+  player         team pos      £  rivals  gap/pt
+  Thomas         COV  DEF    4.0    0/6   +1.00
+  Mbeumo         MUN  MID    7.8    0/6   +1.00
+  Rudoni         COV  MID    4.9    0/6   +1.00
+  Barry          EVE  FWD    5.7    0/6   +1.00
+  Kelleher       BRE  GK     5.0    0/6   +1.00
+  Thiago         BRE  FWD    7.8    0/6   +1.00
+  Slater         HUL  MID    4.5    0/6   +1.00
+  Verbruggen     BHA  GK     4.6    1/6   +0.83
+  Tarkowski      EVE  DEF    6.2    1/6   +0.83
+  Branthwaite    EVE  DEF    5.5    1/6   +0.83
+  Muharemović    LEE  DEF    5.0    2/6   +0.67
+  Groß           BHA  MID    6.1    3/6   +0.50
+
+  CAPTAINCY EFFECT IN GW7   (historical - not a transfer signal)
+  player         team   mult gap  note
+  Saka           ARS       +0.33  
+  Groß           BHA       +0.50  
+  Verbruggen     BHA       +0.83  
+  Muharemović    LEE       +0.83  
+  Tarkowski      EVE       +1.00  
+  Thomas         COV       +1.00  
+  Mbeumo         MUN       +1.00  
+  Rudoni         COV       +1.00  
+  Barry          EVE       +1.00  
+  Haaland        MCI       +1.17  1 rival(s) played Triple Captain - spent, cannot recur
+
+  EFFECTIVE OWNERSHIP WITH CAPTAINCY   (rival picks as of GW7; captain = 2, bench = 0, TC = 2)
+  THEIR STAKES YOU DON'T MATCH   (net/pt < 0: every point he scores costs you)
+  player         team pos  mine    EO  start  capt  net/pt
+  João Pedro     CHE  FWD     0  0.83   5/6    0/6    -0.83
+  Rogers         CHE  MID     0  0.67   4/6    0/6    -0.67
+  Gvardiol       MCI  DEF     0  0.50   3/6    0/6    -0.50
+  De Cuyper      BHA  DEF     0  0.33   2/6    0/6    -0.33
+  Gonzalo        FUL  FWD     0  0.33   2/6    0/6    -0.33
+  Kinsky         TOT  GK      0  0.33   2/6    0/6    -0.33
+  Raya           ARS  GK      0  0.33   2/6    0/6    -0.33
+  Hall           NEW  DEF     0  0.33   2/6    0/6    -0.33
+  Tavernier      BOU  MID     0  0.33   2/6    0/6    -0.33
+  Semenyo        MCI  MID     0  0.33   1/6    1/6    -0.33
+  Van Hecke      TOT  DEF     0  0.17   1/6    0/6    -0.17
+  Palmer         CHE  MID     0  0.17   1/6    0/6    -0.17
+  YOUR STAKES THEY DON'T MATCH   (net/pt > 0: every point gains on the average rival)
+  player         team pos  mine    EO  start  capt  net/pt
+  Tarkowski      EVE  DEF     1  0.00   0/6    0/6    +1.00
+  Thomas         COV  DEF     1  0.00   0/6    0/6    +1.00
+  Mbeumo         MUN  MID     1  0.00   0/6    0/6    +1.00
+  Rudoni         COV  MID     1  0.00   0/6    0/6    +1.00
+  Barry          EVE  FWD     1  0.00   0/6    0/6    +1.00
+  Verbruggen     BHA  GK      1  0.17   1/6    0/6    +0.83
+  Muharemović    LEE  DEF     1  0.17   1/6    0/6    +0.83
+  Groß           BHA  MID     1  0.50   3/6    0/6    +0.50
+  Saka           ARS  MID     1  0.67   4/6    0/6    +0.33
+  Haaland        MCI  FWD     2  1.67   5/6    5/6    +0.33
+
+  PER RIVAL, GW8   (projected: full model, all terms, one unit; picks as of GW7; blanks 0)
+  rival                 their captain    swing  shared  yours  theirs
+  No More Mr. Rice Guy  Haaland           +2.4    22.8   32.1    29.7
+  Bruno Dos Tres        Haaland           +4.1    27.3   27.5    23.4
+  ReturnOfTheDjedi FC   Haaland           +5.7    22.8   32.1    26.4
+  Revelstoke FC         Haaland           +6.5    17.5   37.4    30.9
+  Skori FC              Semenyo          +16.1     5.4   49.4    33.3
+  PyroNeniZlocin        Haaland          +22.6    18.4   36.5    13.8
+
+  CAPTAIN COVER, GW8   (MID/FWD in your XI by projection; stake/pt = 2 - EO if captained)
+  candidate      team   proj    EO  capt  stake/pt
+  Saka           ARS    5.31  0.67   0/6      +1.33
+  Mbeumo         MUN    4.78  0.00   0/6      +2.00
+  Rudoni         COV    4.54  0.00   0/6      +2.00
+  Barry          EVE    4.52  0.00   0/6      +2.00
+  Groß           BHA    4.40  0.50   0/6      +1.50
+  Haaland        MCI    3.81  1.67   5/6      +0.33
+  the expected value of a captaincy is its projection alone; EO changes the variance
+  of your rank, not the expectation: the field's captain covers, a differential swings.
+
+  gap/pt = net points gained on the average rival per point that player
+  scores. Ownership gap is what transfers change. The captaincy block
+  reflects one past gameweek only; the EO blocks carry it forward.
+
+==============================================================================
+YOUR SQUAD  (form, flags, next 6 fixtures)
+==============================================================================
+        player         team     £    pts     L4  mins     fdr  xGI/90  conc trim90  med90  fixtures
+XI  GK  Verbruggen     BHA    4.6 pts 38 L4: 29 m 360 fdr 3.3    0.03 0.95!   0.00   0.00  LIVA4 MCIA5 BREH3 HULA2 NEWH3 BOUA3
+XI  DEF Muharemović    LEE    5.0 pts 34 L4: 20 m 360 fdr 3.2    0.11 0.54!   0.06   0.02  SUNA3 BOUA3 TOTH2 CHEA4 COVH2 MCIA5
+XI  DEF Calafiori      ARS    6.0 pts 44 L4: 22 m 351 fdr 3.2    0.34 0.28    0.28   0.30  EVEH3 LIVA4 HULH2 NEWA3 MCIH4 BREA3
+XI  DEF Tarkowski      EVE    6.2 pts 46 L4: 25 m 360 fdr 3.3    0.04 0.39    0.03   0.03  ARSA5 NEWA3 COVH2 BREA3 LIVH4 AVLA3
+XI  DEF Thomas         COV    4.0 pts 13 L4: 12 m 244 fdr 2.5    0.14 0.42    0.09   0.10  FULH2 SUNH3 EVEA3 CRYH2 LEEA3 IPSH2
+XI  MID Saka           ARS    9.6 pts 37 L4: 15 m 350 fdr 3.2    0.73 0.30    0.60   0.67  EVEH3 LIVA4 HULH2 NEWA3 MCIH4 BREA3
+XI  MID Mbeumo         MUN    7.8 pts 41 L4: 20 m 360 fdr 3.3    0.69 0.41    0.48   0.57  BOUH3 CHEA4 AVLH3 LIVA4 BREH3 NEWA3
+XI  MID Groß           BHA    6.1 pts 58 L4: 42 m 340 fdr 3.3    0.49 0.30    0.40   0.36  LIVA4 MCIA5 BREH3 HULA2 NEWH3 BOUA3
+XI  MID Rudoni         COV    4.9 pts 26 L4: 20 m 313 fdr 2.5    0.58 0.35    0.45   0.45  FULH2 SUNH3 EVEA3 CRYH2 LEEA3 IPSH2
+XI  FWD Haaland        MCI   15.7 pts 58 L4: 34 m 349 fdr 3.2    0.94 0.24    0.84   0.88  AVLA3 BHAH3 NFOA3 FULH2 ARSA5 LEEH3  !! d Unspecified injury - 75% chance of playi
+XI  FWD Barry          EVE    5.7 pts 28 L4: 16 m 355 fdr 3.3    0.74 0.30    0.58   0.62  ARSA5 NEWA3 COVH2 BREA3 LIVH4 AVLA3
+BEN GK  Kelleher       BRE    5.0 pts 24 L4: 13 m 360 fdr 3.3    0.00 1.00!   0.00   0.00  HULA2 NFOH3 BHAA4 EVEH3 MUNA4 ARSH4
+BEN DEF Branthwaite    EVE    5.5 pts 31 L4: 18 m 360 fdr 3.3    0.05 0.30    0.04   0.07  ARSA5 NEWA3 COVH2 BREA3 LIVH4 AVLA3
+BEN FWD Thiago         BRE    7.8 pts 18 L4: 14 m 360 fdr 3.3    0.60 0.26    0.52   0.68  HULA2 NFOH3 BHAA4 EVEH3 MUNA4 ARSH4
+BEN MID Slater         HUL    4.5 pts 18 L4:  7 m 315 fdr 3.2    0.13 0.51!   0.08   0.05  BREH3 IPSH2 ARSA5 BHAH3 CRYA3 NFOH3
+    xGI/90 = season xGI per 90; conc = best game's share of it ('!' at 0.50+);
+    trim90 = without that game (4+ games); med90 = median per-game rate over 60+ minute
+    games. Printed for a human eye - nothing orders or projects on them.
+
+  BENCH vs XI  GW8   proj = full model, all terms (one unit); each bench player
+  against the lowest-projecting XI player of his own position. Same-position swaps
+  only - the formation is not chosen on the sums. Picks as of the last deadline.
+    bench                proj P(st) share   lowest XI            proj P(st) share  delta  verdict
+    GK  Kelleher         4.10  1.00  1.33   GK  Verbruggen       3.79  1.00  1.33  +0.31  SWAP
+    DEF Branthwaite      4.73  1.00  1.33   DEF Thomas           4.50  1.00  1.33  +0.23  SWAP
+    FWD Thiago           4.13  1.00  1.33   FWD Haaland          3.81  0.75  1.29  +0.32  SWAP
+    MID Slater           3.18  1.00  1.17   MID Groß             4.40  1.00  1.26  -1.22  hold
+    XI under the frozen flag (minutes share <= 0.667): none
+
+==============================================================================
+FIXTURE TICKER  (next 6, sorted by average difficulty)
+==============================================================================
+  COV   2.50     FUL (H)2    SUN (H)3    EVE (A)3    CRY (H)2    LEE (A)3    IPS (H)2
+  IPS   2.67     NFO (H)3    HUL (A)2    BOU (H)3    TOT (A)3    AVL (H)3    COV (A)2
+  TOT   2.67     CHE (A)4    CRY (H)2    LEE (A)3    IPS (H)2    SUN (A)3    FUL (H)2
+  CHE   2.83     TOT (H)2    MUN (H)4    SUN (A)3    LEE (H)3    NFO (A)3    CRY (H)2
+  NFO   3.00     IPS (A)2    BRE (A)3    MCI (H)4    BOU (A)3    CHE (H)4    HUL (A)2
+  AVL   3.00     MCI (H)4    FUL (H)2    MUN (A)4    SUN (H)3    IPS (A)2    EVE (H)3
+  CRY   3.00     NEW (H)3    TOT (A)3    LIV (H)4    COV (A)2    HUL (H)2    CHE (A)4
+  BOU   3.00     MUN (A)4    LEE (H)3    IPS (A)2    NFO (H)3    FUL (A)3    BHA (H)3
+  SUN   3.00     LEE (H)3    COV (A)2    CHE (H)4    AVL (A)3    TOT (H)2    LIV (A)4
+  MCI   3.17     AVL (A)3    BHA (H)3    NFO (A)3    FUL (H)2    ARS (A)5    LEE (H)3
+  ARS   3.17     EVE (H)3    LIV (A)4    HUL (H)2    NEW (A)3    MCI (H)4    BRE (A)3
+  FUL   3.17     COV (A)2    AVL (A)3    NEW (H)3    MCI (A)5    BOU (H)3    TOT (A)3
+  HUL   3.17     BRE (H)3    IPS (H)2    ARS (A)5    BHA (H)3    CRY (A)3    NFO (H)3
+  LEE   3.17     SUN (A)3    BOU (A)3    TOT (H)2    CHE (A)4    COV (H)2    MCI (A)5
+  EVE   3.33     ARS (A)5    NEW (A)3    COV (H)2    BRE (A)3    LIV (H)4    AVL (A)3
+  BRE   3.33     HUL (A)2    NFO (H)3    BHA (A)4    EVE (H)3    MUN (A)4    ARS (H)4
+  LIV   3.33     BHA (H)3    ARS (H)4    CRY (A)3    MUN (H)4    EVE (A)3    SUN (H)3
+  BHA   3.33     LIV (A)4    MCI (A)5    BRE (H)3    HUL (A)2    NEW (H)3    BOU (A)3
+  MUN   3.33     BOU (H)3    CHE (A)4    AVL (H)3    LIV (A)4    BRE (H)3    NEW (A)3
+  NEW   3.50     CRY (A)3    EVE (H)3    FUL (A)3    ARS (H)4    BHA (A)4    MUN (H)4
+
+==============================================================================
+DEFCON RATE  (per 90 vs threshold: DEF 10, MID 12)
+==============================================================================
+
+  DEF (threshold 10/match)
+    player         team     £     /90  margin     hit     per game   own%
+    Botman         NEW    5.0    13.8    +3.8     5/7 5 9 17 18 10 10    0.8
+    Schuster       BRE    4.5    13.6    +3.6     3/3     10 12 16    0.5
+    Thomas         COV    4.0    13.5    +3.5    6/10 13 3 10 22 11 6    9.3
+    Vuskovic       BHA    5.1    12.4    +2.4     4/7 8 10 9 12 15 12    5.5
+    Hill           BOU    5.5    11.5    +1.5     4/7 12 6 11 15 11 9    0.8
+    Richards       CRY    4.9    11.5    +1.5     5/7 6 9 13 10 10 13    0.6
+    Tarkowski      EVE    6.2    11.0    +1.0     4/7 10 12 8 12 17 7   18.4
+    Van Hecke      TOT    4.9    11.0    +1.0     3/7 8 4 13 9 11 11    6.8
+    Pinnock        COV    4.5    10.8    +0.8     3/5 13 10 19 5 9    0.1
+    Murillo        NFO    5.5    10.5    +0.5     5/7 6 10 12 11 10 9    2.0
+    Silva          BOU    5.0    10.5    +0.5     5/7 10 8 10 15 5 12    0.6
+    Branthwaite    EVE    5.5    10.2    +0.2     4/7 12 11 9 14 10 8    2.4
+    Affengruber    FUL    4.5    10.2    +0.2     3/4   12 11 11 7    0.7
+    Lacroix        CHE    5.9    10.2    +0.2     3/6 12 9 11 12 8 8    6.3
+    Ajer           BRE    4.5    10.0    +0.0     3/7 17 5 9 9 9 13    4.0
+
+  MID (threshold 12/match)
+    player         team     £     /90  margin     hit     per game   own%
+    M.Sangaré      BRE    5.5    16.2    +4.2     3/3     13 14 13    7.3
+    Mainoo         MUN    5.5    14.6    +2.6     5/5 15 15 13 12 17    1.3
+    Palacios       IPS    5.0    14.1    +2.1     3/7 9 0 19 13 6 19    0.1
+    Janelt         BRE    5.0    13.5    +1.5     4/7 10 12 20 9 14 11    2.3
+    Tielemans      MUN    5.7    13.0    +1.0     2/6 5 13 7 5 13 7    1.4
+    Buendía        AVL    5.9    12.9    +0.9     1/7 5 2 5 15 10 11    1.3
+    Charles        FUL    5.0    12.4    +0.4     2/5 11 17 13 8 9    0.1
+    L.Miley        NEW    5.5    12.2    +0.2     2/6 13 9 4 10 16 11    0.1
+    Schlager       NFO    5.0    12.1    +0.1     3/6 15 10 16 7 8 14    0.1
+    Scott          BOU    6.0    11.5    -0.5     2/5 11 15 11 15 8    2.8
+    Garner         EVE    6.0    11.5    -0.5     2/6 10 8 17 9 12 8    0.2
+    Bruno G.       ARS    6.7    11.5    -0.5     0/1           10    2.4
+    Gomez          BHA    5.0    11.5    -0.5     2/7 5 9 3 13 19 9    3.8
+    Tonali         TOT    5.3    11.5    -0.5     2/7 4 12 11 11 9 14    1.8
+    Anderson       MCI    6.3    11.4    -0.6     2/6 6 14 11 14 9 8    3.9
+
+  hit = gameweeks at or above the threshold, out of starts.
+  per game = raw actions per gameweek, oldest first. A player at 10.0/90
+  who went 4-16-10 is a coin flip; one who went 10-10-10 is an asset.
+
+==============================================================================
+FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
+==============================================================================
+
+  GK
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Verbruggen     BHA    4.6   29    6.30  3.33   5.25   22.5
+    Rushworth      COV    4.5   15    3.33  2.50   4.17    0.9
+    Leno           FUL    4.5   20    4.44  3.17   4.07    4.2
+    Raya           ARS    6.1   27    4.43  3.17   4.06   44.1
+    Kinsky         TOT    4.5   14    3.11  2.67   3.63   15.4
+    Donnarumma     MCI    5.5   19    3.45  3.17   3.17    7.7
+    Trafford       LEE    5.0   17    3.40  3.17   3.12    5.9
+    A.Becker       LIV    5.5   20    3.64  3.33   3.03    4.2
+    Suzuki         AVL    5.0   14    2.80  3.00   2.80    2.0
+    Benitez        CRY    4.5   12    2.67  3.00   2.67    0.1
+    Pickford       EVE    5.5   17    3.09  3.33   2.58    8.7
+    Tzolakis       HUL    4.7   13    2.77  3.17   2.54   14.0
+
+  DEF
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Dasilva        COV    4.0   20    5.00  2.50   6.25    1.5
+    De Cuyper      BHA    5.2   38    7.31  3.33   6.09   40.8
+    Vuskovic       BHA    5.1   33    6.47  3.33   5.39    5.5
+    Boscagli       BHA    4.5   27    6.00  3.33   5.00    0.4
+    Van Hecke      TOT    4.9   21    4.29  2.67   5.00    6.8
+    Thomas         COV    4.0   16    4.00  2.50   5.00    9.3
+    Davis          IPS    4.0   17    4.25  2.67   4.96    7.5
+    O'Shea         IPS    4.0   17    4.25  2.67   4.96    2.6
+    F.Kadıoğlu     BHA    4.4   26    5.91  3.33   4.92    1.7
+    Ouattara       IPS    4.0   16    4.00  2.67   4.67    0.9
+    Bogle          LEE    4.7   23    4.89  3.17   4.49   10.0
+    Bassey         FUL    4.5   22    4.89  3.17   4.48    1.1
+
+  MID
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Groß           BHA    6.1   42    6.89  3.33   5.74   45.1
+    Rudoni         COV    4.9   20    4.08  2.50   5.10    0.3
+    Henderson      CHE    4.9   23    4.69  2.83   5.09    1.1
+    Belloumi       HUL    5.2   25    4.81  3.17   4.41    9.1
+    McGinn         AVL    5.4   23    4.26  3.00   4.26    2.8
+    Ayari          BHA    5.4   27    5.00  3.33   4.17    0.5
+    Neto           CHE    6.5   24    3.69  2.83   4.00    2.2
+    Kamada         CRY    5.0   20    4.00  3.00   4.00    0.7
+    Gomez          BHA    5.0   24    4.80  3.33   4.00    3.8
+    Iwobi          FUL    5.4   23    4.26  3.17   3.90    1.0
+    Buendía        AVL    5.9   21    3.56  3.00   3.56    1.3
+    Tonali         TOT    5.3   16    3.02  2.67   3.52    1.8
+
+  FWD
+    player         team     £   L4  pts/£m   fdr  score   own%
+    Kostoulas      BHA    5.7   33    5.79  3.33   4.82    9.6
+    Evanilson      BOU    6.1   26    4.26  3.00   4.26    4.3
+    Emersonn       IPS    5.6   18    3.21  2.67   3.75    3.7
+    Thomas-Asante  COV    5.0   15    3.00  2.50   3.75    0.9
+    João Pedro     CHE    7.9   26    3.29  2.83   3.57   72.7
+    Calvert-Lewin  LEE    6.0   23    3.83  3.17   3.51   23.1
+    Cherif         COV    5.0   14    2.80  2.50   3.50    0.3
+    Solanke        TOT    5.8   15    2.59  2.67   3.02    1.6
+    Strand Larsen  CRY    6.0   17    2.83  3.00   2.83    0.6
+    N.Jackson      AVL    6.6   17    2.58  3.00   2.58    4.1
+    Barry          EVE    5.7   16    2.81  3.33   2.34    8.5
+    Marmoush       TOT    7.0   14    2.00  2.67   2.33    2.0
+
+==============================================================================
+BENCH AUDIT  (after automatic substitutions: FPL's list where stored, else its rules)
+==============================================================================
+>> 1. FC Kiripolcz        bench=  6  subs 0 FPL    best benched Thiago      ( 4)  worst XI Tarkowski   ( 0)  keeper Kelleher    +0   perfect-XI gain +4
+   Bruno Dos Tres         bench= 11  subs 0 FPL    best benched Konsa       ( 9)  worst XI Gibbs-White ( 0)  keeper Kinsky      +0   perfect-XI gain +9
+   No More Mr. Rice Guy   bench=  5  subs 0 FPL    best benched O'Shea      ( 3)  worst XI Gonzalo     ( 2)  keeper Bentley     +0   perfect-XI gain +1
+   PyroNeniZlocin         bench=  2  subs 0 FPL    best benched Semenyo     ( 1)  worst XI Furo        ( 0)  keeper Kinsky      +0   perfect-XI gain +1
+   ReturnOfTheDjedi FC    bench=  8  subs 0 FPL    best benched Muharemović ( 5)  worst XI Gvardiol    ( 0)  keeper Dubravka    +0   perfect-XI gain +5
+   Revelstoke FC          bench= 13  subs 0 FPL    best benched Calvert-Lewi( 9)  worst XI Gvardiol    ( 0)  keeper Horníček    +0   perfect-XI gain +9
+   Skori FC               bench= 18  subs 0 FPL    best benched Isak        ( 9)  worst XI Cherki      ( 0)  keeper Raya        +7   perfect-XI gain +16
+
+==============================================================================
+FREE HIT SCREEN  (GW8-13, one week at a time; budget £99.7m = bank + selling prices)
+==============================================================================
+  metric  own as recorded in projection_log.csv for that gameweek where it exists
+          (one week ahead), else bottomup (full model, all terms) per fixture;
+          a blank scores 0. Both sides of the gap use the same metric.
+  FH XI   the best legal XI the budget buys around the cheapest legal bench, any
+          formation, at most 3 per club across the fifteen; XI from the usual gate
+          (status 'a', 45+ minutes in the last four). Exact for the XI given that
+          bench: dynamic programme on cost, branch and bound on the club limit.
+  ours    the best XI from our current 15 by the same metric, any formation.
+  flag    FH candidate when the gap exceeds 8 or 3+ of our XI are
+          not status 'a' (today's status, for every week).
+  The formation is chosen on the sums here, which review D ruled out for the
+  wildcard while DEF is over-spread: read a 5-DEF FH XI in a bottomup week so.
+
+  GW   metric      FH XI   ours    gap  not a   shape FH / ours   flag
+  GW8  own          35.8   31.9   +3.9      1   4-4-2 / 4-4-2
+  GW9  bottomup     53.8   52.1   +1.8      0   5-4-1 / 5-4-1
+  GW10 bottomup     56.8   54.6   +2.2      0   5-4-1 / 5-4-1
+  GW11 bottomup     56.9   53.3   +3.6      0   5-4-1 / 5-4-1
+  GW12 bottomup     56.5   52.5   +4.0      0   5-4-1 / 5-4-1
+  GW13 bottomup     54.6   51.9   +2.7      0   5-4-1 / 5-4-1
+
+  GW12 FH XI (5-4-1, £80.6m, largest gap, not flagged):
+    Verbruggen; De Cuyper, Vuskovic, Bogle, Muharemović, Justin; Saka, Mbeumo, Tavernier, Rudoni; Barry
+    bench Forster, Burrowes, Kusi-Asare, Mheuka
+
+==============================================================================
+FDR AUDIT  (rating vs result, all finished fixtures)
+==============================================================================
+
+  60 matches, 120 team-performances
+
+   FDR    n  goals for  conceded  clean sheets  win rate
+     2   27       1.48      1.00          48%       44%
+     3   60       1.62      1.42          22%       38%
+     4   27       1.26      1.85          22%       22%
+     5    6       1.00      2.50           0%        0%
+
+  easy (FDR<=2) vs hard (FDR>=4)
+    goals scored   1.48  vs  1.21   gap +0.27
+    clean sheets    48%  vs   18%   gap +30%
+    The rating is barely separating attacking output. Weight it lightly.
+
+  BIGGEST UPSETS  (favourite by 2+ difficulty points, lost or drew)
+    GW1  HUL 2-0 MUN   MUN was favoured by 2
+    GW4  CHE 2-2 HUL   CHE was favoured by 2
+    GW4  LIV 0-0 FUL   LIV was favoured by 2
+    GW6  MUN 1-1 TOT   MUN was favoured by 2
+
+==============================================================================
+FIXTURE SENSITIVITY  (per player-match, with 95% intervals)
+==============================================================================
+
+  1445 player-matches of 60+ minutes
+
+            easy FDR<=2     hard FDR>=4     gap        95% interval  verdict
+  GK       4.52 (n= 31)    2.64 (n= 39)    1.88       0.49 to 3.26    REAL
+  DEF      4.90 (n=123)    2.61 (n=163)    2.29       1.55 to 3.03    REAL
+  MID      4.68 (n=131)    3.16 (n=168)    1.52       0.79 to 2.25    REAL
+  FWD      4.71 (n= 31)    4.00 (n= 37)    0.71      -1.10 to 2.52    noise
+
+  CHASING EASY vs AVOIDING HARD
+    GK    FDR2 over FDR3  +1.00 (+-1.32)    FDR3 over FDR4+  +0.87 (+-1.01)
+    DEF   FDR2 over FDR3  +1.09 (+-0.70)    FDR3 over FDR4+  +1.20 (+-0.59)
+    MID   FDR2 over FDR3  +0.59 (+-0.71)    FDR3 over FDR4+  +0.92 (+-0.53)
+    FWD   FDR2 over FDR3  +0.46 (+-1.68)    FDR3 over FDR4+  +0.25 (+-1.38)
+
+  HOME vs AWAY
+    GK    gap -0.47  +-0.95   noise
+    DEF   gap +0.24  +-0.54   noise
+    MID   gap +0.31  +-0.50   noise
+    FWD   gap +0.69  +-1.22   noise
+
+  Only rows marked REAL survive the sample size. Everything else is
+  a difference this data cannot distinguish from chance - do not spend
+  transfers on it. Re-run as gameweeks accumulate and the intervals
+  will narrow.
+  Currently real: GK, DEF, MID.
+
+==============================================================================
+POSITION ARBITRAGE  (the scoring system is wrong about these players)
+==============================================================================
+
+  A defender who plays forward earns 6 for a goal AND 4 for a clean
+  sheet. FPL fixes position in July and rarely changes it.
+
+  DEFENDERS with attacking output
+    player         team     £  xG+xA/90  DEFCON/90   own%   fdr
+    De Cuyper      BHA    5.2      0.40        4.0   40.8  3.33
+    Calafiori      ARS    6.0      0.34        3.8   53.6  3.17
+    Bogle          LEE    4.7      0.33        2.2   10.0  3.17
+    Davis          IPS    4.0      0.32        4.8    7.5  2.67
+    Muñoz          NFO    5.3      0.30        5.9    4.8  3.00
+    Khalaili       CRY    5.0      0.29        6.0    0.3  3.00
+    Collins        BRE    5.4      0.26        0.0    0.8  3.33
+    Silva          BOU    5.0      0.24       10.5    0.6  3.00
+
+  MIDFIELDERS carrying defensive load (DEFCON + goals)
+    player         team     £  xG+xA/90  DEFCON/90   own%   fdr
+    Palacios       FUL    5.4      0.39       22.5    0.1  3.17
+    Gallagher      TOT    5.3      0.39       16.2    0.2  2.67
+    Yalcouyé       BHA    4.5      0.64       11.7    3.5  3.33
+    M.Sangaré      BRE    5.5      0.25       16.2    7.3  3.33
+    Barkley        AVL    5.0      0.19       17.0    0.2  3.00
+    Lavia          CHE    5.0      0.28       15.5    0.2  2.83
+    Christie       BOU    5.0      0.54       11.4    0.0  3.00
+    O.Dango        BRE    6.2      0.20       15.1    0.4  3.33
+
+  CHANCE QUALITY vs FINISHING  (threat is FPL's shot-danger index)
+  High threat, few returns = chances are coming, goals have not.
+
+    player         team     £  threat/90   G+A   xG+xA   own%
+    Barry          EVE    5.7       43.8     3    4.86    8.5
+    Rashford       MUN    6.9       40.1     0    1.21    1.2  <-- due
+    Saka           ARS    9.6       39.6     3    4.83   16.8
+    Yalcouyé       BHA    4.5       38.1     2    1.91    3.5
+    Isak           LIV    9.0       37.9     5    3.97   12.8
+    Cherki         MCI    8.0       37.7     6    3.00   37.5
+    Kluivert       BOU    5.9       33.5     1    1.37    0.6
+    Schade         BRE    6.2       31.2     5    2.27   13.9
+    Gallagher      TOT    5.3       30.8     1    1.00    0.2
+    Ndoye          NFO    5.5       30.6     2    3.04    0.6
+
+==============================================================================
+CONSISTENCY  (delivery pattern, not total)
+==============================================================================
+
+  236 players with 3+ full appearances, 162 averaging 3.0+
+
+  METRONOMES  (good average, small swing - captain and bench-boost picks)
+    player         team pos   mean  swing floor blanks   per game
+    Barcola        LIV  MID    3.0    0.8     2      1   3 3 2 4
+    Schlager       NFO  MID    3.0    0.9     2      2   4 3 3 2 2 4
+    Charles        FUL  MID    3.4    1.1     2      1   2 5 4 3 3
+    Bentancur      TOT  MID    3.5    1.3     2      1   2 5 3 4
+    Thomas-Asante  COV  FWD    4.0    1.4     2      1   2 4 5 5
+    Wirtz          LIV  MID    3.6    1.5     2      2   4 3 3 6 2 5
+    Gomes          AVL  MID    3.7    1.5     2      1   4 2 5
+    Belloumi       HUL  MID    4.0    1.6     2      1   3 6 5 4 2
+    Kamara         AVL  MID    3.4    1.6     2      3   2 3 2 6 4 5
+    Anderson       MCI  MID    3.5    1.6     2      2   2 3 3 5 2 6
+
+  LOTTERY TICKETS  (same average, huge swing - differentials, not anchors)
+    B.Fernandes    MUN  MID    4.7    8.1     1      6   23 2 2 2 1 1
+    Brobbey        SUN  FWD    4.8    6.8     1      4   2 2 2 1 17
+    Henderson      CRY  GK     4.7    6.6     1      4   2 1 2 2 18 3
+    Groß           BHA  MID    8.3    6.3     1      2   13 1 17 14 6 5
+    De Cuyper      BHA  DEF    8.4    6.1     0      1   0 4 11 6 15 6
+    Schuster       BRE  DEF    7.0    6.1     3      0   4 3 14
+    Mendy          HUL  DEF    8.7    6.0     3      0   15 8 3
+    Bogle          LEE  DEF    6.4    5.8     1      3   2 14 15 5 1 2
+
+  YOUR SQUAD
+    Groß           BHA  MID    8.3    6.3     1      2   13 1 17 14 6 5  volatile
+    Haaland        MCI  FWD    8.3    4.0     2      1   13 9 9 6 6 13
+    Tarkowski      EVE  DEF    6.6    5.1     0      1   12 3 8 14 3 0  volatile
+    Calafiori      ARS  DEF    6.3    3.7     1      2   11 2 6 1 9 6
+    Mbeumo         MUN  MID    5.9    3.8     2      3   11 8 2 2 8 8
+    Verbruggen     BHA  GK     5.4    3.0     0      1   0 3 8 6 9 6
+    Saka           ARS  MID    5.3    3.9     2      3   11 2 8 2 2 3
+    Muharemović    LEE  DEF    4.9    1.7     2      1   4 4 7 6 2 5  steady
+    Branthwaite    EVE  DEF    4.4    2.4     1      1   4 3 6 8 3 1
+    Thomas         COV  DEF    4.2    2.9     0      3   9 2 7 4 3 2
+    Rudoni         COV  MID    4.2    2.1     2      2   3 2 2 5 7 6
+    Barry          EVE  FWD    4.0    2.6     2      4   2 2 2 6 6 2
+    Kelleher       BRE  GK     3.4    2.1     2      4   2 2 3 6 2 2
+    Slater         HUL  MID    2.6    1.6     1      5   2 3 2 2 2 1
+    Thiago         BRE  FWD    2.6    1.8     0      4   2 2 1 5 4 4
+
+  swing is the standard deviation of gameweek scores. Three matches is
+  far too few to trust an individual figure - read it again at GW8.
+
+[written to reports/fpl_2026-10-19.txt]
+checking for a stuck gameweek ...
+[reading fpl_export_gw7.json]
+
+STUCK CHECK OK: no gameweek unsettled 72 h after its last kickoff
+record summary:
+RECORD OK own 281
+RECORD OK xg 261
+RECORD OK minutes 261
+RECORD OK bottomup 261
+RECORD OK fpl_ep 668
+archiving the export ...
+ARCHIVE OK   fpl_export_gw7.json -> exports/fpl_export_gw7_2026-10-19.json.gz
+running the checks ...
+checks:
+STATUS OK | generated 2026-10-19T22:05:20Z | next deadline GW8 2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 28/28 | repo 6 MB
+ 1 OK   core endpoints: 4 core calls, all HTTP 200
+ 2 OK   element-summary failures: no element-summary calls tonight (the nightly sync makes none)
+ 3 OK   player count: 668 players (668 last night)
+ 4 OK   teams: 20 teams
+ 5 OK   fixtures: 380 fixtures
+ 6 OK   fixtures per gameweek: 10 in each of GW1-38
+ 7 OK   team appearances per gameweek: every team once in every 10-fixture gameweek
+ 8 OK   required fields: every required element and event field present and typed
+ 9 OK   element key set: 109 keys, unchanged
+10 OK   distinct prices: 46 distinct prices
+11 OK   price step: 668 players against their previous snapshot, every step within 0.1 a night
+12 OK   price changes: 13 price changes
+13 OK   chance of playing 0: 177 of 668 (26%) at chance 0
+14 OK   position changes: no position changes
+15 OK   SQLite integrity: ok
+16 OK   price-history rows: 26550 -> 26550 rows (+0)
+17 OK   price-date gaps: no gap outside the 4 known ones
+18 OK   projection-log growth: new rows bottomup +261, fpl_ep +668, minutes +261, own +281, xg +261
+19 OK   projection-log duplicate keys: 0 duplicate keys
+20 OK   forecast rows after the deadline: 0 of 7488 rows at or after their deadline
+21 OK   stuck gameweek: none
+22 SKIP manager score reconciliation: GW7 not locked down: silent mid-gameweek (ruling S3, point 6)
+23 OK   secret in the files to commit: 7 file(s) to commit, none holds a key pattern or the key value
+24 OK   repo size: 6 MB
+25 OK   run duration: 1.7 min
+26 OK   heartbeat: the last status.txt is 15.9 h old
+27 SKIP workflow state: manual: the Actions tab, Boris's weekly glance (a disabled workflow runs no check, and the token has no actions scope)
+28 OK   test gate: 614 tests green
+29 OK   record: own 281, xg 261, minutes 261, bottomup 261, fpl_ep 668
+30 OK   odds snapshot: 20 events (20 with totals), 3160 prices, odds/odds_2026-10-19T2205Z.json.gz 11642 bytes; credits used 16, remaining 484, this request 4
+CHECKS OK  -> reports/status.txt
+Done. Report: reports/fpl_2026-10-19.txt
