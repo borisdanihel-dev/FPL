@@ -104,3 +104,18 @@ RULING lane A night work, item 1: "W1b (automatic dry runs, as already ruled) on
 RULING W1 decisions, point 1 (clause): "W1b's push-triggered dry runs never call it."
 
 RULING S2b, point 4 (clause): "W1b moves to Wednesday."
+
+## Morning ruling, 19 Oct
+
+The chat's ruling, appended verbatim before any further W1b change.
+
+RULING morning 19 Oct (lane A):
+1. Go: commit the W1 verifier files and the S3 log lines, tag pre-W1, merge W1 now, ask Boris for the real dispatch; final verifier after it.
+2. Downloads approved, from github.com/vaastav/Fantasy-Premier-League into historical/<season>/ (gitignored, read-only afterwards), recording URL, fetch time and SHA-256 per file: data/2025-26/players_raw.csv; for Step 16 part 1, data/<season>/fixtures.csv and the gameweek deadlines for 2016-17 to 2024-25. Nothing else; Step 16 parts 3-4 stay parked.
+3. Step 10 answers: Q1 (a), the live game_config as the points table; the reproduction test checks the "no points change" claim, and a failure is a finding. Q2 (a) now via players_raw.csv; storing code in the sync goes into W2. Q3 (b), no BPS re-score: bonus stays official, flagged "2025/26 BPS". Q4 (a), rescale only if game_config shows a 2026/27 assist-points change, else a printed no-op. Step 10 covers 2025/26 only for now.
+4. W1b: reading (a) accepted, the cap and windows apply to manual dry runs too. The 21:30 window closes at 04:00 UTC, which covers the backup run. Point 3 accepted as documented. Point 6: on merge day, a missing deadline row makes the gate WARN instead of skipping silently.
+5. S2b decisions 1-3 accepted; check 22 is the guard on point 1.
+6. C:\GIT\FPL-data: either lane may run git -C C:\GIT\FPL-data pull --ff-only and nothing else; on a lock, wait and retry.
+7. CLAUDE.md b and g: name SESSION_STATE_A.md / SESSION_STATE_B.md. Keep every pre-* tag until the GW10 checkpoint. Finish the S3 report list as you proposed.
+Order today: W1 merge and dispatch; Step 10 on s10-wip; Step 16 part 1 after its download; S16 lands after a dry run.
+END RULING

@@ -23,22 +23,42 @@ this file, then waits for the next instruction.
   RULING S2b (same night) has priority over this queue: verbatim in
   `prereg/S2b.md`, on `s2b-wip` off `w1-wip`. It lands Tuesday before 21:00 UTC,
   after W1 (Monday); W1b moves to Wednesday.
-- **Night work done so far** (19 Oct, about 00:00 UTC):
-  - **S2b:** built on `s2b-wip` (`19b303c`, plus `316652a` closing gh.log).
-    - Code-level verifier: **PASS** (`worklog/verify_S2b_pre.md`); write guard
-      clean.
+- **Night work, done** (19 Oct, 01:00 UTC). Three items were built and
+  verified, all on branches; master got preregs and this file only. All
+  write guards were clean.
+  - **S2b:** on `s2b-wip` at `de65e1b`.
+    - `19b303c` is the code. `316652a` closes gh.log (test only), and
+      `de65e1b` adds the report (`worklog/cc_2026-10-19_S2b.md`) and the
+      verifier copy.
+    - Code-level verifier on `19b303c`: **PASS**.
     - Rehearsal on a scratch copy against the live API: 73 calls, then 25.
       entry_gw points move in GW3 (7 of 7 managers), GW4 (6 of 7) and GW6
       (5 of 7); player_gw points don't move.
     - Check 22 after: 42 of 42 equal. The calibration is identical before and after.
-    - Tuesday: the dry run, the verifier on it, tag `pre-S2b`, merge before
-      21:00 UTC, Boris's real dispatch, then the after-measurement.
-  - **S16 part 2 (calendar mapper):** built on `s16-wip` (`5dcead7`).
-    - 471 tests green four ways; mutations 9 of 9 red.
-    - Verifier next. As an item with tests in tests/, it lands only after a
-      green dry run of its landing branch: under W1b, a push to `dry/S16`.
-  - **W1b:** ruled by Boris (RULING W1b, 19 Oct), verbatim in `prereg/W1b.md`.
-    Build next on `w1b-wip`.
+    - Tuesday:
+      - the dry run of `s2b-wip`, read back;
+      - the verifier on the dry run and on the delta `19b303c..de65e1b`;
+      - tag `pre-S2b`, merge before 21:00 UTC;
+      - Boris's real dispatch, the first real run, which re-fetches GW1-6;
+      - the after-measurement, including lane B's S4, S5, S6 and S9 numbers.
+  - **S16 part 2 (calendar mapper):** on `s16-wip` at `4acdb0f`.
+    - `5dcead7` is the code; `4acdb0f` adds the report and the verifier copy.
+    - Verifier **PASS**; 471 tests green; mutations 9 of 9 red.
+    - The mapping:
+      - Carabao Cup final -> GW30;
+      - FA Cup QF -> GW30 (in the international gap);
+      - FA Cup SF -> GW32 or GW33 (GW33's deadline is that day);
+      - FA Cup final -> GW36.
+    - Lands only after a green dry run of its landing branch: a manual dry run
+      of `s16-wip`, or `dry/S16` once W1b is live. Then the CHANGELOG entry and
+      the merge.
+  - **W1b:** on `w1b-wip` at `28092d8`.
+    - `a9248d1` is the code; `28092d8` adds the report and the verifier copy.
+    - Code-level verifier: **PASS**. 527 tests; mutations 25 of 25 red, and the
+      verifier's own 29 red.
+    - Merges Wednesday after one last manual dry run (Boris), the verifier on
+      it, tag `pre-W1b`, Boris's real dispatch and the final verifier.
+    - No `dry/` branch exists, and none was pushed.
 - **Parked for Boris:**
   - **W1b (answered).** The four questions were answered by RULING W1b.
   - **S3 report (Boris, 19 Oct, verbatim lines):** record in
@@ -104,12 +124,29 @@ this file, then waits for the next instruction.
       - a table of free midweeks, to build from that calendar.
     - Part 4, the backtest on 2024/25 and 2025/26: needs part 3 and both
       seasons' cup draws and dates.
-- **Monday 19 Oct, first task** (RULING S3 dispatch result): confirm
-  tonight's scheduled run - the data commit, status.txt with checks 9 and
-  26 now active instead of SKIP, release backup-2026-10-18, and what the
-  03:17 UTC backup run did. Seen on 18 Oct at 21:58 UTC, still to be confirmed:
-  data `9da6ff1` (21:58:09Z), STATUS OK 27/27, checks 9 and 26 OK, tag
-  `backup-2026-10-18` at `9da6ff1`.
+- **Monday 19 Oct, first task: done at 03:50 UTC** (RULING S3 dispatch result),
+  read from git and the public Actions API (no token):
+  - **Tonight's scheduled nightly**, run 39170094238, started 21:57:24Z (cron
+    21:40): every step success, including Weekly backup and Failure issue.
+    - Data commit `9da6ff1` (21:58:09Z).
+    - `status.txt`: STATUS OK 27/27. Checks 9 (element key set, 109 keys
+      unchanged) and 26 (heartbeat, 3.2 h) are now active and OK. 22 and 27
+      SKIP as designed. 28: 459 tests; 29: four sources.
+  - **Release `backup-2026-10-18`:** at `9da6ff1`, with `fpl.sqlite` 1,896,448
+    bytes and `fpl.sql` 2,543,677 (the tip's sizes). Releases kept: 2 of 8.
+  - **The 03:17 backup run**, run 39196048636, started 03:43:37Z on master
+    `cd3087e`, green in 14 s. Only "Is this run due" ran; Install, Nightly
+    run, Commit, Weekly backup and Failure issue were all skipped. That is
+    the designed not-due path: the nightly had written `status.txt`. No
+    commit (data still `9da6ff1`), no release. Its log line itself needs a
+    token (HTTP 403 without one).
+  - The cancelled dispatch 39166214887 (18 Oct 21:04:45Z) stopped at "Set up
+    job", so no dry run was used by it.
+- **Rehearsal of the week's landings** (scratch only, nothing pushed): master
+  `cd3087e`, then `w1-wip`, `s2b-wip`, `w1b-wip` and `s16-wip`, merged in
+  that order, gives no conflict (git auto-merged test_fpl.py and
+  tests/test_S3.py). 560 tests are green bare, runner-like, with stand-in
+  zones and hermetically.
 - **Current item:** W1 (wiring: fpl_ep and the Odds API collector), on
   `w1-wip` (`ab047c3`); prereg `prereg/W1.md` (`7efc2b2`, decisions `91b10c7`,
   odds storage `249be76`; on w1-wip: master merged in `021656c`, pre-check
@@ -208,8 +245,33 @@ this file, then waits for the next instruction.
 - **Untracked in C:\GIT\FPL on purpose:**
   - `worklog/verify_W1_pre.md` and `worklog/verify_W1_recheck.md`: committed
     on master Monday, with W1;
-  - `worklog/verify_S2b_pre.md`: also committed on `s2b-wip`. Remove the
-    untracked copy before merging `s2b-wip` (the merge brings it).
+  - `worklog/verify_S2b_pre.md`, `verify_S16.md` and `verify_W1b_pre.md`: also
+    committed on `s2b-wip`, `s16-wip` and `w1b-wip`. Remove each untracked
+    copy before merging its branch (the merge brings it).
+- **What needs Boris, in order:**
+  1. **Monday morning:**
+     - lane A confirms the 03:17 run;
+     - commit the W1 verifier files and the S3 log lines;
+     - tag `pre-W1`, merge W1;
+     - **Boris's real dispatch of master**, then the final W1 verifier.
+  2. **Dry-run clicks:**
+     - a manual dry run of `s16-wip`, any day, to land S16;
+     - **Tuesday:** the dry run of `s2b-wip`, then after the merge the real
+       dispatch;
+     - **Wednesday:** the last manual dry run of `w1b-wip`, then after the
+       merge the real dispatch.
+  3. **Readings to confirm:**
+     - W1b (a), the cap and windows on manual dry runs too;
+     - W1b (b), the 21:30 window closing at 03:17; the verifier suggests about
+       04:00 to cover the backup run;
+     - check 30 "any of three headers", which the verifier agreed with;
+     - S2b's three report decisions.
+  4. **Step 10:** the four questions above, among them the source of the
+     2025/26 scoring table and the `code` key (a download).
+  5. **Step 16 parts 1, 3 and 4:** approval for the downloads listed above.
+  6. **Who pulled `C:\GIT\FPL-data` at 22:37:57 UTC on 18 Oct** (lane B?).
+  7. **Earlier open decisions:** the S3 report list; `pre-S2` after GW8; and
+     CLAUDE.md b and g, which still name SESSION_STATE.md.
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_A.md`).
 - **Runner freeze window (9d):** not active. Runner-path changes are never
