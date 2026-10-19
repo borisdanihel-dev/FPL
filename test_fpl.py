@@ -4303,6 +4303,7 @@ class NightlyRunner(unittest.TestCase):
     def _real_world(self):
         here = os.path.dirname(os.path.abspath(__file__))
         tmp = self._world(export=False, edge=self._get(os.path.join(here, "fpl_edge.py")))
+        self._put(os.path.join(tmp, "fpl_lambda.py"), self._get(os.path.join(here, "fpl_lambda.py")))   # W2: the record imports it
         with open(os.path.join(tmp, "fpl_export_gw3.json"), "w", encoding="utf-8") as fh:
             json.dump(self.export, fh)
         with open(os.path.join(tmp, "fpl_export_gw2.json"), "w", encoding="utf-8") as fh:
@@ -4318,7 +4319,8 @@ class NightlyRunner(unittest.TestCase):
         for s, line in zip(self.FOUR, summary):
             self.assertRegex(line, rf"^RECORD OK {s} [1-9]\d*$")
         rows = E.read_log(os.path.join(tmp, "projection_log.csv"))
-        self.assertEqual({r["source"] for r in rows}, set(N.SOURCES))     # the four and fpl_ep (W1)
+        self.assertEqual({r["source"] for r in rows}, set(N.SOURCES) - {"bottomup_lambda"})   # the four and fpl_ep (W1);
+        self.assertIn("RECORD SKIP bottomup_lambda no odds snapshot", "\n".join(log))   # W2: no odds/ in this world: a SKIP
         self.assertGreater(os.path.getsize(os.path.join(tmp, "reports", f"fpl_{self.STAMP}.txt")), 1000)
         self.assertEqual([f for f in os.listdir(tmp) if "sqlite" in f], [],
                          "the record or the report touched a database")
@@ -6460,7 +6462,7 @@ class StepTwoFiles(unittest.TestCase):
     ProjectionLogKey). p1_eval.py is frozen and not checked."""
 
     RUNNER = ("fpl_edge.py", "fpl_sync.py", "fpl_nightly.py", "fpl_gate.py", "fpl_publish.py",
-              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py", "checks.py", "fpl_alert.py")
+              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py", "checks.py", "fpl_alert.py", "fpl_lambda.py")
 
     def test_every_text_open_names_utf8_and_newline(self):
         import re

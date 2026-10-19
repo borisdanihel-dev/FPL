@@ -72,7 +72,7 @@ NIGHTLY_UTC = (21, 40)              # the scheduled nightly: cron "40 21 * * *"
 BACKUP_CRON = "17 3 * * *"          # the backup run: only when the nightly left no status
 STATUS_REL = os.path.join("reports", "status.txt")
 
-SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # fpl_ep: W1
+SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep", "bottomup_lambda")     # fpl_ep: W1; bottomup_lambda: W2
 EXPORTS, LOGS, REPORTS = "exports", "logs", "reports"
 DATED = re.compile(r"^fpl_export_gw(\d+)_(\d{4}-\d{2}-\d{2})\.json(\.gz)?$")
 DATA_ENV = "FPL_DATA_DIR"

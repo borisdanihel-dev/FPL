@@ -132,5 +132,113 @@ class SyncColumns(unittest.TestCase):
         self.assertEqual([s["entry_id"] for s in d["standings"]], [1])                      # entry 2's flagged row is not read
 
 
+class SixthSource(unittest.TestCase):
+    """bottomup_lambda recorded as a sixth source (prereg/W2.md acceptance 2):
+    the runner's copy gives tools/odds_lambda.py's numbers on the same
+    snapshot and export; no snapshot before the deadline is a RECORD SKIP."""
+
+    def setUp(self):
+        import tempfile
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(__import__("shutil").rmtree, self.tmp, True)
+        sys.path.insert(0, os.path.join(HERE, "tools"))
+        from tests.test_S5 import toy_2627
+        toy_2627(self.tmp, post_deadline_export=False, export_gw=8)
+        import gzip, json, sqlite3
+        path = os.path.join(self.tmp, "exports", "fpl_export_gw8_2026-10-17.json.gz")
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            self.d = json.load(fh)
+        # the export's finished results, as the sync exports them from fpl.sqlite (fixtures_played)
+        c = sqlite3.connect(os.path.join(self.tmp, "fpl.sqlite"))
+        short = dict(c.execute("select id, short_name from teams"))
+        self.d["fixtures_played"] = [{"event": ev, "home": short[h], "away": short[a], "h_goals": hs, "a_goals": as_,
+                                      "kickoff_time": ko}
+                                     for ev, ko, h, a, hs, as_, fin in c.execute(
+                                         "select event, kickoff_time, team_h, team_a, team_h_score, team_a_score, finished "
+                                         "from fixtures where finished = 1 and event <= 8")]
+        c.close()
+        import fpl_edge as E
+        self.dl = E.event_deadline(self.d, 9)
+
+    def snapshot(self, name, fetched):
+        from tests.test_S5 import toy_snapshot, api_event
+        import odds_lambda as OL
+        _, _, fixtures, _, _ = OL.sqlite_tables(self.tmp)
+        events = [api_event(f["home"], f["away"], f["kickoff"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            [("b1", 2.0, 3.4, 3.8, 1.9, 1.9, False), ("b2", 2.2, 3.6, 3.4, 2.1, 1.7, True)])
+                  for f in fixtures if f["event"] == 9][:2]                    # the third fixture has no odds: the fallback
+        toy_snapshot(self.tmp, name, events, fetched_at=fetched)
+
+    def test_the_numbers_are_the_tools(self):
+        import fpl_lambda as L
+        import odds_lambda as OL
+        self.snapshot("odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+        snap = OL.newest_snapshot(self.tmp, self.dl)
+        self.assertEqual(L.newest_snapshot(self.tmp, self.dl)[0], snap[0])
+        _, _, fixtures, _, _ = OL.sqlite_tables(self.tmp)
+        tool_results = [(f["kickoff"], f["home"], f["away"], f["hg"], f["ag"]) for f in fixtures if f["finished"] and f["kickoff"] < self.dl]
+        self.assertEqual(sorted(L.results_before(self.d, self.dl)), sorted(tool_results))   # the export's results are the database's
+        book_t, book_r = OL.snapshot_book(snap[1])[0], L.snapshot_book(snap[1])[0]
+        model_t, model_r = OL.fit_fallback(tool_results, self.dl), L.fit_fallback(L.results_before(self.d, self.dl), self.dl)
+        want = OL.rebuild_2627(self.d, 9, book_t, model_t)
+        got = L.rebuild_2627(self.d, 9, book_r, model_r)
+        self.assertTrue(want)
+        self.assertEqual(got, want)                                                   # byte-identical, sources included
+        self.assertEqual({v[4] for v in want.values()} >= {"odds"}, True)
+        self.assertTrue(any("fallback" in v[4] for v in want.values()))               # both paths exercised
+        rows, note, skipped = L.bottomup_lambda(self.d, 9, self.dl, self.tmp)
+        self.assertFalse(skipped)
+        self.assertEqual(rows, [(pid, next(p["web_name"] for p in self.d["all_players"] if p["id"] == pid), round(v[1], 3))
+                                for pid, v in want.items() if v[1]])
+        self.assertIn("odds_2098-12-31T10-00-00Z.json.gz", note)
+
+    def test_the_record_and_the_skip(self):
+        import fpl_edge as E
+        log = os.path.join(self.tmp, "projection_log.csv")
+        with redirect_stdout(io.StringIO()):
+            ok, n, why = E.record_status(self.d, 6, source="bottomup_lambda", path=log)
+        self.assertEqual((ok, n), (E.RECORD_SKIP, 0))                                  # no odds/ yet
+        self.assertIn("no odds snapshot before the GW9 deadline", why)
+        self.snapshot("odds_2099-01-03T10-00-00Z.json.gz", "2099-01-03T10:00:00Z")     # after the deadline: never used
+        with redirect_stdout(io.StringIO()):
+            ok, n, why = E.record_status(self.d, 6, source="bottomup_lambda", path=log)
+        self.assertEqual(ok, E.RECORD_SKIP)
+        self.snapshot("odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+        with redirect_stdout(io.StringIO()):
+            ok, n, why = E.record_status(self.d, 6, source="bottomup_lambda", path=log)
+        self.assertIs(ok, True); self.assertGreater(n, 0)
+        every = E.read_log(log)
+        rows = [r for r in every if r["source"] == "bottomup_lambda"]
+        self.assertEqual(len([r for r in every if r["source"] == "bottomup"]), 5)       # the toy's earlier rows untouched
+        self.assertEqual({r["event"] for r in rows}, {"9"})
+        import fpl_lambda as L
+        want, _, _ = L.bottomup_lambda(self.d, 9, self.dl, self.tmp)
+        self.assertEqual([(int(r["player_id"]), float(r["predicted"])) for r in rows], [(p, v) for p, _, v in want])
+
+    def test_check_29_learns_the_sixth_source(self):
+        import checks as C
+        self.assertEqual(C.SOURCES[-1], "bottomup_lambda")
+        nl = chr(10)
+        base = "".join(f"RECORD OK {s} 5" + nl for s in C.SOURCES[:-1])
+        head, tail = "record summary:" + nl, "archiving ..." + nl
+        ok = head + base + "RECORD OK bottomup_lambda 5" + nl + tail
+        self.assertEqual(C.c29(C.Ctx(run_log=ok))[0], C.OK)
+        skip = head + base + "RECORD SKIP bottomup_lambda no odds snapshot before the GW9 deadline" + nl + tail
+        self.assertEqual(C.c29(C.Ctx(run_log=skip)),
+                         (C.WARN, "bottomup_lambda skipped: no odds snapshot before the GW9 deadline; the other 5 recorded"))
+        fail = head + base + "RECORD FAIL bottomup_lambda boom" + nl + tail
+        self.assertEqual(C.c29(C.Ctx(run_log=fail))[0], C.FAIL)
+        missing = head + base + tail
+        self.assertEqual(C.c29(C.Ctx(run_log=missing)), (C.FAIL, "bottomup_lambda missing"))
+
+    def test_the_record_never_imports_tools_or_opens_the_database(self):
+        import ast
+        tree = ast.parse(open(os.path.join(HERE, "fpl_lambda.py"), encoding="utf-8").read())
+        names = {a.name.split(".")[0] for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
+        names |= {n.module.split(".")[0] for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) and n.module}
+        self.assertNotIn("sqlite3", names)
+        self.assertFalse(names & {"odds_lambda", "tools", "backtest", "chips", "league"})
+
+
 if __name__ == "__main__":
     unittest.main()
