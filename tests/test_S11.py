@@ -196,6 +196,15 @@ class Season(unittest.TestCase):
         r70 = next(r for r in s70.origin(5)["rows"] if r["pid"] == pid0)
         self.assertAlmostEqual(r70["ms"], inp["players"][pid0]["p_start"] * 70 / 90.0)
         self.assertLess(r70["ms"], o["rows"][0]["ms"])
+        # the P(start) factor itself (the verifier's surviving mutation): every toy starter has P(start) 1.0, so flag one
+        # at 90% - he stays a predicted starter (0.9 >= 0.8) and his minutes share carries the 0.9
+        s90 = S.Season(self.tmp.name, self.tmp24.name, self.odds)
+        s90.hist["c"]["players"][pid0]["chance_next_round"] = 90
+        r90 = next(r for r in s90.origin(5)["rows"] if r["pid"] == pid0)
+        p90 = E.reliability_inputs(E.canonical_through(BT.canonical_at(s90.hist, 5), 4), gws_played=4)["players"][pid0]["p_start"]
+        self.assertAlmostEqual(p90, 0.9)
+        self.assertAlmostEqual(r90["ms"], 0.9 * 90 / 90.0)                                        # P(start) x m_start / 90
+        self.assertAlmostEqual(r90["xg"], o["rows"][0]["xg"] * 0.9)                                 # the forecast scales with it
 
     def test_name_match_club_change_and_promoted(self):
         base = S.Season(self.tmp.name, self.tmp24.name, self.odds).origin(5)["rows"]
