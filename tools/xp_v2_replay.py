@@ -515,6 +515,10 @@ def info_2627(data_dir, out=print, gws=INFO_GWS, entry=ENTRY, xp_v2_fn=xp_v2_liv
     db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
         d_ev = {"events": [{"event": ev, "deadline_time": dl} for ev, dl in db.execute("SELECT id, deadline_time FROM events")]}
+        try:
+            web = dict(db.execute("SELECT id, web_name FROM players"))      # names in the print; ids where the table has none
+        except sqlite3.Error:
+            web = {}
         out(f"2026/27 GW{gws[0]}-{gws[-1]} (information only, the ruling): recorded own against xp_v2 as tested, on our squad "
             f"(entry {entry}): each model's XI and captain, realised official points with rule_autosubs and the captain doubled")
         if getattr(xp_v2_fn, "note", None):
@@ -541,13 +545,13 @@ def info_2627(data_dir, out=print, gws=INFO_GWS, entry=ENTRY, xp_v2_fn=xp_v2_liv
             rec = {"gw": g, "graded": True, "snapshot": day}
             if own:
                 rec["own"], rec["own_cap"] = realised_on(rows, own, actual)
-                own_txt = f"own (snapshot {day}, {sum(1 for r in rows if r['id'] in own)} of 15 with a row): {rec['own']:.0f} points, captain {rec['own_cap']}"
+                own_txt = f"own (snapshot {day}, {sum(1 for r in rows if r['id'] in own)} of 15 with a row): {rec['own']:.0f} points, captain {web.get(rec['own_cap'], rec['own_cap'])}"
             else:
                 own_txt = "own: no recorded snapshot before the deadline"
             try:
                 v2 = xp_v2_fn(data_dir, g)
                 rec["v2"], rec["v2_cap"] = realised_on(rows, v2, actual)
-                v2_txt = f"xp_v2 as tested: {rec['v2']:.0f} points, captain {rec['v2_cap']}"
+                v2_txt = f"xp_v2 as tested: {rec['v2']:.0f} points, captain {web.get(rec['v2_cap'], rec['v2_cap'])}"
                 if own:
                     v2_txt += f"; xp_v2 - own {rec['v2'] - rec['own']:+.0f}"
             except MissingInput as e:

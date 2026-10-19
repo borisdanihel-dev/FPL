@@ -333,6 +333,7 @@ class Info2627(unittest.TestCase):
             self.assertEqual(recs[0]["own_cap"], 1)                                           # the highest own projection in the XI
             self.assertEqual(recs[1]["own"], X.realised_on(rows, {pid: float(pid % 5) for pid in range(1, 16)}, actual)[0])   # GW6: own's rows, not xg's
             self.assertIn("xp_v2 as tested: not available", text)
+            self.assertIn("captain W1;", text)                                                  # the captain by name
             self.assertNotIn("v2", recs[0])
             # with a live xp_v2 the paired line prints
             buf2 = io.StringIO()
