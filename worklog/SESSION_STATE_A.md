@@ -77,9 +77,17 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     with DEFCON missing on both sides (stated as a limitation), or score the
     outcomes without the DEFCON category at all, or wait for a source of the
     counts?" Without an answer, F-D is not started; F-E goes first.
-  - **Next: F-E (S6e, xp_v2 + saves)** on 2025/26 (and on 2024/25 after
-    F-C, which is done): prereg `prereg/S6e.md` with F-E's text verbatim
-    first.
+  - **F-E (S6e) built** on `s6e-wip` (off the landing branch + master;
+    prereg master `16f6605`; code `87f6282`; scratch worktree `s6e`).
+    2025/26 test **FAIL** on its bar: keeper points xp_v2 + saves − xp_v2
+    −0.101 [−0.197, −0.007] per squad per gameweek (season −3.4); keeper
+    MAE +0.393 [+0.340, +0.444] (worse); the choice differs in 0.13 of
+    squad-gameweeks; k from 2024/25 split-half. For the chat (not tuned):
+    the ruled E[saves]/3 overstates E[floor(saves/3)], which may explain
+    part of the MAE rise. Not adopted. 2024/25 run not done (needs the
+    harness generalised; shared with the parked F-D). Next: the verifier,
+    the report `cc_2026-10-19_S6e.md`, CHANGELOG; then stop (a FAIL) and
+    report to Boris.
   - **F-C / S10b built** on `s10b-wip` (scratch worktree `s10b`; prereg
     master `c0116fe`; downloads `5918f02` with the record
     `worklog/downloads_2026-10-19b.md`; landing merged `4ddea35`; code
