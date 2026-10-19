@@ -3960,3 +3960,21 @@ Calafiori 5.83; Haaland 5.68 and Mbeumo 5.67 just outside. Suite 686 →
 RULINGS PART F are verbatim in BUILD_PLAN.md "Part F - queued rulings",
 queued after the GW8 queue. F-A (12 dry runs per UTC day) applies now, and
 W1b's cap moves to 12 when W1b is worked.
+
+## 2026-10-19 — S10b (F-C): 2023/24 and 2024/25 re-scored under the 2026/27 rules (`c0116fe` prereg, `5918f02` downloads, `a2902f9` code; on `s10b-wip`)
+
+- **Downloads (approved in F-C):** 11 files, recorded in
+  `worklog/downloads_2026-10-19b.md`: vaastav 2022-23 to 2024-25 and
+  football-data E0 2023-24 and 2024-25.
+- **Method:** `tools/rules.py --season`. The claim under test, that each
+  season's own table is the 2026/27 table without the DEFCON category,
+  holds exactly:
+  - 2023-24: 11,086 of 11,086 player-gameweeks within ±1, all exact;
+  - 2024-25: 11,431 of 11,431, all exact; 322 manager rows out.
+  - Bar ≥ 0.99: PASS for both.
+  - Neither season has a goalkeeper goal, so that value is untested.
+- **Re-scores** under the 2026/27 table and positions (by code; DEFCON
+  missing and flagged; bonus official): 28,742 and 26,919 rows in
+  `tools/out/rules_<season>/`.
+- **Checks:** the 2025/26 path byte-identical to Step 10; suite 692;
+  mutations 8 of 8; verifier PASS (`worklog/verify_S10b.md`).
