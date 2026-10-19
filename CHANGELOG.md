@@ -3485,3 +3485,25 @@ fixtures, a double 2 or more. It is offline and run only as `python -I`.
 - tests 605 -> 613; mutations P1-P10 red;
 - verifier PASS (Fable 5.1, high);
 - landing dry run `43fea40` green.
+
+---
+
+## 2026-10-19 — S16 part 1 amendment: the 2022-23 GW7 void round, landed (`5e81c36` acceptance tests, `14a8da5` code)
+
+`tools/blank_double.py` labels 2022-23 GW7, the round postponed after the
+Queen's death, as a "void round". It keeps it outside the blank/double base
+rates and counts, and prints the count with it alongside.
+
+**2022-23 now reads:** 22 team blanks, 42 team doubles; with the void round,
+42 / 42.
+
+**The cross-season table** excludes it and lists it apart: "2022-23 GW7 (20
+team blanks)". Nothing guesses other void rounds: 2019-20's 30-38 stay
+unused numbers.
+
+**On the real files** the history changes by exactly those lines.
+
+**Tests and checks:**
+- tests 613 -> 614; mutations P1-P15 red;
+- verifier PASS (Fable 5.1, high);
+- landing dry run `7171924` green.
