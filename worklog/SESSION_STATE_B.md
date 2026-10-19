@@ -134,7 +134,9 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
     (morning, from Wednesday night's snapshot; again after Thursday's nightly) -> `tools/out/gw_pass/gw8_pass.txt` with `run.txt`.
   - **Items since the chat review (restarted at 0 by RULING morning 19 Oct):** S11, bundle = 2 of 6; the S8 corrections are a
     continuation of S8.
-  - **Queue:** nothing without Boris (Steps 14, 15, 19 need rulings); after the replays, S8's record and re-verify; Thursday's bundle.
+  - **Queue:** after the replays, S8's record and re-verify; then **S6b** (RULING S6b verbatim in `prereg/S6b.md`: the xp_v2
+    past-season test on 2025/26 re-scored under 2026/27 rules, own_proxy v xp_v2 with S5's bottomup_lambda and S11's shares, the
+    decision-based XI-and-captain test on S7's 50 squads; needs Step 10 on master); Thursday's bundle. Steps 14, 15, 19 need rulings.
 - **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
