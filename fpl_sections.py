@@ -11,14 +11,15 @@
 Run by the nightly after the report is built, in the data folder; the
 sections are appended to the report. They read fpl.sqlite read-only, the
 export and the projection log. A section whose input is missing prints one
-line, `<SECTION> SKIPPED: <why>`, and the night goes on; check 31 WARNs on
-it and never fails the night. Standard library only.
+line, `<SECTION> SKIPPED: <why>`, and the night goes on; so does any other
+exception inside a section (`<SECTION> SKIPPED: <type>: <message>`, W2
+amendment 2). Check 31 WARNs on it and never fails the night. Standard
+library only.
 
     python fpl_sections.py --report reports/fpl_<date>.txt [--data DIR]
 """
 import argparse
 import os
-import sqlite3
 import sys
 from datetime import datetime, timezone
 
@@ -27,13 +28,15 @@ import fpl_chips
 import fpl_league
 
 TITLES = ("CHIPS", "LEAGUE")
-MISSING = (fpl_bt.MissingInput, fpl_chips.MissingInput, fpl_league.MissingInput, sqlite3.Error, OSError, KeyError)
+MISSING = (fpl_bt.MissingInput, fpl_chips.MissingInput, fpl_league.MissingInput)
 RULE = "=" * 78
 
 
 def sections(data_dir, now=None):
     """[(title, lines, status line)] for the two sections; a missing input
-    is the one line `<TITLE> SKIPPED: <why>` (never a substitute)."""
+    is the one line `<TITLE> SKIPPED: <why>` (never a substitute), and any
+    other exception the line `<TITLE> SKIPPED: <type>: <message>` (W2
+    amendment 2: never a red night)."""
     now = now or datetime.now(timezone.utc)
     run = {"CHIPS": lambda out: fpl_chips.live(data_dir, out),
            "LEAGUE": lambda out: fpl_league.report(data_dir, out, now)}
@@ -43,8 +46,8 @@ def sections(data_dir, now=None):
         try:
             run[title](lines.append)
             status = f"{title} OK {len(lines)} lines"
-        except MISSING as e:
-            why = f"{type(e).__name__}: {e}" if isinstance(e, (sqlite3.Error, OSError, KeyError)) else str(e)
+        except Exception as e:
+            why = str(e) if isinstance(e, MISSING) else f"{type(e).__name__}: {e}"
             lines = [f"{title} SKIPPED: {why}"]
             status = lines[0]
         result.append((title, lines, status))

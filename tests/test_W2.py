@@ -306,6 +306,40 @@ class ReportSections(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_any_exception_in_a_section_is_skipped_and_the_other_runs(self):
+        import shutil, tempfile
+        from datetime import datetime, timezone
+        from unittest import mock
+        import checks as C
+        import fpl_sections as FS
+        from tests.test_S9 import toy_league
+        tmp = tempfile.mkdtemp()
+        try:
+            toy_league(tmp)
+            today = datetime(2026, 9, 16, tzinfo=timezone.utc)
+            good = dict((t, st) for t, _, st in FS.sections(tmp, now=today))["LEAGUE"]
+            self.assertTrue(good.startswith("LEAGUE OK "))
+            boom = mock.patch.object(FS.fpl_chips, "live", side_effect=ZeroDivisionError("float division by zero"))
+            with boom:
+                res = dict((t, (lines, st)) for t, lines, st in FS.sections(tmp, now=today))
+            self.assertEqual(res["CHIPS"], (["CHIPS SKIPPED: ZeroDivisionError: float division by zero"],
+                                            "CHIPS SKIPPED: ZeroDivisionError: float division by zero"))
+            self.assertEqual(res["LEAGUE"][1], good)                                         # the other section still runs
+            report = os.path.join(tmp, "fpl_x.txt")
+            with open(report, "w", encoding="utf-8", newline="") as fh:
+                fh.write("THE REPORT" + chr(10))
+            buf = io.StringIO()
+            with mock.patch.object(FS.fpl_league, "report", side_effect=TypeError("bad operand")), \
+                    mock.patch.object(FS.fpl_chips, "live", side_effect=KeyError(7)), redirect_stdout(buf):
+                rc = FS.main(["--report", report, "--data", tmp])
+            self.assertEqual(rc, 0)
+            printed = buf.getvalue().splitlines()
+            self.assertEqual(printed, ["CHIPS SKIPPED: KeyError: 7", "LEAGUE SKIPPED: TypeError: bad operand"])
+            log = "adding the report sections ..." + chr(10) + chr(10).join(printed) + chr(10)
+            self.assertEqual(C.c31(C.Ctx(run_log=log)), (C.WARN, "CHIPS SKIPPED: KeyError: 7, LEAGUE SKIPPED: TypeError: bad operand"))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_check_31_warns_and_never_fails(self):
         import checks as C
         nl = chr(10)
