@@ -7,7 +7,25 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **CURRENT (19 Oct, about 15:30 UTC), after RULING 19 Oct afternoon:**
+- **CURRENT (19 Oct, about 16:00 UTC), after RULING S14 (Boris accepts) + Part F:**
+  - S14 accepted as information (`prereg/S14.md`, master `677f34e`): the
+    captain table prints in the GW8 bundle; the captain rule is unchanged;
+    the table is shown beside any options within 0.3 xP, with no
+    tie-break. GW10 items: the thin 15+ tail and keepers near zero
+    (saves).
+  - **S14 amendment 1** (prereg `3de32ff`, code `282f7e4` on the landing
+    branch): section 7 lists the options within 0.3 xP of xp_v2's captain
+    (today Saka 6.00, option Calafiori 5.83). Mutations 6 of 6; verifier
+    running (Fable, bar 79% at launch).
+  - **RULINGS PART F** are verbatim in BUILD_PLAN.md "Part F - queued
+    rulings". Each item's text goes verbatim into its prereg before its
+    code. Order after the GW8 queue: F-B (W3, merge by Thu 29 Oct), F-C,
+    F-D, F-E, F-F, F-G, F-H, F-I; F-J at the GW10 checkpoint (about 9 Nov);
+    F-K parked.
+  - **F-A, effective now:** 12 dry runs per UTC day, manual and
+    push-triggered together. The text is in `prereg/W1b.md`; W1b's cap
+    constant goes to 12 when W1b is worked on Wednesday.
+- **Earlier (19 Oct, about 15:30 UTC), after RULING 19 Oct afternoon:**
   - The ruling is verbatim in `prereg/S14.md`, `W2.md`, `S16.md`, `S2.md`,
     `S2b.md` (master `fc56fd5`) and `S6c.md` and `S6d.md` (landing branch
     `5fda195`). BUILD_PLAN Step 20 holds the GW10 item "xp_v2 + saves". The
