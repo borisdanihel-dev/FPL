@@ -290,6 +290,7 @@ class Forecast(unittest.TestCase):
 
     def test_the_record_rows_and_skips_without_a_database(self):
         gw9_snapshot(self.tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+        gw9_snapshot(self.tmp, "odds_2099-01-01T13-00-00Z.json.gz", "2099-01-01T13:00:00Z")   # after the deadline: never used
         want = XL.live(self.tmp, self.hist, now=NOW9)["xp"]
         data = tempfile.mkdtemp()
         try:
