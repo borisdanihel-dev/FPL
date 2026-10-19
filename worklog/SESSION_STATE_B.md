@@ -120,11 +120,11 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   - **Provenance (ruling e):** `tools/provenance.py`; every tool writes `run.txt` into its own folder `tools/out/<tool>/`; every recorded
     test and replay number of S4, S5, S6, S7, S9, S12, S13 reproduces byte for byte on the final code; two live screens moved with the
     data (in the landing report). The proposed CLAUDE.md line is in the landing report.
-  - **S8:** verifier FAIL recorded (the first replay was the buggy generator's); ruling (a)-(e) received: `s8_run3` (pre-registered),
-    `s8_nohits` and `s8_buffer3` run on the final code `7f72141` with `run.txt` under `tools/out/planner/` (started 06:39 UTC, about
-    four hours); the lost-FT reading recorded in the prereg (b); the five test gaps closed (c, `5423434`, `7f72141`); the planner
-    stays a screen and prints beside the baseline in the bundle (d). When the replays land: a new CHANGELOG entry beside the first
-    run's, the report updated, re-verify.
+  - **S8:** done. The verifier's FAIL was corrected under RULING S8 verifier FAIL: the final-code replay `s8_run3` (+2.90
+    [-12.74, +18.40], bar FAIL) and the exploratory lines (buffer 3.0 +0.48; no hits +9.00 [-4.74, +22.56], 0 hits) recorded in
+    a new CHANGELOG entry beside the first run's (marked as the buggy generator's), with `run.txt` at `7f72141`; the five test
+    gaps closed; the lost-FT reading in the prereg; re-verified **PASS**. The planner stays a screen, printed beside the baseline
+    in the bundle. Report `worklog/cc_2026-10-19_S8.md` (the record section).
   - **S11:** complete and **adopted** (RULING landing + S11 item 2) as the share input to the xg half of `xp_v2`; not a decision input
     on its own; it enters `xp_v2`'s past-season test, ruled once Step 10 lands. Verifier: FAIL on check 6 (a test gap) then PASS on
     the re-run; both metrics pass their Holm-adjusted bars (goals +0.0061, assists +0.0043). Report `worklog/cc_2026-10-19_S11.md`.
@@ -134,7 +134,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
     (morning, from Wednesday night's snapshot; again after Thursday's nightly) -> `tools/out/gw_pass/gw8_pass.txt` with `run.txt`.
   - **Items since the chat review (restarted at 0 by RULING morning 19 Oct):** S11, bundle = 2 of 6; the S8 corrections are a
     continuation of S8.
-  - **Queue:** after the replays, S8's record and re-verify; then **S6b** (RULING S6b verbatim in `prereg/S6b.md`: the xp_v2
+  - **Queue:** **S6b now** (started 2026-10-19 after S8's record and re-verify) (RULING S6b verbatim in `prereg/S6b.md`: the xp_v2
     past-season test on 2025/26 re-scored under 2026/27 rules, own_proxy v xp_v2 with S5's bottomup_lambda and S11's shares, the
     decision-based XI-and-captain test on S7's 50 squads; needs Step 10 on master); Thursday's bundle. Steps 14, 15, 19 need rulings.
 - **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
