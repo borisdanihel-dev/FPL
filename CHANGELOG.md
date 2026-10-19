@@ -3363,3 +3363,42 @@ Tests: `test_fpl.py` 386 → 386; `tests/test_S9.py` 5 new; mutations 16 of
 16 red.
 
 Report: `worklog/cc_2026-10-18_S9.md`; verifier `worklog/verify_S9.md`.
+
+---
+
+## 2026-10-19 — S10: the rule normaliser for 2025/26, landed (`55f3476` prereg, `2ac6f08` code, merge `63906e6`)
+
+`tools/rules.py` scores 2025/26 player-gameweeks with the live 2026/27 points
+table (`game_config`, fetched 2026-10-19T06:17:43Z), using the prereg's
+thresholds. It also re-scores them under the 2026/27 rules:
+- positions by `code`;
+- DEFCON rebuilt from its parts;
+- official bonus, flagged "2025/26 BPS";
+- assists: no change, so no rescale.
+
+**Measured (pre-registered):** 11,361 of 11,361 player-gameweeks with minutes
+> 0 are within ±1, a share of 1.0000 (90% gameweek-bootstrap CI
+1.0000-1.0000). PASS against the 0.99 bar.
+- All 29,338 player-gameweeks are exact.
+- DEFCON rebuilt = the official column on every row.
+- The "no points change" claim holds for every category that occurs.
+
+**Untested by 2025/26 data:**
+- the GKP goal value (10): no goalkeeper scored;
+- the 60-minute clean-sheet gate: FPL's column is itself gated;
+- GKP DEFCON.
+
+**The verifier:**
+- found the 100% real: the season sums match FPL's own totals for 841 of 841
+  players, and bonus follows the top-3 BPS rule in 380 of 380 fixtures;
+- 14 of 16 single-rule perturbations break the match.
+
+**Normaliser:** 11 players change position for 2026/27; their season point
+effects run from -21 to +23 by group. 360 of 841 players are gone in 2026/27
+and keep their 2025/26 position, flagged.
+
+**Tests:** 511 -> 526 on `s10-wip`, 605 with lane B's landing; mutations
+R1-R16 red. Verifier PASS (Fable 5.1, high). Landing dry run `415c9a9` green.
+
+**For the chat:** the frozen `bottomup` model's `GOAL_VALUE` gives a
+goalkeeper goal 6; `game_config` gives 10. The model is not changed.
