@@ -99,7 +99,18 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   (b) MAE −0.0042 and (c) keeper mismatches 76 → 56 pass. Verifier PASS
   (Fable 5.1), write guard clean. Nothing adopted; the decision is parked
   below. Report `worklog/cc_2026-10-19_S12.md`.
-- **Current item:** S13 (prereg rows `b456909`, ruling verbatim).
+- **S13:** complete on `lane-b` (`tools/defcon.py`, `tests/test_S13.py`;
+  prereg rows `b456909`; code `385bd90`; 7 tests, mutations 22 of 22
+  red). **The pre-registered test FAILS on both bars**: Brier comparator −
+  v2 −0.0188 [−0.0248, −0.0128] (v2 worse than the hit-rate rule) and 1 of
+  10 deciles within 5 points. Verifier PASS (Fable 5.1), write guard
+  clean. Nothing adopted; the decision is parked below. Report
+  `worklog/cc_2026-10-19_S13.md`.
+- **Current item:** none. The queue after S13 is S11 (parked for the
+  2024/25 download), then Steps 14, 15 and 19, which have no rulings yet;
+  the lane stops here (4 of 6 items since the chat review; nothing else
+  is queued without Boris). S8's verifier is still running; its verdict
+  is recorded when it lands.
 - **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
@@ -147,6 +158,16 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
      Question: information only, a new component-wise prereg (the lock
      alone), or shelve? And should an empty header-only `overrides.csv`
      be committed so the format is on master (ruling 2)?
+  5. **S13 result:** DEFCON v2 fails both bars and is worse than the
+     hit-rate comparator (Brier −0.019, 1 of 10 deciles; it over-predicts
+     at the top: 0.75 predicted against 0.43 observed). The verifier and
+     the report name two pinned definitions as the likely causes (μ at 90
+     minutes for every 60+-minute match; the in-sample moments fit).
+     Question: shelve, or a new pre-registered variant (μ at the match's
+     minutes, an out-of-sample r, a beta-binomial on the hit rate as the
+     comparator's upgrade) on the same sample and bars?
+  6. **Next items:** S11 waits on question 3; Steps 14, 15 and 19 need
+     their rulings before any prereg can be written.
 
   Boris is asleep until about 08:00 Prague. Until then:
   - Ask nothing. Anything that needs me (a click, a download approval, a decision) gets parked in your SESSION_STATE file with the exact question, and you move on to the next queued item that doesn't need it.
@@ -192,7 +213,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 3 of 6 (S9, S8, S12; the review of S4–S6 is done).
+- **Items since the last chat review:** 4 of 6 (S9, S8, S12, S13; the review of S4–S6 is done).
 - **Open for the chat:** the S9 FAIL rulings (report, Decision 0); RULING Step 8; the S9 report's Decision 1 (σ_d in Part C rule 1); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).

@@ -3347,3 +3347,42 @@ verifier: unplayed live fixtures counted as missed, an int-keyed `dict(**)`,
 a connection left open on error).
 
 Report: `worklog/cc_2026-10-19_S12.md`; verifier `worklog/verify_S12.md`.
+
+## 2026-10-19 — S13: DEFCON probability v2 (`7111240` ruling, `b456909` prereg rows, `385bd90` code; lane B, overnight)
+
+RULING Step 13 (verbatim in `prereg/S13.md`): `tools/defcon.py` (standard
+library only; the nightly never imports it), `tests/test_S13.py`.
+Verifier: Claude Fable 5.1, **PASS** on every check (`worklog/verify_S13.md`). Not on master. **Pre-registered test: FAIL on
+both bars; v2 is worse than the comparator.**
+
+**Definitions, as pre-registered.** Thresholds DEF 10 CBIT, MID 12 CBIRT,
+FWD 12 CBIRT (GK none; the comparator keeps DEF 10 / MID 12 and 0 for
+forwards). Per player-match with 60+ minutes: μ = shrunk per-90 rate × 90
+× (λ_opp / the round's mean λ, S5's odds-implied λ with the labelled
+fallback), the rate shrunk toward the positional median by the training
+slice's DEFCON reliability weight; r per position by the method of
+moments on the model's own means over the training player-matches
+(clipped [0.5, 1000]; Poisson when the variance ≤ the mean); P(DEFCON) =
+P(X ≥ threshold) under NB(μ, r). Comparator = the player's hit rate over
+his 60+-minute training matches (`defcon_expectation`'s rule). Test:
+2025/26 GW5–38 point-in-time (`canonical_at`, rounds < t, clubs of the
+origin), DEF and MID paired per gameweek, bootstrap over gameweeks B =
+10,000, 90%, seed 20261018; (a) Brier comparator − v2 ≥ 0.005 with a
+positive lower bound; (b) ≥ 8 of 10 deciles of predicted P within 5
+points.
+
+**Measured.** (a) Brier comparator − v2 **−0.0188 [−0.0248, −0.0128]**
+(0.1651 → 0.1839; worse in 26 of 34 gameweeks): **FAIL**. (b) **1 of 10**
+deciles within 5 points: **FAIL** (mean predicted 0.271 against an
+observed 0.229; top decile 0.754 against 0.427; the comparator's deciles
+5 of 10). Log loss favours v2 (0.571 against 0.890, the comparator's 0s
+clipped); fitted r 7–18, never at a clip; fallback share 0; forwards (694
+matches, hit rate 0.013) Brier 0.0130 comparator against 0.0202 v2.
+Candidate causes stated as pinned definitions, not changed: μ at 90
+minutes for every 60+-minute match; the in-sample means in the moments
+fit. Nothing adopted; the decision is parked for Boris (report,
+Decisions). Tests: `test_fpl.py` 386 → 386; `tests/test_S13.py` 7;
+mutations 22 of 22 red (two first-round survivors were test gaps,
+closed).
+
+Report: `worklog/cc_2026-10-19_S13.md`; verifier `worklog/verify_S13.md`.
