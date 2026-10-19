@@ -102,6 +102,31 @@ class Score(unittest.TestCase):
         self.assertAlmostEqual(ev["score"], ev["gain"] - 0 - 1.0)
         self.assertEqual(P.evaluate(((), ()), squad, xp, 0.85, P.SCHEDULES["boris"], 1, {})["score"], 0.0)
         self.assertIsNone(P.evaluate(((), ()), squad, xp, 0.85, P.SCHEDULES["boris"], 5, {}))     # never leave 5 banked
+        # the five verifier gaps (RULING S8 verifier FAIL item c), 1 and 2: the score charges 4 per hit; the club cap is exactly 3
+        o1, o2 = squad[13], squad[14]
+        i1 = next(r for r in market if r["pos"] == 4 and r["price"] == 7.0)
+        i2 = next(r for r in market if r["pos"] == 4 and r["price"] == 6.0)
+        hit = P.evaluate(((o1, o2), (i1, i2)), squad, xp, 0.85, P.SCHEDULES["boris"], 1, {i1["id"]: 1.0, i2["id"]: 1.0})
+        self.assertEqual(hit["hits"], 1)
+        self.assertAlmostEqual(hit["score"], hit["gain"] - 4.0 * 1 - hit["lost"])                      # - 4 x hits, exactly
+        free = P.evaluate(((o1, o2), (i1, i2)), squad, xp, 0.85, P.SCHEDULES["boris"], 2, {})
+        self.assertAlmostEqual(free["score"], free["gain"] - free["lost"]); self.assertEqual(free["hits"], 0)
+        self.assertAlmostEqual(hit["gain"], free["gain"])
+        self.assertEqual(P.HIT, 4.0)
+        gkdef = [r for r in squad if r["pos"] in (1, 2)]; others = [r for r in squad if r["pos"] in (3, 4)]
+        spread = ["ARS", "BRE", "BHA", "CHE", "EVE"]
+        capped = ([dict(r, team=spread[i % 5]) for i, r in enumerate(gkdef)]                      # at most two GK/DEF per club
+                  + [dict(r, team="BOU") for r in others[:4]]                                       # exactly four BOU midfielders/forwards
+                  + [dict(r, team=spread[i % 4]) for i, r in enumerate(others[4:])])               # at most three per club elsewhere
+        self.assertEqual(sum(1 for r in capped if r["team"] == "BOU"), 4)
+        self.assertTrue(all(sum(1 for r in capped if r["team"] == c) <= 3 for c in spread))
+        self.assertFalse(P.legal(capped, 1.0))                                                       # four from one club: illegal
+        three = [dict(r) for r in capped]
+        bou = [i for i, r in enumerate(three) if r["team"] == "BOU"]
+        three[bou[-1]] = dict(three[bou[-1]], team="EVE")
+        self.assertEqual(sum(1 for r in three if r["team"] == "BOU"), 3)
+        self.assertTrue(P.legal(three, 1.0))                                                         # three: legal (so the cap is 3, not 4 or 5)
+        self.assertEqual(P.CLUB_MAX, 3)
 
     def test_hit_rule(self):
         squad, market = toy_squad(), toy_market()
@@ -254,6 +279,25 @@ class ReplayTests(unittest.TestCase):
             P.replay(self.tmp.name, n_squads=1, seed=7, out=lambda s: None, first=5, last=5, check_decays=False, hits_allowed=False, buffer=2.5)
         self.assertTrue(rp.call_args_list)
         self.assertTrue(all(c.args[9] is False and c.args[10] == 2.5 for c in rp.call_args_list))   # the variants reach every ranking
+        # gaps 3-4: the replay reads the realised points of round t itself and charges 4 per hit; a forced two-transfer plan each week
+        def forced(rows, bank, market, xp_weeks, k, p_start, decay, schedule, pool, *rest):
+            mids = [r for r in rows if r["pos"] == 3][:2]
+            ins = [r for r in pool[3] if r["id"] not in {x["id"] for x in rows}][:2]
+            return ([{"outs": tuple(mids), "ins": tuple(ins), "score": 1.0, "gain": 1.0, "gains": [0.0] * len(xp_weeks),
+                      "hits": max(0, 2 - k), "lost": 0.0, "used": 2}], pool)
+        seen_t = []
+
+        def realised(self_, rows, t, xp):
+            seen_t.append(t)
+            return 100.0
+        with mock.patch.object(P, "REPLAY_LAST", 6), mock.patch.object(P, "rank_plans", side_effect=forced), \
+                mock.patch.object(P.Replay, "realised", realised):
+            res4 = P.replay(self.tmp.name, n_squads=1, seed=7, out=lambda s: None, first=5, last=6, check_decays=False)
+        pl = res4["results"][0]["planner"]
+        self.assertEqual((pl["hits"], pl["transfers"]), (2, 4))                                     # 1 FT a week, two moves: a hit each week
+        self.assertAlmostEqual(pl["pts"], 2 * 100.0 - 4.0 * 2)                                     # realised minus 4 per hit
+        self.assertEqual(sorted(seen_t), [5, 5, 6, 6])                                              # round t, for the planner and the baseline
+        self.assertEqual(res4["results"][0]["baseline"]["hits"], 0)
         self.assertIsNone(res2["pass"]); self.assertIsNone(res3["pass"])                 # exploratory: no bar
         self.assertIn("no hits; baseline", buf2.getvalue()); self.assertIn("EXPLORATORY", buf2.getvalue())
         self.assertIn("exploratory line: no bar, no adoption", buf2.getvalue())
@@ -283,6 +327,18 @@ class CLI(unittest.TestCase):
             self.assertEqual(sum(1 for k in kws if k.get("hits_allowed") is False), 1)               # the no-hit line
             self.assertEqual(sum(1 for k in kws if k.get("buffer") == 3.0), 1)                       # the buffer-3.0 line
             self.assertEqual(len(res[("no hits", "boris")]), len([e for e in res[(P.DECAY, "boris")] if e["hits"] == 0]))
+            self.assertEqual(P.HORIZON, 6)                                                           # gap 5: six weeks reach every ranking
+            real_weeks = P.CH.own_week_points
+
+            def eight_weeks(d, log_rows, *a, **kw):                                                 # the toy offers three weeks: offer eight
+                weeks, pts, src = real_weeks(d, log_rows, *a, **kw)
+                extra = [weeks[-1] + i for i in range(1, 6)]
+                return weeks + extra, {**pts, **{w: dict(pts[weeks[-1]]) for w in extra}}, src
+            with mock.patch.object(P.CH, "own_week_points", side_effect=eight_weeks), \
+                    mock.patch.object(P, "rank_plans", wraps=P.rank_plans) as rp8:
+                P.live(tmp, out=lambda s: None)
+            self.assertTrue(rp8.call_args_list)
+            self.assertTrue(all(len(c.args[3]) == 6 for c in rp8.call_args_list))                  # the ranking sees six weeks, no more
         code = ("import sys, os; import fpl_nightly, fpl_ship, fpl_edge, fpl_sync, fpl_gate, fpl_publish; "
                 "bad = [m for m, mod in sys.modules.items() if (getattr(mod, '__file__', None) or '')"
                 ".replace(os.sep, '/').find('/tools/') >= 0 or m.split('.')[0] in ('tools', 'analysis', 'planner')]; print(bad)")

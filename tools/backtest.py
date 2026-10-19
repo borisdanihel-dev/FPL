@@ -40,6 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import fpl_hist as H                                              # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
+from provenance import Run                                        # noqa: E402
 import hist_pit as PIT                                            # noqa: E402
 
 SEED = 20261018            # the bootstrap seed (prereg)
@@ -874,6 +875,7 @@ def main(argv=None):
     ap.add_argument("--reps", type=int, default=400)
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
+    run = Run("tools/backtest.py", args.out, argv)
     lines = []
 
     def out(s=""):
@@ -898,8 +900,11 @@ def main(argv=None):
     except MissingInput as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
-    with open(os.path.join(args.out, name), "w", encoding="utf-8") as fh:
+    path = os.path.join(args.out, name)
+    with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
+    run.wrote(path)
+    run.close()
     return 0
 
 

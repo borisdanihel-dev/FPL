@@ -64,6 +64,7 @@ import fpl_edge as E                                              # noqa: E402
 import fpl_hist as H                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
+from provenance import Run                                        # noqa: E402
 
 XI = 0.0065                 # Dixon-Coles decay per day
 MIN_WEIGHTED = 4.0          # below this weighted match count the fallback uses the league average
@@ -886,6 +887,7 @@ def main(argv=None):
     ap.add_argument("--live", action="store_true")
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
+    run = Run("tools/odds_lambda.py", args.out, argv)
     lines = []
 
     def out(s=""):
@@ -914,8 +916,11 @@ def main(argv=None):
     except MissingInput as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
-    with open(os.path.join(args.out, name), "w", encoding="utf-8") as fh:
+    path = os.path.join(args.out, name)
+    with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
+    run.wrote(path)
+    run.close()
     return 0
 
 

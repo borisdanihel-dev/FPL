@@ -48,6 +48,7 @@ import fpl_hist as H                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
 import hist_pit as PIT                                            # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
+from provenance import Run                                        # noqa: E402
 
 BENCH_W = (0.30, 0.10, 0.03)      # outfield bench, in forecast order
 SUBGK_W = 0.03
@@ -674,6 +675,7 @@ def main(argv=None):
     ap.add_argument("--resamples", type=int, default=RESAMPLES)
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
+    run = Run("tools/chips.py", args.out, argv)
     lines = []
 
     def out(s=""):
@@ -688,8 +690,11 @@ def main(argv=None):
     except MissingInput as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
-    with open(os.path.join(args.out, name), "w", encoding="utf-8") as fh:
+    path = os.path.join(args.out, name)
+    with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
+    run.wrote(path)
+    run.close()
     return 0
 
 

@@ -49,6 +49,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
+from provenance import Run                                        # noqa: E402
 
 MY_ENTRY = BT.MY_ENTRY
 LAST_GW = 38
@@ -440,6 +441,7 @@ def main(argv=None):
     ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
+    run = Run("tools/league.py", args.out, argv)
     lines = []
 
     def out(s=""):
@@ -450,8 +452,11 @@ def main(argv=None):
     except MissingInput as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
-    with open(os.path.join(args.out, f"league_{today:%Y-%m-%d}.txt"), "w", encoding="utf-8") as fh:
+    path = os.path.join(args.out, f"league_{today:%Y-%m-%d}.txt")
+    with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
+    run.wrote(path)
+    run.close()
     return 0
 
 

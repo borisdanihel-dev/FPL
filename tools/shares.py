@@ -40,6 +40,7 @@ import fpl_hist as H                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
 import odds_lambda as OL                                          # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
+from provenance import Run                                        # noqa: E402
 
 STARTER_P = BT.STARTER_P                  # predicted starters: P(start) >= 0.8
 HALF_MINUTES = 45                         # split-half population: 45+ minutes in each half
@@ -354,6 +355,7 @@ def main(argv=None):
     if not a.test:
         ap.print_help()
         return 2
+    run = Run("tools/shares.py", a.out, argv)
     lines = []
 
     def out(s):
@@ -372,7 +374,8 @@ def main(argv=None):
     path = os.path.join(a.out, "shares_test_2025-26.txt")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
-    print(f"written: {path}")
+    run.wrote(path)
+    print(f"written: {path}; provenance: {run.close()}")
     return 0
 
 

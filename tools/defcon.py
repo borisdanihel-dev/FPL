@@ -37,6 +37,7 @@ import fpl_hist as H                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
 import odds_lambda as OL                                          # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
+from provenance import Run                                        # noqa: E402
 
 THRESHOLDS = {2: 10, 3: 12, 4: 12}        # v2, 2025/26 rules: DEF 10 CBIT, MID 12 CBIRT, FWD 12 CBIRT; GK none
 COMPARATOR = E.DEFCON_THRESHOLD           # the current code: DEF 10, MID 12; forwards 0
@@ -302,6 +303,7 @@ def main(argv=None):
     if not a.test:
         ap.print_help()
         return 2
+    run = Run("tools/defcon.py", a.out, argv)
     lines = []
 
     def out(s):
@@ -316,7 +318,8 @@ def main(argv=None):
     path = os.path.join(a.out, "defcon_test_2025-26.txt")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
-    print(f"written: {path}")
+    run.wrote(path)
+    print(f"written: {path}; provenance: {run.close()}")
     return 0
 
 
