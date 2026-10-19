@@ -250,6 +250,10 @@ class ReplayTests(unittest.TestCase):
             res3 = P.replay(self.tmp.name, n_squads=2, seed=7, out=print if False else (lambda s: None), first=5, last=6,
                             check_decays=False, buffer=3.0)
         self.assertTrue(all(r["planner"]["hits"] == 0 for r in res2["results"]))      # no hits: never a hit
+        with mock.patch.object(P, "REPLAY_LAST", 6), mock.patch.object(P, "rank_plans", wraps=P.rank_plans) as rp:
+            P.replay(self.tmp.name, n_squads=1, seed=7, out=lambda s: None, first=5, last=5, check_decays=False, hits_allowed=False, buffer=2.5)
+        self.assertTrue(rp.call_args_list)
+        self.assertTrue(all(c.args[9] is False and c.args[10] == 2.5 for c in rp.call_args_list))   # the variants reach every ranking
         self.assertIsNone(res2["pass"]); self.assertIsNone(res3["pass"])                 # exploratory: no bar
         self.assertIn("no hits; baseline", buf2.getvalue()); self.assertIn("EXPLORATORY", buf2.getvalue())
         self.assertIn("exploratory line: no bar, no adoption", buf2.getvalue())
@@ -272,6 +276,13 @@ class CLI(unittest.TestCase):
             self.assertIn("schedule solver", text)
             self.assertIn("exploratory, no hits (Boris's schedule, no bar): top plan", text)
             self.assertIn("exploratory, hit buffer 3.0 (Boris's schedule, no bar): top plan", text)
+            # the toy export yields no hit plan at all, so the variants are checked on what the ranking is asked for
+            with mock.patch.object(P, "rank_plans", wraps=P.rank_plans) as rp:
+                res = P.live(tmp, out=lambda s: None)
+            kws = [c.kwargs for c in rp.call_args_list]
+            self.assertEqual(sum(1 for k in kws if k.get("hits_allowed") is False), 1)               # the no-hit line
+            self.assertEqual(sum(1 for k in kws if k.get("buffer") == 3.0), 1)                       # the buffer-3.0 line
+            self.assertEqual(len(res[("no hits", "boris")]), len([e for e in res[(P.DECAY, "boris")] if e["hits"] == 0]))
         code = ("import sys, os; import fpl_nightly, fpl_ship, fpl_edge, fpl_sync, fpl_gate, fpl_publish; "
                 "bad = [m for m, mod in sys.modules.items() if (getattr(mod, '__file__', None) or '')"
                 ".replace(os.sep, '/').find('/tools/') >= 0 or m.split('.')[0] in ('tools', 'analysis', 'planner')]; print(bad)")
