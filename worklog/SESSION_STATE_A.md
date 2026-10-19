@@ -7,7 +7,51 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (19 Oct, 16:00 UTC on): W2, then Part F, overnight** (Boris, verbatim):
+- **NOW (19 Oct evening on): RULING 19 Oct evening.** It is verbatim in
+  `prereg/W2.md` (amendment 2), `prereg/W3.md` and `prereg/S6f.md`, and in
+  the scratchpad `ruling_19oct_evening.txt`. The item count restarted at 0.
+  - Tonight, in order: F-B (W3) off `w2-wip`, then F-D (S6f), then S6e2,
+    then F-F and F-G as far as the harness allows. No merges or landings.
+    Park anything that needs Boris here, with the exact question.
+  - Tuesday after 00:00 UTC Boris clicks the dry runs of
+    `landing-2026-10-19b` and `s2b-wip`.
+  - Items since the review: W2a2 (1), W3 (2), S6f (3). Stop after 6.
+  - **W2 amendment 2 DONE** on `w2-wip` `eb9a143`: any exception inside a
+    section ends SKIPPED with check 31's WARN; verifier PASS (Fable 5.1).
+    The flag rule stays event 2.
+  - **W3 (F-B) BUILT** on `w3-wip` `09b3a50` (off `w2-wip` + the landing;
+    prereg master `ccb5882`); verifier running.
+    - xp_v2 is the seventh source, from an AST port of xp_v2_live's
+      closure, with the S11 prior in the committed
+      `priors/s11_prior_2025-26.json` (`tools/make_prior.py`) and the
+      export carrying code, first_name and second_name.
+    - New sections: CAPTAIN, BAN RISK and REALISED.
+    - Real GW8: identical to the tool (285 players); the six other sources
+      are unchanged.
+    - Suite 699 → 716; mutations 19 of 19.
+    - **Parked for Boris (W3, before its merge):** "The runner has no
+      historical/ folder and its record never opens the database, so last
+      season's S11 prior travels as priors/s11_prior_2025-26.json (109 KB,
+      derived from vaastav 2025/26, SHA-256s recorded), and the export
+      gains code, first_name and second_name. OK to merge it this way?"
+      Also: "GW8's xp_v2 is not in the log (W3 merges after GW8): grade
+      GW8's xp_v2 from the bundle file worklog/gw_pass/gw8/ (labelled), or
+      leave it 'not recorded'?"
+  - **S6f (F-D) BUILT, the test FAILS its bar** on `s6f-wip` `483a8a6`
+    (prereg master `3c955b5`); verifier running.
+    - 2024/25 GW5-38, DEFCON removed on both sides: xp_v2 − own_rebuilt
+      −0.396 per squad per gameweek [−0.864, +0.045] (season −13.5).
+    - S6b's xp_v2 − own_proxy +0.357 [+0.177, +0.548]; own_rebuilt −
+      own_proxy +0.754.
+    - Per F-D, this does not revert GW8+ by itself; it goes to the chat,
+      and the GW10 revert rule governs.
+    - **Parked for Boris:** "S6f fails on 2024/25 (xp_v2 below own_rebuilt
+      by 0.40 a squad-gameweek, CI [−0.86, +0.05]) while S6c passed the
+      switch on 2025/26. GW8 stays on xp_v2 as ruled unless you say
+      otherwise; the GW10 revert rule decides."
+  - Next: S6e2 (prereg first), then F-F (S8b) and F-G (Step 15).
+
+- (Earlier) **NOW (19 Oct, 16:00 UTC on): W2, then Part F, overnight** (Boris, verbatim):
 
   > 2. Start W2 now on its own branch off master, as prereg/W2.md lays out; it merges Saturday 24 Oct after the GW8 deadline, outside 9d. Stop W2 at a clean point when Tuesday's S2b and landing work is due (after 00:00 UTC, once Boris has clicked the dry runs).
   > 3. If W2 is done before then: continue with Part F in order (F-C and F-D are offline, so they may run before F-B; F-B builds on W2 and must merge by Thu 29 Oct). Overnight, park anything that needs Boris in the state file with the exact question and move to the next item; no merges or landings without him.
