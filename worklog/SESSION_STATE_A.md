@@ -64,7 +64,17 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     `pre-W2`, merge, Boris's real dispatch.
   - **Items since the last chat review** (Boris's W2 + Part F message):
     W2 = 1 of 6.
-  - **Next: Part F, F-C first** (Step 10b, offline): prereg
+  - **F-C / S10b built** on `s10b-wip` (scratch worktree `s10b`; prereg
+    master `c0116fe`; downloads `5918f02` with the record
+    `worklog/downloads_2026-10-19b.md`; landing merged `4ddea35`; code
+    `a2902f9`). Reproduction PASS: 2023-24 11,086 of 11,086, 2024-25
+    11,431 of 11,431 (exact). Neither season had a goalkeeper goal, so the GK
+    goal value is untested. Re-scores in `tools/out/rules_<season>/` (28,742
+    and 26,919 rows; DEFCON missing, flagged). 2025/26 path byte-identical to
+    Step 10. Mutations 8 of 8. Still to do: the full suite, the verifier
+    (Fable), the report `cc_2026-10-19_S10b.md`, CHANGELOG, push. Then
+    F-D (S6f).
+  - (Earlier plan) **Part F, F-C first** (Step 10b, offline): prereg
     `prereg/S10b.md` with F-C's text verbatim. The downloads are approved
     in F-C (record the URL, fetch time and SHA-256; data only; read with
     `python -I`): vaastav `data/2022-23`, `2023-24`, `2024-25`
