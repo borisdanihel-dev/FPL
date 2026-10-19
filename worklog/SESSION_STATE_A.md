@@ -85,9 +85,23 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     squad-gameweeks; k from 2024/25 split-half. For the chat (not tuned):
     the ruled E[saves]/3 overstates E[floor(saves/3)], which may explain
     part of the MAE rise. Not adopted. 2024/25 run not done (needs the
-    harness generalised; shared with the parked F-D). Next: the verifier,
-    the report `cc_2026-10-19_S6e.md`, CHANGELOG; then stop (a FAIL) and
-    report to Boris.
+    harness generalised; shared with the parked F-D).
+  - **S6e DONE** on `s6e-wip` `85f288b` (about 18:10 UTC): verifier PASS
+    (Fable 5.1, `worklog/verify_S6e.md`): the item is done correctly and
+    the model's FAIL is recorded. 12 of the verifier's 19 mutations went
+    red; the 7 survivors were test gaps, and three are closed in `e08660e`
+    (tests only; my mutations 6 of 6). Suite 692. Report
+    `worklog/cc_2026-10-19_S6e.md` and CHANGELOG on the branch. Not
+    landed: offline, with s10b-wip in a later landing (tests/ changes need
+    a green dry run). Items since the last chat review: W2, S10b, S6e = 3
+    of 6.
+  - **STOPPED after S6e** (Part F: "Stop on a FAIL"). Open for Boris:
+    (1) the F-D question above; (2) S6e: should a discretised term,
+    E[floor(saves/3)] from a Poisson on E[saves], get its own
+    pre-registered test at the GW10 checkpoint? (3) Next if he says go:
+    F-F (S8b) and F-G (Step 15) both test 2024/25, so they need the same
+    harness generalisation as F-D and F-E's 2024/25 run; F-B (W3) can be
+    built on `w2-wip` now and merged by Thu 29 Oct.
   - **F-C / S10b built** on `s10b-wip` (scratch worktree `s10b`; prereg
     master `c0116fe`; downloads `5918f02` with the record
     `worklog/downloads_2026-10-19b.md`; landing merged `4ddea35`; code
