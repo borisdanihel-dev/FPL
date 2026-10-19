@@ -97,6 +97,8 @@ class Toy(unittest.TestCase):
         self.assertIn(f"S6b's xp_v2 - own_proxy {res['s6b']['boot']['mean']:+.3f}", text)
         rows = [l for l in lines if l.strip()[:2].strip().isdigit()]
         self.assertEqual([int(l.split()[0]) for l in rows], [5, 6])
+        for line, rc, rb in zip(rows, res["s6c"]["per"], res["s6b"]["per"]):
+            self.assertEqual(line.split()[3:6], [f"{rc['diff']:+.2f}", f"{rc['prx']:.2f}", f"{rb['diff']:+.2f}"])   # diff, own_proxy, v2-prx
         for want_pass, lo in ((True, 0.01), (False, 0.0), (False, -0.5)):
             with mock.patch.object(X.BT, "bootstrap_mean", return_value={"mean": 0.5, "lo": lo, "hi": 1.0, "n": 2, "p": 0.1}):
                 res2, lines2 = self.run_tool()
