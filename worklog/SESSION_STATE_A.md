@@ -5,9 +5,12 @@ Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
 before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
 this file, then waits for the next instruction.
 
-- **CURRENT, for a fresh lane A session (19 Oct, about 11:20 UTC).** Read
+- **CURRENT, for a fresh lane A session (19 Oct; the old session ended here by
+  RULING W2 standings + lanes merge).** Read
   `CLAUDE.md`, `BUILD_PLAN.md` and this file, then wait for Boris.
-  - **Master** `08d6a95`, 614 tests green. Landed 19 Oct: W1, S16 part 2,
+  - **Master:** the commit carrying this file (`git log -1 --
+    worklog/SESSION_STATE_A.md`), 614 tests green. No W2 code exists yet;
+    `w2-wip` is not created. Landed 19 Oct: W1, S16 part 2,
     S10, S16 part 1 and its void-round amendment; lane B's S4, S5, S6, S7
     and S9.
   - **Untracked here on purpose:** `worklog/verify_S2b_pre.md` (on
@@ -38,9 +41,15 @@ this file, then waits for the next instruction.
       - `fetched_at_utc` on `transfers`, `chips`, `standings`,
         `player_history` (`picks` comes from S2b);
       - `players.code`;
-      - the one-time rewrite of the seven mislabelled event-2 `standings`
-        rows from the `entry_gw` chain. `standings` is grow-only in the
-        gate, so rewrite, never delete.
+      - **the standings, per RULING W2 standings (19 Oct, prereg/W2.md,
+        replacing acceptance test 4):** do not rewrite the seven mislabelled
+        event-2 rows; keep them byte for byte.
+        - Add `standings.label_error` (0/1) by migration, and set it to 1 on
+          those seven rows, with a CHANGELOG note.
+        - Make every reader skip `label_error = 1`. Find them first: the
+          export, checks, `fpl_edge` and lane B's tools.
+        - GW2 league rank stays "not recorded".
+        - No row is removed, so the gate's grow-only holds.
     - **(b) `bottomup_lambda` as a sixth source:** port the forecast from
       `tools/odds_lambda.py`. Find the function S5 adopted: its live mode
       takes W1's newest odds snapshot before the next deadline, the mean
