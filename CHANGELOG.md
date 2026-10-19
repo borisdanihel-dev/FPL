@@ -3751,3 +3751,31 @@ until Boris accepts (report, Decisions). Tests: `test_fpl.py` 386 → 386;
 survivors were test gaps, closed).
 
 Report: `worklog/cc_2026-10-19_S6b.md`; verifier `worklog/verify_S6b.md`.
+
+## 2026-10-19 — RULING S6b acceptance + lanes merge: xp_v2 as tested accepted for XI and captain from GW8; S6c and the revert rule; lane B closes (verbatim in `prereg/S6b.md`; lane B)
+
+1. **Accepted:** xp_v2 as tested in S6b (S11's shares in the xg half, S5's
+   bottomup_lambda in the bottomup half, P(start) from the current minutes
+   model) picks the XI and captain from GW8; own keeps being recorded
+   nightly and is printed beside xp_v2 at every deadline, both compared
+   weekly in grading; vetoes on hard facts as before. If the live forecast
+   cannot use S11's shares by the GW8 pass, own picks GW8 (today the live
+   xp_v2 reads the recorded xg rows; the S6b allocation exists only in the
+   replay — an open item in the handover).
+2. **S6c, a safety check (queued):** own_rebuilt = live own's formula with
+   every rebuildable input (the form term, the minutes-reliability scaling,
+   the FDR adjustment from the file's end-of-season FDR), status and chance
+   as available for both sides; the same squads, metric and bootstrap as
+   S6b; the switch is suspended for GW8 only if the 90% upper bound of
+   (xp_v2 − own_rebuilt) is below 0; 2026/27 GW5–7 recorded own against
+   xp_v2 as tested printed as information.
+3. **Revert rule, fixed now:** at the GW10 checkpoint, if the live paired
+   decision metric over GW8–10 has its 90% upper bound below 0, own
+   returns.
+4. **Lanes merge:** lane B's last task; the handover is in
+   `worklog/SESSION_STATE_B.md` (open items: S6c; the live "xp_v2 as
+   tested" forecast in the bundle; the bundle runs Thursday about 18:00
+   and Friday morning with the files committed under `worklog/gw_pass/gw8/`;
+   the next landing of S8, S11, S12, S13, S6b, S6c, the bundle and the
+   CLAUDE.md provenance line; Step 14). `lane-b` pushed; `C:\GIT\FPL-b`
+   and its `tools/out` left untouched.

@@ -122,3 +122,12 @@ RULING S6b (xp_v2 past-season test), queued after S8; needs Step 10 on master (l
 5. On PASS, adoption needs Boris's acceptance in chat. The chat would then propose switching XI and captain to xp_v2 from the next deadline, with own printed beside it and the live GW7-10 numbers checked at the GW10 checkpoint.
 Prereg first with this ruling verbatim, verifier on Fable, usual tests and mutations.
 END RULING
+
+## RULING S6b acceptance + lanes merge (verbatim, 2026-10-19; after the evaluation numbers exist: an acceptance and the revert rule, not an edit of the rows above)
+
+RULING S6b acceptance + lanes merge:
+1. Boris accepts xp_v2 as tested in S6b (S11 shares in the xg half, S5 bottomup_lambda in the other, current minutes model) for XI and captain from GW8. own keeps being recorded nightly and is printed beside xp_v2 at every deadline; both are compared weekly in grading. Vetoes on hard facts as before. If the live forecast cannot use S11's shares by the GW8 pass, own picks GW8.
+2. S6c, a safety check: own_rebuilt = live own's formula with every rebuildable input (form term, minutes-reliability scaling, FDR adjustment from the file's end-of-season FDR), status and chance taken as available for both sides; same squads, metric and bootstrap as S6b. The switch is suspended for GW8 only if the 90% upper bound of (xp_v2 - own_rebuilt) is below 0. Also print 2026/27 GW5-7, recorded own against xp_v2 as tested, as information.
+3. Revert rule, fixed now: at the GW10 checkpoint, if the live paired decision metric over GW8-10 has its 90% upper bound below 0, own returns.
+4. Lanes merge: this is lane B's last task. Record this ruling verbatim in prereg/S6b.md, write a complete handover in SESSION_STATE_B.md (open items: S6c; the live "xp_v2 as tested" forecast in the bundle; the bundle runs Thursday about 18:00 and Friday morning with files committed under worklog/gw_pass/gw8/; the next landing of S8, S11, S12, S13, S6b, S6c, the bundle and the CLAUDE.md provenance line; Step 14), push lane-b, and stop. Leave C:\GIT\FPL-b and its tools/out untouched.
+END RULING

@@ -5,6 +5,144 @@ BUILD_PLAN.md Part E). Updated at the end of every item, before the push. A
 fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
+## HANDOVER — lanes merge (RULING S6b acceptance + lanes merge, 2026-10-19 ~12:00 UTC; verbatim in `prereg/S6b.md`)
+
+Lane B's last task. `lane-b` is pushed and left as is; `C:\GIT\FPL-b` and
+its `tools/out` stay untouched (the replay and test outputs with their
+`run.txt` live there until the next landing's provenance check). Whoever
+continues works from `C:\GIT\FPL` (lane A's folder) after merging or
+landing `lane-b`; `lane-b` is only ever fast-forwarded, never rebased.
+
+### Where everything stands
+
+| item | state | on master | report |
+|---|---|---|---|
+| S4, S7, S5, S6, S9 | landed 2026-10-19 (`6bd378b`) after the green dry run | yes | `worklog/cc_2026-10-19_landing.md` |
+| S8 planner | a screen (ruling d); final-code replay +2.90 [−12.74, +18.40] FAIL; no-hit line +9.00 [−4.74, +22.56]; re-verified PASS | no (lane-b) | `worklog/cc_2026-10-19_S8.md` |
+| S12 minutes v2 | not adopted; the keeper lock prints in the bundle | no | `worklog/cc_2026-10-19_S12.md` |
+| S13 DEFCON v2 | shelved; revisit at the GW19 checkpoint | no | `worklog/cc_2026-10-19_S13.md` |
+| S11 shares | PASS, adopted as the xg-half share input of xp_v2 | no | `worklog/cc_2026-10-19_S11.md` |
+| provenance | `tools/provenance.py`; every tool writes `run.txt` into `tools/out/<tool>/` | no | `worklog/cc_2026-10-19_landing.md` (the proposed CLAUDE.md line) |
+| bundle | `tools/gw_pass.py` with amendment 1; verified PASS (3 runs) | no | `worklog/cc_2026-10-19_bundle.md` |
+| S6b | PASS (+0.358 [+0.126, +0.592] per squad per gameweek); **accepted** for XI and captain from GW8 | no | `worklog/cc_2026-10-19_S6b.md` |
+
+`lane-b` is 91 commits ahead of `origin/master` (`4b4ffce`), 49 files;
+master is ahead of lane-b by lane A's S16 part 1, W2 prereg and state
+commits (not merged into lane-b; nothing of lane B's depends on them).
+Lane-b's own files beyond master: `tools/provenance.py`, `gw_pass.py`,
+`shares.py`, `xp_v2_replay.py`, `defcon.py`, `minutes_v2.py`, `planner.py`;
+`tests/test_S8.py`, `test_S11.py`, `test_S12.py`, `test_S13.py`,
+`test_S6b.py`, `test_bundle.py`, `test_provenance.py`; the provenance
+wiring and per-tool output folders in `tools/backtest.py`, `chips.py`,
+`league.py`, `odds_lambda.py`, `xp_v2.py`; `tests/test_S5.py` (the toy
+schema) and `tests/test_S9.py` (run.txt in the CLI test); the preregs,
+reports, verifier reports and CHANGELOG entries. Every tool suite and the
+discovery suite were green at `841c4bc` (646 tests) and the tools' suites
+after.
+
+### The accepted decision rule (ruling 1 and 3)
+
+- From GW8: XI and captain by **xp_v2 as tested in S6b** — P(start) ×
+  (E_xg + E_bl) / 2 + P(sub) × E[pts | sub], with S11's shares in the xg
+  half and S5's bottomup_lambda in the bottomup half, P(start) from the
+  current minutes model. `own` keeps being recorded nightly and is printed
+  beside xp_v2 at every deadline; both are compared weekly in grading.
+  Vetoes on hard facts as before.
+- **If the live forecast cannot use S11's shares by the GW8 pass, own picks
+  GW8.** Today the live xp_v2 (`tools/xp_v2.py --forecast`, the bundle's
+  "own v xp_v2" section) reads the recorded `xg` rows, not S11's shares:
+  the S6b allocation exists only in the replay (`tools/xp_v2_replay.py`,
+  `Replay.xp_v2`). A live "xp_v2 as tested" needs the S11 allocation on the
+  2026/27 data (S11's `shares.Season` is 2025/26-only; the live inputs are
+  the export's players, `fpl.sqlite`'s fixtures and the odds snapshot for
+  λ_team, the 2024/25 priors from `historical/2024-25/`) — an open item.
+- **Revert rule, fixed now:** at the GW10 checkpoint, if the live paired
+  decision metric over GW8–10 (the realised points of the XI and captain
+  chosen by xp_v2 minus those chosen by own, the S6b metric on our real
+  squad) has its 90% upper bound below 0, own returns.
+
+### Open items, in order
+
+1. **S6c, the safety check (ruling 2):** `own_rebuilt` = live own's formula
+   (`fpl_edge.project`: the form term from the last four gameweeks per 90
+   shrunk by `SHRINK` to the positional prior, the minutes-reliability
+   scaling, the FDR adjustment 1 + (3 − FDR) × 0.12 from the file's
+   end-of-season FDR — `fixtures.csv` `team_h_difficulty` /
+   `team_a_difficulty`), status and chance taken as available for both
+   sides; the same 50 squads, metric and bootstrap as S6b
+   (`tools/xp_v2_replay.py` has the machinery: add an `own_rebuilt`
+   projection beside `own_proxy`). The switch is suspended for GW8 only if
+   the 90% upper bound of (xp_v2 − own_rebuilt) is below 0. Also print
+   2026/27 GW5–7, recorded own against xp_v2 as tested, as information
+   (recorded own from the projection log; xp_v2 as tested needs the live
+   allocation of item 2, or is printed as "not available" — never
+   substituted). Prereg first (`prereg/S6c.md`, the ruling verbatim).
+2. **The live "xp_v2 as tested" forecast in the bundle:** S11's allocation
+   on 2026/27 (λ_team from the odds snapshot via `odds_lambda`, shares from
+   the season's rows in `fpl.sqlite`/the export, the 2024/25 priors by name
+   and club, k as measured) feeding `xp_v2`'s xg half; printed beside own
+   in the bundle's "own v xp_v2" section and in the keeper line. Without it
+   by Thursday's pass, own picks GW8 (ruling 1).
+3. **The bundle runs:** Thursday 2026-10-22 about 18:00 and Friday
+   2026-10-23 morning (deadline 17:30 UTC): `git -C C:\GIT\FPL-data pull
+   --ff-only`, then `python tools/gw_pass.py` (from the lane's folder; the
+   data folder defaults to `C:\GIT\FPL-data`); the file and its `run.txt`
+   are committed under `worklog/gw_pass/gw8/` (copy
+   `tools/out/gw_pass/gw8_pass.txt` and `run.txt` there with a dated
+   name). The bundle prints the baseline as the default where the planner
+   differs, the three named rows (Thiago → João Pedro, roll, the best
+   Bench-Boost bench upgrade), 1 FT confirmed, the keeper line.
+4. **The next landing:** S8, S11, S12, S13, S6b, S6c, the bundle and the
+   CLAUDE.md provenance line (the text is in
+   `worklog/cc_2026-10-19_landing.md`), as the Monday landing was done: a
+   temporary branch from `origin/master`, lane-b's commits after `6bd378b`
+   (the merge commits `b6637c8` and `2970141` are merges of master and are
+   skipped), CHANGELOG = master's plus lane-b's later entries (the scripted
+   resolution in the session scratchpad `land.py` / `merge_master.py`
+   pattern: master's file plus lane-b's entries from the "S8:
+   rolling-horizon transfer planner" heading on), the discovery suite, a
+   green dry run (tests/ changes), outside 9d; before it, the provenance
+   check of every recorded number (each tool's `run.txt` commit must be
+   its item's final code; the outputs under `tools/out/<tool>/` were all
+   produced on the final code: `s8_*` at `7f72141`, `shares` at `7f72141`,
+   `gw_pass` at `96b9dfd`, `xp_v2_replay` at `37c6493`; the tie-test
+   commit `bb7dd78` and `f6e4757` are tests only).
+5. **Step 14** (and 15, 19) need rulings before any prereg.
+
+### How to run what lane B built (from the lane's folder, data read-only)
+
+- `python tools/gw_pass.py` → `tools/out/gw_pass/gw<N>_pass.txt` (75 s).
+- `python tools/xp_v2_replay.py --test` → `tools/out/xp_v2_replay/` (13 s;
+  needs `historical/2025-26/players_raw.csv`, `historical/2026-27/
+  game_config.json` and `elements_positions.csv` — lane A's downloads,
+  copied with their recorded SHA-256 `412ce017…`, `a72a9908…`, `ac3dc891…`;
+  and `historical/2024-25/` for S11's priors, `5bbbcba6…`, `ce696e18…`,
+  `d10a6db8…`).
+- `python tools/shares.py --test`, `tools/defcon.py --test`,
+  `tools/minutes_v2.py --test | --live`, `tools/planner.py [--replay]
+  [--no-hits] [--buffer 3.0]` (a replay is 4 h 20 min), `tools/chips.py`,
+  `tools/league.py`, `tools/odds_lambda.py --live`, `tools/xp_v2.py
+  --forecast`, `tools/backtest.py --report`. Each writes `run.txt` beside
+  its output.
+- Tests: `python -m unittest discover -p "test*.py"` from the folder
+  (hermetic; `FPL_DATA_DIR` unset). The mutation scripts lived in the
+  session scratchpad only; each report lists its mutations.
+
+### Lessons recorded for the next session
+
+- Never put repository text in an unquoted heredoc (backticks are shell
+  command substitution): write patch scripts with the file-writing tool,
+  or quote the delimiter. One state commit (`1a2a967`) lost its code
+  names that way and was repaired in `b4ce107`.
+- Never run mutations while another process is starting from the same
+  files; never cite a run whose `run.txt` commit is not the item's final
+  code (the S8 lesson).
+- Boris's rulings are pasted verbatim and checked with `diff`.
+
+---
+
+Everything below is the session history that led here (kept for the record; the handover above governs).
+
 - **Worktree:** `C:\GIT\FPL-b` on branch `lane-b`, created by lane A on 18 Oct
   with `git worktree add` from master (`git log -1 lane-b` at creation: the
   commit that adds this file). One Claude Code session here; never a second
