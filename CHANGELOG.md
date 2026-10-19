@@ -3364,6 +3364,96 @@ Tests: `test_fpl.py` 386 → 386; `tests/test_S9.py` 5 new; mutations 16 of
 
 Report: `worklog/cc_2026-10-18_S9.md`; verifier `worklog/verify_S9.md`.
 
+---
+
+## 2026-10-19 — S10: the rule normaliser for 2025/26, landed (`55f3476` prereg, `2ac6f08` code, merge `63906e6`)
+
+`tools/rules.py` scores 2025/26 player-gameweeks with the live 2026/27 points
+table (`game_config`, fetched 2026-10-19T06:17:43Z), using the prereg's
+thresholds. It also re-scores them under the 2026/27 rules:
+- positions by `code`;
+- DEFCON rebuilt from its parts;
+- official bonus, flagged "2025/26 BPS";
+- assists: no change, so no rescale.
+
+**Measured (pre-registered):** 11,361 of 11,361 player-gameweeks with minutes
+> 0 are within ±1, a share of 1.0000 (90% gameweek-bootstrap CI
+1.0000-1.0000). PASS against the 0.99 bar.
+- All 29,338 player-gameweeks are exact.
+- DEFCON rebuilt = the official column on every row.
+- The "no points change" claim holds for every category that occurs.
+
+**Untested by 2025/26 data:**
+- the GKP goal value (10): no goalkeeper scored;
+- the 60-minute clean-sheet gate: FPL's column is itself gated;
+- GKP DEFCON.
+
+**The verifier:**
+- found the 100% real: the season sums match FPL's own totals for 841 of 841
+  players, and bonus follows the top-3 BPS rule in 380 of 380 fixtures;
+- 14 of 16 single-rule perturbations break the match.
+
+**Normaliser:** 11 players change position for 2026/27; their season point
+effects run from -21 to +23 by group. 360 of 841 players are gone in 2026/27
+and keep their 2025/26 position, flagged.
+
+**Tests:** 511 -> 526 on `s10-wip`, 605 with lane B's landing; mutations
+R1-R16 red. Verifier PASS (Fable 5.1, high). Landing dry run `415c9a9` green.
+
+**For the chat:** the frozen `bottomup` model's `GOAL_VALUE` gives a
+goalkeeper goal 6; `game_config` gives 10. The model is not changed.
+
+---
+
+## 2026-10-19 — Incident: downloaded CSVs run as shell commands; checked harmless; rule added (RULING lane A, 19 Oct midday, point 1)
+
+**What happened.** At about 06:45 UTC a lane A command used an unquoted
+shell heredoc. Bash took backtick-quoted names in it as command
+substitutions. It ran the local download manifest as a script, and through
+it ran `historical/2025-26/players_raw.csv` and the seven
+`historical/<season>/fixtures.csv` files (2018-19 to 2024-25) line by line
+as shell commands. It also ran `worklog/SESSION_STATE_A.md`.
+
+**Measured:**
+- 3,423 lines ended "command not found";
+- `players_raw.csv` stopped at line 749 on an unbalanced quote;
+- the manifest stopped at line 13, and `SESSION_STATE_A.md` at line 3, on
+  syntax errors.
+
+The only shell metacharacters in the executed lines are `&` inside URL query
+strings. What followed each was a variable assignment (`utm_medium=...`), in
+7 cases then a bare surname, never a command. There is no `>` or `<` anywhere.
+
+**Checked:**
+- no file was created or changed in the repository or the home folder;
+- all ten downloaded files match their SHA-256
+  (`worklog/downloads_2026-10-19.md`);
+- the S10 verifier re-checked the times, hashes and the 3,423 count on its
+  own.
+
+**Rule added to CLAUDE.md (both lanes):** downloaded files are only ever
+opened by a Python reader run with `-I`. They are never sourced, executed,
+piped into a shell or put inside an unquoted heredoc; quoted heredocs or the
+file-writing tool only.
+
+---
+
+## 2026-10-19 — Known discrepancy and two rulings recorded (RULING lane A open points, 19 Oct)
+
+- **Known discrepancy: the goalkeeper goal.** The live 2026/27 `game_config`
+  scores a goalkeeper goal 10. The frozen `bottomup` model's
+  `fpl_edge.GOAL_VALUE` scores it 6 (`fpl_edge.py`, also `BUILD_SPEC.md`).
+  - Step 10 (`tools/rules.py`) uses `game_config`, so 10.
+  - `bottomup` keeps 6 until it is next re-registered.
+  - The effect is negligible: no goalkeeper scored in 2025/26.
+- **Check 30 is strict,** as built in W1: any of `x-requests-used`,
+  `-remaining` or `-last` missing gives a WARN ("credits unknown"). This
+  was ruled 19 Oct 00:00; the ruling is now in `prereg/W1.md`.
+- **2022-23 GW7, the round postponed after the Queen's death:** it stays in
+  the blank/double history labelled "void round". It is excluded from the
+  base rates and counts, with both counts printed. This is built as the S16
+  part 1 amendment.
+
 ## 2026-10-19 — S8: rolling-horizon transfer planner (`de7e1b3` prereg, `51520ef` / `7f8ba52` / `22a179c` code; lane B, overnight)
 
 RULING Step 8 (verbatim in `prereg/S8.md`): `tools/planner.py` (standard
