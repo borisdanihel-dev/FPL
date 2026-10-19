@@ -53,6 +53,7 @@ POOL = 25
 HIT = 4.0
 HIT_BUFFER = 1.5
 HIT_MIN_GAIN = HIT + HIT_BUFFER
+EXPLORATORY = (("no hits", {"hits_allowed": False}), ("hit buffer 3.0", {"buffer": 3.0}))   # RULING morning 19 Oct item 2
 HIT_MIN_PSTART = 0.8
 MAX_FT = 5
 CLUB_MAX = 3
@@ -179,9 +180,11 @@ def plan_candidates(squad, bank, pool):
     return plans
 
 
-def evaluate(plan, squad, xp_weeks, decay, schedule, k_banked, p_start):
+def evaluate(plan, squad, xp_weeks, decay, schedule, k_banked, p_start, hits_allowed=True, buffer=HIT_BUFFER):
     """The plan's score and its parts. None when the plan is not allowed
-    (a hit outside the rule, or rolling at the cap)."""
+    (a hit outside the rule, or rolling at the cap). `hits_allowed` False
+    and `buffer` are the exploratory variants of RULING morning 19 Oct item
+    2 (no hits; the hit buffer at 3.0): no bar, no adoption."""
     outs, ins = plan
     used = len(outs)
     if used == 0 and k_banked >= MAX_FT:
@@ -198,8 +201,10 @@ def evaluate(plan, squad, xp_weeks, decay, schedule, k_banked, p_start):
     decayed_gain = sum(decay ** t * g for t, g in enumerate(gains))
     hits = max(0, used - k_banked)
     if hits:
+        if not hits_allowed:
+            return None
         largest = max(decay ** t * g for t, g in enumerate(gains))
-        if decayed_gain < HIT_MIN_GAIN or decayed_gain - largest <= 0:
+        if decayed_gain < HIT + buffer or decayed_gain - largest <= 0:
             return None
         if any(p_start.get(i["id"], 0.0) < HIT_MIN_PSTART for i in ins):
             return None
@@ -209,11 +214,12 @@ def evaluate(plan, squad, xp_weeks, decay, schedule, k_banked, p_start):
             "outs": outs, "ins": ins}
 
 
-def rank_plans(squad, bank, market, xp_weeks, k_banked, p_start, decay=DECAY, schedule=SCHEDULES["boris"], pool=None):
+def rank_plans(squad, bank, market, xp_weeks, k_banked, p_start, decay=DECAY, schedule=SCHEDULES["boris"], pool=None,
+               hits_allowed=True, buffer=HIT_BUFFER):
     pool = pool or build_pool(market, {r["id"] for r in squad}, xp_weeks, decay)
     scored = []
     for plan in plan_candidates(squad, bank, pool):
-        ev = evaluate(plan, squad, xp_weeks, decay, schedule, k_banked, p_start)
+        ev = evaluate(plan, squad, xp_weeks, decay, schedule, k_banked, p_start, hits_allowed, buffer)
         if ev is not None:
             scored.append(ev)
     scored.sort(key=lambda e: (-e["score"], e["used"], tuple(sorted(i["id"] for i in e["ins"]))))
@@ -272,6 +278,14 @@ def live(data_dir, out=print):
                                  + ("roll" if not alt[0]["outs"] else "; ".join(f"{o['name']} -> {n['name']}" for o, n in zip(alt[0]["outs"], alt[0]["ins"]))))
             out(f"  {i:>2} {ev['score']:7.2f} {ev['gain']:7.2f} {ev['hits']:5d} {ev['lost']:7.2f}  {weekly:<36} {plan}"
                 + (f"   [{'; '.join(flags)}]" if flags else ""))
+    # exploratory lines (RULING morning 19 Oct item 2): the same ranking with no hits, and with the buffer at 3.0
+    out("")
+    for label, kw in EXPLORATORY:
+        scored, _ = rank_plans(squad, bank, market, xp_weeks, k, p_start, DECAY, SCHEDULES["boris"], **kw)
+        results[(label, "boris")] = scored
+        ev = scored[0] if scored else None
+        plan = "none" if ev is None else ("roll" if not ev["outs"] else "; ".join(f"{o['name']} -> {n['name']}" for o, n in zip(ev["outs"], ev["ins"])))
+        out(f"  exploratory, {label} (Boris's schedule, no bar): top plan {plan}" + (f"  score {ev['score']:.2f}, gain {ev['gain']:.2f}, hits {ev['hits']}" if ev else ""))
     return results
 
 
@@ -361,14 +375,17 @@ def baseline_plan(squad, bank, pool, xp_now, k_banked):
 
 
 def replay(hist_dir, n_squads=50, seed=CH.SQUAD_SEED, out=print, decay=DECAY, schedule_name="boris",
-           boot_seed=SEED, first=REPLAY_FIRST, last=REPLAY_LAST, check_decays=True):
+           boot_seed=SEED, first=REPLAY_FIRST, last=REPLAY_LAST, check_decays=True, hits_allowed=True, buffer=HIT_BUFFER):
     rp = Replay(hist_dir)
     if rp.through < last:
         raise MissingInput(f"the season copy ends at GW{rp.through}, before GW{last}")
     schedule = SCHEDULES[schedule_name]
     squads = CH.sample_squads(CH.gw1_candidates(rp.rp.hist), n_squads, seed)
     out(f"REPLAY 2025/26 GW{first}-{last}: {len(squads)} synthetic squads (seed {seed}), 1 FT a week, bank to {MAX_FT}, no chips; "
-        f"planner decay {decay}, schedule {schedule_name} {schedule}, hit buffer {HIT_BUFFER}; baseline = best one-week move or roll, never a hit")
+        f"planner decay {decay}, schedule {schedule_name} {schedule}, " + ("no hits" if not hits_allowed else f"hit buffer {buffer}")
+        + "; baseline = best one-week move or roll, never a hit"
+        + ("" if (hits_allowed and buffer == HIT_BUFFER) else "; EXPLORATORY (RULING morning 19 Oct item 2): no bar, no adoption"))
+    pre_registered = hits_allowed and buffer == HIT_BUFFER
     results = []
     for si, squad0 in enumerate(squads):
         state = {}
@@ -384,11 +401,11 @@ def replay(hist_dir, n_squads=50, seed=CH.SQUAD_SEED, out=print, decay=DECAY, sc
                 rows = rp.squad_rows(st["squad"], t)
                 pool = build_pool(market, {r["id"] for r in rows}, xp_weeks, decay)
                 if name == "planner":
-                    scored, _ = rank_plans(rows, st["bank"], market, xp_weeks, st["k"], p_start, decay, schedule, pool)
+                    scored, _ = rank_plans(rows, st["bank"], market, xp_weeks, st["k"], p_start, decay, schedule, pool, hits_allowed, buffer)
                     plan = (scored[0]["outs"], scored[0]["ins"]) if scored else ((), ())
                     if check_decays and si < 5:
                         for dc in DECAYS_CHECK:
-                            alt, _ = rank_plans(rows, st["bank"], market, xp_weeks, st["k"], p_start, dc, schedule, pool)
+                            alt, _ = rank_plans(rows, st["bank"], market, xp_weeks, st["k"], p_start, dc, schedule, pool, hits_allowed, buffer)
                             if alt and scored and plan_key(alt[0]) != plan_key(scored[0]):
                                 st["disagree"] += 1
                 else:
@@ -416,11 +433,14 @@ def replay(hist_dir, n_squads=50, seed=CH.SQUAD_SEED, out=print, decay=DECAY, sc
         f"(hits {sum(r['planner']['hits'] for r in results) / len(results):.1f}, transfers {sum(r['planner']['transfers'] for r in results) / len(results):.1f}), "
         f"baseline {sum(r['baseline']['pts'] for r in results) / len(results):.1f} (transfers {sum(r['baseline']['transfers'] for r in results) / len(results):.1f})")
     out(f"  paired gain planner - baseline: mean {b['mean']:+.2f}, 90% CI [{b['lo']:+.2f}, {b['hi']:+.2f}] (bootstrap over {b['n']} squads, B={BT.B}, seed {boot_seed})")
-    out(f"  pre-registered bar: mean >= +{PASS_GAIN:g} and CI lower bound > 0: {'PASS' if ok else 'FAIL'}")
+    if pre_registered:
+        out(f"  pre-registered bar: mean >= +{PASS_GAIN:g} and CI lower bound > 0: {'PASS' if ok else 'FAIL'}")
+    else:
+        out("  exploratory line: no bar, no adoption")
     if check_decays:
         dis = [r["planner"]["disagree"] for r in results[:5]]
         out(f"  robustness (first 5 squads): weeks where decay 0.80 or 0.90 chose a different plan: {dis} of {last - first + 1} each")
-    return {"results": results, "boot": b, "pass": ok}
+    return {"results": results, "boot": b, "pass": ok if pre_registered else None}
 
 
 def main(argv=None):
@@ -433,6 +453,8 @@ def main(argv=None):
     ap.add_argument("--squads", type=int, default=50)
     ap.add_argument("--schedule", default="boris", choices=tuple(SCHEDULES))
     ap.add_argument("--decay", type=float, default=DECAY)
+    ap.add_argument("--no-hits", action="store_true", help="exploratory: the planner never takes a hit")
+    ap.add_argument("--buffer", type=float, default=HIT_BUFFER, help="exploratory: the hit buffer (pre-registered 1.5)")
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
     lines = []
@@ -441,8 +463,13 @@ def main(argv=None):
         print(s); lines.append(s)
     try:
         if args.replay:
-            replay(args.hist, n_squads=args.squads, out=out, decay=args.decay, schedule_name=args.schedule)
+            replay(args.hist, n_squads=args.squads, out=out, decay=args.decay, schedule_name=args.schedule,
+                   hits_allowed=not args.no_hits, buffer=args.buffer)
             name = "planner_replay_2025-26.txt" if (args.decay == DECAY and args.schedule == "boris") else f"planner_replay_2025-26_{args.schedule}_{args.decay}.txt"
+            if args.no_hits:
+                name = name.replace(".txt", "_nohits.txt")                    # the exploratory lines never overwrite the pre-registered file
+            elif args.buffer != HIT_BUFFER:
+                name = name.replace(".txt", f"_buffer{args.buffer:g}.txt")
         else:
             live(args.data, out)
             name = "planner_live.txt"

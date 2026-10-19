@@ -129,6 +129,25 @@ class Score(unittest.TestCase):
         one[0][i1["id"]] = 20.0
         self.assertIsNone(P.evaluate(plan, squad, one, 0.85, P.SCHEDULES["boris"], 1, {i1["id"]: 1.0, i2["id"]: 1.0}))
         self.assertIsNotNone(P.evaluate(plan, squad, xp, 0.85, P.SCHEDULES["boris"], 2, {}))                     # two banked: no hit, no P(start) rule
+        # exploratory variants (RULING morning 19 Oct item 2): no hits; the buffer at 3.0
+        ps = {i1["id"]: 1.0, i2["id"]: 1.0}
+        self.assertIsNone(P.evaluate(plan, squad, xp, 0.85, P.SCHEDULES["boris"], 1, ps, hits_allowed=False))   # a hit: refused outright
+        self.assertIsNotNone(P.evaluate(plan, squad, xp, 0.85, P.SCHEDULES["boris"], 2, {}, hits_allowed=False))  # no hit needed: allowed
+        for step in range(1, 400):
+            lift = 0.05 * step
+            band = [{k: (v if k not in (i1["id"], i2["id"]) else w[squad[13]["id"]] + lift) for k, v in w.items()} for w in xp]
+            ev_band = P.evaluate(plan, squad, band, 0.85, P.SCHEDULES["boris"], 2, {})
+            if ev_band and P.HIT_MIN_GAIN <= ev_band["gain"] < P.HIT + 3.0:
+                break
+        else:
+            self.fail("no toy gain between 5.5 and 7.0")
+        self.assertIsNotNone(P.evaluate(plan, squad, band, 0.85, P.SCHEDULES["boris"], 1, ps))                  # buffer 1.5: a hit
+        self.assertIsNone(P.evaluate(plan, squad, band, 0.85, P.SCHEDULES["boris"], 1, ps, buffer=3.0))          # buffer 3.0: refused
+        big = [{k: (v if k not in (i1["id"], i2["id"]) else v + 10.0) for k, v in w.items()} for w in xp]
+        self.assertIsNotNone(P.evaluate(plan, squad, big, 0.85, P.SCHEDULES["boris"], 1, ps, buffer=3.0))        # a large gain clears 7.0
+        scored, _ = P.rank_plans(squad, 0.0, market, xp, 1, ps, hits_allowed=False)
+        self.assertTrue(all(ev["hits"] == 0 for ev in scored))
+        self.assertEqual(P.EXPLORATORY, (("no hits", {"hits_allowed": False}), ("hit buffer 3.0", {"buffer": 3.0})))
 
     def test_exhaustive_equals_brute_force_and_caps(self):
         squad, market = toy_squad(), toy_market()
@@ -223,6 +242,19 @@ class ReplayTests(unittest.TestCase):
             self.assertGreaterEqual(r["planner"]["transfers"], r["planner"]["hits"])
         self.assertIn("pre-registered bar", buf.getvalue())
         self.assertIn("robustness", buf.getvalue())
+        self.assertNotIn("EXPLORATORY", buf.getvalue())
+        buf2 = io.StringIO()
+        with mock.patch.object(P, "REPLAY_LAST", 6):
+            res2 = P.replay(self.tmp.name, n_squads=2, seed=7, out=lambda s: buf2.write(s + chr(10)), first=5, last=6,
+                            check_decays=False, hits_allowed=False)
+            res3 = P.replay(self.tmp.name, n_squads=2, seed=7, out=print if False else (lambda s: None), first=5, last=6,
+                            check_decays=False, buffer=3.0)
+        self.assertTrue(all(r["planner"]["hits"] == 0 for r in res2["results"]))      # no hits: never a hit
+        self.assertIsNone(res2["pass"]); self.assertIsNone(res3["pass"])                 # exploratory: no bar
+        self.assertIn("no hits; baseline", buf2.getvalue()); self.assertIn("EXPLORATORY", buf2.getvalue())
+        self.assertIn("exploratory line: no bar, no adoption", buf2.getvalue())
+        self.assertNotIn("pre-registered bar", buf2.getvalue())
+        self.assertEqual([r["baseline"] for r in res2["results"]], [r["baseline"] for r in res["results"]])   # the baseline is untouched
 
 
 class CLI(unittest.TestCase):
@@ -238,6 +270,8 @@ class CLI(unittest.TestCase):
             self.assertIn("price predictor: no source", text)
             self.assertIn("TOP 5 PLANS  decay 0.85, schedule boris", text)
             self.assertIn("schedule solver", text)
+            self.assertIn("exploratory, no hits (Boris's schedule, no bar): top plan", text)
+            self.assertIn("exploratory, hit buffer 3.0 (Boris's schedule, no bar): top plan", text)
         code = ("import sys, os; import fpl_nightly, fpl_ship, fpl_edge, fpl_sync, fpl_gate, fpl_publish; "
                 "bad = [m for m, mod in sys.modules.items() if (getattr(mod, '__file__', None) or '')"
                 ".replace(os.sep, '/').find('/tools/') >= 0 or m.split('.')[0] in ('tools', 'analysis', 'planner')]; print(bad)")
