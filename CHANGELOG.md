@@ -3668,3 +3668,47 @@ survivors - the captain tie rule, the Bench-Boost captain term, the
 lost-FT term, the sqlite deadline - tested in `f6e4757` and `96b9dfd`).
 
 Report: `worklog/cc_2026-10-19_bundle.md`; verifier `worklog/verify_bundle.md`.
+
+## 2026-10-19 — S8 record (RULING S8 verifier FAIL items (a)–(d), RULING morning 19 Oct item 2): the final-code replay `s8_run3` and the two exploratory lines (`7f72141` code; lane B)
+
+RULING S8 verifier FAIL (verbatim in `prereg/S8.md`): the first replay
+recorded on 19 Oct (planner 1919.5, +7.68 [−6.58, +22.06]) came from the
+first commit's candidate generator, which dropped 30–45% of the distinct
+two-transfer plans; that entry stays above, marked as the buggy generator's.
+The replay was rerun on the final code (`tools/planner.py` at `7f72141`,
+unchanged since; `tools/out/planner/s8_run3/run.txt`: commit `7f72141`, 0
+modified tracked files, 06:39–10:58 UTC) with the five verifier test gaps
+closed first (item (c), `5423434`, `7f72141`) and the lost-FT reading
+recorded in the prereg (item (b): the schedule's (k + 1)-th value when k are
+banked; no number changes).
+
+**The S8 result (item (a)), 2025/26 GW2–38, 50 squads (seed 7):** planner
+**1914.7** points per squad net of hits (12.6 hits, 49.5 transfers),
+baseline 1911.8 (37.0 transfers, never a hit); **paired gain +2.90, 90% CI
+[−12.74, +18.40]** (bootstrap over squads, B = 10,000, seed 20261018);
+pre-registered bar (mean ≥ +10 and lower bound > 0): **FAIL**; robustness
+(first five squads) [9, 4, 7, 3, 11] of 37 weeks. Identical to the
+verifier's own in-process replay of the same code. Nothing is adopted; the
+planner stays a screen (item (d)): in the Thursday bundle its top plan
+prints beside the baseline's choice and the no-hit line, the baseline the
+default where they differ.
+
+**Exploratory lines (RULING morning 19 Oct item 2; no bar, no adoption),
+the same replay, squads and seed:**
+
+| variant | planner points per squad | hits | transfers | paired gain v baseline, 90% CI | robustness |
+|---|---|---|---|---|---|
+| pre-registered (hit buffer 1.5) | 1914.7 | 12.6 | 49.5 | +2.90 [−12.74, +18.40] | [9, 4, 7, 3, 11] |
+| hit buffer 3.0 | 1912.3 | 12.7 | 49.6 | +0.48 [−14.26, +15.36] | [11, 10, 6, 3, 11] |
+| no hits | 1920.8 | 0 | 36.9 | +9.00 [−4.74, +22.56] | [2, 3, 2, 2, 3] |
+
+Reading, stated without inference: raising the buffer to 3.0 changes
+almost nothing (the hits the rule refuses are replaced by other hits); the
+no-hit planner makes as many transfers as the baseline (36.9 against 37.0) and
+scores 9.0 points per squad more, an interval still through zero, with the
+decay flags down to 2–3 weeks of 37 (the hits, not the look-ahead, were the
+unstable part). Provenance: `tools/out/planner/s8_nohits/`
+and `s8_buffer3/` with `run.txt` at `7f72141`. Live (export of
+2026-10-18, 1 free transfer, confirmed by Boris): the top plan Thomas → De
+Cuyper, unchanged. Report: `worklog/cc_2026-10-19_S8.md` (the record
+section); verifier `worklog/verify_S8.md` (the re-verification).
