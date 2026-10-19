@@ -64,7 +64,33 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     `pre-W2`, merge, Boris's real dispatch.
   - **Items since the last chat review** (Boris's W2 + Part F message):
     W2 = 1 of 6.
-  - **Next: Part F, F-C first** (Step 10b, offline): prereg
+  - **S10b DONE** on `s10b-wip` `a454e09` (verifier PASS, Fable 5.1;
+    report `worklog/cc_2026-10-19_S10b.md` and CHANGELOG on the branch;
+    suite 692). Not landed: it rides with a later landing (offline; tests/
+    changes need a green dry run). Items since the last chat review: W2,
+    S10b = 2 of 6.
+  - **F-D (S6f) PARKED for Boris, the exact question:** "2023/24 and
+    2024/25 have no defensive-action counts, so DEFCON is missing both in
+    the models' inputs (bottomup's defcon90 and xp_v2's DEFCON hit rate read
+    0) and in the outcomes (the 2026/27 re-score's DEFCON points are 0,
+    flagged). F-D compares xp_v2 with own_rebuilt on those outcomes. Run it
+    with DEFCON missing on both sides (stated as a limitation), or score the
+    outcomes without the DEFCON category at all, or wait for a source of the
+    counts?" Without an answer, F-D is not started; F-E goes first.
+  - **Next: F-E (S6e, xp_v2 + saves)** on 2025/26 (and on 2024/25 after
+    F-C, which is done): prereg `prereg/S6e.md` with F-E's text verbatim
+    first.
+  - **F-C / S10b built** on `s10b-wip` (scratch worktree `s10b`; prereg
+    master `c0116fe`; downloads `5918f02` with the record
+    `worklog/downloads_2026-10-19b.md`; landing merged `4ddea35`; code
+    `a2902f9`). Reproduction PASS: 2023-24 11,086 of 11,086, 2024-25
+    11,431 of 11,431 (exact). Neither season had a goalkeeper goal, so the GK
+    goal value is untested. Re-scores in `tools/out/rules_<season>/` (28,742
+    and 26,919 rows; DEFCON missing, flagged). 2025/26 path byte-identical to
+    Step 10. Mutations 8 of 8. Still to do: the full suite, the verifier
+    (Fable), the report `cc_2026-10-19_S10b.md`, CHANGELOG, push. Then
+    F-D (S6f).
+  - (Earlier plan) **Part F, F-C first** (Step 10b, offline): prereg
     `prereg/S10b.md` with F-C's text verbatim. The downloads are approved
     in F-C (record the URL, fetch time and SHA-256; data only; read with
     `python -I`): vaastav `data/2022-23`, `2023-24`, `2024-25`
