@@ -7,7 +7,26 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **CURRENT (19 Oct, about 13:30 UTC):**
+- **CURRENT (19 Oct, about 15:30 UTC), after RULING 19 Oct afternoon:**
+  - The ruling is verbatim in `prereg/S14.md`, `W2.md`, `S16.md`, `S2.md`,
+    `S2b.md` (master `fc56fd5`) and `S6c.md` and `S6d.md` (landing branch
+    `5fda195`). BUILD_PLAN Step 20 holds the GW10 item "xp_v2 + saves". The
+    lane-B handover note now says 2025/26 priors.
+  - Point 6, done (landing branch `aac4b66`, reports and CHANGELOG): the
+    GW5–7 retro uses the actual post-wildcard 15, official points (sums
+    equal `entry_gw`: GW5 60, GW6 49) and no autosubs, by FPL or the rule.
+    The gap is selection: GW6 own 59 (Verbruggen +7, Thomas +2, Tarkowski
+    captain +1), xp_v2 61 (+ Rudoni +3); GW5 both 54. GW6
+    `points_on_bench` 11 v 22 flagged for S2b.
+  - **S14 built** on `s14-wip` (from the landing branch; prereg rows
+    master `15e18fa`, code `0def550`): `tools/points_pmf.py`, bundle
+    section 7 (captain table). Test PASS: Brier +0.00118 [+0.00070,
+    +0.00178]; 10+ hauls 403.6 predicted v 449 (−10.1%). Mutations 18 of
+    18. Verifier running (Fable). Plan: on PASS, report, then fast-forward
+    `landing-2026-10-19b` to `s14-wip`, so Tuesday's one dry run covers it.
+  - Dry runs move to Tuesday after 00:00 UTC (point 5): the landing branch
+    and `s2b-wip`.
+- **Earlier (19 Oct, about 13:30 UTC):**
   - **S6c done** on `s6c-wip` (`d662656` prereg, `11c262c` + `28d0578`
     code, `247edb9` report): xp_v2 − own_rebuilt +0.515 [+0.213, +0.816]
     per squad per gameweek → **GW8 SWITCH STANDS**; verifier PASS (Fable
