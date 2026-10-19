@@ -112,11 +112,29 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   10 deciles within 5 points. Verifier PASS (Fable 5.1), write guard
   clean. Nothing adopted; the decision is parked below. Report
   `worklog/cc_2026-10-19_S13.md`.
-- **Current item:** none. The queue after S13 is S11 (parked for the
-  2024/25 download), then Steps 14, 15 and 19, which have no rulings yet;
-  the lane stops here (4 of 6 items since the chat review; nothing else
-  is queued without Boris). S8's verifier is still running; its verdict
-  is recorded when it lands.
+- **Monday 19 Oct, morning (RULING morning 19 Oct; RULING S8 verifier FAIL; RULING landing + S11; Boris's bundle amendment 1):**
+  - **Landed:** `landing-2026-10-19` (S4 via the revert of `32bf218`, S7, S5, S6, S9, the Part C rule 2 tie-break bullet, a header-only
+    `overrides.csv`, the landing report `worklog/cc_2026-10-19_landing.md` with the provenance table) - dry run green (590 tests,
+    record OK, the WARN is the dry run's own odds skip), fast-forwarded to `master` at `6bd378b` 07:12 UTC; `origin/master` merged
+    into `lane-b` (`b6637c8`, a merge commit). The temporary worktree is removed.
+  - **Provenance (ruling e):** `tools/provenance.py`; every tool writes `run.txt` into its own folder `tools/out/<tool>/`; every recorded
+    test and replay number of S4, S5, S6, S7, S9, S12, S13 reproduces byte for byte on the final code; two live screens moved with the
+    data (in the landing report). The proposed CLAUDE.md line is in the landing report.
+  - **S8:** verifier FAIL recorded (the first replay was the buggy generator's); ruling (a)-(e) received: `s8_run3` (pre-registered),
+    `s8_nohits` and `s8_buffer3` run on the final code `7f72141` with `run.txt` under `tools/out/planner/` (started 06:39 UTC, about
+    four hours); the lost-FT reading recorded in the prereg (b); the five test gaps closed (c, `5423434`, `7f72141`); the planner
+    stays a screen and prints beside the baseline in the bundle (d). When the replays land: a new CHANGELOG entry beside the first
+    run's, the report updated, re-verify.
+  - **S11:** complete and **adopted** (RULING landing + S11 item 2) as the share input to the xg half of `xp_v2`; not a decision input
+    on its own; it enters `xp_v2`'s past-season test, ruled once Step 10 lands. Verifier: FAIL on check 6 (a test gap) then PASS on
+    the re-run; both metrics pass their Holm-adjusted bars (goals +0.0061, assists +0.0043). Report `worklog/cc_2026-10-19_S11.md`.
+  - **Bundle** (`tools/gw_pass.py`): built with amendment 1 (1 FT confirmed; Thiago -> Joao Pedro, roll, the best Bench-Boost bench
+    upgrade beside the top 5) and the sqlite deadline; first verifier run FAIL on check 6 (the captain tie rule untested, closed in
+    `f6e4757`); re-verification running. Thursday: `git -C C:\GIT\FPL-data pull`, then `python tools/gw_pass.py` (morning, from
+    Wednesday night's snapshot; again after Thursday's nightly) -> `tools/out/gw_pass/gw8_pass.txt`.
+  - **Items since the chat review (restarted at 0 by RULING morning 19 Oct):** S11, bundle = 2 of 6; the S8 corrections are a
+    continuation of S8.
+  - **Queue:** nothing without Boris (Steps 14, 15, 19 need rulings); after the replays, S8's record and re-verify; Thursday's bundle.
 - **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
@@ -140,47 +158,12 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   here under "Needs Boris (morning)"; lane-b only, no landings, merges or
   dispatch requests; the usual gates; stop on FAIL, WARN, an open decision
   or after 6 items; one report block per finished item in the morning.**
-- **Needs Boris (morning), in order:** (filled as items finish)
-  1. The Monday landing: after W1's green dispatch, the landing branch
-     (revert of `32bf218` + lane-b's items + the BUILD_PLAN Part C line) is
-     pushed and needs the dry-run click.
-  2. **S8 verifier FAIL — the recorded replay is wrong.** The numbers in
-     the S8 report and CHANGELOG (+7.68 [−6.58, +22.06]) came from the
-     first commit's generator, which dropped 30–45% of the two-transfer
-     plans; the verifier's replay of the final code gives +2.90 [−12.74,
-     +18.40]. The bar fails either way. Rulings needed: (a) record the
-     final-code replay (the scratchpad rerun `s8_run3`, or the verifier's
-     numbers) in a new CHANGELOG entry and re-verify; (b) the lost-FT
-     charge: the prereg's k-th schedule value or the code's (k + 1)-th
-     against rolling; (c) close the five test gaps first? Then the
-     original question stands: keep the planner as a screen, re-register
-     a test, or shelve.
-  3. **S11 download approval:** the ruling's priors and reliability
-     constants come from 2024/25 per-gameweek data (the player's 2024/25
-     share at the same club; k from split-half reliability measured on
-     2024/25). The repo holds only 2025/26 per-gameweek rows and the FPL
-     API's 2024/25 season totals without clubs, so S11 needs
-     `github.com/vaastav/Fantasy-Premier-League` season 2024/25
-     (`merged_gw.csv`, `fixtures.csv`, `teams.csv`, about 7 MB, into
-     `historical/2024-25/`, gitignored). Question: may lane B download it?
-     Until then S11 is parked and the queue runs S12, then S13 (2025/26
-     only).
-  4. **S12 result:** minutes v2 fails its Brier bar (+0.0017 against
-     ≥ 0.01; interval touching zero) while the keeper lock cuts
-     keeper-starter mismatches from 76 to 56 and the MAE is unchanged.
-     Question: information only, a new component-wise prereg (the lock
-     alone), or shelve? And should an empty header-only `overrides.csv`
-     be committed so the format is on master (ruling 2)?
-  5. **S13 result:** DEFCON v2 fails both bars and is worse than the
-     hit-rate comparator (Brier −0.019, 1 of 10 deciles; it over-predicts
-     at the top: 0.75 predicted against 0.43 observed). The verifier and
-     the report name two pinned definitions as the likely causes (μ at 90
-     minutes for every 60+-minute match; the in-sample moments fit).
-     Question: shelve, or a new pre-registered variant (μ at the match's
-     minutes, an out-of-sample r, a beta-binomial on the hit rate as the
-     comparator's upgrade) on the same sample and bars?
-  6. **Next items:** S11 waits on question 3; Steps 14, 15 and 19 need
-     their rulings before any prereg can be written.
+- **Needs Boris, in order (19 Oct, after the landing):**
+  1. The CLAUDE.md provenance line (proposed in `worklog/cc_2026-10-19_landing.md`): lane A edits CLAUDE.md, or a ruling for lane B.
+  2. S8 after the replays: the recorded numbers and the re-verify (reported when they land, about 10:40 UTC).
+  3. Thursday's bundle: who runs it (a lane-B session Thursday morning and after the nightly), and whether the Thursday files are
+     committed for the record (e.g. `worklog/gw8_pass_*.txt`) or stay in `tools/out/gw_pass/` (gitignored).
+  4. S12 and S13 stay as ruled (not adopted / shelved); the keeper lock prints in the bundle.
 
   Boris is asleep until about 08:00 Prague. Until then:
   - Ask nothing. Anything that needs me (a click, a download approval, a decision) gets parked in your SESSION_STATE file with the exact question, and you move on to the next queued item that doesn't need it.
@@ -226,7 +209,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 4 of 6 (S9, S8, S12, S13; the review of S4–S6 is done).
+- **Items since the last chat review:** 2 of 6 (S11, bundle; RULING morning 19 Oct reviewed S9, S8, S12, S13).
 - **Open for the chat:** the S9 FAIL rulings (report, Decision 0); RULING Step 8; the S9 report's Decision 1 (σ_d in Part C rule 1); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
