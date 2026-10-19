@@ -517,6 +517,8 @@ def info_2627(data_dir, out=print, gws=INFO_GWS, entry=ENTRY, xp_v2_fn=xp_v2_liv
         d_ev = {"events": [{"event": ev, "deadline_time": dl} for ev, dl in db.execute("SELECT id, deadline_time FROM events")]}
         out(f"2026/27 GW{gws[0]}-{gws[-1]} (information only, the ruling): recorded own against xp_v2 as tested, on our squad "
             f"(entry {entry}): each model's XI and captain, realised official points with rule_autosubs and the captain doubled")
+        if getattr(xp_v2_fn, "note", None):
+            out(f"  xp_v2 as tested: {xp_v2_fn.note}")
         recs = []
         for g in gws:
             ev = db.execute("SELECT deadline_time, finished, data_checked FROM events WHERE id = ?", (g,)).fetchone()
@@ -620,7 +622,8 @@ def main_s6c(a, argv):
     try:
         rescored = rescore(a.rules, rescored_csv, say=out)
         test_s6c(a.hist, a.prior, out, odds_file=a.odds, first=a.first, last=a.last, n_squads=a.squads, rescored=rescored)
-        info_2627(a.data, out)
+        import xp_v2_live as XL                             # S6d: the live column (a lazy import: xp_v2_live imports this module)
+        info_2627(a.data, out, xp_v2_fn=XL.retro_fn(a.rules))
     except (MissingInput, OL.MissingInput, BT.MissingInput, SH.MissingInput, PL.MissingInput, CH.MissingInput) as e:
         print(f"missing input: {e}")
         return 2

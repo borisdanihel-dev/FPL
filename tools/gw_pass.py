@@ -14,14 +14,17 @@ gw<N>_pass.txt, with run.txt beside it:
      the note.
   4. S9: the league report with the captain and effective-ownership
      tables (league.report).
-  5. own v xp_v2: our XI, bench order and captain by each, side by side.
+  5. own v xp_v2 as tested (S6d, tools/xp_v2_live.py): our XI, bench
+     order and captain by each, side by side; from GW8 xp_v2 as tested is
+     the default for XI and captain (RULING S6b acceptance point 1), own
+     printed beside it. Without the live forecast: own picks GW8.
   6. The keeper line: own's P(start) beside S12's keeper lock (not
-     adopted, information).
+     adopted, information) and each keeper's xp_v2 as tested.
 
 A section whose input is missing prints "missing input: ..." and the
 bundle continues; nothing is substituted.
 
-    python tools/gw_pass.py [--data DIR] [--out DIR]
+    python tools/gw_pass.py [--data DIR] [--hist ROOT] [--out DIR]
 """
 import argparse
 import os
@@ -40,14 +43,15 @@ import chips as CH                                                # noqa: E402
 import odds_lambda as OL                                          # noqa: E402
 import league as LG                                               # noqa: E402
 import xp_v2 as XV                                                # noqa: E402
+import xp_v2_live as XL                                           # noqa: E402
 import minutes_v2 as MV                                           # noqa: E402
 import planner as PL                                              # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
 from provenance import Run                                        # noqa: E402
 
-MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, MV, PL)) if c is not None)
+MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, XL, MV, PL)) if c is not None)
 SECTIONS = ("S5 ODDS CLEAN SHEETS", "S7 CHIPS", "S8 TRANSFER PLANNER AND THE BASELINE", "S9 LEAGUE, CAPTAIN AND EFFECTIVE OWNERSHIP",
-            "OWN v XP_V2: XI, BENCH AND CAPTAIN", "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK")
+            "OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN", "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK")
 
 
 class MissingInput(Exception):
@@ -241,7 +245,8 @@ def keeper_line(keepers, own_ps, lock):
     return [(r["name"], r["team"], own_ps.get(r["id"]), lock.get(r["id"])) for r in keepers]
 
 
-def bundle(data_dir, out=print, now=None):
+def bundle(data_dir, out=print, now=None, hist_root=None):
+    hist_root = hist_root or os.path.join(ROOT, "historical")
     d, path = CH.newest_export(data_dir)
     log_rows = E.read_log(os.path.join(data_dir, E.LOG_PATH))
     target = d["gameweek"] + 1
@@ -282,24 +287,41 @@ def bundle(data_dir, out=print, now=None):
     section(out, SECTIONS[2], planner)
     section(out, SECTIONS[3], lambda: LG.report(data_dir, out, now))
 
+    v2_live = {}
+
     def own_v_xp():
-        rows = XV.forecast(data_dir, out=lambda s: None, now=now)
-        v2 = {pid: v for pid, v, *_ in rows}
+        try:
+            res = XL.live(data_dir, hist_root, now)
+            if res["target"] != target:
+                raise MissingInput(f"the live forecast is for GW{res['target']}, the export's next gameweek is GW{target}")
+        except Exception as e:                   # missing or failed: said, and own picks (ruling point 1); nothing substituted
+            out(f"  {'missing input' if isinstance(e, MISSING + (MissingInput,)) else 'section failed: ' + type(e).__name__}: {e}")
+            out(f"  own picks GW{target} (RULING S6b acceptance point 1: without the live xp_v2 as tested, own picks); nothing is substituted")
+            return None
+        v2 = res["xp"]
+        v2_live.update(v2)
         weeks, pts, src = CH.own_week_points(d, log_rows)
-        if not weeks:
-            raise MissingInput("the export has no upcoming fixtures")
+        if not weeks or weeks[0] != target:
+            raise MissingInput(f"own has no GW{target} projections in the log")
         squad = CH.my_squad(d)
         missing = [r["name"] for r in squad if r["id"] not in v2]
-        sbs = side_by_side(squad, pts[weeks[0]], v2)
-        out(f"  GW{weeks[0]}: own = the recorded row where the log holds one ({sum(1 for r in squad if src[weeks[0]].get(r['id']) == 'own')} of 15), "
-            f"xp_v2 = the S6 forecast (not recorded)" + (f"; no xp_v2 for {', '.join(missing)} (0 assumed)" if missing else ""))
-        out(f"  {'slot':>4}  {'own':<34}{'xp_v2':<34}")
+        sbs = side_by_side(squad, pts[target], v2)
+        snap = res["snapshot"]
+        n_odds = sum(1 for s_ in res["sources"].values() if s_ == "odds")
+        out(f"  GW{target}: from GW8 xp_v2 as tested picks the XI and captain (RULING S6b acceptance point 1); own is printed beside it; "
+            f"vetoes on hard facts only")
+        out(f"  own = the recorded row where the log holds one ({sum(1 for r in squad if src[target].get(r['id']) == 'own')} of 15); "
+            f"xp_v2 as tested = tools/xp_v2_live.py (not recorded) from {res['export']}, odds "
+            + (f"{snap[0]} ({n_odds} of {len(res['sources'])} fixtures from odds)" if snap else "none before the deadline (every fixture on the fallback)")
+            + f", priors 2025/26 (S11)" + (f"; no xp_v2 for {', '.join(missing)} (0 in the choice: status not a, under 45 minutes in the last four, or no fixture)" if missing else ""))
+        out(f"  {'slot':>4}  {'own':<34}{'xp_v2 as tested':<34}")
         for slot, a, b in sbs["rows"]:
             tag = "   " if a["id"] == b["id"] else " * "
             out(f"  {slot:>4}{tag}{a['name']:<16}{BT.POS_NAME.get(a['pos'], '?'):>4} {a['proj']:5.2f}       {b['name']:<16}{BT.POS_NAME.get(b['pos'], '?'):>4} {b['proj']:5.2f}")
         co, cv = sbs["captain"]
-        out(f"  captain: own {co['name']} ({co['proj']:.2f})  |  xp_v2 {cv['name']} ({cv['proj']:.2f})" + ("" if co["id"] == cv["id"] else "   *"))
-        out(f"  {sbs['changed']} slots differ; the XI {'differs' if sbs['xi_differs'] else 'is the same set'} (slots 1-11 by own are the default: Part C rule 2)")
+        out(f"  captain: own {co['name']} ({co['proj']:.2f})  |  xp_v2 as tested {cv['name']} ({cv['proj']:.2f})" + ("" if co["id"] == cv["id"] else "   *"))
+        out(f"  {sbs['changed']} slots differ; the XI {'differs' if sbs['xi_differs'] else 'is the same set'}; DEFAULT = xp_v2 as tested "
+            f"(slots 1-11, the bench order and the captain)")
         return sbs
     section(out, SECTIONS[4], own_v_xp)
 
@@ -310,9 +332,13 @@ def bundle(data_dir, out=print, now=None):
                   if r["source"] == "minutes" and int(r["event"]) == target}
         squad = CH.my_squad(d)
         ks = keeper_line([r for r in squad if r["pos"] == 1], own_ps, mv["v2"])
-        out(f"  GW{target}: own P(start) = the recorded minutes row; keeper lock = S12 minutes v2 (not adopted; 0.95 / 0.05 / 0 by starts in the club's last 3)")
-        for name, team, ps, lk in ks:
-            out(f"  {name:<16}{team:>5}  own P(start) {'n/a' if ps is None else f'{ps:.2f}':>5}   keeper lock {'n/a' if lk is None else f'{lk:.2f}':>5}")
+        out(f"  GW{target}: own P(start) = the recorded minutes row; keeper lock = S12 minutes v2 (not adopted; 0.95 / 0.05 / 0 by starts in the club's last 3); "
+            f"xp_v2 = xp_v2 as tested (section 5)")
+        ids = [r["id"] for r in squad if r["pos"] == 1]
+        for (name, team, ps, lk), pid in zip(ks, ids):
+            v = v2_live.get(pid)
+            out(f"  {name:<16}{team:>5}  own P(start) {'n/a' if ps is None else f'{ps:.2f}':>5}   keeper lock {'n/a' if lk is None else f'{lk:.2f}':>5}"
+                f"   xp_v2 {'n/a' if v is None else f'{v:.2f}':>5}")
         return ks
     section(out, SECTIONS[5], keepers)
     return target
@@ -322,6 +348,7 @@ def main(argv=None):
     utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
+    ap.add_argument("--hist", default=os.path.join(ROOT, "historical"), help="xp_v2 as tested: the root holding 2025-26/ and 2026-27/")
     ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "gw_pass"))
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
@@ -331,7 +358,7 @@ def main(argv=None):
     def out(s=""):
         print(s); lines.append(s)
     try:
-        target = bundle(args.data, out)
+        target = bundle(args.data, out, hist_root=args.hist)
     except MISSING + (MissingInput,) as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
