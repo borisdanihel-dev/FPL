@@ -3435,3 +3435,21 @@ strings. What followed each was a variable assignment (`utm_medium=...`), in
 opened by a Python reader run with `-I`. They are never sourced, executed,
 piped into a shell or put inside an unquoted heredoc; quoted heredocs or the
 file-writing tool only.
+
+---
+
+## 2026-10-19 — Known discrepancy and two rulings recorded (RULING lane A open points, 19 Oct)
+
+- **Known discrepancy: the goalkeeper goal.** The live 2026/27 `game_config`
+  scores a goalkeeper goal 10. The frozen `bottomup` model's
+  `fpl_edge.GOAL_VALUE` scores it 6 (`fpl_edge.py`, also `BUILD_SPEC.md`).
+  - Step 10 (`tools/rules.py`) uses `game_config`, so 10.
+  - `bottomup` keeps 6 until it is next re-registered.
+  - The effect is negligible: no goalkeeper scored in 2025/26.
+- **Check 30 is strict,** as built in W1: any of `x-requests-used`,
+  `-remaining` or `-last` missing gives a WARN ("credits unknown"). This
+  was ruled 19 Oct 00:00; the ruling is now in `prereg/W1.md`.
+- **2022-23 GW7, the round postponed after the Queen's death:** it stays in
+  the blank/double history labelled "void round". It is excluded from the
+  base rates and counts, with both counts printed. This is built as the S16
+  part 1 amendment.
