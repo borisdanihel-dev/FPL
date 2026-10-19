@@ -73,9 +73,16 @@ class Rules(unittest.TestCase):
     def test_cover(self):
         rows, kos = toy_rows()
         cut = kos[-1] + timedelta(days=1)
+        rows.club_of[13] = "ALP"; rows.pos[13] = 2
+        for key in ("m2", "m4"):
+            rows.played[(13, key)] = (90, 1, 0)                                 # 13: exactly 2 of the last 4 - not a regular
+        rows.club_of[14] = "ALP"; rows.pos[14] = 2
+        for key in ("m2", "m3", "m4"):
+            rows.played[(14, key)] = (90, 1, 0)                                 # 14: 3 of the last 4 (regular), 0 minutes in m5...
+        rows.played[(14, "m1")] = (0, 0, 0)                                     # ...but did not start the 4 before m5: not "out"
         regs, absent = M.regulars_and_absent(rows, "ALP", cut)
-        self.assertEqual(sorted(regs), [1, 10, 11])                             # keeper 1 started 3 of the last 4 too
-        self.assertEqual(absent, [1])                                           # 0 minutes last match after starting the 4 before
+        self.assertEqual(sorted(regs), [1, 10, 11, 14])                         # keeper 1 started 3 of the last 4 too
+        self.assertEqual(absent, [1])                                           # only 1: 0 minutes last match after starting the 4 before
         self.assertEqual(M.replacement_for(rows, "ALP", 1, cut), 2)             # keeper 2 started when 1 did not
         self.assertIsNone(M.replacement_for(rows, "ALP", 11, cut))              # 11 never missed a match
         rows_live, _ = toy_rows()
@@ -104,12 +111,14 @@ class Rules(unittest.TestCase):
         c, lo, hi, n = M.congestion_factor(rows, cut, b=200)
         self.assertEqual(c, 1.0)                                                # regulars start every match: no effect, interval includes 1
         rows2, kos2 = toy_rows(n_matches=12, rest=(7, 7, 7, 2, 7, 2, 7, 2, 7, 2, 7))
+        for _, key, _ in rows2.matches["ALP"]:                                   # keeper 1 starts every match: a third regular
+            rows2.played[(1, key)] = (90, 1, 0); rows2.played[(2, key)] = (0, 0, 0)
         congested = [i for i, (ko, key, ev) in enumerate(rows2.matches["ALP"]) if i >= 1 and (ko - rows2.matches["ALP"][i - 1][0]).days <= 3]
         for k, i in enumerate(congested):                                        # 10 and 11 rest alternate congested matches: both stay regular
             rows2.played[(10 if k % 2 else 11, rows2.matches["ALP"][i][1])] = (0, 0, 0)
         cut2 = kos2[-1] + timedelta(days=1)
         c2, lo2, hi2, n2 = M.congestion_factor(rows2, cut2, b=400)
-        self.assertAlmostEqual(c2, 0.5)                                         # one of two regulars starts a congested match
+        self.assertAlmostEqual(c2, 2 / 3)                                       # two of three regulars start a congested match, all three otherwise
         self.assertLess(hi2, 1.0)
         rows3, kos3 = toy_rows(n_matches=3)
         self.assertEqual(M.congestion_factor(rows3, kos3[-1] + timedelta(days=1), b=50)[0], 1.0)   # no training match

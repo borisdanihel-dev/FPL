@@ -457,6 +457,13 @@ def rows_2627(data_dir, d):
     if not os.path.exists(db):
         raise MissingInput(f"{db} is missing")
     c = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        return _rows_2627(c, d)
+    finally:
+        c.close()
+
+
+def _rows_2627(c, d):
     short = {i: s for i, s in c.execute("select id, short_name from teams")}
     matches = defaultdict(list)
     fx_event = {}
@@ -472,7 +479,6 @@ def rows_2627(data_dir, d):
         for fid, (e, h, a, fin) in fx_event.items():
             if e == ev and fin and club in (h, a):
                 played[(pid, fid)] = (mins or 0, 1 if starts else 0, yellow or 0)
-    c.close()
     names = {p["id"]: p["web_name"] for p in d["all_players"]}
     known = {fid for fid, (e, h, a, fin) in fx_event.items() if fin}
     return Rows(matches, played, team_of, pos, names, known)

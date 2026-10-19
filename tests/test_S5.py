@@ -90,9 +90,9 @@ def toy_2627(tmp, post_deadline_export=True, export_gw=7, rename=None):
       create table events(id integer, deadline_time text, finished integer, data_checked integer);
       create table fixtures(id integer, event integer, kickoff_time text, team_h integer, team_a integer,
         team_h_difficulty integer, team_a_difficulty integer, team_h_score integer, team_a_score integer, finished integer);
-      create table players(id integer, position integer);
+      create table players(id integer, position integer, team_id integer);
       create table player_gw(player_id integer, event integer, total_points integer, minutes integer, starts integer,
-        clean_sheets integer, goals integer, bonus integer, defensive_contribution integer);
+        clean_sheets integer, goals integer, bonus integer, defensive_contribution integer, yellow integer);
       create table picks(entry_id integer, event integer, player_id integer, position integer);
     """)
     c.executemany("insert into teams values (?,?,?)", [(i, API_NAMES[s], s) for i, s in enumerate(CLUBS, 1)])
@@ -117,13 +117,14 @@ def toy_2627(tmp, post_deadline_export=True, export_gw=7, rename=None):
                 pid += 1
                 players.append({"id": pid, "web_name": (rename or {}).get(pid, f"P{pid}"), "team": club, "pos": pos,
                                 "price": 4.5 + (pid % 4) * 0.5, "status": "a", "chance_next_round": None})
-    c.executemany("insert into players values (?,?)", [(p["id"], p["pos"]) for p in players])
+    c.executemany("insert into players values (?,?,?)", [(p["id"], p["pos"], CLUBS.index(p["team"]) + 1) for p in players])
     for p in players:
         for ev in range(4, 9):
             mins = 90 if rng.random() < 0.8 else 0
-            c.execute("insert into player_gw values (?,?,?,?,?,?,?,?,?)",
+            c.execute("insert into player_gw values (?,?,?,?,?,?,?,?,?,?)",
                       (p["id"], ev, rng.randint(0, 10) if mins else 0, mins, 1 if mins else 0,
-                       rng.choice([0, 1]) if mins else 0, 0, 0, rng.choice([5, 10, 13]) if mins else 0))
+                       rng.choice([0, 1]) if mins else 0, 0, 0, rng.choice([5, 10, 13]) if mins else 0,
+                       1 if (mins and p["id"] % 9 == 0) else 0))
     c.commit(); c.close()
     # exports of gameweek 7: player_gw_recent GW4-7 with player_id; fixtures_next6 = GW8
     def export(generated, boost):
