@@ -10,7 +10,7 @@
 # A push to dry/<item> is a dry run too (RULING W1b): its result goes to
 # data-dryrun-<item>, the Odds API key is not passed, and the --due gate
 # (fpl_dryrun.py) skips it, green, in the quiet windows (21:30 UTC until the
-# nightly has committed, at the latest 03:17; within 1 hour of a deadline) or
+# nightly has committed, at the latest 04:00; within 1 hour of a deadline) or
 # when 6 dry runs, pushed and manual together, already ran that UTC day.
 # The checks (checks.py, Step 3) write reports/status.txt; a FAIL commits
 # nothing. A red run opens or updates the issue "Nightly run failed", a green

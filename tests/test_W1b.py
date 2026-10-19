@@ -4,7 +4,7 @@ A push to dry/<item> starts the nightly workflow as a dry run whose result
 goes to data-dryrun-<item>; the key is not passed; the run waits in the
 nightly-dryrun group, never nightly-data. Before it does anything the --due
 gate skips it, green, in a quiet window (21:30 UTC until the night's nightly
-has committed, at the latest 03:17 UTC; within 1 hour of a deadline) or at
+has committed, at the latest 04:00 UTC; within 1 hour of a deadline) or at
 the cap of 6 dry runs a UTC day, counted with the Actions API. Manual
 dispatch keeps its inputs and data-dryrun.
 """
@@ -174,7 +174,7 @@ class PushRunPublishes(_NoInheritedTests):
 
 class Windows(unittest.TestCase):
     """Point 5 (and reading (b) in prereg/W1b.md: the 21:30 window closes at
-    03:17 UTC at the latest)."""
+    04:00 UTC at the latest - RULING morning 19 Oct, point 4)."""
 
     NIGHTLY = at("2026-10-19T21:58:09")         # tonight's nightly commit
     LAST = at("2026-10-18T21:58:09")            # last night's
@@ -190,8 +190,9 @@ class Windows(unittest.TestCase):
         self.assertIsNone(self.q("2026-10-19T21:59", self.NIGHTLY))
         self.assertIsNone(self.q("2026-10-20T02:00", self.NIGHTLY))
         self.assertIn("nightly", self.q("2026-10-20T02:00", self.LAST))    # tonight's never committed
-        self.assertIn("nightly", self.q("2026-10-20T03:16", self.LAST))
-        self.assertIsNone(self.q("2026-10-20T03:17", self.LAST))
+        self.assertIn("nightly", self.q("2026-10-20T03:17", self.LAST))      # the backup run's slot
+        self.assertIn("nightly", self.q("2026-10-20T03:59", self.LAST))
+        self.assertIsNone(self.q("2026-10-20T04:00", self.LAST))
         self.assertIn("nightly", self.q("2026-10-19T22:10", None))         # tip unknown
 
     def test_a_deadline(self):
@@ -358,6 +359,26 @@ class DueGate(unittest.TestCase):
         self.assertEqual(out, "run=false")
         self.assertEqual(lines[-1], "DRY RUN SKIPPED: cannot read the deadlines (no fpl.sqlite in the data checkout)")
         self.assertEqual(seen, [])
+
+    def test_a_missing_deadline_row_warns_and_the_run_goes_on(self):
+        con = sqlite3.connect(os.path.join(self.data, "fpl.sqlite"))
+        con.execute("INSERT INTO events VALUES (9, NULL)")
+        con.commit()
+        con.close()
+        out, lines, _ = self._due(PUSH, NOW)
+        self.assertEqual(out, "run=true")
+        self.assertIn("DRY RUN WARN: no deadline for GW9 - the 1-hour rule is not checked for it", lines)
+        out, lines, _ = self._due(PUSH, at("2026-10-23T17:00"))           # GW8's deadline still guards
+        self.assertEqual(out, "run=false")
+
+    def test_no_deadline_rows_at_all_warns_and_the_run_goes_on(self):
+        con = sqlite3.connect(os.path.join(self.data, "fpl.sqlite"))
+        con.execute("DELETE FROM events")
+        con.commit()
+        con.close()
+        out, lines, _ = self._due(PUSH, NOW)
+        self.assertEqual(out, "run=true")
+        self.assertIn("DRY RUN WARN: no deadline rows in events - the 1-hour rule is not checked", lines)
 
     def test_real_runs_never_reach_the_gate(self):
         for env, now in (({"GITHUB_EVENT_NAME": "schedule", "GITHUB_REF": "refs/heads/master",

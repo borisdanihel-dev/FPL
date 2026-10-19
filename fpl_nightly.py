@@ -356,7 +356,7 @@ def due_main(data, env=None, now=None, say=print):
     import fpl_publish
     if due and fpl_publish.run_mode(env)[0] == "dry":
         import fpl_dryrun
-        due, line = fpl_dryrun.gate(env, now, data)
+        due, line = fpl_dryrun.gate(env, now, data, say=say)
         say(line)
     out = env.get("GITHUB_OUTPUT")
     if out:

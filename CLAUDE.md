@@ -152,7 +152,7 @@ h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3)
     issue, no Odds API key.
   - Read the result back from `data-dryrun-<item>`.
   - It skips, green, with a `DRY RUN SKIPPED:` line:
-    - from 21:30 UTC until that night's nightly has committed (03:17 UTC at the
+    - from 21:30 UTC until that night's nightly has committed (04:00 UTC at the
       latest);
     - within 1 hour of a deadline;
     - once 6 dry runs, pushed and manual together, have run that UTC day;

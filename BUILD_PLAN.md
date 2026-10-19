@@ -130,8 +130,8 @@ procedure both lanes use from its landing). Boris clicks only real runs.
    and only to `data-dryrun` and `data-dryrun-*`.
 4. The run skips, green, with a `DRY RUN SKIPPED:` line saying why. The same
    gate applies to a manual dry run. It skips:
-   - from 21:30 UTC until that night's nightly has committed, 03:17 UTC at the
-     latest;
+   - from 21:30 UTC until that night's nightly has committed, 04:00 UTC at the
+     latest (RULING morning 19 Oct, point 4);
    - within 1 hour either side of a deadline;
    - once 6 dry runs, pushed and manual together, have run that UTC day (`6 of
      6 today`);

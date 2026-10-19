@@ -10,10 +10,11 @@ calls gate(), and the run skips - green, with one line saying why - when:
 
   * it is in a quiet window (point 5): from 21:30 UTC until the data branch
     holds a commit made at or after that 21:30 (the night's nightly), and at
-    the latest until 03:17 UTC, the backup run's slot, so a night whose
-    nightly never commits cannot block the next day's dry runs; or within
-    1 hour either side of any deadline (events.deadline_time in the data
-    checkout);
+    the latest until 04:00 UTC, after the backup run (RULING morning 19 Oct,
+    point 4), so a night whose nightly never commits cannot block the next
+    day's dry runs; or within 1 hour either side of any deadline
+    (events.deadline_time in the data checkout; a gameweek without a readable
+    deadline is named in a WARN line, and the rest are checked);
   * CAP dry runs have already run this UTC day (point 4), push-triggered and
     manual together: "DRY RUN SKIPPED: 6 of 6 today". They are counted with
     the Actions API (actions: read, the one job's token): a run counts once
@@ -33,13 +34,14 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, time, timedelta, timezone
+from pathlib import Path
 
 import fpl_publish
 
 UTC = timezone.utc
 CAP = 6                         # dry runs a UTC day, push and manual together (S2 amendment 2, point 9)
 NIGHT_START = time(21, 30)      # the nightly's window opens (the nightly starts 21:40)
-NIGHT_END = time(3, 17)         # ... and closes at the latest at the backup run's slot
+NIGHT_END = time(4, 0)          # ... and closes at the latest at 04:00, after the backup run
 DEADLINE_GAP = timedelta(hours=1)
 STEP = "Nightly run"            # a dry run counts once this step has started
 TITLE = "dry run "              # every dry run's run-name starts so (nightly.yml)
@@ -163,17 +165,38 @@ def data_tip(data):
     return datetime.fromisoformat(text).astimezone(UTC) if text else None
 
 
-def gate(env, now, data):
-    """(run, line) for the dry run about to start on the data checkout `data`.
-    Without the deadlines the 1-hour rule cannot be checked: skip."""
-    import fpl_gate
-    db = os.path.join(data, fpl_gate.DB)
+def read_deadlines(db):
+    """({gameweek: aware UTC deadline}, [gameweeks whose deadline is missing or
+    unreadable]) from the events table, opened read-only."""
+    con = sqlite3.connect(Path(db).resolve().as_uri() + "?mode=ro", uri=True)
     try:
-        deadlines = fpl_gate.deadlines(db) if os.path.exists(db) else None
-    except (sqlite3.Error, ValueError, TypeError, AttributeError) as e:
-        deadlines, problem = None, type(e).__name__
-    else:
-        problem = "no fpl.sqlite in the data checkout"
-    if deadlines is None:
-        return False, f"DRY RUN SKIPPED: cannot read the deadlines ({problem})"
+        rows = con.execute("SELECT id, deadline_time FROM events ORDER BY id").fetchall()
+    finally:
+        con.close()
+    found, missing = {}, []
+    for gw, text in rows:
+        try:
+            found[str(gw)] = datetime.fromisoformat(text.replace("Z", "+00:00")).astimezone(UTC)
+        except (AttributeError, TypeError, ValueError):
+            missing.append(gw)
+    return found, missing
+
+
+def gate(env, now, data, say=print):
+    """(run, line) for the dry run about to start on the data checkout `data`.
+    No readable events table: skip, the 1-hour rule cannot be checked at all.
+    A missing deadline row: a WARN line naming it, and the run goes on with the
+    deadlines it has (RULING morning 19 Oct, point 4)."""
+    db = os.path.join(data, "fpl.sqlite")
+    if not os.path.exists(db):
+        return False, "DRY RUN SKIPPED: cannot read the deadlines (no fpl.sqlite in the data checkout)"
+    try:
+        deadlines, missing = read_deadlines(db)
+    except sqlite3.Error as e:
+        return False, f"DRY RUN SKIPPED: cannot read the deadlines ({type(e).__name__})"
+    if missing:
+        say(f"DRY RUN WARN: no deadline for GW{', GW'.join(map(str, missing))} - the 1-hour rule "
+            f"is not checked for {'it' if len(missing) == 1 else 'them'}")
+    elif not deadlines:
+        say("DRY RUN WARN: no deadline rows in events - the 1-hour rule is not checked")
     return decide(env, now, deadlines, data_tip(data), _GET)
