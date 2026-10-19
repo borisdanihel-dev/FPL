@@ -124,12 +124,29 @@ this file, then waits for the next instruction.
       - a table of free midweeks, to build from that calendar.
     - Part 4, the backtest on 2024/25 and 2025/26: needs part 3 and both
       seasons' cup draws and dates.
-- **Monday 19 Oct, first task** (RULING S3 dispatch result): confirm
-  tonight's scheduled run - the data commit, status.txt with checks 9 and
-  26 now active instead of SKIP, release backup-2026-10-18, and what the
-  03:17 UTC backup run did. Seen on 18 Oct at 21:58 UTC, still to be confirmed:
-  data `9da6ff1` (21:58:09Z), STATUS OK 27/27, checks 9 and 26 OK, tag
-  `backup-2026-10-18` at `9da6ff1`.
+- **Monday 19 Oct, first task: done at 03:50 UTC** (RULING S3 dispatch result),
+  read from git and the public Actions API (no token):
+  - **Tonight's scheduled nightly**, run 39170094238, started 21:57:24Z (cron
+    21:40): every step success, including Weekly backup and Failure issue.
+    - Data commit `9da6ff1` (21:58:09Z).
+    - `status.txt`: STATUS OK 27/27. Checks 9 (element key set, 109 keys
+      unchanged) and 26 (heartbeat, 3.2 h) are now active and OK. 22 and 27
+      SKIP as designed. 28: 459 tests; 29: four sources.
+  - **Release `backup-2026-10-18`:** at `9da6ff1`, with `fpl.sqlite` 1,896,448
+    bytes and `fpl.sql` 2,543,677 (the tip's sizes). Releases kept: 2 of 8.
+  - **The 03:17 backup run**, run 39196048636, started 03:43:37Z on master
+    `cd3087e`, green in 14 s. Only "Is this run due" ran; Install, Nightly
+    run, Commit, Weekly backup and Failure issue were all skipped. That is
+    the designed not-due path: the nightly had written `status.txt`. No
+    commit (data still `9da6ff1`), no release. Its log line itself needs a
+    token (HTTP 403 without one).
+  - The cancelled dispatch 39166214887 (18 Oct 21:04:45Z) stopped at "Set up
+    job", so no dry run was used by it.
+- **Rehearsal of the week's landings** (scratch only, nothing pushed): master
+  `cd3087e`, then `w1-wip`, `s2b-wip`, `w1b-wip` and `s16-wip`, merged in
+  that order, gives no conflict (git auto-merged test_fpl.py and
+  tests/test_S3.py). 560 tests are green bare, runner-like, with stand-in
+  zones and hermetically.
 - **Current item:** W1 (wiring: fpl_ep and the Odds API collector), on
   `w1-wip` (`ab047c3`); prereg `prereg/W1.md` (`7efc2b2`, decisions `91b10c7`,
   odds storage `249be76`; on w1-wip: master merged in `021656c`, pre-check
