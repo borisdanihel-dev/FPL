@@ -3408,3 +3408,48 @@ session scratchpad after the verdict) and re-verifying; the lost-FT
 charge (the prereg's k-th value or the code's (k + 1)-th against
 rolling); the five test gaps the verifier found. Report:
 `worklog/cc_2026-10-19_S8.md` (correction section).
+
+## 2026-10-19 — S11: share-of-team allocation with 2024/25 priors (`7111240` ruling, `47eed25` prereg rows and download record, `5c258e3` code; lane B)
+
+RULING Step 11 (verbatim in `prereg/S11.md`) and RULING morning 19 Oct
+item 5 (the 2024/25 download approved: vaastav `data/2024-25`
+`merged_gw.csv`, `fixtures.csv`, `teams.csv` into `historical/2024-25/`,
+gitignored; URL, fetch time and SHA-256 recorded in the prereg).
+`tools/shares.py` (standard library only; the nightly never imports it),
+`tests/test_S11.py`. Verifier: Claude Fable 5.1: first run **FAIL on check 6 only** (one surviving mutation, a test gap), re-verification **PASS** on every check (`worklog/verify_S11.md`). Not on master.
+**Pre-registered test: PASS on both metrics; adopted by RULING landing + S11 item 2 as the share input to the xg half of `xp_v2` (not a decision input on its own; enters the past-season test of `xp_v2`, ruled once Step 10 lands).**
+
+**Definitions, as pre-registered.** Player xG(t) = Σ over the club's
+round-t fixtures of λ_team (S5's odds-implied λ, the fallback labelled) ×
+shrunk share × expected minutes share; xA the same. Share s = own / team
+xG over the fixtures the player appeared in (training rounds < t); prior
+s0 = his 2024/25 share at the same club (exact vaastav name), else the
+2024/25 club-position mean (180+ minutes), else the league-position mean;
+shrunk share = Z s + (1 − Z) s0, Z = m / (m + k), m = minutes / 90 this
+season, k = n (1 − r) / r from the split-half reliability of the share on
+2024/25 (odd v even rounds, 45+ minutes in each half, n = mean minutes /
+90 per half). Expected minutes share = P(start) × mean minutes per start
+/ 90. Goals forecast = xG, assists = xA (finishing shrunk to 0); manager
+changes "not modelled". Comparator = the same with Z = 1. Test: 2025/26
+GW5–38 point-in-time (`canonical_at`, rounds < t), predicted starters
+(P(start) ≥ 0.8) with a fixture, per-gameweek tie-corrected Spearman of
+forecast v realised goals and assists, v2 − comparator, bootstrap over
+gameweeks B = 10,000 seed 20261018, Holm across the two at 90% (the
+smaller p at 95%, then the other at 90%, stop at the first failure); each
+metric adopted separately only with its Holm-adjusted lower bound > 0.
+
+**Measured.** k: xG share r = 0.734 ± 0.090, n = 8.77, k = 3.18; xA share
+r = 0.715 ± 0.090, k = 3.49 (471 players). Goals: Spearman v2 − comparator
+**+0.0061**, 90% [+0.0027, +0.0096], p = 0.0004, Holm 95% [+0.0021,
++0.0104] → **PASS** (0.268 → 0.274; better in 21 of 34 gameweeks).
+Assists: **+0.0043**, 90% [+0.0004, +0.0083], p = 0.0698, Holm 90%
+[+0.0004, +0.0083] → **PASS** (0.190 → 0.195; better in 20 of 34). Log
+loss of P(goal) comparator − v2 +0.0066 [+0.0018, +0.0123]. Mean Z 0.55 at
+GW5 → 0.89 at GW38; the prior is the player's own 2024/25 share for 58%
+of the sampled player-weeks. Output `tools/out/shares/shares_test_2025-26.txt`
+with `run.txt` (commit `7f72141`), three runs byte-identical. Nothing
+adopted; the lane stops for Boris's acceptance (report, Decisions).
+Tests: `test_fpl.py` 386 → 386; `tests/test_S11.py` 8; mutations 20 of
+20 red (two first-round survivors were test gaps, closed).
+
+Report: `worklog/cc_2026-10-19_S11.md`; verifier `worklog/verify_S11.md`.
