@@ -5,6 +5,7 @@ import gc
 import io
 import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -150,17 +151,42 @@ class NamedPlans(unittest.TestCase):
         self.assertIn("over budget", G.why_illegal(self.squad, -0.1))
 
 
+    def test_bench_boost_value_counts_the_captain_and_the_score_charges_the_lost_ft(self):
+        xp = [dict(w) for w in self.xp]
+        xp[0][202] = 9.0                                                               # the cheap midfielder would be the GW8 captain
+        rows = G.named_plans(dict(self.inp, xp_weeks=xp), {}, 1)
+        _, bb, note = rows[2]
+        self.assertIsNone(note); self.assertEqual(bb["ins"][0]["id"], 202)
+        self.assertAlmostEqual(bb["gains"][0], 15.0)                                   # 9.0 for a 1.0 (+8) and the captain 9.0 for 2.0 (+7)
+        self.assertTrue(all(abs(g) < 1e-9 for g in bb["gains"][1:]))                   # later weeks: a bench change outside the XI
+        self.assertAlmostEqual(bb["lost"], 1.0); self.assertAlmostEqual(bb["score"], 14.0)   # score = decayed gain - 4 x hits - lost FT
+        self.assertAlmostEqual(G.value_bb(self.squad, {r["id"]: 1.0 for r in self.squad}), 16.0)   # 15 x 1.0 plus the captain
+
+    def test_sqlite_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertIsNone(G.sqlite_deadline(tmp, 8))                               # no database: None, never a guess
+            c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
+            c.execute("create table events(id integer, deadline_time text)")
+            c.execute("insert into events values (8, '2026-10-23T17:30:00Z')"); c.commit(); c.close()
+            dl = G.sqlite_deadline(tmp, 8)
+            self.assertEqual((dl.year, dl.month, dl.day, dl.hour, dl.minute, str(dl.tzinfo)), (2026, 10, 23, 17, 30, "UTC"))
+            self.assertIsNone(G.sqlite_deadline(tmp, 9))                               # no row: None
+
+
 class Toy(unittest.TestCase):
     def test_bundle_on_the_toy_export_reports_missing_sections(self):
         tmp = tempfile.mkdtemp()
         try:
             toy_data(tmp); toy_export(tmp)
+            c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
+            c.execute("insert into events (id, deadline_time) values (8, '2026-10-23T17:30:00Z')"); c.commit(); c.close()
             out = os.path.join(tmp, "out")
             with redirect_stdout(io.StringIO()):
                 rc = G.main(["--data", tmp, "--out", out])
             self.assertEqual(rc, 0)
             with open(os.path.join(out, "gw8_pass.txt"), encoding="utf-8") as fh:
                 text = fh.read()
+            self.assertIn("GW PASS  GW8 (deadline 2026-10-23 17:30 UTC)", text)         # the header's deadline from fpl.sqlite events
             for title in G.SECTIONS:
                 self.assertIn(title, text)                                         # every section is announced ...
             self.assertIn("BASELINE (best one-week move", text)                     # ... S7 and S8 run on the toy ...
