@@ -110,7 +110,7 @@ class Rules(unittest.TestCase):
         cut = kos[-1] + timedelta(days=1)
         c, lo, hi, n = M.congestion_factor(rows, cut, b=200)
         self.assertEqual(c, 1.0)                                                # regulars start every match: no effect, interval includes 1
-        rows2, kos2 = toy_rows(n_matches=12, rest=(7, 7, 7, 2, 7, 2, 7, 2, 7, 2, 7))
+        rows2, kos2 = toy_rows(n_matches=12, rest=(7, 7, 7, 2, 7, 2, 7, 2, 7, 2, 4))   # the last rest is 4 days: not congested
         for _, key, _ in rows2.matches["ALP"]:                                   # keeper 1 starts every match: a third regular
             rows2.played[(1, key)] = (90, 1, 0); rows2.played[(2, key)] = (0, 0, 0)
         congested = [i for i, (ko, key, ev) in enumerate(rows2.matches["ALP"]) if i >= 1 and (ko - rows2.matches["ALP"][i - 1][0]).days <= 3]
@@ -118,7 +118,7 @@ class Rules(unittest.TestCase):
             rows2.played[(10 if k % 2 else 11, rows2.matches["ALP"][i][1])] = (0, 0, 0)
         cut2 = kos2[-1] + timedelta(days=1)
         c2, lo2, hi2, n2 = M.congestion_factor(rows2, cut2, b=400)
-        self.assertAlmostEqual(c2, 2 / 3)                                       # two of three regulars start a congested match, all three otherwise
+        self.assertAlmostEqual(c2, 2 / 3)                                       # two of three regulars start a congested match, all three otherwise (the 4-day match included)
         self.assertLess(hi2, 1.0)
         rows3, kos3 = toy_rows(n_matches=3)
         self.assertEqual(M.congestion_factor(rows3, kos3[-1] + timedelta(days=1), b=50)[0], 1.0)   # no training match
@@ -133,6 +133,10 @@ class Rules(unittest.TestCase):
         self.assertTrue(M.suspended_next(rows, 10, "ALP", cut))
         rows.played[(10, "m5")] = (90, 1, 0); rows.played[(10, "m1")] = (90, 1, 1)   # the 5th came earlier: already served
         self.assertFalse(M.suspended_next(rows, 10, "ALP", cut))
+        rows.played[(10, "m5")] = (90, 1, 1)                                    # 6th caution in m5 after the 5th in m4: that ban was served in m5, none is due
+        self.assertEqual(M.cautions_before(rows, 10, cut), 6)
+        self.assertFalse(M.suspended_next(rows, 10, "ALP", cut))
+        rows.played[(10, "m5")] = (90, 1, 0)
         self.assertAlmostEqual(M.p_ban_next(0.3, 0.9), 0.27)
         self.assertEqual(M.p_ban_next(2.0, 0.9), 1.0)
         rate = M.booking_rate90(rows, 10, cut, pos_mean=0.1)                   # 5 cautions in 540 minutes = 0.833/90, shrunk 6/(6+4)
