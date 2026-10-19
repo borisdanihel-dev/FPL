@@ -20,6 +20,7 @@ workflow commits back to the repository:
     reports/watch_<UTC date>.txt               the watch file for watchlist.txt (item L)
     exports/fpl_export_gwN_<UTC date>.json     tonight's export, point-in-time
     projection_log.csv                         written by fpl_edge.py --record only
+    odds/odds_<fetched UTC>.json.gz            the Odds API answer, one a night (W1)
 
 Rules carried over from fpl_run.bat:
 * A red test suite blocks --record. Forecasts freeze at the deadline and cannot
@@ -71,7 +72,7 @@ NIGHTLY_UTC = (21, 40)              # the scheduled nightly: cron "40 21 * * *"
 BACKUP_CRON = "17 3 * * *"          # the backup run: only when the nightly left no status
 STATUS_REL = os.path.join("reports", "status.txt")
 
-SOURCES = ("own", "xg", "minutes", "bottomup")
+SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # fpl_ep: W1
 EXPORTS, LOGS, REPORTS = "exports", "logs", "reports"
 DATED = re.compile(r"^fpl_export_gw(\d+)_(\d{4}-\d{2}-\d{2})\.json(\.gz)?$")
 DATA_ENV = "FPL_DATA_DIR"
@@ -180,10 +181,13 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
             log.flush()
             echo(line)
 
-        def run(cmd, cwd):
-            """One command; its output goes to the log and the console."""
+        def run(cmd, cwd, drop=()):
+            """One command; its output goes to the log and the console. `drop`:
+            environment variables the command must not see."""
             # no __pycache__ in the code or data folder from the discovered suite
             env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+            for name in drop:
+                env.pop(name, None)
             r = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, encoding="utf-8", errors="replace")
             for line in r.stdout.splitlines():
@@ -204,7 +208,9 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
         restore_exports(data, say)
 
         say("running tests ...")
-        tests_ok = run([py, *TEST_ARGS, "-s", root, "-t", root], root) == 0
+        # the suite never sees the odds key or the token (W1): no test needs them
+        tests_ok = run([py, *TEST_ARGS, "-s", root, "-t", root], root,
+                       drop=("ODDS_API_KEY", "GH_TOKEN", "GITHUB_TOKEN")) == 0
         if tests_ok:
             say("TESTS OK")                  # read by checks.py, check 28 (the test gate)
         if not tests_ok:
@@ -215,6 +221,15 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
         if step("fpl_sync.py") != 0:
             failed.append("sync")
             say("SYNC FAILED - continuing with existing data")
+
+        # tonight's odds snapshot (W1, Step 5's collector): one line, ODDS OK,
+        # ODDS SKIPPED or ODDS FAILED. Every odds problem - a crash or a
+        # non-zero exit too - is a WARN only (check 30): never red, never a
+        # lost commit, never the failure issue (RULING W1 decisions, point 2)
+        say("collecting odds ...")
+        code = step("fpl_odds.py")
+        if code != 0:
+            say(f"ODDS FAILED  fpl_odds.py exited {code} - no snapshot tonight")
 
         # one status line per source, written by fpl_edge.py and summarised below
         record_bad = False

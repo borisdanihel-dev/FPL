@@ -56,6 +56,7 @@ STATUS, STATUS_DRY = "status.txt", "status_dryrun.txt"
 STATS_PREFIX = "SYNC STATS "             # printed by fpl_sync.py at the end of every sync
 PRAGUE = "Europe/Prague"
 REPO_WARN_MB, REPO_FAIL_MB = 500, 900
+BIG_FILE_MB = 50            # GitHub warns at 50 MB a file, refuses 100 MB (W1 odds storage, point 4)
 API = "https://api.github.com"
 _urlopen = urllib.request.urlopen
 
@@ -70,14 +71,16 @@ NAMES = {
     20: "forecast rows after the deadline", 21: "stuck gameweek",
     22: "manager score reconciliation", 23: "secret in the files to commit",
     24: "repo size", 25: "run duration", 26: "heartbeat", 27: "workflow state",
-    28: "test gate", 29: "record"}
+    28: "test gate", 29: "record", 30: "odds snapshot"}
 
 # what a breach is, check by check: the table's own word where it gives one
 SEVERITY = {1: FAIL, 2: FAIL, 3: FAIL, 4: FAIL, 5: FAIL, 6: WARN, 7: WARN, 8: FAIL, 9: WARN,
             10: FAIL, 11: FAIL, 12: WARN, 13: FAIL, 14: WARN, 15: FAIL, 16: FAIL, 17: WARN,
             18: FAIL, 19: WARN, 20: FAIL, 21: WARN, 22: WARN, 23: FAIL, 24: FAIL, 25: WARN,
-            26: WARN, 27: SKIP, 28: FAIL, 29: FAIL}
-SOURCES = ("own", "xg", "minutes", "bottomup")     # as fpl_nightly.SOURCES
+            26: WARN, 27: SKIP, 28: FAIL, 29: FAIL, 30: WARN}
+SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # as fpl_nightly.SOURCES
+CREDITS_WARN = 60           # Odds API credits left below this: check 30 WARNs (W1 decisions)
+CREDIT_HEADERS = ("x-requests-used", "x-requests-remaining", "x-requests-last")   # in the ODDS OK line's order
 
 Result = collections.namedtuple("Result", "n name level detail")
 
@@ -93,6 +96,7 @@ class Ctx:
         self.run_log = ""                     # tonight's block of the run log
         self.repo_why = "not measured"
         self.changed = []                     # [(name, bytes)] the files the commit would add
+        self.big_files = []                   # [(name, size)] data files over BIG_FILE_MB
         self.key = ""
         self.known_gaps = {}
         self.__dict__.update(kw)
@@ -458,11 +462,17 @@ def c23(x):
 
 
 def c24(x):
-    if x.repo_kb is None:
+    """The repository's size (GitHub API), and every single file of the data
+    folder: one over BIG_FILE_MB is a WARN that names it (W1 odds storage,
+    point 4: GitHub refuses a file over 100 MB, so the push would fail)."""
+    big = [f"{n} {s / 1048576:.0f} MB" for n, s in sorted(x.big_files)]
+    mb = x.repo_kb / 1024 if x.repo_kb is not None else None
+    if mb is not None and mb >= REPO_FAIL_MB:
+        return FAIL, f"{mb:.0f} MB (>= {REPO_FAIL_MB})" + (f"; over {BIG_FILE_MB} MB: {_short(big)}" if big else "")
+    if big:
+        return WARN, f"file(s) over {BIG_FILE_MB} MB: {_short(big)}" + (f"; repo {mb:.0f} MB" if mb is not None else "")
+    if mb is None:
         return SKIP, x.repo_why
-    mb = x.repo_kb / 1024
-    if mb >= REPO_FAIL_MB:
-        return FAIL, f"{mb:.0f} MB (>= {REPO_FAIL_MB})"
     if mb >= REPO_WARN_MB:
         return WARN, f"{mb:.0f} MB (>= {REPO_WARN_MB})"
     return OK, f"{mb:.0f} MB"
@@ -507,25 +517,52 @@ def c28(x):
 def c29(x):
     """Every source recorded: the record summary of the run log has RECORD OK
     for each of SOURCES; a RECORD FAIL - a failure, or a source skipped because
-    the suite was red - or a missing source fails."""
+    the suite was red - or a missing source fails. fpl_ep's RECORD SKIP (no
+    ep_next in the export) is a WARN only (RULING W1 decisions, point 3)."""
     text = x.run_log or ""
     i = text.rfind("record summary:")
     if i < 0:
         return FAIL, "no record summary in tonight's run log"
     got = {}
     for line in text[i:].splitlines()[1:]:
-        m = re.match(r"RECORD (OK|FAIL) (\S+) ?(.*)", line.strip())
+        m = re.match(r"RECORD (OK|FAIL|SKIP) (\S+) ?(.*)", line.strip())
         if not m:
             break
         got[m.group(2)] = (m.group(1), m.group(3))
-    bad = [f"{s} {why}" for s, (st, why) in got.items() if st == "FAIL"]
+    bad = [f"{s} {why}" for s, (st, why) in got.items()
+           if st == "FAIL" or (st == "SKIP" and s != "fpl_ep")]
     bad += [f"{s} missing" for s in SOURCES if s not in got]
     if bad:
         return FAIL, _short(bad)
+    if got["fpl_ep"][0] == "SKIP":
+        return WARN, f"fpl_ep skipped: {got['fpl_ep'][1]}; the four recorded"
     return OK, ", ".join(f"{s} {got[s][1]}" for s in SOURCES)
 
 
-CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 30)]
+def c30(x):
+    """Tonight's odds snapshot (W1): fpl_odds.py's one line in the run log.
+    Missing, skipped or failed is a WARN - the odds are collected for later
+    models, and tonight's other data is sound without them. An OK line is a
+    WARN too when a credit header is missing ("credits unknown"; RULING W1
+    pre-check decisions, point 2) or fewer than CREDITS_WARN credits remain."""
+    lines = [l.strip() for l in (x.run_log or "").splitlines()
+             if l.startswith(("ODDS OK", "ODDS FAILED", "ODDS SKIPPED"))]
+    if not lines:
+        return WARN, "no odds line in tonight's run log: the collector did not run"
+    line = lines[-1]
+    if line.startswith("ODDS OK"):
+        got = re.search(r"credits used (\S+), remaining (\S+), this request (\S+)", line)
+        heads = dict(zip(CREDIT_HEADERS, got.groups())) if got else {}
+        unknown = [h for h in CREDIT_HEADERS if not re.fullmatch(r"\d+(\.\d+)?", heads.get(h, ""))]
+        if unknown:
+            return WARN, f"credits unknown (no {', '.join(unknown)}): {line}"
+        if float(heads["x-requests-remaining"]) < CREDITS_WARN:
+            return WARN, f"credits remaining {heads['x-requests-remaining']} (< {CREDITS_WARN}): {line}"
+        return OK, line[len("ODDS OK"):].strip()
+    return WARN, line
+
+
+CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 31)]
 
 
 def run_all(x):
@@ -645,6 +682,20 @@ def changed_files(data):
     return files
 
 
+def big_files(data, limit_mb=BIG_FILE_MB):
+    """[(path relative to the data folder, size)] of every file over limit_mb,
+    .git excluded."""
+    out = []
+    for root, dirs, files in os.walk(data):
+        dirs[:] = [d for d in dirs if d != ".git"]
+        for f in files:
+            p = os.path.join(root, f)
+            size = os.path.getsize(p)
+            if size > limit_mb * 1048576:
+                out.append((os.path.relpath(p, data).replace(os.sep, "/"), size))
+    return out
+
+
 def repo_size(env):
     """(kb, why): the repository size from the GitHub API (check 24), or
     (None, the reason it was not measured). The token is sent, never shown."""
@@ -699,6 +750,7 @@ def load(data, stamp, now=None, env=None):
     prev_status = _git(data, "show", f"HEAD:{REPORTS}/{STATUS}")
     x.prev_status = prev_status.decode("utf-8", "replace") if prev_status else None
     x.changed = changed_files(data)
+    x.big_files = big_files(data)
     x.repo_kb, x.repo_why = repo_size(env)
     x.known_gaps = fpl_sync.known_price_gaps()[0]
     return x

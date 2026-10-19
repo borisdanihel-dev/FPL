@@ -14,7 +14,9 @@ compares DATA_DIR with its last commit (git show HEAD:...):
   * no table in GROW_ONLY has fewer rows than in the last commit;
   * projection_log.csv: for every gameweek whose deadline has passed
     (events.deadline_time in fpl.sqlite), the rows are exactly those of the
-    last commit - none missing, changed or added.
+    last commit - none missing, changed or added;
+  * odds/: every odds file of the last commit is still there, byte-identical
+    (append-only; RULING W1 odds storage).
 On a pass it writes DATA_DIR/fpl.sql, a text dump of the whole database
 (sqlite3.Connection.iterdump), committed alongside the binary. On a fail it
 writes nothing.
@@ -47,6 +49,7 @@ import zlib
 from datetime import datetime, timezone
 
 DB, DUMP, LOG = "fpl.sqlite", "fpl.sql", "projection_log.csv"
+ODDS = "odds"               # the Odds API snapshots, one gzip file a night, append-only (W1)
 
 # Every table fpl_sync.py creates. A table that is new since the last commit
 # passes only if it is listed here; a schema change updates this list in the
@@ -165,6 +168,25 @@ def check_log(now_text, prev_text, deadline_of, now):
     return fails
 
 
+def check_odds(data_dir):
+    """Failures for odds/: every file there in the last commit must still be
+    present and byte-identical. A new file is fine; a rewritten or deleted one
+    fails (append-only; RULING W1 odds storage)."""
+    r = subprocess.run(["git", "-C", data_dir, "ls-tree", "-r", "-z", "--name-only", "HEAD", "--",
+                        ODDS + "/"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    fails = []
+    for name in (n for n in r.stdout.decode("utf-8").split("\0") if n):
+        path = os.path.join(data_dir, name)
+        if not os.path.isfile(path):
+            fails.append(f"{name} was deleted - odds files are append-only")
+            continue
+        with open(path, "rb") as fh:
+            body = fh.read()
+        if body != (_git_show(data_dir, name) or b""):
+            fails.append(f"{name} was rewritten - odds files are append-only")
+    return fails
+
+
 def _git_show(data_dir, name):
     r = subprocess.run(["git", "-C", data_dir, "show", f"HEAD:{name}"],
                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -263,6 +285,8 @@ def main(argv=None):
         prev = _git_show(a.data_dir, LOG)
         fails = check_log(now_text, prev.decode("utf-8") if prev is not None else None,
                           deadlines(db), datetime.now(timezone.utc))
+    if not fails:
+        fails = check_odds(a.data_dir)
     for f in fails:
         print(f"GATE FAIL    {f}")
     if fails:

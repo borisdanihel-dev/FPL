@@ -2352,6 +2352,8 @@ def _recordable_export(**kw):
     for f in d["fixtures_next6"]:
         if f["event"] == d["gameweek"] + 1:
             f["kickoff_time"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
+    for p in d["all_players"]:                  # as the sync exports it since W1
+        p.setdefault("ep_next", round(1.0 + (p["id"] % 7) * 0.5, 1))
     return d
 
 
@@ -3988,6 +3990,7 @@ class NightlyRunner(unittest.TestCase):
                                  f"    def test_stub(self):\n        self.assertEqual({tests}, 0)\n"),
                  "fpl_sync.py": f"import sys\nprint('sync ran')\nsys.exit({sync})\n",
                  "checks.py": "print('CHECKS stub')\n",
+                 "fpl_odds.py": "print('ODDS SKIPPED stub')\n",
                  "fpl_edge.py": edge or NIGHTLY_EDGE_STUB, "MODE": mode}
         if export:
             stubs["fpl_export_gw3.json"] = "{}"
@@ -4155,8 +4158,8 @@ class NightlyRunner(unittest.TestCase):
         self.assertEqual(self._gunzip(os.path.join(data, "exports", f"fpl_export_gw3_{self.STAMP}.json.gz")),
                          "{}")
         self.assertEqual(sorted(os.listdir(code_dir)),
-                         ["MODE", "checks.py", "fpl_edge.py", "fpl_sync.py", "test_fpl.py",
-                          "watchlist.txt"])
+                         ["MODE", "checks.py", "fpl_edge.py", "fpl_odds.py", "fpl_sync.py",
+                          "test_fpl.py", "watchlist.txt"])
 
     def test_the_data_dir_comes_from_fpl_data_dir(self):
         seen, real = [], N.nightly
@@ -4212,7 +4215,8 @@ class NightlyRunner(unittest.TestCase):
         self.assertEqual(git("rev-parse", "HEAD").stdout, head, "--restore committed")
         self.assertEqual(git("status", "--porcelain").stdout, "", "--restore left a tracked change")
         self.assertEqual(sorted(os.listdir(code_dir)),
-                         ["MODE", "checks.py", "fpl_edge.py", "fpl_sync.py", "test_fpl.py"])
+                         ["MODE", "checks.py", "fpl_edge.py", "fpl_odds.py", "fpl_sync.py",
+                          "test_fpl.py"])
         self.assertTrue(lines[-1].startswith("RESTORE OK   2 working export(s)"), lines)
 
     def test_restore_replaces_a_stale_working_export_and_then_does_nothing(self):
@@ -4314,7 +4318,7 @@ class NightlyRunner(unittest.TestCase):
         for s, line in zip(self.FOUR, summary):
             self.assertRegex(line, rf"^RECORD OK {s} [1-9]\d*$")
         rows = E.read_log(os.path.join(tmp, "projection_log.csv"))
-        self.assertEqual({r["source"] for r in rows}, set(self.FOUR))
+        self.assertEqual({r["source"] for r in rows}, set(N.SOURCES))     # the four and fpl_ep (W1)
         self.assertGreater(os.path.getsize(os.path.join(tmp, "reports", f"fpl_{self.STAMP}.txt")), 1000)
         self.assertEqual([f for f in os.listdir(tmp) if "sqlite" in f], [],
                          "the record or the report touched a database")
@@ -4344,7 +4348,9 @@ class NightlyRunner(unittest.TestCase):
         self.assertEqual(a, b, "the two paths wrote different reports for the same export")
         key = lambda r: tuple(r[k] for k in E.LOG_FIELDS if k != "made_at")
         la = [key(r) for r in E.read_log(os.path.join(bat, "projection_log.csv"))]
-        lb = [key(r) for r in E.read_log(os.path.join(run, "projection_log.csv"))]
+        # the retired bat records the four frozen sources; the nightly also fpl_ep (W1)
+        lb = [key(r) for r in E.read_log(os.path.join(run, "projection_log.csv"))
+              if r["source"] in self.FOUR]
         self.assertGreater(len(la), 100)
         self.assertEqual(la, lb, "the two paths recorded different forecasts for the same export")
 
@@ -4371,8 +4377,16 @@ class NightlyWorkflow(unittest.TestCase):
         self.assertIn("run: python fpl_nightly.py\n", y)
         self.assertLess(y.index("pip install -r requirements.txt"), y.index("run: python fpl_nightly.py\n"))
         code = "\n".join(l for l in y.splitlines() if not l.strip().startswith("#"))
+        # S1 amendment 1, item 1 (W1): exactly the ODDS_API_KEY reference, and
+        # only in the nightly step and the commit step
+        key = "          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}\n"
+        self.assertEqual(code.count(key), 2)
+        for step in ("name: Nightly run", "name: Commit outputs to the data branch"):
+            body = y[y.index(step):]
+            body = body[:body.index("\n      - ", 1) if "\n      - " in body[1:] else len(body)]
+            self.assertIn(key, body, step)
         for foreign in ("\\", "My Drive", "outbox", "fpl_ship", "fpl_run.bat", "secrets."):
-            self.assertNotIn(foreign, code, f"{foreign!r} has no place on the runner")
+            self.assertNotIn(foreign, code.replace(key, ""), f"{foreign!r} has no place on the runner")
 
     def test_code_from_master_data_from_the_data_branch(self):
         """D1 (Step 1.4): master checked out for code, data into ./data, and
@@ -5133,8 +5147,10 @@ class DataGate(unittest.TestCase):
         most the one row it collides with)."""
         import re
         here = os.path.dirname(os.path.abspath(__file__))
-        with open(os.path.join(here, "fpl_sync.py"), encoding="utf-8") as fh:
-            src = fh.read()
+        src = ""
+        for writer in ("fpl_sync.py", "fpl_odds.py"):    # every writer of fpl.sqlite (W1)
+            with open(os.path.join(here, writer), encoding="utf-8") as fh:
+                src += fh.read()
         self.assertIsNone(re.search(r"(?i)\b(delete\s+from|drop\s+table|truncate|vacuum)\b", src))
         writes = re.findall(r"INSERT(?: OR (\w+))? INTO (\w+)", src)
         self.assertEqual({t for _, t in writes}, set(G.EXPECTED_TABLES))

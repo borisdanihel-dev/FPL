@@ -96,6 +96,13 @@ def get(path):
         _sleep(wait)
 
 
+def ep_next(p):
+    """FPL's expected points for the next gameweek (W1: source fpl_ep), as a
+    number; None when the API gives none - never a 0."""
+    v = p.get("ep_next")
+    return None if v in (None, "") else float(v)
+
+
 def field_problems(items, spec, what):
     """Every missing or mistyped required field in `items` (Step 3, check 8):
     a list of "<what> <id>: <field> ..." strings. bool is not an int here."""
@@ -220,7 +227,7 @@ CREATE TABLE IF NOT EXISTS players (
     status TEXT, chance_next_round INTEGER, news TEXT, updated_at TEXT,
     starts INTEGER, pens_order INTEGER, corners_order INTEGER, fk_order INTEGER,
     xgc REAL, tin_event INTEGER, tout_event INTEGER, form REAL, ppg REAL,
-    influence REAL, creativity REAL, threat REAL);
+    influence REAL, creativity REAL, threat REAL, ep_next REAL);
 
 CREATE TABLE IF NOT EXISTS player_history (
     player_id INTEGER, season TEXT, minutes INTEGER, total_points INTEGER,
@@ -290,7 +297,8 @@ MIGRATIONS = {
     "players": ["starts INTEGER", "pens_order INTEGER", "corners_order INTEGER",
                 "fk_order INTEGER", "xgc REAL", "tin_event INTEGER",
                 "tout_event INTEGER", "form REAL", "ppg REAL",
-                "influence REAL", "creativity REAL", "threat REAL"],
+                "influence REAL", "creativity REAL", "threat REAL",
+                "ep_next REAL"],                 # W1: FPL's ep_next, recorded as fpl_ep
     "teams": ["att_h INTEGER", "att_a INTEGER", "def_h INTEGER", "def_a INTEGER"],
     "player_gw": ["starts INTEGER", "fetched_at_utc TEXT", "ruleset TEXT"],
     "events": ["data_checked INTEGER"],
@@ -363,11 +371,12 @@ def sync_bootstrap(db):
                      num(p.get("points_per_game"), "points_per_game"),
                      num(p.get("influence"), "influence"),
                      num(p.get("creativity"), "creativity"),
-                     num(p.get("threat"), "threat")))
+                     num(p.get("threat"), "threat"),
+                     ep_next(p)))
         db.execute("INSERT OR REPLACE INTO price_history "
                    "(player_id, date, now_cost, fetched_at_utc, london_date) VALUES (?,?,?,?,?)",
                    (required(p, "id"), today, required(p, "now_cost"), now, london_day))
-    db.executemany("INSERT OR REPLACE INTO players VALUES (%s)" % ",".join("?" * 34), rows)
+    db.executemany("INSERT OR REPLACE INTO players VALUES (%s)" % ",".join("?" * 35), rows)
 
     # data_checked = points and bonus are final. `finished` only means the
     # matches ended; grading keys on data_checked.
@@ -657,7 +666,7 @@ def export(db, gw):
                ROUND(pl.threat,1) AS threat, ROUND(pl.creativity,1) AS creativity,
                ROUND(pl.influence,1) AS influence,
                pl.tin_event, pl.tout_event,
-               (pl.tin_event - pl.tout_event) AS net_transfers,
+               (pl.tin_event - pl.tout_event) AS net_transfers, pl.ep_next,
                COALESCE(SUM(g.total_points),0) AS pts_last4,
                COALESCE(SUM(g.minutes),0) AS mins_last4,
                COALESCE(SUM(g.defensive_contribution),0) AS defcon_last4,

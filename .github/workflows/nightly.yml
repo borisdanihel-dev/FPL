@@ -12,9 +12,11 @@
 # one closes it (fpl_alert.py). A second cron at 03:17 UTC is the backup run:
 # it does the whole night again only when the 21:40 nightly left no
 # status.txt (ruling S3, point 4), in the same concurrency group.
-# No secrets: every endpoint fpl_sync.py calls is public. The secret scan looks
-# for "apiKey=" always and for the ODDS_API_KEY value whenever a step has it -
-# the step that first passes the key to a run must pass it to the commit too.
+# One secret, ODDS_API_KEY (W1; S1 amendment 1, item 1): the nightly step needs
+# it for the odds collector (fpl_odds.py, which never prints it) and passes it on
+# to the checks' file scan; the commit step needs it for the staged-secret value
+# check. Nothing else gets it, and the test suite runs without it. The secret
+# scan looks for "apiKey=" always and for the key's value wherever it is set.
 # To start a run by hand: Actions tab -> nightly -> Run workflow. Branch
 # master with dry_run unticked is a real run; anything else is dry.
 name: nightly
@@ -33,6 +35,10 @@ on:
         description: "Dry run: the whole pipeline, result force-pushed to data-dryrun only (always dry on a branch other than master)"
         type: boolean
         default: true
+      odds_live:
+        description: "Dry run only: also call the Odds API (4 credits); a real run always does"
+        type: boolean
+        default: false
       force_backup:
         description: "Run the release backup now, whatever the weekday"
         type: boolean
@@ -96,6 +102,8 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
           GH_TOKEN: ${{ github.token }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          FPL_ODDS_LIVE: ${{ inputs.odds_live }}
           FPL_DATA_DIR: data
         run: python fpl_nightly.py
 
@@ -107,6 +115,7 @@ jobs:
         if: always() && steps.due.outputs.run == 'true'
         env:
           PYTHONIOENCODING: utf-8
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: |
           git -C data config user.name "github-actions[bot]"
           git -C data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
