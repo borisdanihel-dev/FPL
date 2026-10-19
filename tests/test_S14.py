@@ -112,6 +112,44 @@ class Algebra(unittest.TestCase):
         self.assertEqual(pmf3, {1: 0.2, 2: 0.2, 0: 0.6})
 
 
+class CaptainOptions(unittest.TestCase):
+    def test_the_band_edges_and_the_lines(self):
+        xp = {1: 6.00, 2: 5.70, 3: 5.69, 4: 6.00, 5: 3.0, 9: 9.9}
+        xi = [1, 2, 3, 4, 5]                                                                     # 9 is not in the XI
+        self.assertEqual(PM.CAPTAIN_BAND, 0.3)
+        self.assertEqual(PM.captain_options(xi, 1, xp), [4, 2])                                   # 0.30 in (inclusive), 0.31 out; the tie listed, never the captain
+        self.assertEqual(PM.captain_options(xi, 1, {1: 6.0, 2: 5.0}), [])
+        sums = {pid: {"xp": v, "mean": v, "p10": v / 100, "p15": v / 1000, "p90": int(v) + 6} for pid, v in xp.items()}
+        names = {pid: f"N{pid}" for pid in xp}
+        buf = io.StringIO()
+        PM.print_options(1, [4, 2], sums, names, out=lambda s: buf.write(s + chr(10)))
+        text = buf.getvalue()
+        self.assertIn("the captain rule is unchanged - highest xp_v2 in the XI - and there is no tie-break", text)
+        lines = [ln.split() for ln in text.splitlines()[1:]]
+        self.assertEqual([(ln[0], ln[1]) for ln in lines], [("captain", "N1"), ("option", "N4"), ("option", "N2")])
+        self.assertIn("P>=10 0.057  P>=15 0.006  p90 11", text)                                  # N2: the table's numbers
+        buf = io.StringIO()
+        PM.print_options(1, [], sums, names, out=lambda s: buf.write(s + chr(10)))
+        self.assertIn("no option within 0.3 xP", buf.getvalue())
+        # the bundle takes xp_v2's XI and captain from section 5's side by side, never own's
+        own = {1: 5.0, 2: 1.0, 3: 6.5, 4: 1.0, 5: 4.0}                                       # own would start 3 and captain him
+        squad = [{"id": i, "name": f"N{i}", "pos": p, "team": "T"} for i, p in
+                 enumerate([1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4], 1)]
+        v2 = {r["id"]: 1.0 for r in squad}
+        v2.update({8: 6.0, 9: 5.8, 13: 5.75, 1: 3.0, 10: 0.0, 11: 0.0})                      # 8 captains; 9 and 13 within 0.3; 10, 11 benched
+        own_p = {r["id"]: 1.0 for r in squad}
+        own_p.update({10: 9.0, 11: 8.9, 14: 8.8})
+        sbs = G.side_by_side(squad, own_p, v2)
+        v2_xi = {b["id"] for _, _, b in sbs["rows"][:11]}
+        sums2 = {pid: {"xp": v} for pid, v in v2.items()}
+        sums2.update({10: {"xp": 5.95}, 11: {"xp": 5.9}})                                    # inside the band but outside xp_v2's XI? only if benched
+        self.assertFalse({10, 11} & v2_xi); self.assertTrue({10, 11} <= {a["id"] for _, a, _ in sbs["rows"][:11]})   # own starts them, xp_v2 does not
+        cap, opts = G.captain_band(sbs, sums2)
+        self.assertEqual(cap, 8)
+        self.assertTrue(set(opts) <= v2_xi)
+        self.assertEqual(opts, [p for p in PM.captain_options(sorted(v2_xi), 8, {k: v["xp"] for k, v in sums2.items()})])
+
+
 class Toy2526(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -210,6 +248,14 @@ class LiveAndBundle(unittest.TestCase):
             self.assertTrue(lines[0].split()[0] == top["name"])                                   # sorted by mean
             s = sums[top["id"]]
             self.assertIn(f"{s['mean']:6.2f} {s['p10']:7.3f} {s['p15']:7.3f} {s['p90']:>4}", lines[0])
+            sec5 = buf.getvalue().split("OWN v XP_V2 AS TESTED")[1].split("KEEPER LINE")[0]
+            cap_line = [ln for ln in sec7.splitlines() if ln.strip().startswith("captain ")]
+            self.assertEqual(len(cap_line), 1)
+            cap_name = cap_line[0].split()[1]
+            self.assertIn(f"|  xp_v2 as tested {cap_name} (", sec5)                                 # the captain is section 5's
+            for ln in [l for l in sec7.splitlines() if l.strip().startswith("option ")]:
+                pid = next(r["id"] for r in squad if r["name"] == ln.split()[1])
+                self.assertGreaterEqual(sums[pid]["xp"], sums[next(r["id"] for r in squad if r["name"] == cap_name)]["xp"] - 0.3 - 1e-12)
             shutil.rmtree(os.path.join(hist, "2025-26"))                                          # no live xp_v2: the table says so
             buf = io.StringIO()
             G.bundle(tmp, out=lambda s="": buf.write(s + chr(10)), now=NOW9, hist_root=hist)

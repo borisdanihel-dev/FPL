@@ -492,6 +492,33 @@ def live_pmfs(res):
     return out
 
 
+CAPTAIN_BAND = 0.3                  # RULING S14 acceptance point 1: options within 0.3 xP of the captain
+
+
+def captain_options(xi, cap_id, xp, band=CAPTAIN_BAND):
+    """The XI players other than the captain whose xp_v2 is at least the
+    captain's minus `band` (inclusive), highest first (ties by the lower id).
+    The captain stays the highest xp_v2 in the XI: no tie-break here."""
+    top = xp[cap_id]
+    return sorted((pid for pid in xi if pid != cap_id and pid in xp and xp[pid] >= top - band - 1e-12),
+                  key=lambda pid: (-xp[pid], pid))
+
+
+def print_options(cap, options, sums, names, out=print, band=CAPTAIN_BAND):
+    """Section 7's lines beside the captain (amendment 1): the captain and
+    each option with xp_v2, mean, P(>=10), P(>=15) and p90."""
+    if not options:
+        out(f"  captain {names[cap]} (xp_v2 {sums[cap]['xp']:.2f}): no option within {band} xP; the captain rule is unchanged "
+            f"(highest xp_v2 in the XI)")
+        return
+    out(f"  within {band} xP of the captain (information; the captain rule is unchanged - highest xp_v2 in the XI - and there is "
+        f"no tie-break):")
+    for pid, tag in [(cap, "captain")] + [(o, "option") for o in options]:
+        s = sums[pid]
+        out(f"    {tag:<8}{names[pid]:<16} xp_v2 {s['xp']:5.2f}  mean {s['mean']:5.2f}  P>=10 {s['p10']:.3f}  P>=15 {s['p15']:.3f}  "
+            f"p90 {s['p90']}")
+
+
 def captain_table(squad, sums, out=print):
     """Our 15 sorted by mean: mean, P(>=10), P(>=15), p90; a player without
     an xp_v2 forecast is listed as such."""

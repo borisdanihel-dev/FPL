@@ -245,6 +245,14 @@ def side_by_side(squad, own_pts, v2_pts):
             "xi_differs": {r["id"] for r in xi_o} != {r["id"] for r in xi_v}}
 
 
+def captain_band(sbs, sums):
+    """(xp_v2 as tested's captain, the options within 0.3 xP of him in xp_v2's
+    XI): section 5's side-by-side, its xp_v2 column (S14 amendment 1)."""
+    cap = sbs["captain"][1]["id"]
+    xi = [b["id"] for _, _, b in sbs["rows"][:11]]
+    return cap, PM.captain_options(xi, cap, {pid: s["xp"] for pid, s in sums.items()})
+
+
 def keeper_line(keepers, own_ps, lock):
     """[(name, team, own P(start) or None, keeper lock or None)] for our keepers."""
     return [(r["name"], r["team"], own_ps.get(r["id"]), lock.get(r["id"])) for r in keepers]
@@ -312,6 +320,7 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
         squad = CH.my_squad(d)
         missing = [r["name"] for r in squad if r["id"] not in v2]
         sbs = side_by_side(squad, pts[target], v2)
+        live_res["sbs"] = sbs
         snap = res["snapshot"]
         n_odds = sum(1 for s_ in res["sources"].values() if s_ == "odds")
         out(f"  GW{target}: from GW8 xp_v2 as tested picks the XI and captain (RULING S6b acceptance point 1); own is printed beside it; "
@@ -354,7 +363,14 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
             raise MissingInput("xp_v2 as tested is not available (section 5): no distribution to print")
         out(f"  GW{target}: the points distribution of xp_v2 as tested (S14, option (a): its mean is xp_v2; no saves term); "
             f"information only until S14 passes and Boris accepts")
-        return PM.captain_table(CH.my_squad(d), PM.live_pmfs(res), out)
+        sums = PM.live_pmfs(res)
+        rows = PM.captain_table(CH.my_squad(d), sums, out)
+        sbs = live_res.get("sbs")
+        if sbs is not None:                      # amendment 1: the options within 0.3 xP beside xp_v2's captain
+            cap, options = captain_band(sbs, sums)
+            names = {r["id"]: r["name"] for r in CH.my_squad(d)}
+            PM.print_options(cap, options, sums, names, out)
+        return rows
     section(out, SECTIONS[6], captains)
     return target
 
