@@ -53,6 +53,24 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     on `w2-wip`.
   - **Dry run:** after W1b is live, push `dry/W2` (allowed in the GW8
     freeze, RULING 19 Oct afternoon point 3); else Boris's manual dispatch.
+  - **W2 DONE on `w2-wip` `d0ac3f5`** (about 17:30 UTC): verifier PASS
+    (Fable 5.1, `worklog/verify_W2.md` on the branch); suite 625 bare and
+    625 runner-like; report `worklog/cc_2026-10-19_W2.md` and CHANGELOG on
+    the branch. Its notes: the standings flag rule must stay limited to
+    event 2 (other events' snapshots differ by 2–11 points too, worth an S9
+    look). Not merged: Saturday after the GW8 deadline, after a dry run.
+    Before merging, `w2-wip` takes master (S2b, W1b, the landing; expect
+    conflicts in `fpl_sync.py`, `checks.py`, `test_fpl.py`, `tests/`). Tag
+    `pre-W2`, merge, Boris's real dispatch.
+  - **Items since the last chat review** (Boris's W2 + Part F message):
+    W2 = 1 of 6.
+  - **Next: Part F, F-C first** (Step 10b, offline): prereg
+    `prereg/S10b.md` with F-C's text verbatim. The downloads are approved
+    in F-C (record the URL, fetch time and SHA-256; data only; read with
+    `python -I`): vaastav `data/2022-23`, `2023-24`, `2024-25`
+    (`merged_gw.csv`, `fixtures.csv`, `teams.csv`, `players_raw.csv`) and
+    football-data E0 2023-24 and 2024-25. Then F-D (S6f), F-E (S6e), then
+    F-B (W3, merge by Thu 29 Oct).
   - Then: mutations for all three pieces, the full suite four ways (bare,
     runner-like, stand-in zones, hermetic), a frozen-clock regeneration,
     the verifier, the report, CHANGELOG (with the label_error note). No
