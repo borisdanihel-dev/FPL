@@ -24,6 +24,20 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
   - **S2b step 1 done early:** master merged into `s2b-wip` (`0d94be9`,
     clean, 635 tests OK). Tuesday: the dry run (Boris), then the rest.
   - **Items since the last chat review:** S6c, S6d = 2 of 6.
+  - **Landing 2 ready:** `landing-2026-10-19b` = master + `s6d-wip` (lane
+    B's S8, S11, S12, S13, S6b, the bundle, provenance; S6c; S6d) + the
+    CLAUDE.md provenance line + SESSION_STATE_B.md marked closed; 676 tests
+    OK; provenance check in `worklog/cc_2026-10-19_landing2.md` (on the
+    branch). Needs Boris's dry-run click; on green and outside 9d (never
+    21:00 UTC to the end of the nightly; the GW8 window opens Thu 22 Oct
+    11:30 UTC) fast-forward master to it. Until then master takes only
+    this file, merged into the landing branch at once (docs only).
+  - **Scratch worktrees** (session scratchpad, registered in this repo):
+    `s6d` (s6d-wip), `s2b` (s2b-wip at `0d94be9`), `landing`
+    (landing-2026-10-19b). A fresh session can remove them with `git
+    worktree remove`; the branches are pushed.
+  - **Waiting on the chat:** Step 14's mean-match question
+    (`prereg/S14.md`); the live prior season (S6d report, decision 1).
   - **Open for the chat:** (1) S6d's prior season: 2025/26 for the live
     forecast (BUILD_PLAN Step 11, "priors come from last season"); lane
     B's handover named 2024/25. (2) Step 14: xp_v2 has no saves term and
