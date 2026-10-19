@@ -5,6 +5,40 @@ Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
 before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
 this file, then waits for the next instruction.
 
+- **Monday 19 Oct (RULING morning 19 Oct, verbatim in the W1, S2b, W1b, S16
+  and S10 preregs):**
+  - **W1 done.**
+    - Merged `20309df` (tag `pre-W1` = `5b38b41`).
+    - Real dispatch, run 39208578261: data `bd724ca`, STATUS OK 28/28, first
+      real odds file, `fpl_ep` 668, credits 488 left.
+    - Final verifier PASS (`worklog/verify_W1.md`); report and CHANGELOG
+      `9f03bcf`.
+  - **S16 part 2 landed.** Merge `f2820e3`, after its green dry run
+    (`data-dryrun` `24881f1`); CHANGELOG `086a237`.
+  - **W1b updated** on `w1b-wip` `1118948`:
+    - the 21:30 window closes at 04:00;
+    - a missing deadline row is a WARN, and the run goes on;
+    - 541 tests; mutations 29 of 29 red.
+    Still to do: the delta verifier, then the last manual dry run after S2b
+    lands, then the merge Wednesday.
+  - **Downloads done** (`worklog/downloads_2026-10-19.md`):
+    `players_raw.csv` for 2025-26, and `fixtures.csv` for 2018-19 to 2024-25.
+    - There is an incident record in that file: a shell heredoc ran the
+      downloaded CSVs as commands. Checked: no effect, hashes intact.
+  - **Step 10:** prereg `55f3476`; built next on `s10-wip`.
+  - **Step 16 part 1: parked.** Vaastav has no `fixtures.csv` for 2016-17 or
+    2017-18, and no deadlines file for any season. Question:
+    - Without deadlines, the history can only take each fixture's FPL
+      `event` field.
+    - What is the reference for "reproduce the 2024/25 and 2025/26 events
+      exactly"? If it is kickoff mapped to gameweek by deadline, the
+      deadlines need a source: vaastav's `2018-19/raw.json` covers one season
+      only, so another archive would need your approval.
+  - **Findings for the chat:**
+    - The live `game_config` gives a goalkeeper goal 10 points. The frozen
+      `bottomup` model's `GOAL_VALUE` uses 6; not changed (model-change
+      protocol).
+    - Check 30's "any of three headers" reading is still not ruled.
 - **Night of 18/19 Oct: RULING lane A night work** (verbatim, recorded once):
 
   > Keep working until morning without Boris, on branches only:
