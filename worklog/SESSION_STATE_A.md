@@ -7,19 +7,71 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **CURRENT (19 Oct, about 13:30 UTC):**
+- **CURRENT (19 Oct, about 15:30 UTC), after RULING 19 Oct afternoon:**
+  - The ruling is verbatim in `prereg/S14.md`, `W2.md`, `S16.md`, `S2.md`,
+    `S2b.md` (master `fc56fd5`) and `S6c.md` and `S6d.md` (landing branch
+    `5fda195`). BUILD_PLAN Step 20 holds the GW10 item "xp_v2 + saves". The
+    lane-B handover note now says 2025/26 priors.
+  - Point 6, done (landing branch `aac4b66`, reports and CHANGELOG): the
+    GW5–7 retro uses the actual post-wildcard 15, official points (sums
+    equal `entry_gw`: GW5 60, GW6 49) and no autosubs, by FPL or the rule.
+    The gap is selection: GW6 own 59 (Verbruggen +7, Thomas +2, Tarkowski
+    captain +1), xp_v2 61 (+ Rudoni +3); GW5 both 54. GW6
+    `points_on_bench` 11 v 22 flagged for S2b.
+  - **S14 done** on `s14-wip` (prereg rows master `15e18fa`, code
+    `0def550`, report `4aab84d`): `tools/points_pmf.py`, bundle section 7
+    (captain table). Test PASS on both conditions: Brier +0.00118 [+0.00070,
+    +0.00178]; 10+ hauls 403.6 predicted v 449 (−10.1%). Thin tails: 15+
+    predicted 47 v 75. Verifier PASS (Fable 5.1); suite 676 → 686;
+    mutations 18 of 18. Information only until Boris accepts.
+  - **Landing 2** (`landing-2026-10-19b`, tip `3ea0459` plus this file):
+    lane B's items, S6c, S6d, S14, the provenance line, the
+    reconciliation; 686 tests. **Tuesday after 00:00 UTC:** Boris's
+    dry-run click on it and on `s2b-wip`; on green and outside 9d,
+    fast-forward master to the landing branch, then merge master into
+    `s2b-wip` and `w1b-wip`.
+  - **Items since the last chat review** (RULING 19 Oct afternoon): S14 =
+    1 of 6.
+  - **Scratch worktrees left:** `landing` and `s2b` in the session
+    scratchpad (the branches are pushed).
+  - **Next by queue:** S2b Tuesday (dry run, merge before 21:00 UTC,
+    Boris's real dispatch, after-measurement incl. GW6
+    `points_on_bench`); W1b Wednesday; the GW8 bundle Thursday about 18:00
+    Prague and Friday morning (`worklog/gw_pass/gw8/`); W2 in the gaps
+    (dry/W2 pushes allowed in the freeze, point 3).
+  - Dry runs move to Tuesday after 00:00 UTC (point 5): the landing branch
+    and `s2b-wip`.
+- **Earlier (19 Oct, about 13:30 UTC):**
   - **S6c done** on `s6c-wip` (`d662656` prereg, `11c262c` + `28d0578`
     code, `247edb9` report): xp_v2 − own_rebuilt +0.515 [+0.213, +0.816]
     per squad per gameweek → **GW8 SWITCH STANDS**; verifier PASS (Fable
     5.1); suite 652 → 660. Report `worklog/cc_2026-10-19_S6c.md`.
-  - **S6d (queue item 2) built** on `s6d-wip` (prereg `9fa7ab1`, code
-    `4d2d1c7` + `a1595e4`, S6c merged in `c98487b`), worked in the scratch
-    worktree `<session scratchpad>/s6d`: `tools/xp_v2_live.py` (xp_v2 as
-    tested live; its core equals S6b's `Replay.xp_v2` exactly on 2025/26),
-    the bundle's section 5 (own v xp_v2 as tested; own picks GW8 when it is
-    missing) and the keepers' xp_v2, the GW5–7 live column (GW5 +0, GW6
-    +2). Suite 660 → 667; mutations 14 of 15 red, 1 equivalent. Verifier
-    running (Fable); then report, CHANGELOG, push.
+  - **S6d (queue item 2) done** on `s6d-wip` (prereg `9fa7ab1`, code
+    `4d2d1c7` + `a1595e4`, test gap `822d324`, report `6c0feef`; S6c
+    merged in `c98487b`): `tools/xp_v2_live.py` (xp_v2 as tested live; its
+    core equals S6b's `Replay.xp_v2` exactly on 2025/26), the bundle's
+    section 5 (own v xp_v2 as tested, the default from GW8; own picks GW8
+    when it is missing) and the keepers' xp_v2, the GW5–7 live column (GW5
+    +0, GW6 +2). Verifier PASS (Fable 5.1); suite 660 → 667; mutations 15
+    of 16 red, 1 equivalent. Report `worklog/cc_2026-10-19_S6d.md` (on the
+    branch until the landing).
+  - **S2b step 1 done early:** master merged into `s2b-wip` (`0d94be9`,
+    clean, 635 tests OK). Tuesday: the dry run (Boris), then the rest.
+  - **Items since the last chat review:** S6c, S6d = 2 of 6.
+  - **Landing 2 ready:** `landing-2026-10-19b` = master + `s6d-wip` (lane
+    B's S8, S11, S12, S13, S6b, the bundle, provenance; S6c; S6d) + the
+    CLAUDE.md provenance line + SESSION_STATE_B.md marked closed; 676 tests
+    OK; provenance check in `worklog/cc_2026-10-19_landing2.md` (on the
+    branch). Needs Boris's dry-run click; on green and outside 9d (never
+    21:00 UTC to the end of the nightly; the GW8 window opens Thu 22 Oct
+    11:30 UTC) fast-forward master to it. Until then master takes only
+    this file, merged into the landing branch at once (docs only).
+  - **Scratch worktrees (superseded, see CURRENT)** (session scratchpad, registered in this repo):
+    `s6d` (s6d-wip), `s2b` (s2b-wip at `0d94be9`), `landing`
+    (landing-2026-10-19b). A fresh session can remove them with `git
+    worktree remove`; the branches are pushed.
+  - **Waiting on the chat:** Step 14's mean-match question
+    (`prereg/S14.md`); the live prior season (S6d report, decision 1).
   - **Open for the chat:** (1) S6d's prior season: 2025/26 for the live
     forecast (BUILD_PLAN Step 11, "priors come from last season"); lane
     B's handover named 2024/25. (2) Step 14: xp_v2 has no saves term and

@@ -90,3 +90,14 @@ RULING morning 19 Oct (lane A):
 7. CLAUDE.md b and g: name SESSION_STATE_A.md / SESSION_STATE_B.md. Keep every pre-* tag until the GW10 checkpoint. Finish the S3 report list as you proposed.
 Order today: W1 merge and dispatch; Step 10 on s10-wip; Step 16 part 1 after its download; S16 lands after a dry run.
 END RULING
+
+## RULING 19 Oct afternoon (verbatim; point 5: the s2b-wip dry run moves to Tuesday after 00:00 UTC)
+
+RULING 19 Oct afternoon:
+1. Step 14: option (a), the distribution of xp_v2 itself (mean matches by construction). Record the missing saves term as a GW10-checkpoint item ("xp_v2 + saves" gets its own pre-registered test then); no change to the accepted model before that.
+2. The live xp_v2 priors: 2025/26 is correct ("last season" = the season before the forecast season; S6b used 2024/25 only because it replayed 2025/26). Correct the handover note.
+3. Pushes to dry/W2 during the GW8 freeze are allowed: a dry run writes only data-dryrun-*, never master. W1b's quiet windows still apply.
+4. Step 16 parts 3-4: parked until after GW8; then propose exact sources (URL, size, what each provides) for approval. pre-S2 stays until the GW10 checkpoint.
+5. Dry-run cap: today's six are used. The landing-2026-10-19b and s2b-wip dry runs move to Tuesday after 00:00 UTC.
+6. Reconcile before relying on the GW5-7 retro: our actual GW6 (wildcard, captain Saka) scored 49 officially, while the retro scores our squad 59 (own's picks) and 61 (xp_v2's picks). Check that the retro used the actual GW6 15 (post-wildcard), the official points and FPL's actual autosubs, and explain the gap in the S6c/S6d report. Captain in reality was Saka (the vice was Haaland).
+END RULING
