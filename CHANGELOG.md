@@ -3978,3 +3978,21 @@ W1b's cap moves to 12 when W1b is worked.
   `tools/out/rules_<season>/`.
 - **Checks:** the 2025/26 path byte-identical to Step 10; suite 692;
   mutations 8 of 8; verifier PASS (`worklog/verify_S10b.md`).
+
+## 2026-10-19 — S6f (F-D): S6b and S6c repeated on 2024/25, the test FAILS (`3c955b5` prereg, `161cd69` code; on `s6f-wip`)
+
+- 2024/25 GW5–38: priors 2023/24, football-data 2024/25, S10b's re-score,
+  50 squads (seed 7, 2024/25 GW1 ownership). S6b's and S6c's drivers ran
+  unchanged.
+- **DEFCON removed on both sides** (RULING 19 Oct evening point 1). The
+  outcomes have none. The primary's xp_v2 and own_rebuilt DEFCON terms are
+  exactly 0. own_proxy (secondary) keeps a logistic floor (≤ 0.027 a
+  fixture); without it, the secondary is +0.373 [+0.187, +0.568].
+- **Primary,** xp_v2 − own_rebuilt: −0.396 per squad per gameweek, 90% CI
+  [−0.864, +0.045] → **FAIL**; season −13.5.
+- **Secondary:** S6b's xp_v2 − own_proxy +0.357 [+0.177, +0.548];
+  own_rebuilt − own_proxy +0.754 [+0.269, +1.271].
+- Per F-D this reverts nothing by itself; it goes to the chat, and the GW10
+  revert rule governs.
+- Verifier PASS (Fable 5.1, `worklog/verify_S6f.md`), its own loop within
+  1e-6; mutations 12 of 12.
