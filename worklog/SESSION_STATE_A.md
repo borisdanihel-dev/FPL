@@ -18,12 +18,27 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     The gap is selection: GW6 own 59 (Verbruggen +7, Thomas +2, Tarkowski
     captain +1), xp_v2 61 (+ Rudoni +3); GW5 both 54. GW6
     `points_on_bench` 11 v 22 flagged for S2b.
-  - **S14 built** on `s14-wip` (from the landing branch; prereg rows
-    master `15e18fa`, code `0def550`): `tools/points_pmf.py`, bundle
-    section 7 (captain table). Test PASS: Brier +0.00118 [+0.00070,
-    +0.00178]; 10+ hauls 403.6 predicted v 449 (−10.1%). Mutations 18 of
-    18. Verifier running (Fable). Plan: on PASS, report, then fast-forward
-    `landing-2026-10-19b` to `s14-wip`, so Tuesday's one dry run covers it.
+  - **S14 done** on `s14-wip` (prereg rows master `15e18fa`, code
+    `0def550`, report `4aab84d`): `tools/points_pmf.py`, bundle section 7
+    (captain table). Test PASS on both conditions: Brier +0.00118 [+0.00070,
+    +0.00178]; 10+ hauls 403.6 predicted v 449 (−10.1%). Thin tails: 15+
+    predicted 47 v 75. Verifier PASS (Fable 5.1); suite 676 → 686;
+    mutations 18 of 18. Information only until Boris accepts.
+  - **Landing 2** (`landing-2026-10-19b`, tip `3ea0459` plus this file):
+    lane B's items, S6c, S6d, S14, the provenance line, the
+    reconciliation; 686 tests. **Tuesday after 00:00 UTC:** Boris's
+    dry-run click on it and on `s2b-wip`; on green and outside 9d,
+    fast-forward master to the landing branch, then merge master into
+    `s2b-wip` and `w1b-wip`.
+  - **Items since the last chat review** (RULING 19 Oct afternoon): S14 =
+    1 of 6.
+  - **Scratch worktrees left:** `landing` and `s2b` in the session
+    scratchpad (the branches are pushed).
+  - **Next by queue:** S2b Tuesday (dry run, merge before 21:00 UTC,
+    Boris's real dispatch, after-measurement incl. GW6
+    `points_on_bench`); W1b Wednesday; the GW8 bundle Thursday about 18:00
+    Prague and Friday morning (`worklog/gw_pass/gw8/`); W2 in the gaps
+    (dry/W2 pushes allowed in the freeze, point 3).
   - Dry runs move to Tuesday after 00:00 UTC (point 5): the landing branch
     and `s2b-wip`.
 - **Earlier (19 Oct, about 13:30 UTC):**
@@ -51,7 +66,7 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     21:00 UTC to the end of the nightly; the GW8 window opens Thu 22 Oct
     11:30 UTC) fast-forward master to it. Until then master takes only
     this file, merged into the landing branch at once (docs only).
-  - **Scratch worktrees** (session scratchpad, registered in this repo):
+  - **Scratch worktrees (superseded, see CURRENT)** (session scratchpad, registered in this repo):
     `s6d` (s6d-wip), `s2b` (s2b-wip at `0d94be9`), `landing`
     (landing-2026-10-19b). A fresh session can remove them with `git
     worktree remove`; the branches are pushed.
