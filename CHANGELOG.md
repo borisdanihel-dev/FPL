@@ -3947,3 +3947,16 @@ captain table (mean, P(≥10), P(≥15), p90), information only.
 `test_fpl.py` untouched; mutations 18 of 18 red.
 
 Report: `worklog/cc_2026-10-19_S14.md`; verifier `worklog/verify_S14.md`.
+
+## 2026-10-19 — RULING S14 (Boris accepts) + Part F; S14 amendment 1, the options within 0.3 xP (`677f34e` ruling, `3de32ff` amendment, `282f7e4` code)
+
+S14 accepted as information: the captain table prints in the GW8 bundle;
+the captain rule is unchanged (highest xp_v2 in the XI). Amendment 1:
+section 7 lists every other XI player whose xp_v2 is within 0.3 of xp_v2's
+captain, beside him (xp_v2, mean, P(≥10), P(≥15), p90). There is no
+tie-break, and no S14 or S6d number moved. Live GW8: Saka 6.00, option
+Calafiori 5.83; Haaland 5.68 and Mbeumo 5.67 just outside. Suite 686 →
+687; mutations 6 of 6 red; verifier PASS (`worklog/verify_S14_amend1.md`).
+RULINGS PART F are verbatim in BUILD_PLAN.md "Part F - queued rulings",
+queued after the GW8 queue. F-A (12 dry runs per UTC day) applies now, and
+W1b's cap moves to 12 when W1b is worked.
