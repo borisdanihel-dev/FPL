@@ -3779,3 +3779,36 @@ Report: `worklog/cc_2026-10-19_S6b.md`; verifier `worklog/verify_S6b.md`.
    the next landing of S8, S11, S12, S13, S6b, S6c, the bundle and the
    CLAUDE.md provenance line; Step 14). `lane-b` pushed; `C:\GIT\FPL-b`
    and its `tools/out` left untouched.
+
+## 2026-10-19 — S6c: the safety check, xp_v2 as tested against own_rebuilt (`d662656` prereg, `11c262c` / `28d0578` code; the merged session)
+
+**What.** `tools/xp_v2_replay.py --s6c`: S6b's 50 squads (seed 7), metric
+and bootstrap (B 10,000, seed 20261018, 90%) on 2025/26 GW5–38 re-scored
+under the 2026/27 rules, with own_rebuilt in own_proxy's place.
+own_rebuilt = live own's `project()` as `record_status` calls it: the form
+term over rounds t−4..t−1 shrunk to the 2024/25 personal prior (full name,
+one element, 450+ minutes, keyed by the 2025/26 `web_name`), else the
+positional prior; the minutes-reliability scaling; the FDR adjustment from
+`fixtures.csv`'s end-of-season FDR; status and chance taken as available.
+It lacks the pre-deadline FDR, status and `chance_next_round`, personal
+priors before 2024/25, and FPL-id identity for the personal prior.
+
+**Measured.** xp_v2 − own_rebuilt **+0.515 per squad per gameweek, 90% CI
+[+0.213, +0.816]** (p 0.0068, n 34); season +17.5 per squad (own_rebuilt
+1362.0, xp_v2 1379.5, own_proxy 1367.4). The ruling's line: upper bound
++0.816 ≥ 0 → **GW8 SWITCH STANDS**. Information: own_rebuilt − own_proxy
+−0.158 [−0.455, +0.141]; Spearman among starters +0.0154 [−0.0120,
++0.0421]; MAE −0.141 [−0.256, −0.036]; same XI 0.64, same captain 0.42.
+2026/27 on our squad (information): GW5 own 54, GW6 own 59, GW7 not locked
+down; xp_v2 as tested printed "not available" until S6d. Output
+`tools/out/s6c/` with `run.txt` (commit `28d0578`, 0 modified files, 14 s).
+S6b reproduces on this checkout byte for byte.
+
+**Tests.** 652 → 660 by discovery (`tests/test_S6c.py`, 8 tests);
+`test_fpl.py` untouched. The first code commit failed `test_fpl`'s
+ProjectionLogKey guard (the GW5–7 print read the log directly); fixed in
+`28d0578` through `fpl_edge.forecasts(read_log(...), d)`. Mutations 16 of
+18 red; 2 equivalent (`personal_priors` and `project` repeat the 450- and
+45-minute guards).
+
+Report: `worklog/cc_2026-10-19_S6c.md`; verifier `worklog/verify_S6c.md`.
