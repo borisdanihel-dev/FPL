@@ -3541,3 +3541,40 @@ Tests: `test_fpl.py` 386 → 386; `tests/test_S11.py` 8; mutations 20 of
 20 red (two first-round survivors were test gaps, closed).
 
 Report: `worklog/cc_2026-10-19_S11.md`; verifier `worklog/verify_S11.md`.
+
+## 2026-10-19 — bundle: the Thursday deadline-pass file, `tools/gw_pass.py` (`0df1443` / `a01c862` rulings, `ed1bbb6` prereg rows, `3029867` code; lane B)
+
+RULING morning 19 Oct items 3 and 6 and RULING S8 verifier FAIL item (d)
+(verbatim in `prereg/bundle.md`). `tools/gw_pass.py` (standard library
+only; the nightly never imports it) composes, from the newest snapshot in
+the data folder, one file `tools/out/gw_pass/gw<N>_pass.txt` with
+`run.txt`: S5 `--live` (odds-implied λ and clean sheets, our GK/DEF), the
+S7 chip table, the S8 top plans with the no-hit and buffer-3.0 lines
+beside the baseline's choice (best one-week move or roll, never a hit;
+where they differ the baseline is the default and the planner the note),
+the S9 league report with the captain and effective-ownership tables,
+own v xp_v2 XI, bench and captain side by side (`chips.xi_and_bench`,
+captain = the highest projection in the XI), and the keeper line (own's
+recorded P(start) beside S12's keeper lock, not adopted). A section with
+a missing input or a failing tool says so and the pass continues;
+nothing is substituted. Verifier: Claude Fable 5.1, three runs: FAIL on check 6 (the captain tie rule untested), FAIL on check 6 (three pinned terms untested), then **PASS** on every check (`worklog/verify_bundle.md`). Not on master;
+information only, no bar, no adoption. First run on the 2026-10-18
+export: the baseline Branthwaite → De Cuyper is the default, the planner's
+Thomas → De Cuyper the note; own and xp_v2 share the captain (Haaland)
+and differ in 8 of 15 slots; keeper lock 0.95 for both our keepers. The
+record is Thursday's file (from Wednesday night's snapshot, refreshed
+after Thursday's nightly). **Amendment 1** (Boris, 19 Oct morning,
+verbatim in the prereg; `500dae7`): 1 free transfer confirmed for GW8,
+printed beside the planner's estimate; three named rows under the top 5
+with the same columns — Thiago → João Pedro by `planner.evaluate`
+(accent-insensitive names; an illegal swap reported with its reason),
+the roll, and the best single bench upgrade with GW8 valued under Bench
+Boost (all 15 count; the outgoing player one of the four bench slots of
+the GW8 XI by own) — on the 2026-10-18 export 1.55, 0.00 and 2.90
+(Slater → Ayari). RULING landing + S11 item 3: the header's deadline from
+`fpl.sqlite` `events.deadline_time`. Tests: `test_fpl.py` 386 → 386;
+`tests/test_bundle.py` 6; mutations 18 of 18 red (the verifier's two rounds of
+survivors - the captain tie rule, the Bench-Boost captain term, the
+lost-FT term, the sqlite deadline - tested in `f6e4757` and `96b9dfd`).
+
+Report: `worklog/cc_2026-10-19_bundle.md`; verifier `worklog/verify_bundle.md`.

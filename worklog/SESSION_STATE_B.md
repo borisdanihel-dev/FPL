@@ -128,10 +128,10 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   - **S11:** complete and **adopted** (RULING landing + S11 item 2) as the share input to the xg half of `xp_v2`; not a decision input
     on its own; it enters `xp_v2`'s past-season test, ruled once Step 10 lands. Verifier: FAIL on check 6 (a test gap) then PASS on
     the re-run; both metrics pass their Holm-adjusted bars (goals +0.0061, assists +0.0043). Report `worklog/cc_2026-10-19_S11.md`.
-  - **Bundle** (`tools/gw_pass.py`): built with amendment 1 (1 FT confirmed; Thiago -> Joao Pedro, roll, the best Bench-Boost bench
-    upgrade beside the top 5) and the sqlite deadline; first verifier run FAIL on check 6 (the captain tie rule untested, closed in
-    `f6e4757`); re-verification running. Thursday: `git -C C:\GIT\FPL-data pull`, then `python tools/gw_pass.py` (morning, from
-    Wednesday night's snapshot; again after Thursday's nightly) -> `tools/out/gw_pass/gw8_pass.txt`.
+  - **Bundle** (`tools/gw_pass.py`): complete with amendment 1 (1 FT confirmed; Thiago -> Joao Pedro, roll, the best Bench-Boost bench
+    upgrade beside the top 5) and the sqlite deadline; verifier PASS on the third run (two rounds of test gaps closed), write guard
+    clean; report `worklog/cc_2026-10-19_bundle.md`. Thursday: `git -C C:\GIT\FPL-data pull`, then `python tools/gw_pass.py`
+    (morning, from Wednesday night's snapshot; again after Thursday's nightly) -> `tools/out/gw_pass/gw8_pass.txt` with `run.txt`.
   - **Items since the chat review (restarted at 0 by RULING morning 19 Oct):** S11, bundle = 2 of 6; the S8 corrections are a
     continuation of S8.
   - **Queue:** nothing without Boris (Steps 14, 15, 19 need rulings); after the replays, S8's record and re-verify; Thursday's bundle.
