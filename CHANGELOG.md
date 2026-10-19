@@ -3507,3 +3507,29 @@ unused numbers.
 - tests 613 -> 614; mutations P1-P15 red;
 - verifier PASS (Fable 5.1, high);
 - landing dry run `7171924` green.
+
+## 2026-10-19 — W2 built: sync columns, bottomup_lambda as the sixth source, the CHIPS and LEAGUE report sections (`4d48697`, `aa5352a`, `451ade6`, `109e58a` on `w2-wip`; not merged)
+
+- **Sync:** `fetched_at_utc` on `transfers`, `chips`, `standings` and
+  `player_history`; `players.code`; named-column inserts.
+- **Standings label note (RULING W2 standings):** the seven `standings`
+  rows labelled event 2 hold GW3 snapshots (S9 verifier). They are kept
+  byte for byte and flagged `label_error = 1` when the column is added:
+  entries 18931, 881799, 2322726, 3073318, 4866471, 5826302, 8690100, each
+  total off its GW2 `entry_gw` total. Every reader (the export) skips them;
+  GW2's league rank stays "not recorded".
+- **Sixth source:** `fpl_lambda.py` (S5's live functions verbatim, the
+  fallback on the export's results); `bottomup_lambda` recorded nightly,
+  RECORD SKIP (a WARN) without an odds snapshot before the deadline.
+- **Report sections:** `fpl_sections.py` with verbatim copies of the chips
+  and league tools appends CHIPS and LEAGUE to the report; check 31 "report
+  sections" WARNs on a skip or a crash, never FAILs.
+- **Measured on real data:** 7 flags, 42 rows kept, the export identical;
+  264 bottomup_lambda rows equal to the tool; five sources identical;
+  CHIPS and LEAGUE identical to the tools.
+- **Checks:** suite 614 → 625 (`tests/test_W2.py` 11); mutations 17 of 17
+  red; verifier PASS (`worklog/verify_W2.md`).
+- **Next:** merge Saturday 24 Oct after the GW8 deadline, outside 9d, after
+  a dry run and with tag `pre-W2`.
+
+Report: `worklog/cc_2026-10-19_W2.md`.
