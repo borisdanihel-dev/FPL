@@ -7,6 +7,29 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
+- **CURRENT (19 Oct, about 13:30 UTC):**
+  - **S6c done** on `s6c-wip` (`d662656` prereg, `11c262c` + `28d0578`
+    code, `247edb9` report): xp_v2 − own_rebuilt +0.515 [+0.213, +0.816]
+    per squad per gameweek → **GW8 SWITCH STANDS**; verifier PASS (Fable
+    5.1); suite 652 → 660. Report `worklog/cc_2026-10-19_S6c.md`.
+  - **S6d (queue item 2) built** on `s6d-wip` (prereg `9fa7ab1`, code
+    `4d2d1c7` + `a1595e4`, S6c merged in `c98487b`), worked in the scratch
+    worktree `<session scratchpad>/s6d`: `tools/xp_v2_live.py` (xp_v2 as
+    tested live; its core equals S6b's `Replay.xp_v2` exactly on 2025/26),
+    the bundle's section 5 (own v xp_v2 as tested; own picks GW8 when it is
+    missing) and the keepers' xp_v2, the GW5–7 live column (GW5 +0, GW6
+    +2). Suite 660 → 667; mutations 14 of 15 red, 1 equivalent. Verifier
+    running (Fable); then report, CHANGELOG, push.
+  - **Open for the chat:** (1) S6d's prior season: 2025/26 for the live
+    forecast (BUILD_PLAN Step 11, "priors come from last season"); lane
+    B's handover named 2024/25. (2) Step 14: xp_v2 has no saves term and
+    no goals-conceded term in its xg half, so a PMF with saves at their
+    measured rate cannot match xp_v2's mean within 0.05 for keepers;
+    question in the S6d report.
+  - **Next:** the landing branch (lane-b items + `s6c-wip` + `s6d-wip` +
+    the CLAUDE.md provenance line) needs one dry run (it changes `tests/`):
+    Boris's click, Tuesday with S2b's or Wednesday's; land before Thursday
+    11:30 UTC.
 - **Merged session, 19 Oct 12:50 UTC (Boris's queue, in order):**
   1. S6c today, on `s6c-wip` off `origin/lane-b`, as ruled in
      `prereg/S6b.md`.
