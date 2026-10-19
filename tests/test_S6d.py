@@ -68,10 +68,11 @@ def toy_hist_root(root):
     return root
 
 
-def toy_live(tmp, export_gw=8, post_deadline_export=False, status=None, chance=None, sub=None):
+def toy_live(tmp, export_gw=8, post_deadline_export=False, status=None, chance=None, sub=None, few=()):
     """S5's toy 2026/27 folder plus first and second names in fpl.sqlite,
     ICT in the export, and the export edits: status {pid: s}, chance {pid:
-    c}, sub {pid: event} (a 30-minute appearance without a start)."""
+    c}, sub {pid: event} (a 30-minute appearance without a start), few
+    (players with 10 minutes in each of the last four gameweeks)."""
     gw8, odds = toy_2627(tmp, post_deadline_export=post_deadline_export, export_gw=export_gw)
     c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
     c.execute("alter table players add column first_name text"); c.execute("alter table players add column second_name text")
@@ -87,6 +88,8 @@ def toy_live(tmp, export_gw=8, post_deadline_export=False, status=None, chance=N
         for r in d["player_gw_recent"]:
             if (sub or {}).get(r["player_id"]) == r["event"]:
                 r["mins"], r["starts"], r["pts"] = 30, 0, 2
+            if r["player_id"] in few and r["event"] > d["gameweek"] - 4:
+                r["mins"], r["starts"], r["pts"] = 10, 0, 1
         with gzip.open(path, "wt", encoding="utf-8") as fh:
             json.dump(d, fh)
     return gw8, odds
@@ -222,7 +225,7 @@ class Live(unittest.TestCase):
             XL.live(self.tmp, self.hist, now=NOW9)
 
     def test_gate_and_the_sub_term_with_chance(self):
-        toy_live(self.tmp, status={3: "d"}, chance={4: 50}, sub={4: 8})
+        toy_live(self.tmp, status={3: "d"}, chance={4: 50}, sub={4: 8}, few=(7,))
         res = XL.live(self.tmp, self.hist, now=NOW9)
         self.assertNotIn(3, res["xp"])                                                      # status d: no xp_v2
         x = res["detail"][4]
@@ -235,9 +238,10 @@ class Live(unittest.TestCase):
         self.assertAlmostEqual(x["p_sub"], 0.25 * 0.5)                                      # times chance 50%
         self.assertEqual(x["p_start"], inp["players"][4]["p_start"])                        # the current minutes model, chance included
         self.assertAlmostEqual(res["xp"][4], x["p_start"] * (x["e_xg"] + x["e_bl"]) / 2 + x["p_sub"] * x["e_sub"])
-        for pid, p in inp["players"].items():
-            if p["mins_last4"] < 45:
-                self.assertNotIn(pid, res["xp"])
+        under = [pid for pid, p in inp["players"].items() if p["mins_last4"] < 45]
+        self.assertIn(7, under)                                                             # 40 minutes in the last four (the verifier's gap)
+        for pid in under:
+            self.assertNotIn(pid, res["xp"])
         ict = XL.ict_live(d)
         tot = {p["id"]: p["influence"] + p["creativity"] + p["threat"] for p in d["all_players"] if p["minutes"] > 0}
         order = sorted(tot, key=lambda k: (tot[k], k))
