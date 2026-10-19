@@ -72,3 +72,21 @@ RULING S8 verifier FAIL:
 (e) Provenance, from now on, both lanes: every output folder holds a run.txt with the commit hash it ran on and its start and end times (UTC), written by the tool itself. A report may cite a run only when that commit equals the item's final code. Before the landing, check every recorded number in S4, S5, S6, S7, S9, S12 and S13 against this; rerun only where it does not hold, and list the result in the landing report. Propose the matching CLAUDE.md line in the landing.
 Then continue the morning ruling: the landing after W1's green dispatch, S11 after its download, the Thursday bundle.
 END RULING
+
+## Amendment 1 (Boris, 2026-10-19 morning, verbatim; named plans beside the top 5)
+
+Boris confirms 1 free transfer for GW8 (the planner's estimate is right). In the Thursday bundle, score these explicitly beside the top 5, same columns: (1) Thiago -> Joao Pedro, (2) roll the transfer, (3) the best single bench upgrade if Bench Boost is played in GW8.
+END
+
+Pinned before any code for it (2026-10-19): the three rows are printed in the S8 section under the top-5 table with the same columns
+(score, gain, hits, lost FT, weekly dxP, plan), scored by `planner.evaluate` on Boris's schedule, decay 0.85, the planner's squad,
+bank, xP weeks, P(start) and the confirmed 1 free transfer (the planner's own estimate; the bundle prints both and flags a
+difference). (1) Thiago -> Joao Pedro: the single swap of our player whose web_name normalises to "thiago" for the market player
+whose web_name normalises to "joao pedro" (accents and case stripped; a missing or ambiguous name is reported as missing input;
+an illegal swap - budget, club cap, GK+DEF cap - is reported with its reason, never scored). (2) Roll: the empty plan, scored as
+the planner scores it (gain 0, no hit, the lost-FT value of rolling with 1 banked = 0). (3) The best single bench upgrade under
+Bench Boost in GW8: over the four bench slots of our GW8 XI by own (`chips.xi_and_bench` on the GW8 xP: the sub keeper and the
+three outfield bench players) as the outgoing player and every affordable same-position market player (status available,
+45+ minutes in the last four) as the incoming one, the legal swap with the highest score when GW8 is valued with all 15
+counting (the sum of the 15 projections plus the captain's, the captain = the highest projection) and GW9-13 as the planner
+values them (the best XI with the captain); the GW8 term of the weekly dxP is that Bench-Boost gain, labelled. Information only.
