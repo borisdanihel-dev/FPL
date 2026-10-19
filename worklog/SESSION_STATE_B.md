@@ -90,8 +90,14 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   `7f8ba52`, `22a179c`; 7 tests, mutations 19 of 19 red). **The replay
   FAILS its bar**: +7.68 [−6.58, +22.06] against ≥ +10 with a positive lower
   bound (`tools/out/s8_run1/`; run 2 on the final code and the verifier's
-  own run confirm). Verifier: S8_VERIFIER_STATE. Nothing adopted; the
-  decision is parked below. The queue continues with S12.
+  own run confirm). **Verifier FAIL** (Fable 5.1, `worklog/verify_S8.md`): the
+  recorded replay is the first commit's, whose candidate generator
+  dropped 30–45% of the distinct pairs; the verifier's replay of the
+  final code gives +2.90 [−12.74, +18.40]; my "run 2 byte-identical"
+  claim was false (written 32 s after run 1). The lane stopped on the
+  FAIL (mode e); a rerun of the replay on the final code was started
+  into the session scratchpad (`s8_run3`, about four hours) and is
+  recorded only under the ruling. Nothing adopted; the item is not done.
 - **S12:** complete on `lane-b` (`tools/minutes_v2.py`, `tests/test_S12.py`;
   prereg rows `3b94269`; code `005531a`, `d8a2ee5`, `e68bf70`; 7 tests,
   mutations 20 of 20 red). **The pre-registered test FAILS on (a)**: Brier
@@ -138,10 +144,17 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   1. The Monday landing: after W1's green dispatch, the landing branch
      (revert of `32bf218` + lane-b's items + the BUILD_PLAN Part C line) is
      pushed and needs the dry-run click.
-  2. **S8 result:** the planner's pre-registered test failed (+7.7 points
-     per squad, interval spanning zero, against ≥ +10). Question: keep it
-     as a screen, re-register a test (e.g. no hits / a tighter hit rule),
-     or shelve until S11/S12 change its inputs?
+  2. **S8 verifier FAIL — the recorded replay is wrong.** The numbers in
+     the S8 report and CHANGELOG (+7.68 [−6.58, +22.06]) came from the
+     first commit's generator, which dropped 30–45% of the two-transfer
+     plans; the verifier's replay of the final code gives +2.90 [−12.74,
+     +18.40]. The bar fails either way. Rulings needed: (a) record the
+     final-code replay (the scratchpad rerun `s8_run3`, or the verifier's
+     numbers) in a new CHANGELOG entry and re-verify; (b) the lost-FT
+     charge: the prereg's k-th schedule value or the code's (k + 1)-th
+     against rolling; (c) close the five test gaps first? Then the
+     original question stands: keep the planner as a screen, re-register
+     a test, or shelve.
   3. **S11 download approval:** the ruling's priors and reliability
      constants come from 2024/25 per-gameweek data (the player's 2024/25
      share at the same club; k from split-half reliability measured on

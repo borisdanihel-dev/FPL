@@ -3280,7 +3280,7 @@ Report: `worklog/cc_2026-10-18_S9.md`; verifier `worklog/verify_S9.md`.
 
 RULING Step 8 (verbatim in `prereg/S8.md`): `tools/planner.py` (standard
 library only; the nightly never imports it), `tests/test_S8.py`. Verifier:
-VERIFIER_LINE. Not on master. **Pre-registered replay: FAIL on its bar.**
+**FAIL** (see the amendment of 2026-10-19 below). Not on master. **Pre-registered replay: FAIL on its bar.**
 
 **Definitions, as pre-registered.** xP = own (recorded next gameweek,
 `project()` on later fixture-known gameweeks); pool = top 25 per position
@@ -3386,3 +3386,25 @@ mutations 22 of 22 red (two first-round survivors were test gaps,
 closed).
 
 Report: `worklog/cc_2026-10-19_S13.md`; verifier `worklog/verify_S13.md`.
+
+## 2026-10-19 — S8 amendment: verifier FAIL, the recorded replay is the first commit's (`worklog/verify_S8.md`; lane B, overnight)
+
+The S8 entry above recorded the 2025/26 replay as planner 1919.5 points
+per squad against baseline 1911.8, paired gain +7.68 [−6.58, +22.06], and
+called `7f8ba52` score-neutral. The verifier (Claude Fable 5.1) showed
+both to be wrong: the first commit's `plan_candidates` skipped pairs of
+singles by outgoing-id order, which `itertools.combinations` already
+yields once, so 30–45% of the distinct two-transfer plans were never
+evaluated; the fix `7f8ba52` restores them and changes the replay. The
+verifier's own replay of the final code `22a179c` (14,116 s): planner
+1914.7 (12.58 hits, 49.5 transfers) against the same baseline 1911.8,
+**paired gain +2.90, 90% CI [−12.74, +18.40]**, robustness [9, 4, 7, 3,
+11]. The "second run on the final code, byte-identical" claim was false:
+the file was written 32 seconds after the first. The bar is failed under
+both sets of numbers; nothing moves live. The entry above is not edited;
+its replay numbers are superseded and not to be cited. Open for the
+ruling: recording the final-code replay (a rerun was started into the
+session scratchpad after the verdict) and re-verifying; the lost-FT
+charge (the prereg's k-th value or the code's (k + 1)-th against
+rolling); the five test gaps the verifier found. Report:
+`worklog/cc_2026-10-19_S8.md` (correction section).
