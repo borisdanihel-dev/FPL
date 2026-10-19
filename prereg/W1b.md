@@ -119,3 +119,7 @@ RULING morning 19 Oct (lane A):
 7. CLAUDE.md b and g: name SESSION_STATE_A.md / SESSION_STATE_B.md. Keep every pre-* tag until the GW10 checkpoint. Finish the S3 report list as you proposed.
 Order today: W1 merge and dispatch; Step 10 on s10-wip; Step 16 part 1 after its download; S16 lands after a dry run.
 END RULING
+
+## RULINGS PART F, item F-A (verbatim, 2026-10-19; the whole block is in BUILD_PLAN.md Part F): W1b's cap constant becomes 12
+
+F-A. Dry-run limit: 12 per UTC day, manual and push-triggered together, effective now. Quiet windows unchanged (21:30 UTC until the night's data commit; one hour before a deadline). W1b's cap constant becomes 12.
