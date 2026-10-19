@@ -4304,6 +4304,11 @@ class NightlyRunner(unittest.TestCase):
         here = os.path.dirname(os.path.abspath(__file__))
         tmp = self._world(export=False, edge=self._get(os.path.join(here, "fpl_edge.py")))
         self._put(os.path.join(tmp, "fpl_lambda.py"), self._get(os.path.join(here, "fpl_lambda.py")))   # W2: the record imports it
+        for name in ("fpl_xpv2.py", "fpl_xpr.py", "fpl_shares.py", "fpl_xpv.py", "fpl_hist.py"):          # W3: so does xp_v2
+            self._put(os.path.join(tmp, name), self._get(os.path.join(here, name)))
+        os.makedirs(os.path.join(tmp, "priors"), exist_ok=True)
+        prior = os.path.join("priors", "s11_prior_2025-26.json")
+        self._put(os.path.join(tmp, prior), self._get(os.path.join(here, prior)))
         with open(os.path.join(tmp, "fpl_export_gw3.json"), "w", encoding="utf-8") as fh:
             json.dump(self.export, fh)
         with open(os.path.join(tmp, "fpl_export_gw2.json"), "w", encoding="utf-8") as fh:
@@ -4312,6 +4317,8 @@ class NightlyRunner(unittest.TestCase):
 
     def test_the_real_record_and_report_need_no_database(self):
         self.export, self.previous = _recordable_export(), make_export(gw=2)
+        for p in self.export["all_players"]:                                   # W3: the export's prior key
+            p.setdefault("code", 900000 + p["id"]); p.setdefault("first_name", "First"); p.setdefault("second_name", p["web_name"])
         tmp = self._real_world()
         code, log, _ = self._run(tmp)
         self.assertEqual(code, 0, log[-12:])

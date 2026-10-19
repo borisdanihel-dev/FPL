@@ -78,8 +78,8 @@ SEVERITY = {1: FAIL, 2: FAIL, 3: FAIL, 4: FAIL, 5: FAIL, 6: WARN, 7: WARN, 8: FA
             10: FAIL, 11: FAIL, 12: WARN, 13: FAIL, 14: WARN, 15: FAIL, 16: FAIL, 17: WARN,
             18: FAIL, 19: WARN, 20: FAIL, 21: WARN, 22: WARN, 23: FAIL, 24: FAIL, 25: WARN,
             26: WARN, 27: SKIP, 28: FAIL, 29: FAIL, 30: WARN, 31: WARN}
-SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep", "bottomup_lambda")     # as fpl_nightly.SOURCES
-SKIPPABLE = ("fpl_ep", "bottomup_lambda")      # a RECORD SKIP is a WARN (W1: no ep_next; W2: no odds snapshot)
+SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep", "bottomup_lambda", "xp_v2")     # as fpl_nightly.SOURCES
+SKIPPABLE = ("fpl_ep", "bottomup_lambda", "xp_v2")      # a RECORD SKIP is a WARN (W1: no ep_next; W2: no odds snapshot; W3: no prior)
 CREDITS_WARN = 60           # Odds API credits left below this: check 30 WARNs (W1 decisions)
 CREDIT_HEADERS = ("x-requests-used", "x-requests-remaining", "x-requests-last")   # in the ODDS OK line's order
 
@@ -520,7 +520,8 @@ def c29(x):
     for each of SOURCES; a RECORD FAIL - a failure, or a source skipped because
     the suite was red - or a missing source fails. fpl_ep's RECORD SKIP (no
     ep_next in the export) is a WARN only (RULING W1 decisions, point 3), and so
-    is bottomup_lambda's (no odds snapshot before the deadline; W2)."""
+    are bottomup_lambda's (no odds snapshot before the deadline; W2) and
+    xp_v2's (no prior file or key; W3)."""
     text = x.run_log or ""
     i = text.rfind("record summary:")
     if i < 0:
@@ -566,7 +567,7 @@ def c30(x):
     return WARN, line
 
 
-SECTION_TITLES = ("CHIPS", "LEAGUE")             # as fpl_sections.TITLES (W2)
+SECTION_TITLES = ("CHIPS", "LEAGUE", "CAPTAIN", "BAN RISK", "REALISED")     # as fpl_sections.TITLES (W2, W3)
 
 
 def c31(x):
@@ -577,7 +578,7 @@ def c31(x):
     failed = [l.strip() for l in text.splitlines() if l.startswith("SECTIONS FAILED")]
     got = {}
     for line in text.splitlines():
-        m = re.match(r"(CHIPS|LEAGUE) (OK \d+ lines|SKIPPED: .*)$", line.strip())
+        m = re.match("(" + "|".join(map(re.escape, SECTION_TITLES)) + r") (OK \d+ lines|SKIPPED: .*)$", line.strip())
         if m:
             got[m.group(1)] = m.group(2)
     if failed:

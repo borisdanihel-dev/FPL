@@ -708,6 +708,7 @@ def export(db, gw):
                ROUND(pl.influence,1) AS influence,
                pl.tin_event, pl.tout_event,
                (pl.tin_event - pl.tout_event) AS net_transfers, pl.ep_next,
+               pl.code, pl.first_name, pl.second_name,
                COALESCE(SUM(g.total_points),0) AS pts_last4,
                COALESCE(SUM(g.minutes),0) AS mins_last4,
                COALESCE(SUM(g.defensive_contribution),0) AS defcon_last4,

@@ -2946,6 +2946,19 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
         if skipped:
             print(f"  {note} - bottomup_lambda skipped tonight")
             return RECORD_SKIP, 0, note
+    elif source == "xp_v2":
+        # S6d's xp_v2 as tested, adopted for the GW8 switch (W3): the export,
+        # the newest odds snapshot before the deadline (none: every fixture on
+        # the fallback, as the tool), the fallback fitted on the export's
+        # results and last season's S11 prior from priors/ (committed); the
+        # record never opens the database. A missing prior or key is a SKIP,
+        # a WARN, never a FAIL.
+        import fpl_xpv2
+        data_dir = os.path.dirname(os.path.abspath(path))
+        rows, note, skipped = fpl_xpv2.record(d, target, dl, data_dir)
+        if skipped:
+            print(f"  {note} - xp_v2 skipped tonight")
+            return RECORD_SKIP, 0, note
     elif source == "xg":
         tick, _ = build_ticker(d, horizon)
         cs_table, cs_default = cs_rate_by_fdr(d)
