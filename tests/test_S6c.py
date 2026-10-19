@@ -87,8 +87,8 @@ def toy_2627(folder, locked=(5, 6), gws=(5, 6, 7)):
             w.writerow(["2026-09-13T21:55:00+00:00", "own", 5, pid, f"W{pid}", f"{pid:.3f}"])          # older snapshot
             w.writerow(["2026-09-14T21:55:00+00:00", "own", 5, pid, f"W{pid}", f"{16 - pid:.3f}"])     # the last before GW5's deadline
             w.writerow(["2026-09-15T21:55:00+00:00", "own", 5, pid, f"W{pid}", f"{pid * 3:.3f}"])      # after it: never read
-            w.writerow(["2026-09-15T21:55:00+00:00", "xg", 6, pid, f"W{pid}", "9.0"])                  # another source: never read
             w.writerow(["2026-09-15T21:55:00+00:00", "own", 6, pid, f"W{pid}", f"{pid % 5:.3f}"])
+            w.writerow(["2026-09-15T21:55:00+00:00", "xg", 6, pid, f"W{pid}", "9.0"])                  # another source, written after own: never read
 
 
 class Toys(unittest.TestCase):
@@ -321,13 +321,17 @@ class Info2627(unittest.TestCase):
             text = buf.getvalue()
             self.assertEqual([r["graded"] for r in recs], [True, True, False])                # GW7 not locked down
             self.assertIn("GW7: not locked down: not graded", text)
-            self.assertEqual(recs[0]["snapshot"], "2026-09-14")                               # the last snapshot before the deadline
-            own5, day = X.recorded_own(os.path.join(d, "projection_log.csv"), 5, "2026-09-15T10:00:00Z")
-            self.assertEqual(day, "2026-09-14"); self.assertEqual(own5[1], 15.0); self.assertEqual(own5[15], 1.0)
+            self.assertEqual(recs[0]["snapshot"], "2026-09-14T21:55:00+00:00")                # the last snapshot before the deadline
+            log_rows = E.read_log(os.path.join(d, E.LOG_PATH))
+            own5, day = X.recorded_own(log_rows, 5, {"events": [{"event": 5, "deadline_time": "2026-09-15T10:00:00Z"}]})
+            self.assertEqual(day, "2026-09-14T21:55:00+00:00"); self.assertEqual(own5[1], 15.0); self.assertEqual(own5[15], 1.0)
+            self.assertEqual(X.recorded_own(log_rows, 5, {"events": [{"event": 5, "deadline_time": "2026-09-14T10:00:00Z"}]})[1],
+                             "2026-09-13T21:55:00+00:00")                                      # an earlier deadline: the earlier snapshot
             rows = [{"id": i, "pos": p} for i, p in enumerate([1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4], 1)]
             actual = {pid: (float(pid % 7 + 1), 0.0 if pid == 3 else 90.0) for pid in range(1, 16)}
             self.assertEqual(recs[0]["own"], X.realised_on(rows, own5, actual)[0])
             self.assertEqual(recs[0]["own_cap"], 1)                                           # the highest own projection in the XI
+            self.assertEqual(recs[1]["own"], X.realised_on(rows, {pid: float(pid % 5) for pid in range(1, 16)}, actual)[0])   # GW6: own's rows, not xg's
             self.assertIn("xp_v2 as tested: not available", text)
             self.assertNotIn("v2", recs[0])
             # with a live xp_v2 the paired line prints

@@ -487,21 +487,14 @@ def realised_on(rows, proj, actual):
     return pts + actual.get(cap["id"], (0.0, 0))[0], cap["id"]
 
 
-def recorded_own(log_path, event, deadline):
-    """{pid: predicted} of source own for `event`: the last snapshot (UTC day
-    of made_at) among rows made before the deadline; and that day."""
-    from datetime import datetime
-    cut = datetime.fromisoformat(deadline.replace("Z", "+00:00"))
-    rows = []
-    with open(log_path, encoding="utf-8", newline="") as fh:
-        for r in csv.DictReader(fh):
-            if (r["source"] == "own" and int(r["event"]) == event
-                    and datetime.fromisoformat(r["made_at"].replace("Z", "+00:00")) < cut):
-                rows.append(r)
+def recorded_own(log_rows, event, d_ev):
+    """{pid: predicted} of source own for `event` as every reader takes it,
+    fpl_edge.forecasts: the gameweek's last snapshot made before its
+    deadline (the deadlines in d_ev); and that snapshot's made_at."""
+    rows = [r for r in E.forecasts(log_rows, d_ev) if r["source"] == "own" and int(r["event"]) == event]
     if not rows:
         return {}, None
-    day = max(r["made_at"][:10] for r in rows)
-    return {int(r["player_id"]): float(r["predicted"]) for r in rows if r["made_at"][:10] == day}, day
+    return {int(r["player_id"]): float(r["predicted"]) for r in rows}, rows[0]["made_at"]
 
 
 def xp_v2_live(data_dir, event):
@@ -514,12 +507,14 @@ def info_2627(data_dir, out=print, gws=INFO_GWS, entry=ENTRY, xp_v2_fn=xp_v2_liv
     and captain each model would choose and their realised official points,
     under the lockdown guard. Returns the per-gameweek records."""
     import sqlite3
-    db_path, log_path = os.path.join(data_dir, "fpl.sqlite"), os.path.join(data_dir, "projection_log.csv")
+    db_path, log_path = os.path.join(data_dir, "fpl.sqlite"), os.path.join(data_dir, E.LOG_PATH)
     for p in (db_path, log_path):
         if not os.path.exists(p):
             raise MissingInput(f"{p} is missing")
+    log_rows = E.read_log(log_path)
     db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
+        d_ev = {"events": [{"event": ev, "deadline_time": dl} for ev, dl in db.execute("SELECT id, deadline_time FROM events")]}
         out(f"2026/27 GW{gws[0]}-{gws[-1]} (information only, the ruling): recorded own against xp_v2 as tested, on our squad "
             f"(entry {entry}): each model's XI and captain, realised official points with rule_autosubs and the captain doubled")
         recs = []
@@ -540,7 +535,7 @@ def info_2627(data_dir, out=print, gws=INFO_GWS, entry=ENTRY, xp_v2_fn=xp_v2_liv
             rows = [{"id": pid, "pos": pos} for pid, pos in picks]
             actual = {pid: (float(pts or 0), float(mins or 0)) for pid, pts, mins in db.execute(
                 "SELECT player_id, total_points, minutes FROM player_gw WHERE event = ?", (g,))}
-            own, day = recorded_own(log_path, g, ev[0])
+            own, day = recorded_own(log_rows, g, d_ev)
             rec = {"gw": g, "graded": True, "snapshot": day}
             if own:
                 rec["own"], rec["own_cap"] = realised_on(rows, own, actual)
