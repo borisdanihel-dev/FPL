@@ -38,12 +38,21 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     `SOURCES` gain it in `fpl_nightly.py` and `checks.py`; test_W1, test_S3
     and test_fpl learn the sixth source. Real data: identical to the tool for
     264 players; the five other sources identical to master.
-  - **(c) next:** the CHIPS and LEAGUE report sections. Port
-    `tools/chips.py` `live()` (with the part of `tools/backtest.py`'s
-    Harness that `residual_pools` uses) and `tools/league.py` `report()` into
-    the runner; byte-identical on the same data folder, seeds and
-    resamples. A missing input gives `<SECTION> SKIPPED: <why>` and the new
-    check 31 WARNs.
+  - **(c) done** `451ade6` (+ test `109e58a`): `fpl_chips.py`,
+    `fpl_league.py`, `fpl_bt.py` and `fpl_pit.py` (the AST closure of the
+    tools, verbatim, aliases kept; scratchpad `make_sections.py`);
+    `fpl_sections.py` appends CHIPS and LEAGUE to the night's report;
+    `<SECTION> SKIPPED:` and `SECTIONS FAILED` are WARNs in the new check
+    31, never a red night. Real data: identical to the tools (37 and 69
+    lines).
+  - Suite 614 → 625 bare. A runner-like run (`FPL_DATA_DIR`) was in
+    progress; stand-in zones not run (no zone data on this PC; the dry
+    run's Linux image covers it). Mutations 17 of 17. Verifier on Fable
+    running at about 17:00 UTC; then the report
+    `worklog/cc_2026-10-19_W2.md` and CHANGELOG (with the label_error note)
+    on `w2-wip`.
+  - **Dry run:** after W1b is live, push `dry/W2` (allowed in the GW8
+    freeze, RULING 19 Oct afternoon point 3); else Boris's manual dispatch.
   - Then: mutations for all three pieces, the full suite four ways (bare,
     runner-like, stand-in zones, hermetic), a frozen-clock regeneration,
     the verifier, the report, CHANGELOG (with the label_error note). No
