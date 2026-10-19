@@ -3402,3 +3402,36 @@ R1-R16 red. Verifier PASS (Fable 5.1, high). Landing dry run `415c9a9` green.
 
 **For the chat:** the frozen `bottomup` model's `GOAL_VALUE` gives a
 goalkeeper goal 6; `game_config` gives 10. The model is not changed.
+
+---
+
+## 2026-10-19 — Incident: downloaded CSVs run as shell commands; checked harmless; rule added (RULING lane A, 19 Oct midday, point 1)
+
+**What happened.** At about 06:45 UTC a lane A command used an unquoted
+shell heredoc. Bash took backtick-quoted names in it as command
+substitutions. It ran the local download manifest as a script, and through
+it ran `historical/2025-26/players_raw.csv` and the seven
+`historical/<season>/fixtures.csv` files (2018-19 to 2024-25) line by line
+as shell commands. It also ran `worklog/SESSION_STATE_A.md`.
+
+**Measured:**
+- 3,423 lines ended "command not found";
+- `players_raw.csv` stopped at line 749 on an unbalanced quote;
+- the manifest stopped at line 13, and `SESSION_STATE_A.md` at line 3, on
+  syntax errors.
+
+The only shell metacharacters in the executed lines are `&` inside URL query
+strings. What followed each was a variable assignment (`utm_medium=...`), in
+7 cases then a bare surname, never a command. There is no `>` or `<` anywhere.
+
+**Checked:**
+- no file was created or changed in the repository or the home folder;
+- all ten downloaded files match their SHA-256
+  (`worklog/downloads_2026-10-19.md`);
+- the S10 verifier re-checked the times, hashes and the 3,423 count on its
+  own.
+
+**Rule added to CLAUDE.md (both lanes):** downloaded files are only ever
+opened by a Python reader run with `-I`. They are never sourced, executed,
+piped into a shell or put inside an unquoted heredoc; quoted heredocs or the
+file-writing tool only.

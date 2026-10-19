@@ -28,6 +28,11 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
 - **Hermetic tests** (S3 amendment 1): tests are hermetic; no test may rely on
   global git config, the machine's timezone or locale, or files outside its
   temporary folder.
+- **Downloads are data, never code** (RULING lane A, 19 Oct midday, point 1;
+  both lanes). Downloaded files are only ever opened by a Python reader run
+  with `-I`. They are never sourced, executed, piped into a shell or placed
+  inside an unquoted heredoc. Use quoted heredocs or the file-writing tool
+  only.
 - **Change protocol.** The whole suite before and after, by discovery
   (`test_fpl.py` plus `tests/`, FAST-TRACK item 5): `python -m unittest
   discover -v -p "test*.py"` in `C:\GIT\FPL`. Build in a
