@@ -3533,3 +3533,15 @@ unused numbers.
   a dry run and with tag `pre-W2`.
 
 Report: `worklog/cc_2026-10-19_W2.md`.
+
+## 2026-10-19 — W2 amendment 2: any exception inside a section ends SKIPPED (`a78e2e7` prereg, `c21e0e0` code; on `w2-wip`)
+
+- RULING 19 Oct evening, point 3. `fpl_sections.py` catches any exception
+  per section: `<SECTION> SKIPPED: <type>: <message>`; the other section
+  still runs; the CLI exits 0; check 31 WARNs; never a red night. A missing
+  input's line is unchanged.
+- Flag rule unchanged (event 2 only); the stand-in time-zone variant is left
+  to the Linux dry run.
+- Measured: suite 625 → 626; the new test red on the old code; mutations
+  3 of 3; verifier PASS (Fable 5.1, `worklog/verify_W2a2.md`) with a
+  six-source record on real data identical apart from the clock.
