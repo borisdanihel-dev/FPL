@@ -178,6 +178,9 @@ class SixthSource(unittest.TestCase):
         _, _, fixtures, _, _ = OL.sqlite_tables(self.tmp)
         tool_results = [(f["kickoff"], f["home"], f["away"], f["hg"], f["ag"]) for f in fixtures if f["finished"] and f["kickoff"] < self.dl]
         self.assertEqual(sorted(L.results_before(self.d, self.dl)), sorted(tool_results))   # the export's results are the database's
+        late = dict(self.d["fixtures_played"][0], kickoff_time="2099-02-01T15:00:00Z")      # kicked off after the deadline
+        d_late = dict(self.d, fixtures_played=self.d["fixtures_played"] + [late])
+        self.assertEqual(L.results_before(d_late, self.dl), L.results_before(self.d, self.dl))   # never read
         book_t, book_r = OL.snapshot_book(snap[1])[0], L.snapshot_book(snap[1])[0]
         model_t, model_r = OL.fit_fallback(tool_results, self.dl), L.fit_fallback(L.results_before(self.d, self.dl), self.dl)
         want = OL.rebuild_2627(self.d, 9, book_t, model_t)
