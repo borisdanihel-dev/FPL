@@ -116,3 +116,14 @@ RULING S6b acceptance + lanes merge:
 3. Revert rule, fixed now: at the GW10 checkpoint, if the live paired decision metric over GW8-10 has its 90% upper bound below 0, own returns.
 4. Lanes merge: this is lane B's last task. Record this ruling verbatim in prereg/S6b.md, write a complete handover in SESSION_STATE_B.md (open items: S6c; the live "xp_v2 as tested" forecast in the bundle; the bundle runs Thursday about 18:00 and Friday morning with files committed under worklog/gw_pass/gw8/; the next landing of S8, S11, S12, S13, S6b, S6c, the bundle and the CLAUDE.md provenance line; Step 14), push lane-b, and stop. Leave C:\GIT\FPL-b and its tools/out untouched.
 END RULING
+
+## RULING 19 Oct afternoon (verbatim; point 2 confirms the 2025/26 priors, point 6 the GW5-7 reconciliation; recorded after S6d's outputs - a ruling, not an edit of the rows above)
+
+RULING 19 Oct afternoon:
+1. Step 14: option (a), the distribution of xp_v2 itself (mean matches by construction). Record the missing saves term as a GW10-checkpoint item ("xp_v2 + saves" gets its own pre-registered test then); no change to the accepted model before that.
+2. The live xp_v2 priors: 2025/26 is correct ("last season" = the season before the forecast season; S6b used 2024/25 only because it replayed 2025/26). Correct the handover note.
+3. Pushes to dry/W2 during the GW8 freeze are allowed: a dry run writes only data-dryrun-*, never master. W1b's quiet windows still apply.
+4. Step 16 parts 3-4: parked until after GW8; then propose exact sources (URL, size, what each provides) for approval. pre-S2 stays until the GW10 checkpoint.
+5. Dry-run cap: today's six are used. The landing-2026-10-19b and s2b-wip dry runs move to Tuesday after 00:00 UTC.
+6. Reconcile before relying on the GW5-7 retro: our actual GW6 (wildcard, captain Saka) scored 49 officially, while the retro scores our squad 59 (own's picks) and 61 (xp_v2's picks). Check that the retro used the actual GW6 15 (post-wildcard), the official points and FPL's actual autosubs, and explain the gap in the S6c/S6d report. Captain in reality was Saka (the vice was Haaland).
+END RULING

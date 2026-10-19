@@ -58,7 +58,9 @@ after.
   `Replay.xp_v2`). A live "xp_v2 as tested" needs the S11 allocation on the
   2026/27 data (S11's `shares.Season` is 2025/26-only; the live inputs are
   the export's players, `fpl.sqlite`'s fixtures and the odds snapshot for
-  λ_team, the 2024/25 priors from `historical/2024-25/`) — an open item.
+  λ_team, the 2025/26 priors from `historical/2025-26/` — corrected by
+  RULING 19 Oct afternoon point 2: "last season" is the season before the
+  forecast season; this note first said 2024/25) — an open item.
 - **Revert rule, fixed now:** at the GW10 checkpoint, if the live paired
   decision metric over GW8–10 (the realised points of the XI and captain
   chosen by xp_v2 minus those chosen by own, the S6b metric on our real
@@ -82,8 +84,9 @@ after.
    substituted). Prereg first (`prereg/S6c.md`, the ruling verbatim).
 2. **The live "xp_v2 as tested" forecast in the bundle:** S11's allocation
    on 2026/27 (λ_team from the odds snapshot via `odds_lambda`, shares from
-   the season's rows in `fpl.sqlite`/the export, the 2024/25 priors by name
-   and club, k as measured) feeding `xp_v2`'s xg half; printed beside own
+   the season's rows in `fpl.sqlite`/the export, the 2025/26 priors by name
+   and club — corrected by RULING 19 Oct afternoon point 2; this note first
+   said 2024/25 — k as measured) feeding `xp_v2`'s xg half; printed beside own
    in the bundle's "own v xp_v2" section and in the keeper line. Without it
    by Thursday's pass, own picks GW8 (ruling 1).
 3. **The bundle runs:** Thursday 2026-10-22 about 18:00 and Friday
