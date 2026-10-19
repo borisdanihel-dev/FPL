@@ -7,6 +7,49 @@ bundle tool starts, before any of its code. Offline under `tools/`
 bar, no adoption; it composes the live outputs of S5, S7, S8, S9, S6 and
 S12 from the newest snapshot in `C:\GIT\FPL-data`.
 
+Template rows, filled on 2026-10-19 before any bundle code (the rulings
+below govern where they differ):
+
+- **Item:** bundle (RULING morning 19 Oct item 6; RULING S8 verifier FAIL
+  item (d); RULING morning 19 Oct item 3 for the keeper line). Offline,
+  information only.
+- **Hypothesis:** none. The bundle composes existing live outputs into one
+  file for the Thursday deadline pass; it forecasts nothing of its own.
+- **Data:** the newest export and the odds snapshots in `C:\GIT\FPL-data`
+  (read-only), the projection log's recorded rows (`own`, `minutes`); run
+  first on Thursday from Wednesday night's snapshot, refreshed after
+  Thursday's nightly. Its output is `tools/out/gw_pass/gw8_pass.txt` with
+  `run.txt`.
+- **Definitions pinned (the sections, in order):**
+  1. S5 `--live` (`odds_lambda.live`): the fixtures' λ and odds-implied
+     clean-sheet probabilities, and our GK/DEF lines.
+  2. S7 chip table (`chips.live`): the Bench Boost / Free Hit values per
+     gameweek and the next-gameweek call.
+  3. S8 (`planner.live`): the top 5 plans on Boris's schedule and the two
+     exploratory lines (no hits; buffer 3.0), beside the baseline's choice
+     (the best one-week move with a free transfer when its gain > 0, else
+     roll, never a hit: `planner.baseline_plan` on the same squad, bank,
+     pool and xP). Where the planner's top plan differs from the baseline,
+     the baseline is the default and the planner is the note (ruling (d)).
+  4. S9 (`league.report`): the league report with its captain and
+     effective-ownership tables.
+  5. own v xp_v2: our XI, bench order and captain chosen by `own` (the
+     recorded row for the next gameweek) and by `xp_v2` (`xp_v2.forecast`,
+     not recorded), side by side via `chips.xi_and_bench` (captain = the
+     highest projection in the XI, ties by the lower id).
+  6. The keeper line (ruling item 3): for our keepers, own's P(start) (the
+     recorded `minutes` row) beside S12's keeper lock (`minutes_v2.live`,
+     not adopted, information).
+  A section whose input is missing prints "missing input: ..." and the
+  bundle continues; nothing is substituted.
+- **Comparison / metrics / bootstrap / pass threshold:** none; information
+  only, no bar, no adoption.
+- **Acceptance tests:** each section's header present on a toy; the
+  side-by-side XI on a hand case (two projections, two XIs, two captains);
+  the keeper line on a hand case; a missing section reported, not
+  substituted; `run.txt` written; CLI `python tools/gw_pass.py`; nightly
+  isolation; tests in `tests/test_bundle.py`; `test_fpl.py` untouched.
+
 ## Ruling morning 19 Oct (verbatim)
 
 RULING morning 19 Oct (lane B); chat review of S9, S8, S12, S13, so the item count restarts at 0:
