@@ -94,7 +94,7 @@ def core(inp, names, by_round, t, s11_rows, n2s, tot, prior, fixtures_of, lam_te
         a = agg.get(pid)
         m = a["minutes"] / 90.0 if a else 0.0
         m_start = (a["start_minutes"] / a["starts"]) if a and a["starts"] else pos_mean_start.get(p["pos"], 90.0)
-        lam_fx, cs, alloc, how = [], 0.0, {"xg": 0.0, "xa": 0.0}, {}
+        lam_fx, cs, alloc, how, parts = [], 0.0, {"xg": 0.0, "xa": 0.0}, {}, []
         for fid, f in fx:
             home = p["team"] == f["home"]
             opp = f["away"] if home else f["home"]
@@ -102,11 +102,14 @@ def core(inp, names, by_round, t, s11_rows, n2s, tot, prior, fixtures_of, lam_te
             lam_fx.append((opp, home, lo))
             cs += OL.p_clean_sheet(lo) * E.CS_VALUE.get(p["pos"], 0)
             lt = lam_team(fid, p["team"])
+            part = {"opp": opp, "home": home, "lam_opp": lo}             # S14: the fixture's own terms
             for key in ("xg", "xa"):
                 s = SH.share_of(a, key) if a else 0.0
                 s0, how[key] = prior.prior(names[pid], p["pos"], p["team"], key)
                 z = m / (m + prior.k[key])
-                alloc[key] += lt * (z * s + (1 - z) * s0) * (m_start / 90.0)   # per start: S11's forecast without P(start)
+                part[key] = lt * (z * s + (1 - z) * s0) * (m_start / 90.0)   # per start: S11's forecast without P(start)
+                alloc[key] += part[key]
+            parts.append(part)
         bl = OL.forecast_lambda(pid, inp, lam_fx)
         e_bl = (bl / ps) if (ps > 0 and bl is not None) else 0.0
         e_xg = XR.xg_half(p["pos"], alloc["xg"], alloc["xa"], cs, dc.get(pid, 0.0), ict.get(pid, 0.5))
@@ -115,7 +118,7 @@ def core(inp, names, by_round, t, s11_rows, n2s, tot, prior, fixtures_of, lam_te
         out[pid] = v
         detail[pid] = {"p_start": ps, "e_xg": e_xg, "e_bl": e_bl, "p_sub": psub, "e_sub": e_sub.get(p["pos"], 0.0),
                        "xg": alloc["xg"], "xa": alloc["xa"], "cs": cs, "defcon": dc.get(pid, 0.0), "ict": ict.get(pid, 0.5),
-                       "prior": how.get("xg")}
+                       "prior": how.get("xg"), "fixtures": parts}
     return out, detail
 
 

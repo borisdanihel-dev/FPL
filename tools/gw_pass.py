@@ -20,6 +20,9 @@ gw<N>_pass.txt, with run.txt beside it:
      printed beside it. Without the live forecast: own picks GW8.
   6. The keeper line: own's P(start) beside S12's keeper lock (not
      adopted, information) and each keeper's xp_v2 as tested.
+  7. S14's captain table (tools/points_pmf.py): for our 15, the mean,
+     P(>=10), P(>=15) and p90 of xp_v2 as tested's points distribution;
+     information only until S14 passes and Boris accepts.
 
 A section whose input is missing prints "missing input: ..." and the
 bundle continues; nothing is substituted.
@@ -44,14 +47,16 @@ import odds_lambda as OL                                          # noqa: E402
 import league as LG                                               # noqa: E402
 import xp_v2 as XV                                                # noqa: E402
 import xp_v2_live as XL                                           # noqa: E402
+import points_pmf as PM                                           # noqa: E402
 import minutes_v2 as MV                                           # noqa: E402
 import planner as PL                                              # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
 from provenance import Run                                        # noqa: E402
 
-MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, XL, MV, PL)) if c is not None)
+MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, XL, PM, MV, PL)) if c is not None)
 SECTIONS = ("S5 ODDS CLEAN SHEETS", "S7 CHIPS", "S8 TRANSFER PLANNER AND THE BASELINE", "S9 LEAGUE, CAPTAIN AND EFFECTIVE OWNERSHIP",
-            "OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN", "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK")
+            "OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN", "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK",
+            "CAPTAIN TABLE: S14 POINTS DISTRIBUTIONS (INFORMATION ONLY)")
 
 
 class MissingInput(Exception):
@@ -287,7 +292,7 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
     section(out, SECTIONS[2], planner)
     section(out, SECTIONS[3], lambda: LG.report(data_dir, out, now))
 
-    v2_live = {}
+    v2_live, live_res = {}, {}
 
     def own_v_xp():
         try:
@@ -300,6 +305,7 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
             return None
         v2 = res["xp"]
         v2_live.update(v2)
+        live_res["res"] = res
         weeks, pts, src = CH.own_week_points(d, log_rows)
         if not weeks or weeks[0] != target:
             raise MissingInput(f"own has no GW{target} projections in the log")
@@ -341,6 +347,15 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
                 f"   xp_v2 {'n/a' if v is None else f'{v:.2f}':>5}")
         return ks
     section(out, SECTIONS[5], keepers)
+
+    def captains():
+        res = live_res.get("res")
+        if res is None:
+            raise MissingInput("xp_v2 as tested is not available (section 5): no distribution to print")
+        out(f"  GW{target}: the points distribution of xp_v2 as tested (S14, option (a): its mean is xp_v2; no saves term); "
+            f"information only until S14 passes and Boris accepts")
+        return PM.captain_table(CH.my_squad(d), PM.live_pmfs(res), out)
+    section(out, SECTIONS[6], captains)
     return target
 
 
