@@ -3998,3 +3998,33 @@ W1b's cap moves to 12 when W1b is worked.
 - Measured: suite 625 → 626; the new test red on the old code; mutations
   3 of 3; verifier PASS (Fable 5.1, `worklog/verify_W2a2.md`) with a
   six-source record on real data identical apart from the clock.
+
+## 2026-10-19 — W3 (F-B): xp_v2 recorded nightly; CAPTAIN, BAN RISK and REALISED sections (`ccb5882` prereg; `66ae89a`, `09b3a50` code; on `w3-wip`, not merged)
+
+- **Source `xp_v2`** (the seventh): xp_v2 as tested for the next gameweek.
+  - It comes from runner copies by syntax tree of `tools/xp_v2_live.py`'s
+    closure (`fpl_xpv2`, `fpl_xpr`, `fpl_shares`, `fpl_xpv`; odds from W2's
+    `fpl_lambda`).
+  - The record never opens the database.
+  - Last season's S11 prior is the committed `priors/s11_prior_2025-26.json`
+    (`tools/make_prior.py`, input SHA-256s recorded).
+  - The export's `all_players` gains `code`, `first_name` and
+    `second_name`.
+  - A missing prior file or key is a RECORD SKIP (WARN).
+- **Sections** (`fpl_squad.py`, after CHIPS and LEAGUE):
+  - CAPTAIN: Step 14's table and the options within 0.3 xP.
+  - BAN RISK: S12's rule, one booking from a ban; the position mean is the
+    pooled rate.
+  - REALISED: from GW8, own v xp_v2 on our squad from the recorded rows.
+- **Measured:**
+  - Real GW8: identical to the tool (285 players, max |diff| 0.0).
+  - The six existing sources are unchanged on real data and at simulated
+    GW10, 20 and 38.
+  - CAPTAIN equals gw_pass section 7.
+  - Suite 699 → 716; mutations 19 of 19, plus the verifier's survivor
+    closed.
+  - Verifier PASS (Fable 5.1, `worklog/verify_W3.md`).
+- **Open for Boris before the merge (by Thu 29 Oct):**
+  - the prior file on master and the export keys;
+  - GW8's xp_v2 in REALISED;
+  - the ban line's finished-fixture rule.
