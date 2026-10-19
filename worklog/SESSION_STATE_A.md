@@ -5,6 +5,58 @@ Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
 before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
 this file, then waits for the next instruction.
 
+- **CURRENT, for a fresh lane A session (19 Oct, about 11:20 UTC).** Read
+  `CLAUDE.md`, `BUILD_PLAN.md` and this file, then wait for Boris.
+  - **Master** `08d6a95`, 614 tests green. Landed 19 Oct: W1, S16 part 2,
+    S10, S16 part 1 and its void-round amendment; lane B's S4, S5, S6, S7
+    and S9.
+  - **Untracked here on purpose:** `worklog/verify_S2b_pre.md` (on
+    `s2b-wip`) and `worklog/verify_W1b_pre.md` (on `w1b-wip`). Move each
+    aside before merging its branch.
+  - **Tuesday 20 Oct, S2b** (`s2b-wip` `de65e1b`, verifier PASS on
+    `19b303c`):
+    1. merge master into `s2b-wip` (master moved a lot), full suite;
+    2. Boris dispatches the dry run (manual; W1b is not live), then read back;
+    3. the Fable verifier on the dry run and the delta;
+    4. tag `pre-S2b`; merge before 21:00 UTC; Boris's real dispatch. That is
+       the first real re-fetch of GW1-6: expect 48 extra calls;
+    5. the after-measurement with `s2b_measure.py`, including lane B's S4,
+       S5, S6 and S9 numbers on the after-database (they are on master now).
+  - **Wednesday 21 Oct, W1b** (`w1b-wip` `1118948`, verifier PASS on
+    `a9248d1`; the 04:00 close and the missing-deadline WARN since):
+    1. merge master into `w1b-wip`. `BUILD_PLAN.md` changed on master in lane
+       B's landing; check Part E merges cleanly;
+    2. the verifier on the delta `28092d8..`;
+    3. the last manual dry run (Boris);
+    4. tag `pre-W1b`, merge, real dispatch, final verifier.
+    Then lanes ask for dry runs by pushing `dry/<item>`.
+  - **W2** (RULING W2 build; prereg `prereg/W2.md`, master `08d6a95`, with
+    acceptance tests per piece). Build on `w2-wip` off master; merge Saturday
+    24 Oct after the GW8 deadline, outside 9d. Suggested order, small to
+    large:
+    - **(a) `fpl_sync.py`:**
+      - `fetched_at_utc` on `transfers`, `chips`, `standings`,
+        `player_history` (`picks` comes from S2b);
+      - `players.code`;
+      - the one-time rewrite of the seven mislabelled event-2 `standings`
+        rows from the `entry_gw` chain. `standings` is grow-only in the
+        gate, so rewrite, never delete.
+    - **(b) `bottomup_lambda` as a sixth source:** port the forecast from
+      `tools/odds_lambda.py`. Find the function S5 adopted: its live mode
+      takes W1's newest odds snapshot before the next deadline, the mean
+      price across bookmakers, h2h without h2h_lay and totals at 2.5.
+      - Prove byte-identical numbers against the tool on the same snapshot.
+      - RECORD SKIP, a WARN, without an odds file.
+    - **(c) Report sections CHIPS and LEAGUE:** port `tools/chips.py` `live()`
+      with the part of `tools/backtest.py` Harness that `residual_pools`
+      uses, and `tools/league.py` `report()`. Byte-identical against the
+      tools on the same data folder, seeds and resamples. A missing input
+      gives `<SECTION> SKIPPED:` and a new check 31 WARN.
+    - Never import `tools/` from the runner (the existing test).
+    - Lane B owns `tools/`: copy, do not edit their files.
+    - Open question: the runner freeze for the GW8 deadline runs from 22 Oct
+      11:30Z to the deadline, 23 Oct 17:30Z. Do pushes to `dry/W2` count?
+      Ask before pushing one inside it.
 - **Monday 19 Oct, end of day (11:05 UTC):** RULING lane A open points, 19
   Oct, is verbatim in `prereg/S16.md`, `S10.md` and `W1.md`.
   - **S16 part 1 landed** (`53b5246`, CHANGELOG `4d3e9b5`).
