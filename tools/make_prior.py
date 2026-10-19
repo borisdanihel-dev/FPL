@@ -102,7 +102,7 @@ def main(argv=None):
         print(f"missing input: {e} - nothing written")
         return 2
     if a.check:
-        with open(a.out, encoding="utf-8", newline="") as fh:
+        with open(a.out, encoding="utf-8") as fh:            # universal newlines: a CRLF checkout reads the same
             same = fh.read() == text
         print(f"{a.out}: {'identical to' if same else 'DIFFERS from'} a regeneration from {os.path.join(a.hist, SEASON)}")
         return 0 if same else 1
