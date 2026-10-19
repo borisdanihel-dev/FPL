@@ -1,9 +1,30 @@
-# Session state — lane A (C:\GIT\FPL)
+# Session state — the one session (C:\GIT\FPL)
 
-Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
-4; `prereg/FAST.md`, BUILD_PLAN.md Part E). Updated at the end of every item,
-before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
-this file, then waits for the next instruction.
+The lanes merged on 19 Oct (RULING S6b acceptance + lanes merge, verbatim in
+`prereg/S6b.md` on `lane-b`): one session in `C:\GIT\FPL` does runner and
+offline work, and this is the one state file. Lane B's handover is the top
+of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
+every item, before the push. A fresh session reads `CLAUDE.md`,
+`BUILD_PLAN.md` and this file, then waits for the next instruction.
+
+- **Merged session, 19 Oct 12:50 UTC (Boris's queue, in order):**
+  1. S6c today, on `s6c-wip` off `origin/lane-b`, as ruled in
+     `prereg/S6b.md`.
+  2. The live "xp_v2 as tested" forecast (S11 shares in the xg half,
+     bottomup_lambda, current minutes model) in `tools/gw_pass.py`, beside
+     own: XI, bench and captain. Required for the GW8 switch.
+  3. S2b Tuesday: dry run, merge before 21:00 UTC, Boris's real dispatch.
+  4. The landing of lane B's items (S8, S11, S12, S13, S6b, S6c, the
+     bundle, the CLAUDE.md provenance line): Tuesday or Wednesday, one dry
+     run, before Thursday 11:30 UTC.
+  5. W1b Wednesday.
+  6. Step 14 (RULING Step 14, Boris 19 Oct; prereg first), by Thursday
+     afternoon so the bundle can print it.
+  7. The GW8 bundle: Thursday about 18:00 Prague and Friday morning after
+     the nightly; files under `worklog/gw_pass/gw8/`.
+  8. W2 in the gaps (merge Saturday after the deadline, `prereg/W2.md`).
+  Verifier: Fable unless its weekly bar is above 80% (then Opus xhigh);
+  Fable resets Tuesday 08:00. Stop after 6 items without a chat review.
 
 - **CURRENT, for a fresh lane A session (19 Oct; the old session ended here by
   RULING W2 standings + lanes merge).** Read
