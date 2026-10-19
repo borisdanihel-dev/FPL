@@ -79,6 +79,21 @@ class Counts(unittest.TestCase):
         self.assertIn("numbered above 38: [39]", line)
         self.assertIn("unused numbers: [2, 3,", line)
 
+    def test_the_void_round_is_labelled_and_kept_outside_the_base_rates(self):
+        """RULING lane A open points 19 Oct, point 1: 2022-23 GW7."""
+        write_fixtures(os.path.join(self.tmp, "2022-23"),
+                       [(1, 1, 2), (1, 3, 4), (2, 1, 2), (2, 1, 3), (8, 1, 2), (8, 3, 4)])
+        said = []
+        table = B.history(self.tmp, say=said.append)
+        line = next(s for s in said if s.startswith("2022-23:"))
+        self.assertEqual(line, "2022-23: 4 teams, 3 events (unused numbers: [3, 4, 5, 6]; void round GW7 "
+                               "(no fixtures)); 1 team blanks, 1 team doubles (with the void round: 5 team "
+                               "blanks, 1 team doubles)")
+        self.assertIn("  GW7: void round - no fixtures, every team blanks; outside the base rates", said)
+        self.assertNotIn(7, table)
+        self.assertEqual(said[-1], "void rounds, outside the base rates: 2022-23 GW7 (4 team blanks)")
+        self.assertNotIn("numbered above 38: []", line)
+
     def test_the_history_and_the_table(self):
         said = []
         table = B.history(self.tmp, say=said.append)

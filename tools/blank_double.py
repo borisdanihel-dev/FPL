@@ -33,6 +33,12 @@ HIST = os.path.join(HERE, "historical")
 SEASONS = ("2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26")
 REPRODUCE = ("2024-25", "2025-26")
 LAST_REGULAR_EVENT = 38
+# Rounds FPL voided: the deadline passed, every match was postponed, every
+# team scored 0. Kept in the history, outside the blank and double base rates,
+# with both counts printed (RULING lane A open points 19 Oct, point 1). The
+# fixtures data cannot mark them, so they are named here and nothing guesses
+# others: 2019-20's unused 30-38 stay "unused numbers".
+VOID_ROUNDS = {("2022-23", 7): "void round"}      # postponed after the Queen's death
 
 
 def read_fixtures(path):
@@ -125,6 +131,7 @@ def _label(t, names):
 
 def history(hist=HIST, say=print):
     table = defaultdict(lambda: {"blank_seasons": set(), "double_seasons": set(), "blank": 0, "double": 0})
+    voids = []
     for season in SEASONS:
         path = os.path.join(hist, season, "fixtures.csv")
         if not os.path.exists(path):
@@ -133,14 +140,23 @@ def history(hist=HIST, say=print):
         n, unscheduled, teams, events = counts(read_fixtures(path))
         names = team_names(hist, season)
         bd = blanks_and_doubles(n)
+        void = sorted(e for (s, e) in VOID_ROUNDS if s == season)
         late = [e for e in events if e > LAST_REGULAR_EVENT]
-        gaps = [e for e in range(1, max(events) + 1) if e not in events]
+        gaps = [e for e in range(1, max(events) + 1) if e not in events and e not in void]
+        blanks = sum(len(v["blank"]) for v in bd.values())
+        doubles = sum(len(v["double"]) for v in bd.values())
+        notes = ([f"numbered above 38: {late}"] if late else []) + ([f"unused numbers: {gaps}"] if gaps else [])             + (["void round " + ", ".join(f"GW{e}" for e in void) + " (no fixtures)"] if void else [])
         say(f"{season}: {len(teams)} teams, {len(events)} events"
-            + (f" (numbered above 38: {late}; unused numbers: {gaps})" if late or gaps else "")
+            + (f" ({'; '.join(notes)})" if notes else "")
             + (f"; {len(unscheduled)} unscheduled fixtures" if unscheduled else "")
-            + f"; {sum(len(v['blank']) for v in bd.values())} team blanks, "
-              f"{sum(len(v['double']) for v in bd.values())} team doubles")
-        for e in sorted(bd):
+            + f"; {blanks} team blanks, {doubles} team doubles"
+            + (f" (with the void round: {blanks + len(teams) * len(void)} team blanks, {doubles} team doubles)"
+               if void else ""))
+        for e in sorted(set(bd) | set(void)):
+            if e in void:
+                say(f"  GW{e}: void round - no fixtures, every team blanks; outside the base rates")
+                voids.append((season, e, len(teams)))
+                continue
             b, d = bd[e]["blank"], bd[e]["double"]
             say(f"  GW{e}: " + "; ".join(x for x in (
                 f"blank {len(b)}: " + ", ".join(_label(t, names) for t in b) if b else "",
@@ -158,6 +174,8 @@ def history(hist=HIST, say=print):
         t = table[e]
         say(f"  GW{e}: blank {len(t['blank_seasons'])} / {t['blank']}; "
             f"double {len(t['double_seasons'])} / {t['double']}")
+    if voids:
+        say("void rounds, outside the base rates: " + ", ".join(f"{s} GW{e} ({k} team blanks)" for s, e, k in voids))
     return table
 
 
