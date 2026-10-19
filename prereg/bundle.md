@@ -90,3 +90,11 @@ three outfield bench players) as the outgoing player and every affordable same-p
 45+ minutes in the last four) as the incoming one, the legal swap with the highest score when GW8 is valued with all 15
 counting (the sum of the 15 projections plus the captain's, the captain = the highest projection) and GW9-13 as the planner
 values them (the best XI with the captain); the GW8 term of the weekly dxP is that Bench-Boost gain, labelled. Information only.
+
+## RULING landing + S11 (verbatim; this item: item 3: the header's deadline from fpl.sqlite events.deadline_time)
+
+RULING landing + S11:
+1. Boris is clicking the dry run of landing-2026-10-19 now. Land on green, after the chips replay closes the provenance table; put the landing report with that table on the branch before pushing to master. Nothing on master after 21:00 UTC.
+2. S11: if the re-verify passes, it is adopted as the share input to the xg half of xp_v2, as S5 was for the bottomup half. Not a decision input on its own; it enters the past-season test of xp_v2, which I rule on once Step 10 lands. Close the verifier's test gap and the two bundle mutation gaps first.
+3. Bundle header: read the deadline from fpl.sqlite events.deadline_time, as the runner does.
+END
