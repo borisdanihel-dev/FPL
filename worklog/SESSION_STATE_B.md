@@ -86,14 +86,13 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   `5aceef2`), re-verified **PASS** (Fable 5.1), write guard clean. For lane
   A: S2b (Tuesday) and the verifier's note that `standings` "event 2" rows
   are mislabelled GW3 snapshots.
-- **Current item:** S8 built (`tools/planner.py`, `tests/test_S8.py`, prereg
-  `de7e1b3` with RULING Step 8 verbatim; code `51520ef`, `7f8ba52`, `22a179c`;
-  7 tests, mutations 19 of 19 red). The 50-squad replay is running in the
-  background (about two hours; output `tools/out/s8_run2/`); the report
-  `worklog/cc_2026-10-19_S8.md` is drafted with the live table. Then the
-  verifier, the docs, and the queue continues with S11 (prereg template rows
-  to fill), S12, S13 — the rulings are verbatim in `prereg/S11.md`, `S12.md`,
-  `S13.md`.
+- **S8:** built (`tools/planner.py`, `tests/test_S8.py`; code `51520ef`,
+  `7f8ba52`, `22a179c`; 7 tests, mutations 19 of 19 red). **The replay
+  FAILS its bar**: +7.68 [−6.58, +22.06] against ≥ +10 with a positive lower
+  bound (`tools/out/s8_run1/`; run 2 on the final code and the verifier's
+  own run confirm). Verifier: S8_VERIFIER_STATE. Nothing adopted; the
+  decision is parked below. The queue continues with S12.
+- **Current item:** S12 (prereg rows `3b94269`, ruling verbatim).
 - **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
@@ -121,7 +120,11 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   1. The Monday landing: after W1's green dispatch, the landing branch
      (revert of `32bf218` + lane-b's items + the BUILD_PLAN Part C line) is
      pushed and needs the dry-run click.
-  2. **S11 download approval:** the ruling's priors and reliability
+  2. **S8 result:** the planner's pre-registered test failed (+7.7 points
+     per squad, interval spanning zero, against ≥ +10). Question: keep it
+     as a screen, re-register a test (e.g. no hits / a tighter hit rule),
+     or shelve until S11/S12 change its inputs?
+  3. **S11 download approval:** the ruling's priors and reliability
      constants come from 2024/25 per-gameweek data (the player's 2024/25
      share at the same club; k from split-half reliability measured on
      2024/25). The repo holds only 2025/26 per-gameweek rows and the FPL

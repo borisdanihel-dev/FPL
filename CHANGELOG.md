@@ -3275,3 +3275,34 @@ Tests: `test_fpl.py` 386 → 386; `tests/test_S9.py` 5 new; mutations 16 of
 16 red.
 
 Report: `worklog/cc_2026-10-18_S9.md`; verifier `worklog/verify_S9.md`.
+
+## 2026-10-19 — S8: rolling-horizon transfer planner (`de7e1b3` prereg, `51520ef` / `7f8ba52` / `22a179c` code; lane B, overnight)
+
+RULING Step 8 (verbatim in `prereg/S8.md`): `tools/planner.py` (standard
+library only; the nightly never imports it), `tests/test_S8.py`. Verifier:
+VERIFIER_LINE. Not on master. **Pre-registered replay: FAIL on its bar.**
+
+**Definitions, as pre-registered.** xP = own (recorded next gameweek,
+`project()` on later fixture-known gameweeks); pool = top 25 per position
+by decayed six-week xP; candidates 0/1/2 transfers exhaustive over the
+pool within the selling budget, club cap 3 and 2 GK+DEF per club, the XI
+and captain re-optimised per gameweek; score = Σ 0.85^t ΔxP_t − 4 × hits −
+lost banked-FT value (Boris's and the solver's schedules; a fifth FT worth
+0; rolling at 5 not allowed); a hit only if the decayed gain ≥ 5.5, not
+resting on one fixture, every incoming P(start) ≥ 0.8; decay 0.80/0.90
+re-run with a flag; "price predictor: no source". Replay 2025/26 GW2–38 on
+S7's 50 squads (seed 7), 1 FT a week, no chips, point-in-time
+`project_reliability` with clubs of the origin, autosubs by rule; baseline
+= the best one-week move or roll, never a hit; bootstrap over squads.
+
+**Measured.** Planner 1919.5 season points per squad net of hits (11.5
+hits, 48.5 transfers), baseline 1911.8 (37.0 transfers): **paired gain
++7.68, 90% CI [−6.58, +22.06]** — bar (≥ +10, lower bound > 0) **FAIL** on
+both halves; decay flags in 4–8 of 37 weeks on five squads. Live (GW8,
+£1.9m bank, 1 FT): Thomas → De Cuyper tops both schedules (score 6.09),
+no decay flag. Nothing adopted; the decision is parked for Boris (report,
+Decisions). Tests: `test_fpl.py` 386 → 386; `tests/test_S8.py` 7; mutations
+19 of 19 red (one real defect found by the candidate-set oracle: a
+duplicate pair of swaps, score-neutral, fixed).
+
+Report: `worklog/cc_2026-10-19_S8.md`; verifier `worklog/verify_S8.md`.
