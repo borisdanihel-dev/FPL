@@ -92,7 +92,14 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   bound (`tools/out/s8_run1/`; run 2 on the final code and the verifier's
   own run confirm). Verifier: S8_VERIFIER_STATE. Nothing adopted; the
   decision is parked below. The queue continues with S12.
-- **Current item:** S12 (prereg rows `3b94269`, ruling verbatim).
+- **S12:** complete on `lane-b` (`tools/minutes_v2.py`, `tests/test_S12.py`;
+  prereg rows `3b94269`; code `005531a`, `d8a2ee5`, `e68bf70`; 7 tests,
+  mutations 20 of 20 red). **The pre-registered test FAILS on (a)**: Brier
+  +0.0017 [−0.0001, +0.0033] against ≥ 0.01 with a positive lower bound;
+  (b) MAE −0.0042 and (c) keeper mismatches 76 → 56 pass. Verifier PASS
+  (Fable 5.1), write guard clean. Nothing adopted; the decision is parked
+  below. Report `worklog/cc_2026-10-19_S12.md`.
+- **Current item:** S13 (prereg rows `b456909`, ruling verbatim).
 - **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
   `1dc2263` + `2d56fd5`; prereg `98ebddd` with RULING Step 9 verbatim).
   Descriptive; pooled σ_d 18.6 [10.5, 20.6], every rival inside the
@@ -134,6 +141,12 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
      `historical/2024-25/`, gitignored). Question: may lane B download it?
      Until then S11 is parked and the queue runs S12, then S13 (2025/26
      only).
+  4. **S12 result:** minutes v2 fails its Brier bar (+0.0017 against
+     ≥ 0.01; interval touching zero) while the keeper lock cuts
+     keeper-starter mismatches from 76 to 56 and the MAE is unchanged.
+     Question: information only, a new component-wise prereg (the lock
+     alone), or shelve? And should an empty header-only `overrides.csv`
+     be committed so the format is on master (ruling 2)?
 
   Boris is asleep until about 08:00 Prague. Until then:
   - Ask nothing. Anything that needs me (a click, a download approval, a decision) gets parked in your SESSION_STATE file with the exact question, and you move on to the next queued item that doesn't need it.
@@ -179,7 +192,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 1 of 6 (S9; the review of S4–S6 is done).
+- **Items since the last chat review:** 3 of 6 (S9, S8, S12; the review of S4–S6 is done).
 - **Open for the chat:** the S9 FAIL rulings (report, Decision 0); RULING Step 8; the S9 report's Decision 1 (σ_d in Part C rule 1); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).

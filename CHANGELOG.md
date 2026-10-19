@@ -3306,3 +3306,44 @@ Decisions). Tests: `test_fpl.py` 386 → 386; `tests/test_S8.py` 7; mutations
 duplicate pair of swaps, score-neutral, fixed).
 
 Report: `worklog/cc_2026-10-19_S8.md`; verifier `worklog/verify_S8.md`.
+
+## 2026-10-19 — S12: minutes model v2, overrides and suspensions (`7111240` ruling, `3b94269` prereg rows, `005531a` / `d8a2ee5` / `e68bf70` code; lane B, overnight)
+
+RULING Step 12 (verbatim in `prereg/S12.md`): `tools/minutes_v2.py`
+(standard library only; the nightly never imports it), `tests/test_S12.py`.
+Verifier: Claude Fable 5.1, **PASS** on every check (`worklog/verify_S12.md`). Not on master. **Pre-registered test: FAIL on
+(a).**
+
+**Definitions, as pre-registered.** States start / sub / none over the
+club's last min(4, t−1) matches (live × `chance_next_round`); GK lock 0.95 /
+0.05 / 0 by starts in the club's last 3 (tie: the latest starter; flagged
+keepers skipped); cover: a regular (≥ 3 of the last 4) out (live: status not
+`a`; replay: 0 minutes after starting the 4 before) hands his P(start) to the
+same-position teammate who started most in the matches he missed (ties:
+total starts, lower id), max with the teammate's own; congestion c = start
+rate on ≤ 3 days' rest / > 3, fitted on training rounds per origin, dropped
+when its 90% interval includes 1; suspensions: a 5th caution before the
+club's 19th match or a 10th before its 32nd, in the previous match, → 0
+(served bans not reapplied), and at t+1 × (1 − min(1, rate90 × P(start)))
+with rate90 shrunk by m/(m + 4); `overrides.csv` live only, logged to
+`tools/out/minutes_overrides_log.csv`, scored on settled gameweeks. Test:
+2025/26 GW5–38, the recording gate, paired per gameweek against
+`fpl_edge.start_probability` on the S4 harness's rebuilt inputs, clubs of the
+origin (`hist_pit`), bootstrap over gameweeks B = 10,000, 90%, seed
+20261018.
+
+**Measured.** (a) Brier current − v2 **+0.0017 [−0.0001, +0.0033]**
+(0.2035 → 0.2018; bar ≥ 0.01 with a positive lower bound: **FAIL** on both
+halves; better in 22 of 34 gameweeks); (b) bottomup MAE v2 − current
+−0.0042 [−0.0132, +0.0052] (bar ≤ 0.02: PASS); (c) keeper-starter
+mismatches 76 → 56 (PASS). The congestion factor was applied at GW15 only
+(c = 0.907); elsewhere its interval included 1. Live GW8: c = 1 (no
+interval), lock 54, cover 1, 0 overrides; the 40 largest changes are ±0.25
+from the states' denominator. Nothing adopted; the decision is parked for
+Boris (report, Decisions). Tests: `test_fpl.py` 386 → 386;
+`tests/test_S12.py` 7; mutations 20 of 20 red (five survivors over two
+rounds were test gaps, closed; defects found by the tests before the
+verifier: unplayed live fixtures counted as missed, an int-keyed `dict(**)`,
+a connection left open on error).
+
+Report: `worklog/cc_2026-10-19_S12.md`; verifier `worklog/verify_S12.md`.
