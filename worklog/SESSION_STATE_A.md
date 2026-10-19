@@ -1,10 +1,193 @@
-# Session state — lane A (C:\GIT\FPL)
+# Session state — the one session (C:\GIT\FPL)
 
-Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
-4; `prereg/FAST.md`, BUILD_PLAN.md Part E). Updated at the end of every item,
-before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
-this file, then waits for the next instruction.
+The lanes merged on 19 Oct (RULING S6b acceptance + lanes merge, verbatim in
+`prereg/S6b.md` on `lane-b`): one session in `C:\GIT\FPL` does runner and
+offline work, and this is the one state file. Lane B's handover is the top
+of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
+every item, before the push. A fresh session reads `CLAUDE.md`,
+`BUILD_PLAN.md` and this file, then waits for the next instruction.
 
+- **CURRENT (19 Oct, about 13:30 UTC):**
+  - **S6c done** on `s6c-wip` (`d662656` prereg, `11c262c` + `28d0578`
+    code, `247edb9` report): xp_v2 − own_rebuilt +0.515 [+0.213, +0.816]
+    per squad per gameweek → **GW8 SWITCH STANDS**; verifier PASS (Fable
+    5.1); suite 652 → 660. Report `worklog/cc_2026-10-19_S6c.md`.
+  - **S6d (queue item 2) built** on `s6d-wip` (prereg `9fa7ab1`, code
+    `4d2d1c7` + `a1595e4`, S6c merged in `c98487b`), worked in the scratch
+    worktree `<session scratchpad>/s6d`: `tools/xp_v2_live.py` (xp_v2 as
+    tested live; its core equals S6b's `Replay.xp_v2` exactly on 2025/26),
+    the bundle's section 5 (own v xp_v2 as tested; own picks GW8 when it is
+    missing) and the keepers' xp_v2, the GW5–7 live column (GW5 +0, GW6
+    +2). Suite 660 → 667; mutations 14 of 15 red, 1 equivalent. Verifier
+    running (Fable); then report, CHANGELOG, push.
+  - **Open for the chat:** (1) S6d's prior season: 2025/26 for the live
+    forecast (BUILD_PLAN Step 11, "priors come from last season"); lane
+    B's handover named 2024/25. (2) Step 14: xp_v2 has no saves term and
+    no goals-conceded term in its xg half, so a PMF with saves at their
+    measured rate cannot match xp_v2's mean within 0.05 for keepers;
+    question in the S6d report.
+  - **Next:** the landing branch (lane-b items + `s6c-wip` + `s6d-wip` +
+    the CLAUDE.md provenance line) needs one dry run (it changes `tests/`):
+    Boris's click, Tuesday with S2b's or Wednesday's; land before Thursday
+    11:30 UTC.
+- **Merged session, 19 Oct 12:50 UTC (Boris's queue, in order):**
+  1. S6c today, on `s6c-wip` off `origin/lane-b`, as ruled in
+     `prereg/S6b.md`.
+  2. The live "xp_v2 as tested" forecast (S11 shares in the xg half,
+     bottomup_lambda, current minutes model) in `tools/gw_pass.py`, beside
+     own: XI, bench and captain. Required for the GW8 switch.
+  3. S2b Tuesday: dry run, merge before 21:00 UTC, Boris's real dispatch.
+  4. The landing of lane B's items (S8, S11, S12, S13, S6b, S6c, the
+     bundle, the CLAUDE.md provenance line): Tuesday or Wednesday, one dry
+     run, before Thursday 11:30 UTC.
+  5. W1b Wednesday.
+  6. Step 14 (RULING Step 14, Boris 19 Oct; prereg first), by Thursday
+     afternoon so the bundle can print it.
+  7. The GW8 bundle: Thursday about 18:00 Prague and Friday morning after
+     the nightly; files under `worklog/gw_pass/gw8/`.
+  8. W2 in the gaps (merge Saturday after the deadline, `prereg/W2.md`).
+  Verifier: Fable unless its weekly bar is above 80% (then Opus xhigh);
+  Fable resets Tuesday 08:00. Stop after 6 items without a chat review.
+
+- **CURRENT, for a fresh lane A session (19 Oct; the old session ended here by
+  RULING W2 standings + lanes merge).** Read
+  `CLAUDE.md`, `BUILD_PLAN.md` and this file, then wait for Boris.
+  - **Master:** the commit carrying this file (`git log -1 --
+    worklog/SESSION_STATE_A.md`), 614 tests green. No W2 code exists yet;
+    `w2-wip` is not created. Landed 19 Oct: W1, S16 part 2,
+    S10, S16 part 1 and its void-round amendment; lane B's S4, S5, S6, S7
+    and S9.
+  - **Untracked here on purpose:** `worklog/verify_S2b_pre.md` (on
+    `s2b-wip`) and `worklog/verify_W1b_pre.md` (on `w1b-wip`). Move each
+    aside before merging its branch.
+  - **Tuesday 20 Oct, S2b** (`s2b-wip` `de65e1b`, verifier PASS on
+    `19b303c`):
+    1. merge master into `s2b-wip` (master moved a lot), full suite;
+    2. Boris dispatches the dry run (manual; W1b is not live), then read back;
+    3. the Fable verifier on the dry run and the delta;
+    4. tag `pre-S2b`; merge before 21:00 UTC; Boris's real dispatch. That is
+       the first real re-fetch of GW1-6: expect 48 extra calls;
+    5. the after-measurement with `s2b_measure.py`, including lane B's S4,
+       S5, S6 and S9 numbers on the after-database (they are on master now).
+  - **Wednesday 21 Oct, W1b** (`w1b-wip` `1118948`, verifier PASS on
+    `a9248d1`; the 04:00 close and the missing-deadline WARN since):
+    1. merge master into `w1b-wip`. `BUILD_PLAN.md` changed on master in lane
+       B's landing; check Part E merges cleanly;
+    2. the verifier on the delta `28092d8..`;
+    3. the last manual dry run (Boris);
+    4. tag `pre-W1b`, merge, real dispatch, final verifier.
+    Then lanes ask for dry runs by pushing `dry/<item>`.
+  - **W2** (RULING W2 build; prereg `prereg/W2.md`, master `08d6a95`, with
+    acceptance tests per piece). Build on `w2-wip` off master; merge Saturday
+    24 Oct after the GW8 deadline, outside 9d. Suggested order, small to
+    large:
+    - **(a) `fpl_sync.py`:**
+      - `fetched_at_utc` on `transfers`, `chips`, `standings`,
+        `player_history` (`picks` comes from S2b);
+      - `players.code`;
+      - **the standings, per RULING W2 standings (19 Oct, prereg/W2.md,
+        replacing acceptance test 4):** do not rewrite the seven mislabelled
+        event-2 rows; keep them byte for byte.
+        - Add `standings.label_error` (0/1) by migration, and set it to 1 on
+          those seven rows, with a CHANGELOG note.
+        - Make every reader skip `label_error = 1`. Find them first: the
+          export, checks, `fpl_edge` and lane B's tools.
+        - GW2 league rank stays "not recorded".
+        - No row is removed, so the gate's grow-only holds.
+    - **(b) `bottomup_lambda` as a sixth source:** port the forecast from
+      `tools/odds_lambda.py`. Find the function S5 adopted: its live mode
+      takes W1's newest odds snapshot before the next deadline, the mean
+      price across bookmakers, h2h without h2h_lay and totals at 2.5.
+      - Prove byte-identical numbers against the tool on the same snapshot.
+      - RECORD SKIP, a WARN, without an odds file.
+    - **(c) Report sections CHIPS and LEAGUE:** port `tools/chips.py` `live()`
+      with the part of `tools/backtest.py` Harness that `residual_pools`
+      uses, and `tools/league.py` `report()`. Byte-identical against the
+      tools on the same data folder, seeds and resamples. A missing input
+      gives `<SECTION> SKIPPED:` and a new check 31 WARN.
+    - Never import `tools/` from the runner (the existing test).
+    - Lane B owns `tools/`: copy, do not edit their files.
+    - Open question: the runner freeze for the GW8 deadline runs from 22 Oct
+      11:30Z to the deadline, 23 Oct 17:30Z. Do pushes to `dry/W2` count?
+      Ask before pushing one inside it.
+- **Monday 19 Oct, end of day (11:05 UTC):** RULING lane A open points, 19
+  Oct, is verbatim in `prereg/S16.md`, `S10.md` and `W1.md`.
+  - **S16 part 1 landed** (`53b5246`, CHANGELOG `4d3e9b5`).
+  - **The void-round amendment landed** (`dc4bc28`): 2022-23 GW7 is labelled
+    "void round" and kept outside the base rates, with both counts printed.
+  - **CHANGELOG** records the goalkeeper-goal discrepancy (`game_config` 10,
+    frozen `bottomup` 6) and check 30 strict.
+  - **Landed today:** W1, S16 part 2, S10, S16 part 1 and its amendment.
+    Master `dc4bc28`, 614 tests.
+  - **Next:**
+    - Tuesday S2b: merge master into `s2b-wip` (it has moved: W1, lane B's
+      landing, S10, S16), then the dry run, the verifier on the dry run and
+      the delta, tag `pre-S2b`, merge before 21:00 UTC, real dispatch,
+      after-measurement.
+    - Wednesday W1b: merge master into `w1b-wip` first (`BUILD_PLAN.md`
+      changed on master), then the delta verifier, the last manual dry run,
+      tag, merge, real dispatch, final verifier.
+  - **Parked:** Step 16 parts 3-4 (missing inputs).
+- **Monday 19 Oct, later (RULING lane A 19 Oct midday, verbatim in prereg/S16.md):**
+  - **S10 landed** on master `349e1a7`, merge `63906e6`.
+    - Measurement PASS: 11,361 of 11,361; verifier PASS; landing dry run
+      `415c9a9`.
+    - It had merged lane B's landing of S4, S5, S6, S7 and S9 (`6bd378b`)
+      first.
+  - **Downloads are data, never code:** now a rule in `CLAUDE.md` (both lanes).
+    The 06:45 UTC incident is in CHANGELOG (`47142a3`).
+  - **S16 part 1** (blank and double history, 2018/19 on, from the `event`
+    field): built on `s16-wip` (`2ed24d6` code, `0bec736` report).
+    - Reproduction PASS, 2024-25 and 2025-26; verifier PASS.
+    - Waits for one green dry run of `s16-wip`, then the CHANGELOG entry and
+      the merge.
+  - **Open for the chat:**
+    - 2022-23 GW7: the whole-round blank reads as an unused number, so
+      2022-23 counts 22 blanks against 42 doubles;
+    - the goalkeeper goal: 6 in the frozen `bottomup` model, 10 in
+      `game_config`;
+    - check 30's "any of three" reading.
+  - **Next, by plan:**
+    - S2b on Tuesday: the dry run of `s2b-wip`, the verifier on the dry run
+      and the delta, tag `pre-S2b`, merge before 21:00 UTC, real dispatch,
+      after-measurement;
+    - W1b on Wednesday: merge master into `w1b-wip` first. `BUILD_PLAN.md`
+      changed on master in lane B's landing; W1b's Part E text must merge
+      cleanly.
+- **Monday 19 Oct (RULING morning 19 Oct, verbatim in the W1, S2b, W1b, S16
+  and S10 preregs):**
+  - **W1 done.**
+    - Merged `20309df` (tag `pre-W1` = `5b38b41`).
+    - Real dispatch, run 39208578261: data `bd724ca`, STATUS OK 28/28, first
+      real odds file, `fpl_ep` 668, credits 488 left.
+    - Final verifier PASS (`worklog/verify_W1.md`); report and CHANGELOG
+      `9f03bcf`.
+  - **S16 part 2 landed.** Merge `f2820e3`, after its green dry run
+    (`data-dryrun` `24881f1`); CHANGELOG `086a237`.
+  - **W1b updated** on `w1b-wip` `1118948`:
+    - the 21:30 window closes at 04:00;
+    - a missing deadline row is a WARN, and the run goes on;
+    - 541 tests; mutations 29 of 29 red.
+    Still to do: the delta verifier, then the last manual dry run after S2b
+    lands, then the merge Wednesday.
+  - **Downloads done** (`worklog/downloads_2026-10-19.md`):
+    `players_raw.csv` for 2025-26, and `fixtures.csv` for 2018-19 to 2024-25.
+    - There is an incident record in that file: a shell heredoc ran the
+      downloaded CSVs as commands. Checked: no effect, hashes intact.
+  - **Step 10:** prereg `55f3476`; built next on `s10-wip`.
+  - **Step 16 part 1: parked.** Vaastav has no `fixtures.csv` for 2016-17 or
+    2017-18, and no deadlines file for any season. Question:
+    - Without deadlines, the history can only take each fixture's FPL
+      `event` field.
+    - What is the reference for "reproduce the 2024/25 and 2025/26 events
+      exactly"? If it is kickoff mapped to gameweek by deadline, the
+      deadlines need a source: vaastav's `2018-19/raw.json` covers one season
+      only, so another archive would need your approval.
+  - **Findings for the chat:**
+    - The live `game_config` gives a goalkeeper goal 10 points. The frozen
+      `bottomup` model's `GOAL_VALUE` uses 6; not changed (model-change
+      protocol).
+    - Check 30's "any of three headers" reading is still not ruled.
 - **Night of 18/19 Oct: RULING lane A night work** (verbatim, recorded once):
 
   > Keep working until morning without Boris, on branches only:
@@ -23,18 +206,44 @@ this file, then waits for the next instruction.
   RULING S2b (same night) has priority over this queue: verbatim in
   `prereg/S2b.md`, on `s2b-wip` off `w1-wip`. It lands Tuesday before 21:00 UTC,
   after W1 (Monday); W1b moves to Wednesday.
+- **Night work, done** (19 Oct, 01:00 UTC). Three items were built and
+  verified, all on branches; master got preregs and this file only. All
+  write guards were clean.
+  - **S2b:** on `s2b-wip` at `de65e1b`.
+    - `19b303c` is the code. `316652a` closes gh.log (test only), and
+      `de65e1b` adds the report (`worklog/cc_2026-10-19_S2b.md`) and the
+      verifier copy.
+    - Code-level verifier on `19b303c`: **PASS**.
+    - Rehearsal on a scratch copy against the live API: 73 calls, then 25.
+      entry_gw points move in GW3 (7 of 7 managers), GW4 (6 of 7) and GW6
+      (5 of 7); player_gw points don't move.
+    - Check 22 after: 42 of 42 equal. The calibration is identical before and after.
+    - Tuesday:
+      - the dry run of `s2b-wip`, read back;
+      - the verifier on the dry run and on the delta `19b303c..de65e1b`;
+      - tag `pre-S2b`, merge before 21:00 UTC;
+      - Boris's real dispatch, the first real run, which re-fetches GW1-6;
+      - the after-measurement, including lane B's S4, S5, S6 and S9 numbers.
+  - **S16 part 2 (calendar mapper):** on `s16-wip` at `4acdb0f`.
+    - `5dcead7` is the code; `4acdb0f` adds the report and the verifier copy.
+    - Verifier **PASS**; 471 tests green; mutations 9 of 9 red.
+    - The mapping:
+      - Carabao Cup final -> GW30;
+      - FA Cup QF -> GW30 (in the international gap);
+      - FA Cup SF -> GW32 or GW33 (GW33's deadline is that day);
+      - FA Cup final -> GW36.
+    - Lands only after a green dry run of its landing branch: a manual dry run
+      of `s16-wip`, or `dry/S16` once W1b is live. Then the CHANGELOG entry and
+      the merge.
+  - **W1b:** on `w1b-wip` at `28092d8`.
+    - `a9248d1` is the code; `28092d8` adds the report and the verifier copy.
+    - Code-level verifier: **PASS**. 527 tests; mutations 25 of 25 red, and the
+      verifier's own 29 red.
+    - Merges Wednesday after one last manual dry run (Boris), the verifier on
+      it, tag `pre-W1b`, Boris's real dispatch and the final verifier.
+    - No `dry/` branch exists, and none was pushed.
 - **Parked for Boris:**
-  - **W1b, no spec in this session.** The night ruling calls W1b "automatic dry
-    runs, as already ruled". The only W1b text in the repository or this
-    session is one clause in RULING W1 decisions, point 1: "W1b's
-    push-triggered dry runs never call it". Nothing was built. Questions:
-    1. Which pushes start a dry run: every branch, only `*-wip`, lane B's landing
-       branches? Do docs-only pushes count?
-    2. Do push-triggered runs count against "At most 6 dry runs a day" (S2
-       amendment 2, point 9), and what does the 7th push do?
-    3. `data-dryrun` is one branch: two lanes pushing at once overwrite each
-       other's result. One `data-dryrun-<branch>` each, or one run at a time?
-    4. Is the manual dispatch dry run kept alongside?
+  - **W1b (answered).** The four questions were answered by RULING W1b.
   - **S3 report (Boris, 19 Oct, verbatim lines):** record in
     `worklog/cc_2026-10-18_S3.md` on Monday, since master takes only preregs
     and this file tonight. The 18:45 UTC dispatch was nightly #21,
@@ -47,14 +256,80 @@ this file, then waits for the next instruction.
     rows, frozen forecasts unchanged) and SECRETS OK. That outstanding item
     is closed.
   - **Low priority, whenever lane A next touches test_fpl.py:** the
-    BackupStep tests leave gh.log open (ResourceWarning: unclosed file,
-    test_fpl.py:5419). Close it, with no behaviour change.
-- **Monday 19 Oct, first task** (RULING S3 dispatch result): confirm
-  tonight's scheduled run - the data commit, status.txt with checks 9 and
-  26 now active instead of SKIP, release backup-2026-10-18, and what the
-  03:17 UTC backup run did. Seen on 18 Oct at 21:58 UTC, still to be confirmed:
-  data `9da6ff1` (21:58:09Z), STATUS OK 27/27, checks 9 and 26 OK, tag
-  `backup-2026-10-18` at `9da6ff1`.
+    BackupStep tests left gh.log open (ResourceWarning: unclosed file,
+    test_fpl.py:5419). Done on `s2b-wip` (`316652a`): 5 warnings before, 0
+    after, no behaviour change. It lands with S2b.
+  - **Step 10 (rule normaliser): not started. Four inputs or decisions are
+    missing, and no code was written:**
+    1. The 2025/26 scoring table, which the reproduction test needs ("re-scoring
+       2025/26 under the 2025/26 rules reproduces official points within ±1 for
+       ≥ 99%"). No official 2025/26 table is in the repository or the local
+       data. Which source should it be?
+       - (a) The live API's `bootstrap-static` `game_config` (2026/27), taken
+         as the 2025/26 points table on the claim that points rules did not
+         change. HISTORICAL_VALIDATION.md says goals, assists and appearance
+         points are unchanged and names only BPS changes. The reproduction
+         test then checks that claim.
+       - (b) A 2025/26 table Boris supplies, for example an archived copy of
+         the rules page.
+    2. The cross-season key `code`, needed for position reclassifications:
+       - `fpl.sqlite` `players` has no `code` column; the sync checks the field
+         but does not store it.
+       - `historical/2025-26` carries only the 2025/26 element id (`merged_gw.csv`)
+         and names (`cleaned_players.csv`).
+       Which source?
+       - (a) Download vaastav `data/2025-26/players_raw.csv` (has `id` and
+         `code`). A download, so it needs your approval.
+       - (b) Store `code` in the sync. That is a runner change, its own item.
+    3. BPS under 2026/27: two of the three changed components are not in
+       `merged_gw.csv`: times tackled (the removed −1) and big-chance saves (the
+       GK rework). Only CBI (1 per 2 → 1 per 3) can be recomputed, so 2026/27
+       bonus cannot be re-derived. Choose one:
+       - (a) a partial BPS with the CBI term, the rest reported missing;
+       - (b) no BPS re-score until the data exists.
+    4. "Rescale assists": which rule?
+       - (a) a 2026/27 change in assist points (the 2026/27 `game_config` would
+         show it);
+       - (b) the wider 2025/26 assist definitions applied to older seasons,
+         which is a Step 16 or older-season matter.
+    Older seasons than 2025/26 are not local either (vaastav download).
+  - **Step 16 parts 1, 3 and 4: missing inputs, parked** (part 2 is built on
+    `s16-wip`):
+    - Part 1, the history 2016/17-2025/26: archived fixtures with FPL's gameweek
+      per fixture exist locally only for 2025/26 (`historical/2025-26/fixtures.csv`).
+      Needed: vaastav `data/<season>/fixtures.csv` for 2016-17 to 2024-25
+      (9 files), plus each season's deadlines (vaastav `gws/` or the events).
+      Its unit test needs 2024/25 as well as 2025/26.
+    - Part 3, the cup Monte Carlo needs three inputs:
+      - "to qualify" odds history, or results to build Elo from. Neither is
+        local; FA Cup Elo needs lower-league clubs too.
+      - the 2026/27 European fixture calendar (UEFA dates), not local;
+      - a table of free midweeks, to build from that calendar.
+    - Part 4, the backtest on 2024/25 and 2025/26: needs part 3 and both
+      seasons' cup draws and dates.
+- **Monday 19 Oct, first task: done at 03:50 UTC** (RULING S3 dispatch result),
+  read from git and the public Actions API (no token):
+  - **Tonight's scheduled nightly**, run 39170094238, started 21:57:24Z (cron
+    21:40): every step success, including Weekly backup and Failure issue.
+    - Data commit `9da6ff1` (21:58:09Z).
+    - `status.txt`: STATUS OK 27/27. Checks 9 (element key set, 109 keys
+      unchanged) and 26 (heartbeat, 3.2 h) are now active and OK. 22 and 27
+      SKIP as designed. 28: 459 tests; 29: four sources.
+  - **Release `backup-2026-10-18`:** at `9da6ff1`, with `fpl.sqlite` 1,896,448
+    bytes and `fpl.sql` 2,543,677 (the tip's sizes). Releases kept: 2 of 8.
+  - **The 03:17 backup run**, run 39196048636, started 03:43:37Z on master
+    `cd3087e`, green in 14 s. Only "Is this run due" ran; Install, Nightly
+    run, Commit, Weekly backup and Failure issue were all skipped. That is
+    the designed not-due path: the nightly had written `status.txt`. No
+    commit (data still `9da6ff1`), no release. Its log line itself needs a
+    token (HTTP 403 without one).
+  - The cancelled dispatch 39166214887 (18 Oct 21:04:45Z) stopped at "Set up
+    job", so no dry run was used by it.
+- **Rehearsal of the week's landings** (scratch only, nothing pushed): master
+  `cd3087e`, then `w1-wip`, `s2b-wip`, `w1b-wip` and `s16-wip`, merged in
+  that order, gives no conflict (git auto-merged test_fpl.py and
+  tests/test_S3.py). 560 tests are green bare, runner-like, with stand-in
+  zones and hermetically.
 - **Current item:** W1 (wiring: fpl_ep and the Odds API collector), on
   `w1-wip` (`ab047c3`); prereg `prereg/W1.md` (`7efc2b2`, decisions `91b10c7`,
   odds storage `249be76`; on w1-wip: master merged in `021656c`, pre-check
@@ -136,7 +411,7 @@ this file, then waits for the next instruction.
 - **Queue (FAST-TRACK item 8, as amended on 18/19 Oct):**
   - W1: merge Monday.
   - S2b: lands Tuesday.
-  - W1b: Wednesday, waiting for its spec.
+  - W1b: ruled 19 Oct, built on `w1b-wip`, merges Wednesday.
   - Step 10.
   - W2: after the GW8 deadline.
   - Step 16.
@@ -150,6 +425,36 @@ this file, then waits for the next instruction.
   xhigh only if the Fable weekly bar is above 80% before its reset. Each
   report names the models used.
 - **Dry runs used:** 18 Oct: 6 of 6.
+- **Untracked in C:\GIT\FPL on purpose:**
+  - `worklog/verify_W1_pre.md` and `worklog/verify_W1_recheck.md`: committed
+    on master Monday, with W1;
+  - `worklog/verify_S2b_pre.md`, `verify_S16.md` and `verify_W1b_pre.md`: also
+    committed on `s2b-wip`, `s16-wip` and `w1b-wip`. Remove each untracked
+    copy before merging its branch (the merge brings it).
+- **What needs Boris, in order:**
+  1. **Monday morning:**
+     - lane A confirms the 03:17 run;
+     - commit the W1 verifier files and the S3 log lines;
+     - tag `pre-W1`, merge W1;
+     - **Boris's real dispatch of master**, then the final W1 verifier.
+  2. **Dry-run clicks:**
+     - a manual dry run of `s16-wip`, any day, to land S16;
+     - **Tuesday:** the dry run of `s2b-wip`, then after the merge the real
+       dispatch;
+     - **Wednesday:** the last manual dry run of `w1b-wip`, then after the
+       merge the real dispatch.
+  3. **Readings to confirm:**
+     - W1b (a), the cap and windows on manual dry runs too;
+     - W1b (b), the 21:30 window closing at 03:17; the verifier suggests about
+       04:00 to cover the backup run;
+     - check 30 "any of three headers", which the verifier agreed with;
+     - S2b's three report decisions.
+  4. **Step 10:** the four questions above, among them the source of the
+     2025/26 scoring table and the `code` key (a download).
+  5. **Step 16 parts 1, 3 and 4:** approval for the downloads listed above.
+  6. **Who pulled `C:\GIT\FPL-data` at 22:37:57 UTC on 18 Oct** (lane B?).
+  7. **Earlier open decisions:** the S3 report list; `pre-S2` after GW8; and
+     CLAUDE.md b and g, which still name SESSION_STATE.md.
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_A.md`).
 - **Runner freeze window (9d):** not active. Runner-path changes are never

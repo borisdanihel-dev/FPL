@@ -28,6 +28,11 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
 - **Hermetic tests** (S3 amendment 1): tests are hermetic; no test may rely on
   global git config, the machine's timezone or locale, or files outside its
   temporary folder.
+- **Downloads are data, never code** (RULING lane A, 19 Oct midday, point 1;
+  all work). Downloaded files are only ever opened by a Python reader run
+  with `-I`. They are never sourced, executed, piped into a shell or placed
+  inside an unquoted heredoc. Use quoted heredocs or the file-writing tool
+  only.
 - **Change protocol.** The whole suite before and after, by discovery
   (`test_fpl.py` plus `tests/`, FAST-TRACK item 5): `python -m unittest
   discover -v -p "test*.py"` in `C:\GIT\FPL`. Build in a
@@ -72,12 +77,20 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   4. Two lanes. Lane A works in C:\GIT\FPL: runner work, wiring items and history items. Lane B works in a second worktree, C:\GIT\FPL-b (lane A creates it with git worktree add, on its own branch): offline items. One Claude Code session per lane, never two sessions in one folder. Each lane keeps worklog/SESSION_STATE_A.md or worklog/SESSION_STATE_B.md. Either lane may merge its own items: fetch, rebase onto master, rerun the full test suite, push; never force. On a CHANGELOG conflict, keep both entries.
   5. Tests: new items put their tests in tests/test_<item>.py. S3 switches the nightly gate and local runs to test discovery (test_fpl.py plus tests/). Only lane A edits test_fpl.py.
   6. Auto-continue: after an offline item with verifier PASS, a clean write guard and no open decision, the lane starts its next queued item without waiting; it still prints its 15-line summary. It stops on FAIL, WARN, an open decision, a model result that would change a live decision (adoption needs Boris's acceptance in chat), or after 6 items without a chat review.
+- **Lanes merged** (RULING S6b acceptance + lanes merge, 19 Oct; Boris, 19
+  Oct): items 4 and 5 above are kept as the record. From 19 Oct there is one
+  Claude Code session, working in `C:\GIT\FPL`, for runner and offline work
+  alike; it keeps one state file, `worklog/SESSION_STATE_A.md`. Lane B's
+  work is on `origin/lane-b` (a backup branch, only ever fast-forwarded);
+  branch from it where needed. Never edit `C:\GIT\FPL-b`; read its
+  `tools/out` only when needed (provenance). Item 1's split of runner and
+  offline work, and item 6's stops, still apply.
 
 ## Session operating mode
 
 a. One item at a time. Start an item only when Boris says so ("Do Step N" or a "RULING <item>:" block). After an item is pushed, stop and wait. Never start the next item on your own.
 
-b. Each item: git pull; tree clean; the newest logs/run_<date>.log is from the last nightly (if not, say so first); prereg/<item>.md with the ruling verbatim, committed before any code; implement; tests before and after; native verifier with the read-from-disk instruction; write guard (git status and git diff; any change outside worklog/verify_<item>.md voids the verdict); report worklog/cc_<date>_<item>.md; CHANGELOG; worklog/SESSION_STATE.md; push.
+b. Each item: git pull; tree clean; the newest logs/run_<date>.log is from the last nightly (if not, say so first); prereg/<item>.md with the ruling verbatim, committed before any code; implement; tests before and after; native verifier with the read-from-disk instruction; write guard (git status and git diff; any change outside worklog/verify_<item>.md voids the verdict); report worklog/cc_<date>_<item>.md; CHANGELOG; worklog/SESSION_STATE_A.md (the one state file since the lanes merged); push.
 
 c. Text Boris pastes that starts with "RULING <item>:" is the chat's ruling. Paste it verbatim into prereg/<item>.md. Do not paraphrase or extend it.
 
@@ -87,7 +100,7 @@ e. Stop and ask, changing nothing further, when: the plan and the code disagree;
 
 f. After each item, the chat reply is at most 15 lines: what changed, commit range, tests before and after, verifier verdict, and a numbered "Decisions for the chat" list. Detail goes in the report file.
 
-g. If the session gets long or you notice you are losing earlier instructions, update worklog/SESSION_STATE.md, push, and tell Boris to start a fresh session with: "Read CLAUDE.md, BUILD_PLAN.md and worklog/SESSION_STATE.md, then wait for the next instruction."
+g. If the session gets long or you notice you are losing earlier instructions, update worklog/SESSION_STATE_A.md, push, and tell Boris to start a fresh session with: "Read CLAUDE.md, BUILD_PLAN.md and worklog/SESSION_STATE_A.md, then wait for the next instruction."
 
 h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3), high for model steps, medium for docs-only items. Steps 4, 7, 15, 16 and 17 may run the main session on Fable if Boris switches it; the report names the model used.
 
@@ -103,14 +116,16 @@ h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3)
   push with retries). Sundays it uploads `fpl.sqlite` and `fpl.sql` as
   release `backup-<date>`; the last 8 are kept.
 - Locally: the worktree `C:\GIT\FPL-data` (`git worktree add C:\GIT\FPL-data
-  data`, once). `git -C C:\GIT\FPL-data pull` before reading data.
+  data`, once). Before reading data, the session runs `git -C C:\GIT\FPL-data pull
+  --ff-only` and nothing else there; on a lock, wait and retry (RULING morning
+  19 Oct, point 6).
 - **Local command pattern: run from `C:\GIT\FPL-data`, call the script in
   `C:\GIT\FPL`.** The scripts read and write their working folder; of the
   scripts only `fpl_nightly.py` reads `FPL_DATA_DIR` (`test_fpl.py` uses it
   only to find the real data).
   ```
   cd C:\GIT\FPL-data
-  git pull
+  git pull --ff-only
   python C:\GIT\FPL\fpl_nightly.py --restore
   python C:\GIT\FPL\fpl_edge.py --section calibration
   python C:\GIT\FPL\fpl_edge.py --diff
@@ -137,7 +152,8 @@ h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3)
   ruling only.
 - Raw URLs: `https://raw.githubusercontent.com/borisdanihel-dev/FPL/data/reports/watch_<date>.txt`
   and `.../data/reports/fpl_<date>.txt`.
-- Rollback: tag `pre-data-branch` is `master` before the migration.
+- Rollback: tag `pre-data-branch` is `master` before the migration. Every
+  `pre-*` tag is kept until the GW10 checkpoint (RULING morning 19 Oct, point 7).
 - **No manual nightly dispatch within 1 hour either side of an FPL deadline.** A
   dispatch across a deadline fails the gate (its forecasts were recorded before
   it, the gate runs after) and commits nothing that night.
