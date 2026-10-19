@@ -12,14 +12,18 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     code, `247edb9` report): xp_v2 − own_rebuilt +0.515 [+0.213, +0.816]
     per squad per gameweek → **GW8 SWITCH STANDS**; verifier PASS (Fable
     5.1); suite 652 → 660. Report `worklog/cc_2026-10-19_S6c.md`.
-  - **S6d (queue item 2) built** on `s6d-wip` (prereg `9fa7ab1`, code
-    `4d2d1c7` + `a1595e4`, S6c merged in `c98487b`), worked in the scratch
-    worktree `<session scratchpad>/s6d`: `tools/xp_v2_live.py` (xp_v2 as
-    tested live; its core equals S6b's `Replay.xp_v2` exactly on 2025/26),
-    the bundle's section 5 (own v xp_v2 as tested; own picks GW8 when it is
-    missing) and the keepers' xp_v2, the GW5–7 live column (GW5 +0, GW6
-    +2). Suite 660 → 667; mutations 14 of 15 red, 1 equivalent. Verifier
-    running (Fable); then report, CHANGELOG, push.
+  - **S6d (queue item 2) done** on `s6d-wip` (prereg `9fa7ab1`, code
+    `4d2d1c7` + `a1595e4`, test gap `822d324`, report `6c0feef`; S6c
+    merged in `c98487b`): `tools/xp_v2_live.py` (xp_v2 as tested live; its
+    core equals S6b's `Replay.xp_v2` exactly on 2025/26), the bundle's
+    section 5 (own v xp_v2 as tested, the default from GW8; own picks GW8
+    when it is missing) and the keepers' xp_v2, the GW5–7 live column (GW5
+    +0, GW6 +2). Verifier PASS (Fable 5.1); suite 660 → 667; mutations 15
+    of 16 red, 1 equivalent. Report `worklog/cc_2026-10-19_S6d.md` (on the
+    branch until the landing).
+  - **S2b step 1 done early:** master merged into `s2b-wip` (`0d94be9`,
+    clean, 635 tests OK). Tuesday: the dry run (Boris), then the rest.
+  - **Items since the last chat review:** S6c, S6d = 2 of 6.
   - **Open for the chat:** (1) S6d's prior season: 2025/26 for the live
     forecast (BUILD_PLAN Step 11, "priors come from last season"); lane
     B's handover named 2024/25. (2) Step 14: xp_v2 has no saves term and
