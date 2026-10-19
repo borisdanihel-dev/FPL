@@ -3712,3 +3712,42 @@ and `s8_buffer3/` with `run.txt` at `7f72141`. Live (export of
 2026-10-18, 1 free transfer, confirmed by Boris): the top plan Thomas → De
 Cuyper, unchanged. Report: `worklog/cc_2026-10-19_S8.md` (the record
 section); verifier `worklog/verify_S8.md` (the re-verification).
+
+## 2026-10-19 — S6b: the xp_v2 past-season test, 2025/26 re-scored under the 2026/27 rules (`84a2c9f` ruling, `841c4bc` prereg rows, `37c6493` code; lane B)
+
+RULING S6b (verbatim in `prereg/S6b.md`): `tools/xp_v2_replay.py` (standard
+library only; the nightly never imports it), `tests/test_S6b.py`. Verifier:
+Claude Fable 5.1, **PASS** on every check. Not on master. **Pre-registered test: PASS; adoption needs
+Boris's acceptance in chat (ruling 5).**
+
+**Definitions, as pre-registered.** Outcomes = Step 10's re-scoring
+(`tools/rules.py normalise`, lane A's downloads with their recorded hashes),
+points and minutes per player-gameweek. own_proxy = `project_reliability`
+on the harness's training inputs (the rebuildable `bottomup` S7 and S8
+replayed); it lacks live own's form term, minutes-reliability scaling,
+pre-deadline FDR adjustment, and `chance_next_round` and `status`. xp_v2 =
+P(start) × (E_xg + E_bl) / 2 + P(sub) × E[pts | sub] (S6's equal blend):
+P(start) the current minutes model; E_bl | start = S5's `bottomup_lambda`
+/ P(start); E_xg | start = `project_xg`'s terms with S11's allocation for
+goals and assists, S5's odds-implied clean sheet, appearance 2, DEFCON by
+the hit-rate rule, bonus by the ICT percentile; P(sub) and E[pts | sub] as
+S6's `sub_inputs` on the raw rows; the recording gate on both. Test: S7's
+50 squads (seed 7), fixed, no transfers or chips; each gameweek each model
+picks the XI and captain (`chips.xi_and_bench`, the captain the highest in
+the XI), realised points with `rule_autosubs` on the re-scored minutes and
+the captain doubled; per gameweek the mean over squads of (xp_v2 −
+own_proxy); bootstrap over gameweeks B = 10,000, 90%, seed 20261018; pass
+= lower bound > 0. Secondary: Spearman and MAE among predicted starters.
+
+**Measured (GW5–38).** Realised points per squad per gameweek: own_proxy
+40.22, xp_v2 40.57, **+0.358, 90% CI [+0.126, +0.592]** (p 0.012; better
+in 27 of 34 gameweeks) → **PASS**; season 1367.4 → 1379.5, **+12.2 per
+squad**. Same XI in 71% and same captain in 62% of squad-gameweeks.
+Spearman among starters 0.124 → 0.189, +0.065 [+0.049, +0.080]; MAE
+−0.008 [−0.023, +0.006]. Output `tools/out/xp_v2_replay/` with `run.txt`
+(commit `37c6493`), two runs byte-identical, 13 s. Nothing changes live
+until Boris accepts (report, Decisions). Tests: `test_fpl.py` 386 → 386;
+`tests/test_S6b.py` 6; mutations 18 of 18 red (seven first-round
+survivors were test gaps, closed).
+
+Report: `worklog/cc_2026-10-19_S6b.md`; verifier `worklog/verify_S6b.md`.

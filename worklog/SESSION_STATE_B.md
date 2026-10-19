@@ -134,7 +134,13 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
     (morning, from Wednesday night's snapshot; again after Thursday's nightly) -> `tools/out/gw_pass/gw8_pass.txt` with `run.txt`.
   - **Items since the chat review (restarted at 0 by RULING morning 19 Oct):** S11, bundle = 2 of 6; the S8 corrections are a
     continuation of S8.
-  - **Queue:** **S6b now** (started 2026-10-19 after S8's record and re-verify) (RULING S6b verbatim in `prereg/S6b.md`: the xp_v2
+  - **S6b:** complete on  (, ; code ): **PASS** - xp_v2 beats own_proxy
+    by +0.358 points per squad per gameweek, 90% [+0.126, +0.592], +12.2 per squad per season on 2025/26 re-scored under the
+    2026/27 rules; verifier PASS (Fable 5.1), write guard clean. **Stopped for Boris's acceptance (ruling 5)**: the chat would
+    propose switching XI and captain to xp_v2 from the next deadline, own printed beside it, the live GW7-10 numbers checked at
+    the GW10 checkpoint. Report .
+  - **Queue:** nothing without Boris: the S6b acceptance; Thursday's bundle (a lane-B session Thursday morning and after the
+    nightly); Steps 14, 15, 19 need rulings.
     past-season test on 2025/26 re-scored under 2026/27 rules, own_proxy v xp_v2 with S5's bottomup_lambda and S11's shares, the
     decision-based XI-and-captain test on S7's 50 squads; needs Step 10 on master); Thursday's bundle. Steps 14, 15, 19 need rulings.
 - **Old S9 state (superseded):** S9 built (`tools/league.py`, `tests/test_S9.py`, code
@@ -211,7 +217,7 @@ fresh lane-B session works in `C:\GIT\FPL-b`, reads `CLAUDE.md`,
   of `C:\GIT\FPL\historical\2025-26`, vaastav, verified 2026-09-14).
 - **Queue (item 8):** Step 4 (harness, offline part), Step 7, Step 5 (model and
   backtest), Step 6, Step 9, Step 8, Steps 11-13, Step 14, Step 15, Step 19.
-- **Items since the last chat review:** 2 of 6 (S11, bundle; RULING morning 19 Oct reviewed S9, S8, S12, S13).
+- **Items since the last chat review:** 3 of 6 (S11, bundle, S6b; RULING morning 19 Oct reviewed S9, S8, S12, S13).
 - **Open for the chat:** the S9 FAIL rulings (report, Decision 0); RULING Step 8; the S9 report's Decision 1 (σ_d in Part C rule 1); the GW8 chip call (S7, Thursday); S4 Decisions 1 (S6 primary metric power) and 3 (the frozen 2026-09-14 2025/26 bottomup results used end-of-season clubs); the Monday landing (S4 + S7?).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_B.md`).
