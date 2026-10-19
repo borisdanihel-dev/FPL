@@ -878,7 +878,7 @@ def main(argv=None):
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
     ap.add_argument("--odds", default=None, help="an odds CSV (default: the newest tools/odds file for the season)")
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "odds_lambda"))   # one folder per tool: its run.txt
     ap.add_argument("--season", default="2025-26", choices=("2025-26", "2026-27"))
     ap.add_argument("--test", action="store_true")
     ap.add_argument("--condition", action="store_true")

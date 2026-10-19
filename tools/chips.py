@@ -669,7 +669,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "chips"))   # one folder per tool: its run.txt
     ap.add_argument("--replay", action="store_true")
     ap.add_argument("--squads", type=int, default=N_SQUADS)
     ap.add_argument("--resamples", type=int, default=RESAMPLES)

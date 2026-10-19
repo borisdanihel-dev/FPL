@@ -347,7 +347,7 @@ def main(argv=None):
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
     ap.add_argument("--prior", default=os.path.join(ROOT, "historical", "2024-25"))
     ap.add_argument("--odds", default=None)
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "shares"))   # one folder per tool: its run.txt
     ap.add_argument("--first", type=int, default=5)
     ap.add_argument("--last", type=int, default=None)
     ap.add_argument("--test", action="store_true")

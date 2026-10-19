@@ -570,7 +570,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "minutes_v2"))   # one folder per tool: its run.txt
     ap.add_argument("--overrides", default=OVERRIDES)
     ap.add_argument("--test", action="store_true")
     ap.add_argument("--live", action="store_true")

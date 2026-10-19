@@ -865,7 +865,7 @@ def main(argv=None):
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"),
                     help="the data branch worktree (read-only)")
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "backtest"))   # one folder per tool: its run.txt
     ap.add_argument("--season", default="2026-27", choices=("2025-26", "2026-27"))
     ap.add_argument("--filter", default="all", choices=("all", "starters"))
     ap.add_argument("--compare", nargs=2, metavar=("A", "B"))

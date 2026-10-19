@@ -438,7 +438,7 @@ def main(argv=None):
     utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "league"))   # one folder per tool: its run.txt
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
     run = Run("tools/league.py", args.out, argv)

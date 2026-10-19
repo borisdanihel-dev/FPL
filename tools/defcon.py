@@ -295,7 +295,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
     ap.add_argument("--odds", default=None, help="football-data CSV (default: S5's 2025/26 file)")
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "defcon"))   # one folder per tool: its run.txt
     ap.add_argument("--first", type=int, default=5)
     ap.add_argument("--last", type=int, default=None)
     ap.add_argument("--test", action="store_true")

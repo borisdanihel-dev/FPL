@@ -298,6 +298,19 @@ class ReplayTests(unittest.TestCase):
         self.assertAlmostEqual(pl["pts"], 2 * 100.0 - 4.0 * 2)                                     # realised minus 4 per hit
         self.assertEqual(sorted(seen_t), [5, 5, 6, 6])                                              # round t, for the planner and the baseline
         self.assertEqual(res4["results"][0]["baseline"]["hits"], 0)
+        # gap 4, inside realised(): the points come from round t's actuals, not round t + 1's
+        rp = P.Replay(self.tmp.name)
+        squad0 = CH.sample_squads(CH.gw1_candidates(rp.rp.hist), 1, 7)[0]
+        rows5 = rp.squad_rows(squad0, 5)
+        fc, _, _ = rp.forecasts(5)
+        xp5 = fc[min(fc)]
+        base = rp.realised(rows5, 5, xp5)
+        saved6 = dict(rp.rp.actual[6])
+        rp.rp.actual[6] = {pid: (99.0, 90) for pid in rp.rp.actual[6]}
+        self.assertEqual(rp.realised(rows5, 5, xp5), base)                                          # round 6 altered: unchanged
+        rp.rp.actual[6] = saved6
+        rp.rp.actual[5] = {pid: (99.0, 90) for pid in rp.rp.actual[5]}
+        self.assertNotEqual(rp.realised(rows5, 5, xp5), base)                                       # round 5 altered: moves
         self.assertIsNone(res2["pass"]); self.assertIsNone(res3["pass"])                 # exploratory: no bar
         self.assertIn("no hits; baseline", buf2.getvalue()); self.assertIn("EXPLORATORY", buf2.getvalue())
         self.assertIn("exploratory line: no bar, no adoption", buf2.getvalue())

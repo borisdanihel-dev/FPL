@@ -323,7 +323,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
     ap.add_argument("--odds", default=None)
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "xp_v2"))   # one folder per tool: its run.txt
     ap.add_argument("--cut", type=int, default=None, help="the development cut (the last settled gameweek on the day of the first S6 code commit)")
     ap.add_argument("--develop", action="store_true")
     ap.add_argument("--validate", action="store_true")
