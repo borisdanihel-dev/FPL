@@ -165,6 +165,9 @@ class Toys(unittest.TestCase):
         xi_a, cap_a = X.pick(rows, own); xi_b, cap_b = X.pick(rows, flipped)
         self.assertEqual(len(xi_a), 11); self.assertNotEqual(xi_a, xi_b)
         self.assertIn(cap_a, xi_a); self.assertEqual(cap_a, max(xi_a, key=lambda i: (own.get(i, 0.0), -i)))
+        tied = {r["id"]: 1.0 for r in rows}                                               # every projection equal: the lowest id captains
+        xi_t, cap_t = X.pick(rows, tied)
+        self.assertEqual(cap_t, min(xi_t))
         r_a = rp.pl.realised(rows, 5, own)
         # the outcomes are the re-scored points: lifting one XI player's re-scored points lifts the realised total by that much
         pid = next(iter(xi_a))
