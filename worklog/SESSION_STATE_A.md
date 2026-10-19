@@ -23,18 +23,24 @@ this file, then waits for the next instruction.
   RULING S2b (same night) has priority over this queue: verbatim in
   `prereg/S2b.md`, on `s2b-wip` off `w1-wip`. It lands Tuesday before 21:00 UTC,
   after W1 (Monday); W1b moves to Wednesday.
+- **Night work done so far** (19 Oct, about 00:00 UTC):
+  - **S2b:** built on `s2b-wip` (`19b303c`, plus `316652a` closing gh.log).
+    - Code-level verifier: **PASS** (`worklog/verify_S2b_pre.md`); write guard
+      clean.
+    - Rehearsal on a scratch copy against the live API: 73 calls, then 25.
+      entry_gw points move in GW3 (7 of 7 managers), GW4 (6 of 7) and GW6
+      (5 of 7); player_gw points don't move.
+    - Check 22 after: 42 of 42 equal. The calibration is identical before and after.
+    - Tuesday: the dry run, the verifier on it, tag `pre-S2b`, merge before
+      21:00 UTC, Boris's real dispatch, then the after-measurement.
+  - **S16 part 2 (calendar mapper):** built on `s16-wip` (`5dcead7`).
+    - 471 tests green four ways; mutations 9 of 9 red.
+    - Verifier next. As an item with tests in tests/, it lands only after a
+      green dry run of its landing branch: under W1b, a push to `dry/S16`.
+  - **W1b:** ruled by Boris (RULING W1b, 19 Oct), verbatim in `prereg/W1b.md`.
+    Build next on `w1b-wip`.
 - **Parked for Boris:**
-  - **W1b, no spec in this session.** The night ruling calls W1b "automatic dry
-    runs, as already ruled". The only W1b text in the repository or this
-    session is one clause in RULING W1 decisions, point 1: "W1b's
-    push-triggered dry runs never call it". Nothing was built. Questions:
-    1. Which pushes start a dry run: every branch, only `*-wip`, lane B's landing
-       branches? Do docs-only pushes count?
-    2. Do push-triggered runs count against "At most 6 dry runs a day" (S2
-       amendment 2, point 9), and what does the 7th push do?
-    3. `data-dryrun` is one branch: two lanes pushing at once overwrite each
-       other's result. One `data-dryrun-<branch>` each, or one run at a time?
-    4. Is the manual dispatch dry run kept alongside?
+  - **W1b (answered).** The four questions were answered by RULING W1b.
   - **S3 report (Boris, 19 Oct, verbatim lines):** record in
     `worklog/cc_2026-10-18_S3.md` on Monday, since master takes only preregs
     and this file tonight. The 18:45 UTC dispatch was nightly #21,
@@ -47,8 +53,57 @@ this file, then waits for the next instruction.
     rows, frozen forecasts unchanged) and SECRETS OK. That outstanding item
     is closed.
   - **Low priority, whenever lane A next touches test_fpl.py:** the
-    BackupStep tests leave gh.log open (ResourceWarning: unclosed file,
-    test_fpl.py:5419). Close it, with no behaviour change.
+    BackupStep tests left gh.log open (ResourceWarning: unclosed file,
+    test_fpl.py:5419). Done on `s2b-wip` (`316652a`): 5 warnings before, 0
+    after, no behaviour change. It lands with S2b.
+  - **Step 10 (rule normaliser): not started. Four inputs or decisions are
+    missing, and no code was written:**
+    1. The 2025/26 scoring table, which the reproduction test needs ("re-scoring
+       2025/26 under the 2025/26 rules reproduces official points within ±1 for
+       ≥ 99%"). No official 2025/26 table is in the repository or the local
+       data. Which source should it be?
+       - (a) The live API's `bootstrap-static` `game_config` (2026/27), taken
+         as the 2025/26 points table on the claim that points rules did not
+         change. HISTORICAL_VALIDATION.md says goals, assists and appearance
+         points are unchanged and names only BPS changes. The reproduction
+         test then checks that claim.
+       - (b) A 2025/26 table Boris supplies, for example an archived copy of
+         the rules page.
+    2. The cross-season key `code`, needed for position reclassifications:
+       - `fpl.sqlite` `players` has no `code` column; the sync checks the field
+         but does not store it.
+       - `historical/2025-26` carries only the 2025/26 element id (`merged_gw.csv`)
+         and names (`cleaned_players.csv`).
+       Which source?
+       - (a) Download vaastav `data/2025-26/players_raw.csv` (has `id` and
+         `code`). A download, so it needs your approval.
+       - (b) Store `code` in the sync. That is a runner change, its own item.
+    3. BPS under 2026/27: two of the three changed components are not in
+       `merged_gw.csv`: times tackled (the removed −1) and big-chance saves (the
+       GK rework). Only CBI (1 per 2 → 1 per 3) can be recomputed, so 2026/27
+       bonus cannot be re-derived. Choose one:
+       - (a) a partial BPS with the CBI term, the rest reported missing;
+       - (b) no BPS re-score until the data exists.
+    4. "Rescale assists": which rule?
+       - (a) a 2026/27 change in assist points (the 2026/27 `game_config` would
+         show it);
+       - (b) the wider 2025/26 assist definitions applied to older seasons,
+         which is a Step 16 or older-season matter.
+    Older seasons than 2025/26 are not local either (vaastav download).
+  - **Step 16 parts 1, 3 and 4: missing inputs, parked** (part 2 is built on
+    `s16-wip`):
+    - Part 1, the history 2016/17-2025/26: archived fixtures with FPL's gameweek
+      per fixture exist locally only for 2025/26 (`historical/2025-26/fixtures.csv`).
+      Needed: vaastav `data/<season>/fixtures.csv` for 2016-17 to 2024-25
+      (9 files), plus each season's deadlines (vaastav `gws/` or the events).
+      Its unit test needs 2024/25 as well as 2025/26.
+    - Part 3, the cup Monte Carlo needs three inputs:
+      - "to qualify" odds history, or results to build Elo from. Neither is
+        local; FA Cup Elo needs lower-league clubs too.
+      - the 2026/27 European fixture calendar (UEFA dates), not local;
+      - a table of free midweeks, to build from that calendar.
+    - Part 4, the backtest on 2024/25 and 2025/26: needs part 3 and both
+      seasons' cup draws and dates.
 - **Monday 19 Oct, first task** (RULING S3 dispatch result): confirm
   tonight's scheduled run - the data commit, status.txt with checks 9 and
   26 now active instead of SKIP, release backup-2026-10-18, and what the
@@ -136,7 +191,7 @@ this file, then waits for the next instruction.
 - **Queue (FAST-TRACK item 8, as amended on 18/19 Oct):**
   - W1: merge Monday.
   - S2b: lands Tuesday.
-  - W1b: Wednesday, waiting for its spec.
+  - W1b: ruled 19 Oct, built on `w1b-wip`, merges Wednesday.
   - Step 10.
   - W2: after the GW8 deadline.
   - Step 16.
@@ -150,6 +205,11 @@ this file, then waits for the next instruction.
   xhigh only if the Fable weekly bar is above 80% before its reset. Each
   report names the models used.
 - **Dry runs used:** 18 Oct: 6 of 6.
+- **Untracked in C:\GIT\FPL on purpose:**
+  - `worklog/verify_W1_pre.md` and `worklog/verify_W1_recheck.md`: committed
+    on master Monday, with W1;
+  - `worklog/verify_S2b_pre.md`: also committed on `s2b-wip`. Remove the
+    untracked copy before merging `s2b-wip` (the merge brings it).
 - **Last pushed commit:** the commit carrying this version of the file (`git
   log -1 -- worklog/SESSION_STATE_A.md`).
 - **Runner freeze window (9d):** not active. Runner-path changes are never
