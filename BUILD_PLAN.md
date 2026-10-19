@@ -51,6 +51,9 @@ It lives in the repo root as `BUILD_PLAN.md`.
 
 1. **Expected points first.** At a 56-point gap with ~31 GWs left, maximise xP. Variance-seeking starts only when the gap exceeds σ_d·√n (σ_d is measured in Step 9; on current assumptions about GW25–27).
 2. **XI, keeper and captain = the best xP.** Use `own` until `xp_v2` passes Step 6.
+   - GK/DEF ties within 0.3 xP on `own`: `bottomup_lambda` (S5's odds-implied λ) breaks the tie instead of
+     `bottomup`, and the keeper line shows each keeper's odds-implied P(clean sheet) (RULING S5 result
+     point 2, 2026-10-18).
    - Vetoes are allowed only on hard facts (injury, dropped, confirmed rotation).
    - From Step 12 onward, a veto is entered as a P(start) override with a reason, and is logged and scored later.
 3. **Captain** = highest xP in the whole XI.
