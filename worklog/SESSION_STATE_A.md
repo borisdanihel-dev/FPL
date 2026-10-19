@@ -5,6 +5,24 @@ Lane A: runner work, wiring items and history items (RULING FAST-TRACK, item
 before the push. A fresh lane-A session reads `CLAUDE.md`, `BUILD_PLAN.md` and
 this file, then waits for the next instruction.
 
+- **Monday 19 Oct, end of day (11:05 UTC):** RULING lane A open points, 19
+  Oct, is verbatim in `prereg/S16.md`, `S10.md` and `W1.md`.
+  - **S16 part 1 landed** (`53b5246`, CHANGELOG `4d3e9b5`).
+  - **The void-round amendment landed** (`dc4bc28`): 2022-23 GW7 is labelled
+    "void round" and kept outside the base rates, with both counts printed.
+  - **CHANGELOG** records the goalkeeper-goal discrepancy (`game_config` 10,
+    frozen `bottomup` 6) and check 30 strict.
+  - **Landed today:** W1, S16 part 2, S10, S16 part 1 and its amendment.
+    Master `dc4bc28`, 614 tests.
+  - **Next:**
+    - Tuesday S2b: merge master into `s2b-wip` (it has moved: W1, lane B's
+      landing, S10, S16), then the dry run, the verifier on the dry run and
+      the delta, tag `pre-S2b`, merge before 21:00 UTC, real dispatch,
+      after-measurement.
+    - Wednesday W1b: merge master into `w1b-wip` first (`BUILD_PLAN.md`
+      changed on master), then the delta verifier, the last manual dry run,
+      tag, merge, real dispatch, final verifier.
+  - **Parked:** Step 16 parts 3-4 (missing inputs).
 - **Monday 19 Oct, later (RULING lane A 19 Oct midday, verbatim in prereg/S16.md):**
   - **S10 landed** on master `349e1a7`, merge `63906e6`.
     - Measurement PASS: 11,361 of 11,361; verifier PASS; landing dry run
