@@ -2946,3 +2946,31 @@ Tag `pre-S3` = `3ce5a08`.
 - check 22 after the GW7 lockdown;
 - the failure issue's first live red path;
 - three Actions-log lines for Boris to read.
+
+---
+
+## 2026-10-19 — S16 part 2: the 2026/27 calendar mapper, landed (`d813953` prereg, `5dcead7` code, merge `f2820e3`)
+
+`tools/calendar_2627.py` maps each cup date of Step 16.2 to the gameweek
+whose window [deadline g, deadline g+1) holds the whole UK day. A day that
+holds a deadline is named both ways: the plan gives no kickoff times.
+Offline, read-only, stdlib; BST by rule.
+
+**Measured on the 18 Oct data:**
+
+| Cup date | Gameweek |
+|---|---|
+| Carabao Cup final, 21 Mar 2027 | GW30 |
+| FA Cup QF, 3 Apr | GW30 (in the 20 Mar - 10 Apr gap) |
+| FA Cup SF, 24 Apr | GW32 or GW33 (GW33's deadline 12:30 UTC that day; 10 GW33 league fixtures that day) |
+| FA Cup final, 22 May | GW36 |
+
+The verifier recomputed all four with zoneinfo.
+
+**Tests and checks:**
+- tests 459 -> 471 (511 on master with W1); mutations K1-K9 red;
+- verifier PASS (Fable 5.1, high);
+- landing dry run `24881f1` green.
+
+**Parked for missing inputs:** parts 1, 3 and 4. Part 1's download was
+approved on 19 Oct.
