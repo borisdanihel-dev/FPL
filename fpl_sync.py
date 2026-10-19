@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS players (
     status TEXT, chance_next_round INTEGER, news TEXT, updated_at TEXT,
     starts INTEGER, pens_order INTEGER, corners_order INTEGER, fk_order INTEGER,
     xgc REAL, tin_event INTEGER, tout_event INTEGER, form REAL, ppg REAL,
-    influence REAL, creativity REAL, threat REAL, ep_next REAL);
+    influence REAL, creativity REAL, threat REAL, ep_next REAL, code INTEGER);
 
 CREATE TABLE IF NOT EXISTS player_history (
     player_id INTEGER, season TEXT, minutes INTEGER, total_points INTEGER,
@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS entries (
 
 CREATE TABLE IF NOT EXISTS standings (
     entry_id INTEGER, event INTEGER, rank INTEGER, event_total INTEGER,
-    total INTEGER, PRIMARY KEY (entry_id, event));
+    total INTEGER, fetched_at_utc TEXT, label_error INTEGER, PRIMARY KEY (entry_id, event));
 
 CREATE TABLE IF NOT EXISTS entry_gw (
     entry_id INTEGER, event INTEGER, points INTEGER, total_points INTEGER,
@@ -298,7 +298,8 @@ MIGRATIONS = {
                 "fk_order INTEGER", "xgc REAL", "tin_event INTEGER",
                 "tout_event INTEGER", "form REAL", "ppg REAL",
                 "influence REAL", "creativity REAL", "threat REAL",
-                "ep_next REAL"],                 # W1: FPL's ep_next, recorded as fpl_ep
+                "ep_next REAL",                  # W1: FPL's ep_next, recorded as fpl_ep
+                "code INTEGER"],                 # W2: the cross-season key (Step 10 Q2 b)
     "teams": ["att_h INTEGER", "att_a INTEGER", "def_h INTEGER", "def_a INTEGER"],
     "player_gw": ["starts INTEGER", "fetched_at_utc TEXT", "ruleset TEXT"],
     "events": ["data_checked INTEGER"],
@@ -307,11 +308,41 @@ MIGRATIONS = {
     "price_history": ["fetched_at_utc TEXT", "london_date TEXT"],
     "fixtures": ["started INTEGER", "fetched_at_utc TEXT"],
     "entry_gw": ["fetched_at_utc TEXT"],
+    # W2 (Step 9 item 4): stored rows keep NULL, every write sets the time
+    "transfers": ["fetched_at_utc TEXT"],
+    "chips": ["fetched_at_utc TEXT"],
+    "player_history": ["fetched_at_utc TEXT"],
+    # W2 (RULING W2 standings): label_error = 1 marks a row whose event label
+    # is wrong; every reader skips it
+    "standings": ["fetched_at_utc TEXT", "label_error INTEGER"],
 }
+
+PLAYER_COLS = ("id, web_name, first_name, second_name, team_id, position, now_cost, "
+               "cost_change_start, selected_by_percent, total_points, minutes, goals, assists, "
+               "clean_sheets, bonus, expected_goals, expected_assists, ict_index, status, "
+               "chance_next_round, news, updated_at, starts, pens_order, corners_order, fk_order, "
+               "xgc, tin_event, tout_event, form, ppg, influence, creativity, threat, ep_next, code")
+
+
+def flag_standings_labels(db):
+    """RULING W2 standings: the rows labelled event 2 whose total is not the
+    entry's GW2 total in the entry_gw chain hold later snapshots (the S9
+    verifier: GW3). They are kept byte for byte and marked label_error = 1;
+    every other row 0. Run once, when the column is added."""
+    db.execute("UPDATE standings SET label_error = 0 WHERE label_error IS NULL")
+    bad = db.execute("""SELECT s.entry_id, s.event, s.total, g.total_points FROM standings s
+                        JOIN entry_gw g ON g.entry_id = s.entry_id AND g.event = s.event
+                        WHERE s.event = 2 AND s.total != g.total_points ORDER BY s.entry_id""").fetchall()
+    for eid, ev, tot, chain in bad:
+        db.execute("UPDATE standings SET label_error = 1 WHERE entry_id = ? AND event = ?", (eid, ev))
+        print(f"  standings entry {eid} event {ev}: total {tot} is not the GW2 chain's {chain} - "
+              f"label_error = 1, row kept")
+    return len(bad)
 
 
 def migrate(db):
     """Add columns to a database created by an earlier version."""
+    added = set()
     for table, cols in MIGRATIONS.items():
         have = {r[1] for r in db.execute(f"PRAGMA table_info({table})")}
         for col in cols:
@@ -319,6 +350,9 @@ def migrate(db):
             if name not in have:
                 db.execute(f"ALTER TABLE {table} ADD COLUMN {col}")
                 print(f"  + {table}.{name}")
+                added.add(f"{table}.{name}")
+    if "standings.label_error" in added:
+        flag_standings_labels(db)
     db.commit()
 
 
@@ -372,11 +406,11 @@ def sync_bootstrap(db):
                      num(p.get("influence"), "influence"),
                      num(p.get("creativity"), "creativity"),
                      num(p.get("threat"), "threat"),
-                     ep_next(p)))
+                     ep_next(p), p.get("code")))
         db.execute("INSERT OR REPLACE INTO price_history "
                    "(player_id, date, now_cost, fetched_at_utc, london_date) VALUES (?,?,?,?,?)",
                    (required(p, "id"), today, required(p, "now_cost"), now, london_day))
-    db.executemany("INSERT OR REPLACE INTO players VALUES (%s)" % ",".join("?" * 35), rows)
+    db.executemany("INSERT OR REPLACE INTO players (%s) VALUES (%s)" % (PLAYER_COLS, ",".join("?" * 36)), rows)
 
     # data_checked = points and bonus are final. `finished` only means the
     # matches ended; grading keys on data_checked.
@@ -470,6 +504,7 @@ def sync_history(db, only_relevant=True):
         return
     print(f"player history: fetching {len(todo)} players (cached after this) ...")
     rows = []
+    fetched = datetime.now(timezone.utc).isoformat(timespec="seconds")
     for n, pid in enumerate(todo, 1):
         if n % 100 == 0:
             print(f"  {n}/{len(todo)} ...")
@@ -481,11 +516,12 @@ def sync_history(db, only_relevant=True):
                          h["goals_scored"], h["assists"], h["clean_sheets"],
                          h["bonus"], float(h.get("expected_goals") or 0),
                          float(h.get("expected_assists") or 0),
-                         h.get("starts") or 0))
+                         h.get("starts") or 0, fetched))
     if rows:
         db.executemany(
-            "INSERT OR REPLACE INTO player_history VALUES (%s)" % ",".join("?" * 11),
-            rows)
+            "INSERT OR REPLACE INTO player_history (player_id, season, minutes, total_points, goals, "
+            "assists, clean_sheets, bonus, expected_goals, expected_assists, starts, fetched_at_utc) "
+            "VALUES (%s)" % ",".join("?" * 12), rows)
         db.commit()
     print(f"  stored {len(rows)} season rows")
 
@@ -496,12 +532,14 @@ def sync_league(db, last_gw):
     if not lg:
         return []
     entries = []
+    fetched = datetime.now(timezone.utc).isoformat(timespec="seconds")
     for r in lg["standings"]["results"]:
         entries.append(r["entry"])
         db.execute("INSERT OR REPLACE INTO entries VALUES (?,?,?)",
                    (r["entry"], r["entry_name"], r["player_name"]))
-        db.execute("INSERT OR REPLACE INTO standings VALUES (?,?,?,?,?)",
-                   (r["entry"], last_gw, r["rank"], r["event_total"], r["total"]))
+        db.execute("INSERT OR REPLACE INTO standings (entry_id, event, rank, event_total, total, "
+                   "fetched_at_utc, label_error) VALUES (?,?,?,?,?,?,0)",
+                   (r["entry"], last_gw, r["rank"], r["event_total"], r["total"], fetched))
     db.commit()
     return entries
 
@@ -510,15 +548,18 @@ def sync_entries(db, entries, last_gw):
     for eid in entries:
         print(f"entry {eid} ...")
         hist = get(f"entry/{eid}/history/")
+        stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
         if hist:
             for c in hist.get("chips", []):
-                db.execute("INSERT OR REPLACE INTO chips VALUES (?,?,?,?)",
-                           (eid, c["name"], c["event"], c["time"]))
+                db.execute("INSERT OR REPLACE INTO chips (entry_id, name, event, time, fetched_at_utc) "
+                           "VALUES (?,?,?,?,?)", (eid, c["name"], c["event"], c["time"], stamp))
         tr = get(f"entry/{eid}/transfers/") or []
+        stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
         for t in tr:
-            db.execute("INSERT OR REPLACE INTO transfers VALUES (?,?,?,?,?,?,?)",
+            db.execute("INSERT OR REPLACE INTO transfers (entry_id, event, time, player_in, player_out, "
+                       "cost_in, cost_out, fetched_at_utc) VALUES (?,?,?,?,?,?,?,?)",
                        (eid, t["event"], t["time"], t["element_in"], t["element_out"],
-                        t["element_in_cost"], t["element_out_cost"]))
+                        t["element_in_cost"], t["element_out_cost"], stamp))
         for gw in range(1, last_gw + 1):
             have = db.execute("SELECT 1 FROM entry_gw WHERE entry_id=? AND event=?",
                               (eid, gw)).fetchone()
@@ -602,7 +643,7 @@ def export(db, gw):
                g.value, g.bank, g.points_on_bench, g.transfers, g.transfers_cost, g.active_chip
         FROM standings s JOIN entries e ON e.id=s.entry_id
         LEFT JOIN entry_gw g ON g.entry_id=s.entry_id AND g.event=s.event
-        WHERE s.event=? ORDER BY s.rank""", (gw,))
+        WHERE s.event=? AND COALESCE(s.label_error, 0) = 0 ORDER BY s.rank""", (gw,))
 
     out["chips_used"] = q(db, """
         SELECT e.entry_name, c.name, c.event FROM chips c JOIN entries e ON e.id=c.entry_id
