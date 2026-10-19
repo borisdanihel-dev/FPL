@@ -3507,3 +3507,393 @@ unused numbers.
 - tests 613 -> 614; mutations P1-P15 red;
 - verifier PASS (Fable 5.1, high);
 - landing dry run `7171924` green.
+
+## 2026-10-19 — S8: rolling-horizon transfer planner (`de7e1b3` prereg, `51520ef` / `7f8ba52` / `22a179c` code; lane B, overnight)
+
+RULING Step 8 (verbatim in `prereg/S8.md`): `tools/planner.py` (standard
+library only; the nightly never imports it), `tests/test_S8.py`. Verifier:
+**FAIL** (see the amendment of 2026-10-19 below). Not on master. **Pre-registered replay: FAIL on its bar.**
+
+**Definitions, as pre-registered.** xP = own (recorded next gameweek,
+`project()` on later fixture-known gameweeks); pool = top 25 per position
+by decayed six-week xP; candidates 0/1/2 transfers exhaustive over the
+pool within the selling budget, club cap 3 and 2 GK+DEF per club, the XI
+and captain re-optimised per gameweek; score = Σ 0.85^t ΔxP_t − 4 × hits −
+lost banked-FT value (Boris's and the solver's schedules; a fifth FT worth
+0; rolling at 5 not allowed); a hit only if the decayed gain ≥ 5.5, not
+resting on one fixture, every incoming P(start) ≥ 0.8; decay 0.80/0.90
+re-run with a flag; "price predictor: no source". Replay 2025/26 GW2–38 on
+S7's 50 squads (seed 7), 1 FT a week, no chips, point-in-time
+`project_reliability` with clubs of the origin, autosubs by rule; baseline
+= the best one-week move or roll, never a hit; bootstrap over squads.
+
+**Measured.** Planner 1919.5 season points per squad net of hits (11.5
+hits, 48.5 transfers), baseline 1911.8 (37.0 transfers): **paired gain
++7.68, 90% CI [−6.58, +22.06]** — bar (≥ +10, lower bound > 0) **FAIL** on
+both halves; decay flags in 4–8 of 37 weeks on five squads. Live (GW8,
+£1.9m bank, 1 FT): Thomas → De Cuyper tops both schedules (score 6.09),
+no decay flag. Nothing adopted; the decision is parked for Boris (report,
+Decisions). Tests: `test_fpl.py` 386 → 386; `tests/test_S8.py` 7; mutations
+19 of 19 red (one real defect found by the candidate-set oracle: a
+duplicate pair of swaps, score-neutral, fixed).
+
+Report: `worklog/cc_2026-10-19_S8.md`; verifier `worklog/verify_S8.md`.
+
+## 2026-10-19 — S12: minutes model v2, overrides and suspensions (`7111240` ruling, `3b94269` prereg rows, `005531a` / `d8a2ee5` / `e68bf70` code; lane B, overnight)
+
+RULING Step 12 (verbatim in `prereg/S12.md`): `tools/minutes_v2.py`
+(standard library only; the nightly never imports it), `tests/test_S12.py`.
+Verifier: Claude Fable 5.1, **PASS** on every check (`worklog/verify_S12.md`). Not on master. **Pre-registered test: FAIL on
+(a).**
+
+**Definitions, as pre-registered.** States start / sub / none over the
+club's last min(4, t−1) matches (live × `chance_next_round`); GK lock 0.95 /
+0.05 / 0 by starts in the club's last 3 (tie: the latest starter; flagged
+keepers skipped); cover: a regular (≥ 3 of the last 4) out (live: status not
+`a`; replay: 0 minutes after starting the 4 before) hands his P(start) to the
+same-position teammate who started most in the matches he missed (ties:
+total starts, lower id), max with the teammate's own; congestion c = start
+rate on ≤ 3 days' rest / > 3, fitted on training rounds per origin, dropped
+when its 90% interval includes 1; suspensions: a 5th caution before the
+club's 19th match or a 10th before its 32nd, in the previous match, → 0
+(served bans not reapplied), and at t+1 × (1 − min(1, rate90 × P(start)))
+with rate90 shrunk by m/(m + 4); `overrides.csv` live only, logged to
+`tools/out/minutes_overrides_log.csv`, scored on settled gameweeks. Test:
+2025/26 GW5–38, the recording gate, paired per gameweek against
+`fpl_edge.start_probability` on the S4 harness's rebuilt inputs, clubs of the
+origin (`hist_pit`), bootstrap over gameweeks B = 10,000, 90%, seed
+20261018.
+
+**Measured.** (a) Brier current − v2 **+0.0017 [−0.0001, +0.0033]**
+(0.2035 → 0.2018; bar ≥ 0.01 with a positive lower bound: **FAIL** on both
+halves; better in 22 of 34 gameweeks); (b) bottomup MAE v2 − current
+−0.0042 [−0.0132, +0.0052] (bar ≤ 0.02: PASS); (c) keeper-starter
+mismatches 76 → 56 (PASS). The congestion factor was applied at GW15 only
+(c = 0.907); elsewhere its interval included 1. Live GW8: c = 1 (no
+interval), lock 54, cover 1, 0 overrides; the 40 largest changes are ±0.25
+from the states' denominator. Nothing adopted; the decision is parked for
+Boris (report, Decisions). Tests: `test_fpl.py` 386 → 386;
+`tests/test_S12.py` 7; mutations 20 of 20 red (five survivors over two
+rounds were test gaps, closed; defects found by the tests before the
+verifier: unplayed live fixtures counted as missed, an int-keyed `dict(**)`,
+a connection left open on error).
+
+Report: `worklog/cc_2026-10-19_S12.md`; verifier `worklog/verify_S12.md`.
+
+## 2026-10-19 — S13: DEFCON probability v2 (`7111240` ruling, `b456909` prereg rows, `385bd90` code; lane B, overnight)
+
+RULING Step 13 (verbatim in `prereg/S13.md`): `tools/defcon.py` (standard
+library only; the nightly never imports it), `tests/test_S13.py`.
+Verifier: Claude Fable 5.1, **PASS** on every check (`worklog/verify_S13.md`). Not on master. **Pre-registered test: FAIL on
+both bars; v2 is worse than the comparator.**
+
+**Definitions, as pre-registered.** Thresholds DEF 10 CBIT, MID 12 CBIRT,
+FWD 12 CBIRT (GK none; the comparator keeps DEF 10 / MID 12 and 0 for
+forwards). Per player-match with 60+ minutes: μ = shrunk per-90 rate × 90
+× (λ_opp / the round's mean λ, S5's odds-implied λ with the labelled
+fallback), the rate shrunk toward the positional median by the training
+slice's DEFCON reliability weight; r per position by the method of
+moments on the model's own means over the training player-matches
+(clipped [0.5, 1000]; Poisson when the variance ≤ the mean); P(DEFCON) =
+P(X ≥ threshold) under NB(μ, r). Comparator = the player's hit rate over
+his 60+-minute training matches (`defcon_expectation`'s rule). Test:
+2025/26 GW5–38 point-in-time (`canonical_at`, rounds < t, clubs of the
+origin), DEF and MID paired per gameweek, bootstrap over gameweeks B =
+10,000, 90%, seed 20261018; (a) Brier comparator − v2 ≥ 0.005 with a
+positive lower bound; (b) ≥ 8 of 10 deciles of predicted P within 5
+points.
+
+**Measured.** (a) Brier comparator − v2 **−0.0188 [−0.0248, −0.0128]**
+(0.1651 → 0.1839; worse in 26 of 34 gameweeks): **FAIL**. (b) **1 of 10**
+deciles within 5 points: **FAIL** (mean predicted 0.271 against an
+observed 0.229; top decile 0.754 against 0.427; the comparator's deciles
+5 of 10). Log loss favours v2 (0.571 against 0.890, the comparator's 0s
+clipped); fitted r 7–18, never at a clip; fallback share 0; forwards (694
+matches, hit rate 0.013) Brier 0.0130 comparator against 0.0202 v2.
+Candidate causes stated as pinned definitions, not changed: μ at 90
+minutes for every 60+-minute match; the in-sample means in the moments
+fit. Nothing adopted; the decision is parked for Boris (report,
+Decisions). Tests: `test_fpl.py` 386 → 386; `tests/test_S13.py` 7;
+mutations 22 of 22 red (two first-round survivors were test gaps,
+closed).
+
+Report: `worklog/cc_2026-10-19_S13.md`; verifier `worklog/verify_S13.md`.
+
+## 2026-10-19 — S8 amendment: verifier FAIL, the recorded replay is the first commit's (`worklog/verify_S8.md`; lane B, overnight)
+
+The S8 entry above recorded the 2025/26 replay as planner 1919.5 points
+per squad against baseline 1911.8, paired gain +7.68 [−6.58, +22.06], and
+called `7f8ba52` score-neutral. The verifier (Claude Fable 5.1) showed
+both to be wrong: the first commit's `plan_candidates` skipped pairs of
+singles by outgoing-id order, which `itertools.combinations` already
+yields once, so 30–45% of the distinct two-transfer plans were never
+evaluated; the fix `7f8ba52` restores them and changes the replay. The
+verifier's own replay of the final code `22a179c` (14,116 s): planner
+1914.7 (12.58 hits, 49.5 transfers) against the same baseline 1911.8,
+**paired gain +2.90, 90% CI [−12.74, +18.40]**, robustness [9, 4, 7, 3,
+11]. The "second run on the final code, byte-identical" claim was false:
+the file was written 32 seconds after the first. The bar is failed under
+both sets of numbers; nothing moves live. The entry above is not edited;
+its replay numbers are superseded and not to be cited. Open for the
+ruling: recording the final-code replay (a rerun was started into the
+session scratchpad after the verdict) and re-verifying; the lost-FT
+charge (the prereg's k-th value or the code's (k + 1)-th against
+rolling); the five test gaps the verifier found. Report:
+`worklog/cc_2026-10-19_S8.md` (correction section).
+
+## 2026-10-19 — S11: share-of-team allocation with 2024/25 priors (`7111240` ruling, `47eed25` prereg rows and download record, `5c258e3` code; lane B)
+
+RULING Step 11 (verbatim in `prereg/S11.md`) and RULING morning 19 Oct
+item 5 (the 2024/25 download approved: vaastav `data/2024-25`
+`merged_gw.csv`, `fixtures.csv`, `teams.csv` into `historical/2024-25/`,
+gitignored; URL, fetch time and SHA-256 recorded in the prereg).
+`tools/shares.py` (standard library only; the nightly never imports it),
+`tests/test_S11.py`. Verifier: Claude Fable 5.1: first run **FAIL on check 6 only** (one surviving mutation, a test gap), re-verification **PASS** on every check (`worklog/verify_S11.md`). Not on master.
+**Pre-registered test: PASS on both metrics; adopted by RULING landing + S11 item 2 as the share input to the xg half of `xp_v2` (not a decision input on its own; enters the past-season test of `xp_v2`, ruled once Step 10 lands).**
+
+**Definitions, as pre-registered.** Player xG(t) = Σ over the club's
+round-t fixtures of λ_team (S5's odds-implied λ, the fallback labelled) ×
+shrunk share × expected minutes share; xA the same. Share s = own / team
+xG over the fixtures the player appeared in (training rounds < t); prior
+s0 = his 2024/25 share at the same club (exact vaastav name), else the
+2024/25 club-position mean (180+ minutes), else the league-position mean;
+shrunk share = Z s + (1 − Z) s0, Z = m / (m + k), m = minutes / 90 this
+season, k = n (1 − r) / r from the split-half reliability of the share on
+2024/25 (odd v even rounds, 45+ minutes in each half, n = mean minutes /
+90 per half). Expected minutes share = P(start) × mean minutes per start
+/ 90. Goals forecast = xG, assists = xA (finishing shrunk to 0); manager
+changes "not modelled". Comparator = the same with Z = 1. Test: 2025/26
+GW5–38 point-in-time (`canonical_at`, rounds < t), predicted starters
+(P(start) ≥ 0.8) with a fixture, per-gameweek tie-corrected Spearman of
+forecast v realised goals and assists, v2 − comparator, bootstrap over
+gameweeks B = 10,000 seed 20261018, Holm across the two at 90% (the
+smaller p at 95%, then the other at 90%, stop at the first failure); each
+metric adopted separately only with its Holm-adjusted lower bound > 0.
+
+**Measured.** k: xG share r = 0.734 ± 0.090, n = 8.77, k = 3.18; xA share
+r = 0.715 ± 0.090, k = 3.49 (471 players). Goals: Spearman v2 − comparator
+**+0.0061**, 90% [+0.0027, +0.0096], p = 0.0004, Holm 95% [+0.0021,
++0.0104] → **PASS** (0.268 → 0.274; better in 21 of 34 gameweeks).
+Assists: **+0.0043**, 90% [+0.0004, +0.0083], p = 0.0698, Holm 90%
+[+0.0004, +0.0083] → **PASS** (0.190 → 0.195; better in 20 of 34). Log
+loss of P(goal) comparator − v2 +0.0066 [+0.0018, +0.0123]. Mean Z 0.55 at
+GW5 → 0.89 at GW38; the prior is the player's own 2024/25 share for 58%
+of the sampled player-weeks. Output `tools/out/shares/shares_test_2025-26.txt`
+with `run.txt` (commit `7f72141`), three runs byte-identical. Nothing
+adopted; the lane stops for Boris's acceptance (report, Decisions).
+Tests: `test_fpl.py` 386 → 386; `tests/test_S11.py` 8; mutations 20 of
+20 red (two first-round survivors were test gaps, closed).
+
+Report: `worklog/cc_2026-10-19_S11.md`; verifier `worklog/verify_S11.md`.
+
+## 2026-10-19 — bundle: the Thursday deadline-pass file, `tools/gw_pass.py` (`0df1443` / `a01c862` rulings, `ed1bbb6` prereg rows, `3029867` code; lane B)
+
+RULING morning 19 Oct items 3 and 6 and RULING S8 verifier FAIL item (d)
+(verbatim in `prereg/bundle.md`). `tools/gw_pass.py` (standard library
+only; the nightly never imports it) composes, from the newest snapshot in
+the data folder, one file `tools/out/gw_pass/gw<N>_pass.txt` with
+`run.txt`: S5 `--live` (odds-implied λ and clean sheets, our GK/DEF), the
+S7 chip table, the S8 top plans with the no-hit and buffer-3.0 lines
+beside the baseline's choice (best one-week move or roll, never a hit;
+where they differ the baseline is the default and the planner the note),
+the S9 league report with the captain and effective-ownership tables,
+own v xp_v2 XI, bench and captain side by side (`chips.xi_and_bench`,
+captain = the highest projection in the XI), and the keeper line (own's
+recorded P(start) beside S12's keeper lock, not adopted). A section with
+a missing input or a failing tool says so and the pass continues;
+nothing is substituted. Verifier: Claude Fable 5.1, three runs: FAIL on check 6 (the captain tie rule untested), FAIL on check 6 (three pinned terms untested), then **PASS** on every check (`worklog/verify_bundle.md`). Not on master;
+information only, no bar, no adoption. First run on the 2026-10-18
+export: the baseline Branthwaite → De Cuyper is the default, the planner's
+Thomas → De Cuyper the note; own and xp_v2 share the captain (Haaland)
+and differ in 8 of 15 slots; keeper lock 0.95 for both our keepers. The
+record is Thursday's file (from Wednesday night's snapshot, refreshed
+after Thursday's nightly). **Amendment 1** (Boris, 19 Oct morning,
+verbatim in the prereg; `500dae7`): 1 free transfer confirmed for GW8,
+printed beside the planner's estimate; three named rows under the top 5
+with the same columns — Thiago → João Pedro by `planner.evaluate`
+(accent-insensitive names; an illegal swap reported with its reason),
+the roll, and the best single bench upgrade with GW8 valued under Bench
+Boost (all 15 count; the outgoing player one of the four bench slots of
+the GW8 XI by own) — on the 2026-10-18 export 1.55, 0.00 and 2.90
+(Slater → Ayari). RULING landing + S11 item 3: the header's deadline from
+`fpl.sqlite` `events.deadline_time`. Tests: `test_fpl.py` 386 → 386;
+`tests/test_bundle.py` 6; mutations 18 of 18 red (the verifier's two rounds of
+survivors - the captain tie rule, the Bench-Boost captain term, the
+lost-FT term, the sqlite deadline - tested in `f6e4757` and `96b9dfd`).
+
+Report: `worklog/cc_2026-10-19_bundle.md`; verifier `worklog/verify_bundle.md`.
+
+## 2026-10-19 — S8 record (RULING S8 verifier FAIL items (a)–(d), RULING morning 19 Oct item 2): the final-code replay `s8_run3` and the two exploratory lines (`7f72141` code; lane B)
+
+RULING S8 verifier FAIL (verbatim in `prereg/S8.md`): the first replay
+recorded on 19 Oct (planner 1919.5, +7.68 [−6.58, +22.06]) came from the
+first commit's candidate generator, which dropped 30–45% of the distinct
+two-transfer plans; that entry stays above, marked as the buggy generator's.
+The replay was rerun on the final code (`tools/planner.py` at `7f72141`,
+unchanged since; `tools/out/planner/s8_run3/run.txt`: commit `7f72141`, 0
+modified tracked files, 06:39–10:58 UTC) with the five verifier test gaps
+closed first (item (c), `5423434`, `7f72141`) and the lost-FT reading
+recorded in the prereg (item (b): the schedule's (k + 1)-th value when k are
+banked; no number changes).
+
+**The S8 result (item (a)), 2025/26 GW2–38, 50 squads (seed 7):** planner
+**1914.7** points per squad net of hits (12.6 hits, 49.5 transfers),
+baseline 1911.8 (37.0 transfers, never a hit); **paired gain +2.90, 90% CI
+[−12.74, +18.40]** (bootstrap over squads, B = 10,000, seed 20261018);
+pre-registered bar (mean ≥ +10 and lower bound > 0): **FAIL**; robustness
+(first five squads) [9, 4, 7, 3, 11] of 37 weeks. Identical to the
+verifier's own in-process replay of the same code. Nothing is adopted; the
+planner stays a screen (item (d)): in the Thursday bundle its top plan
+prints beside the baseline's choice and the no-hit line, the baseline the
+default where they differ.
+
+**Exploratory lines (RULING morning 19 Oct item 2; no bar, no adoption),
+the same replay, squads and seed:**
+
+| variant | planner points per squad | hits | transfers | paired gain v baseline, 90% CI | robustness |
+|---|---|---|---|---|---|
+| pre-registered (hit buffer 1.5) | 1914.7 | 12.6 | 49.5 | +2.90 [−12.74, +18.40] | [9, 4, 7, 3, 11] |
+| hit buffer 3.0 | 1912.3 | 12.7 | 49.6 | +0.48 [−14.26, +15.36] | [11, 10, 6, 3, 11] |
+| no hits | 1920.8 | 0 | 36.9 | +9.00 [−4.74, +22.56] | [2, 3, 2, 2, 3] |
+
+Reading, stated without inference: raising the buffer to 3.0 changes
+almost nothing (the hits the rule refuses are replaced by other hits); the
+no-hit planner makes as many transfers as the baseline (36.9 against 37.0) and
+scores 9.0 points per squad more, an interval still through zero, with the
+decay flags down to 2–3 weeks of 37 (the hits, not the look-ahead, were the
+unstable part). Provenance: `tools/out/planner/s8_nohits/`
+and `s8_buffer3/` with `run.txt` at `7f72141`. Live (export of
+2026-10-18, 1 free transfer, confirmed by Boris): the top plan Thomas → De
+Cuyper, unchanged. Report: `worklog/cc_2026-10-19_S8.md` (the record
+section); verifier `worklog/verify_S8.md` (the re-verification).
+
+## 2026-10-19 — S6b: the xp_v2 past-season test, 2025/26 re-scored under the 2026/27 rules (`84a2c9f` ruling, `841c4bc` prereg rows, `37c6493` code; lane B)
+
+RULING S6b (verbatim in `prereg/S6b.md`): `tools/xp_v2_replay.py` (standard
+library only; the nightly never imports it), `tests/test_S6b.py`. Verifier:
+Claude Fable 5.1, **PASS** on every check. Not on master. **Pre-registered test: PASS; adoption needs
+Boris's acceptance in chat (ruling 5).**
+
+**Definitions, as pre-registered.** Outcomes = Step 10's re-scoring
+(`tools/rules.py normalise`, lane A's downloads with their recorded hashes),
+points and minutes per player-gameweek. own_proxy = `project_reliability`
+on the harness's training inputs (the rebuildable `bottomup` S7 and S8
+replayed); it lacks live own's form term, minutes-reliability scaling,
+pre-deadline FDR adjustment, and `chance_next_round` and `status`. xp_v2 =
+P(start) × (E_xg + E_bl) / 2 + P(sub) × E[pts | sub] (S6's equal blend):
+P(start) the current minutes model; E_bl | start = S5's `bottomup_lambda`
+/ P(start); E_xg | start = `project_xg`'s terms with S11's allocation for
+goals and assists, S5's odds-implied clean sheet, appearance 2, DEFCON by
+the hit-rate rule, bonus by the ICT percentile; P(sub) and E[pts | sub] as
+S6's `sub_inputs` on the raw rows; the recording gate on both. Test: S7's
+50 squads (seed 7), fixed, no transfers or chips; each gameweek each model
+picks the XI and captain (`chips.xi_and_bench`, the captain the highest in
+the XI), realised points with `rule_autosubs` on the re-scored minutes and
+the captain doubled; per gameweek the mean over squads of (xp_v2 −
+own_proxy); bootstrap over gameweeks B = 10,000, 90%, seed 20261018; pass
+= lower bound > 0. Secondary: Spearman and MAE among predicted starters.
+
+**Measured (GW5–38).** Realised points per squad per gameweek: own_proxy
+40.22, xp_v2 40.57, **+0.358, 90% CI [+0.126, +0.592]** (p 0.012; better
+in 27 of 34 gameweeks) → **PASS**; season 1367.4 → 1379.5, **+12.2 per
+squad**. Same XI in 71% and same captain in 62% of squad-gameweeks.
+Spearman among starters 0.124 → 0.189, +0.065 [+0.049, +0.080]; MAE
+−0.008 [−0.023, +0.006]. Output `tools/out/xp_v2_replay/` with `run.txt`
+(commit `37c6493`), two runs byte-identical, 13 s. Nothing changes live
+until Boris accepts (report, Decisions). Tests: `test_fpl.py` 386 → 386;
+`tests/test_S6b.py` 6; mutations 18 of 18 red (seven first-round
+survivors were test gaps, closed).
+
+Report: `worklog/cc_2026-10-19_S6b.md`; verifier `worklog/verify_S6b.md`.
+
+## 2026-10-19 — RULING S6b acceptance + lanes merge: xp_v2 as tested accepted for XI and captain from GW8; S6c and the revert rule; lane B closes (verbatim in `prereg/S6b.md`; lane B)
+
+1. **Accepted:** xp_v2 as tested in S6b (S11's shares in the xg half, S5's
+   bottomup_lambda in the bottomup half, P(start) from the current minutes
+   model) picks the XI and captain from GW8; own keeps being recorded
+   nightly and is printed beside xp_v2 at every deadline, both compared
+   weekly in grading; vetoes on hard facts as before. If the live forecast
+   cannot use S11's shares by the GW8 pass, own picks GW8 (today the live
+   xp_v2 reads the recorded xg rows; the S6b allocation exists only in the
+   replay — an open item in the handover).
+2. **S6c, a safety check (queued):** own_rebuilt = live own's formula with
+   every rebuildable input (the form term, the minutes-reliability scaling,
+   the FDR adjustment from the file's end-of-season FDR), status and chance
+   as available for both sides; the same squads, metric and bootstrap as
+   S6b; the switch is suspended for GW8 only if the 90% upper bound of
+   (xp_v2 − own_rebuilt) is below 0; 2026/27 GW5–7 recorded own against
+   xp_v2 as tested printed as information.
+3. **Revert rule, fixed now:** at the GW10 checkpoint, if the live paired
+   decision metric over GW8–10 has its 90% upper bound below 0, own
+   returns.
+4. **Lanes merge:** lane B's last task; the handover is in
+   `worklog/SESSION_STATE_B.md` (open items: S6c; the live "xp_v2 as
+   tested" forecast in the bundle; the bundle runs Thursday about 18:00
+   and Friday morning with the files committed under `worklog/gw_pass/gw8/`;
+   the next landing of S8, S11, S12, S13, S6b, S6c, the bundle and the
+   CLAUDE.md provenance line; Step 14). `lane-b` pushed; `C:\GIT\FPL-b`
+   and its `tools/out` left untouched.
+
+## 2026-10-19 — S6c: the safety check, xp_v2 as tested against own_rebuilt (`d662656` prereg, `11c262c` / `28d0578` code; the merged session)
+
+**What.** `tools/xp_v2_replay.py --s6c`: S6b's 50 squads (seed 7), metric
+and bootstrap (B 10,000, seed 20261018, 90%) on 2025/26 GW5–38 re-scored
+under the 2026/27 rules, with own_rebuilt in own_proxy's place.
+own_rebuilt = live own's `project()` as `record_status` calls it: the form
+term over rounds t−4..t−1 shrunk to the 2024/25 personal prior (full name,
+one element, 450+ minutes, keyed by the 2025/26 `web_name`), else the
+positional prior; the minutes-reliability scaling; the FDR adjustment from
+`fixtures.csv`'s end-of-season FDR; status and chance taken as available.
+It lacks the pre-deadline FDR, status and `chance_next_round`, personal
+priors before 2024/25, and FPL-id identity for the personal prior.
+
+**Measured.** xp_v2 − own_rebuilt **+0.515 per squad per gameweek, 90% CI
+[+0.213, +0.816]** (p 0.0068, n 34); season +17.5 per squad (own_rebuilt
+1362.0, xp_v2 1379.5, own_proxy 1367.4). The ruling's line: upper bound
++0.816 ≥ 0 → **GW8 SWITCH STANDS**. Information: own_rebuilt − own_proxy
+−0.158 [−0.455, +0.141]; Spearman among starters +0.0154 [−0.0120,
++0.0421]; MAE −0.141 [−0.256, −0.036]; same XI 0.64, same captain 0.42.
+2026/27 on our squad (information): GW5 own 54, GW6 own 59, GW7 not locked
+down; xp_v2 as tested printed "not available" until S6d. Output
+`tools/out/s6c/` with `run.txt` (commit `28d0578`, 0 modified files, 14 s).
+S6b reproduces on this checkout byte for byte.
+
+**Tests.** 652 → 660 by discovery (`tests/test_S6c.py`, 8 tests);
+`test_fpl.py` untouched. The first code commit failed `test_fpl`'s
+ProjectionLogKey guard (the GW5–7 print read the log directly); fixed in
+`28d0578` through `fpl_edge.forecasts(read_log(...), d)`. Mutations 16 of
+18 red; 2 equivalent (`personal_priors` and `project` repeat the 450- and
+45-minute guards).
+
+Report: `worklog/cc_2026-10-19_S6c.md`; verifier `worklog/verify_S6c.md`.
+
+## 2026-10-19 — S6d: the live "xp_v2 as tested" forecast in the bundle (`9fa7ab1` prereg, `4d2d1c7` / `a1595e4` code, `822d324` tests; the merged session)
+
+**What.** `tools/xp_v2_live.py`: `core()` is S6b's `Replay.xp_v2` term by
+term (on S6b's 2025/26 inputs it returns S6b's numbers exactly at GW5, 21
+and 38, max |difference| 0); `forecast()` feeds it one 2026/27 export: the
+training slice truncated to the export's gameweek, S11's shares from the
+export's rows and S11's `Prior` on 2025/26 (last season, keyed by `code`,
+else the full name), S5's lambdas from the newest Odds API snapshot before
+the deadline (else the fallback), the current minutes model, the status
+gate, P(sub) × chance. `tools/gw_pass.py` section 5 prints our XI, bench
+order and captain by own and by xp_v2 as tested, xp_v2 as tested the
+default from GW8 (RULING S6b acceptance point 1), and "own picks GW8" when
+an input is missing; the keeper line adds xp_v2. `--s6c`'s GW5–7 print
+gains the live column (football-data 2026/27 book, fetched 18 Oct).
+
+**Measured (information).** GW8 from `fpl_export_gw7_2026-10-19` and
+`odds_2026-10-19T0613Z` (10 of 10 fixtures from odds): 285 players; our
+squad: own Haaland captain (4.44) in a 5-3-2, xp_v2 as tested Saka (6.00)
+in a 3-4-3 with Kelleher in goal. 2026/27 on our squad: GW5 own 54, xp_v2
+54; GW6 own 59, xp_v2 61; GW7 not locked down.
+
+**Tests.** 660 → 667 by discovery (`tests/test_S6d.py`, 7 tests;
+`tests/test_S6c.py` asserts captain names); `test_fpl.py` untouched.
+Mutations 15 of 16 red, 1 equivalent (the verifier's test gap, the 45-minute gate in `core()`, closed in `822d324`) (target rows in `export_rows` cannot
+reach `core()`, which reads rounds below the target).
+
+**For the chat.** The live prior season is 2025/26 by BUILD_PLAN.md Step
+11; lane B's handover named 2024/25.
+
+Report: `worklog/cc_2026-10-19_S6d.md`; verifier `worklog/verify_S6d.md`.
