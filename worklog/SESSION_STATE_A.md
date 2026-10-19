@@ -16,7 +16,9 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
   - **S14 amendment 1** (prereg `3de32ff`, code `282f7e4` on the landing
     branch): section 7 lists the options within 0.3 xP of xp_v2's captain
     (today Saka 6.00, option Calafiori 5.83). Mutations 6 of 6; verifier
-    running (Fable, bar 79% at launch).
+    PASS (Fable 5.1); suite 687; records `354cfe0`. Landing branch tip
+    after this file: lane B's items, S6c, S6d, S14 and amendment 1, for
+    Tuesday's dry run.
   - **RULINGS PART F** are verbatim in BUILD_PLAN.md "Part F - queued
     rulings". Each item's text goes verbatim into its prereg before its
     code. Order after the GW8 queue: F-B (W3, merge by Thu 29 Oct), F-C,
