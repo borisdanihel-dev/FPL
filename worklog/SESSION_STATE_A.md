@@ -7,6 +7,22 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
+- **NOW (19 Oct, 16:00 UTC on): W2, then Part F, overnight** (Boris, verbatim):
+
+  > 2. Start W2 now on its own branch off master, as prereg/W2.md lays out; it merges Saturday 24 Oct after the GW8 deadline, outside 9d. Stop W2 at a clean point when Tuesday's S2b and landing work is due (after 00:00 UTC, once Boris has clicked the dry runs).
+  > 3. If W2 is done before then: continue with Part F in order (F-C and F-D are offline, so they may run before F-B; F-B builds on W2 and must merge by Thu 29 Oct). Overnight, park anything that needs Boris in the state file with the exact question and move to the next item; no merges or landings without him.
+
+  Verifier rule until the Fable reset, Tue 20 Oct 08:00 Prague (Boris,
+  verbatim): "keep running the verifier on Fable past 80%, up to its limit;
+  if a Fable run is refused for the usage limit, fall back to Opus at xhigh
+  and say so in the report. After the reset, the normal rule returns (Fable
+  unless the weekly bar is above 80%)."
+
+  Point 1 of the same message ("your reading stands, every other XI player
+  within 0.3 xP of the captain") is in `prereg/S14.md`.
+  Before the landing: merge master into `landing-2026-10-19b` (docs only
+  since its verification) so master can fast-forward.
+
 - **CURRENT (19 Oct, about 16:00 UTC), after RULING S14 (Boris accepts) + Part F:**
   - S14 accepted as information (`prereg/S14.md`, master `677f34e`): the
     captain table prints in the GW8 bundle; the captain rule is unchanged;
