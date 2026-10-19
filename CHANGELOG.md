@@ -3812,3 +3812,34 @@ ProjectionLogKey guard (the GW5–7 print read the log directly); fixed in
 45-minute guards).
 
 Report: `worklog/cc_2026-10-19_S6c.md`; verifier `worklog/verify_S6c.md`.
+
+## 2026-10-19 — S6d: the live "xp_v2 as tested" forecast in the bundle (`9fa7ab1` prereg, `4d2d1c7` / `a1595e4` code, `822d324` tests; the merged session)
+
+**What.** `tools/xp_v2_live.py`: `core()` is S6b's `Replay.xp_v2` term by
+term (on S6b's 2025/26 inputs it returns S6b's numbers exactly at GW5, 21
+and 38, max |difference| 0); `forecast()` feeds it one 2026/27 export: the
+training slice truncated to the export's gameweek, S11's shares from the
+export's rows and S11's `Prior` on 2025/26 (last season, keyed by `code`,
+else the full name), S5's lambdas from the newest Odds API snapshot before
+the deadline (else the fallback), the current minutes model, the status
+gate, P(sub) × chance. `tools/gw_pass.py` section 5 prints our XI, bench
+order and captain by own and by xp_v2 as tested, xp_v2 as tested the
+default from GW8 (RULING S6b acceptance point 1), and "own picks GW8" when
+an input is missing; the keeper line adds xp_v2. `--s6c`'s GW5–7 print
+gains the live column (football-data 2026/27 book, fetched 18 Oct).
+
+**Measured (information).** GW8 from `fpl_export_gw7_2026-10-19` and
+`odds_2026-10-19T0613Z` (10 of 10 fixtures from odds): 285 players; our
+squad: own Haaland captain (4.44) in a 5-3-2, xp_v2 as tested Saka (6.00)
+in a 3-4-3 with Kelleher in goal. 2026/27 on our squad: GW5 own 54, xp_v2
+54; GW6 own 59, xp_v2 61; GW7 not locked down.
+
+**Tests.** 660 → 667 by discovery (`tests/test_S6d.py`, 7 tests;
+`tests/test_S6c.py` asserts captain names); `test_fpl.py` untouched.
+Mutations 15 of 16 red, 1 equivalent (the verifier's test gap, the 45-minute gate in `core()`, closed in `822d324`) (target rows in `export_rows` cannot
+reach `core()`, which reads rounds below the target).
+
+**For the chat.** The live prior season is 2025/26 by BUILD_PLAN.md Step
+11; lane B's handover named 2024/25.
+
+Report: `worklog/cc_2026-10-19_S6d.md`; verifier `worklog/verify_S6d.md`.
