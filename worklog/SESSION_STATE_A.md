@@ -56,9 +56,21 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       by 0.40 a squad-gameweek, CI [−0.86, +0.05]) while S6c passed the
       switch on 2025/26. GW8 stays on xp_v2 as ruled unless you say
       otherwise; the GW10 revert rule decides."
+  - **S6f DONE** on `s6f-wip` `0b16969`: verifier PASS (Fable 5.1); its
+    own loop reproduced the primary within 1e-6. Correction in the report:
+    own_proxy (secondary only) keeps a logistic DEFCON floor with count 0
+    (secondary +0.357 with, +0.373 without); the primary's sides are
+    exactly 0.
+  - **STOPPED: S6e2's verifier WARNs** (`s6e2-wip` `7f0b148`, verify file
+    committed, nothing else changed). Every reported number stands (the
+    run's mu ≤ 8.43; FAIL reproduced independently), but
+    `floor_points` can loop forever for some mu ≥ 12.765. **Parked for
+    Boris:** "Fix floor_points (stop when the pmf has underflowed or bound
+    j; tests at mu 120 and 12.765), re-verify, and then file S6e2's report
+    and CHANGELOG? The recorded FAIL does not change." The report draft is
+    the scratchpad `cc_2026-10-19_S6e2.md`.
   - **S6e2 BUILT, the test FAILS its bar** on `s6e2-wip` `d80644c`
-    (prereg master `f485223`; off `s6f-wip` + `s6e-wip`); verifier
-    running.
+    (prereg master `f485223`; off `s6f-wip` + `s6e-wip`).
     - 2024/25 keeper points (xp_v2 + Σ E[floor(S/3)] − xp_v2): +0.024
       [−0.016, +0.066]; MAE +0.305 (worse).
     - Choice differs 0.05; E[floor(S/3)] 0.767 v E[S]/3 1.100.
