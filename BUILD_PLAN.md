@@ -619,6 +619,7 @@ Item C1.
 
 - At GW10, GW19 and GW29, re-run the harness on all sources and report drift.
 - No model changes outside pre-registered tests.
+- **GW10 checkpoint item** (RULING 19 Oct afternoon, point 1, verbatim): Record the missing saves term as a GW10-checkpoint item ("xp_v2 + saves" gets its own pre-registered test then); no change to the accepted model before that.
 
 *Optional:* a realised chip-return dataset (top-10k vs random managers) to fill the evidence gap on actual chip gains.
 
