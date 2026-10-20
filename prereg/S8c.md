@@ -172,3 +172,56 @@ Ruling, Tue 20 Oct evening.
 2. Yes: a Fable verifier on S2b's after-measurement (worklog/cc_2026-10-20_S2b_after.md) tonight; it blocks nothing.
 
 Then tonight, on branches only: W3 points 2, 3 and 5 on w3-wip (merge by Thu 29 Oct via dry/W3), then the F-I downloads and Step 16's prereg. Wednesday: W1b as planned; tell Boris when his dry-run click is needed. Same rules: no runner pushes 21:00 UTC to the end of the nightly; no merges without Boris; stop at 6 items.
+
+## Amendment 3: the bundle writes xp_v2_all.csv (Ruling, Tue 20 Oct night, point 3, verbatim at the end)
+
+Pinned before any of its code. Tools only (`tools/gw_pass.py`); no runner
+file.
+
+- **The file:** in the same run, `tools/gw_pass.py` writes
+  `xp_v2_all.csv` into its output folder (`--out`; on Thursday that is
+  `worklog/gw_pass/gw8/`). `run.txt` records it with its SHA-256.
+- **The rows:** one per player in the export's `all_players`, sorted by
+  id.
+  - **Players xp_v2 forecasts:** the forecast from section 5's run
+    (`xp_v2_live.live`).
+  - **Players it does not forecast:** the gate (status not 'a', under 45
+    minutes in the last four, or no fixture). They are listed with
+    `xp_v2` 0, which is the bundle's own rule ("0 in the choice"), with
+    `p_start` empty and `lambda_source` `not forecast`.
+  - Haaland is such a player on GW8 (status d). Without his row, "all 15
+    are in the CSV" would fail while he is in our squad.
+  - **This choice is open for Boris.** The alternative is to list only
+    forecast players.
+- **The columns:** `id, name, team, position, xp_v2, p_start,
+  lambda_source`.
+  - `name` is the export's web_name; `team` the club's short name;
+    `position` GK, DEF, MID or FWD.
+  - `xp_v2` and `p_start` are written in Python's `repr` of the float, so
+    they round-trip exactly.
+  - `lambda_source` is each of the club's GW8 fixtures' source (`odds`
+    or `fallback`) in kickoff order, joined by `;`.
+- **No print changes:** `gw8_pass.txt` stays byte-identical with and
+  without the CSV (a test). If section 5 cannot run (a missing input), no
+  CSV is written. The print already says why, and nothing is substituted.
+- **Tests:** the rows equal `xp_v2_live.live`'s forecast and detail on the
+  toy; the not-forecast rows; the round trip; the print byte-identical
+  with and without the writer; the CSV in `run.txt`. Mutations are shown
+  red.
+- **Then:** the full suite; the GW8 read-only run; the verifier on the
+  diff; report and CHANGELOG on `s8c-wip`.
+  - The new head replaces `71c9d17` as the commit Thursday's bundle runs
+    from.
+  - Due by Thu 22 Oct 14:00 UTC.
+
+Ruling, Tue 20 Oct night (verbatim):
+
+Ruling, Tue 20 Oct night.
+
+1. S2b after-report: yes. Correct the four slips in the report; add an amending CHANGELOG entry; the original entry stays as written.
+2. Yes: appended last in the table is what was meant.
+3. Change the GW8 grading so it does not depend on Friday's timing. The export cannot see a pending transfer before the deadline, so a refresh after Boris's transfer would still print the old 15.
+   - s8c-wip: the bundle also writes worklog/gw_pass/gw8/xp_v2_all.csv from the same run: every player it forecasts, with id, name, team, position, xp_v2 for GW8, P(start) and the lambda source. Test that the printed output is byte-identical with and without the CSV. The verifier checks the diff. Done by Thu 22 Oct 14:00 UTC; the new head is the commit Thursday's bundle runs from.
+   - w3-wip: REALISED takes the actual GW8 15 from the post-deadline picks, own from the projection log, and xp_v2 from that CSV; each model picks its XI and captain from those 15. The condition "the bundle's 15 equals the GW8 squad" is replaced by "all 15 are in the CSV"; otherwise "not recorded".
+4. Committer time: OK, and the bundle's run.txt end time must also be before the deadline. Both are required.
+5. Yes: the item count resets to 0 of 6. Wednesday: point 3, then W1b as planned (tell Boris when his dry-run click is needed, before 21:00 UTC), then Step 16's prereg. Same rules: branches only; no merges without Boris; no runner pushes 21:00 UTC to the end of the nightly or from Thu 22 Oct 11:30 UTC to the GW8 deadline.
