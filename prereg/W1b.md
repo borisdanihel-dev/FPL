@@ -123,3 +123,11 @@ END RULING
 ## RULINGS PART F, item F-A (verbatim, 2026-10-19; the whole block is in BUILD_PLAN.md Part F): W1b's cap constant becomes 12
 
 F-A. Dry-run limit: 12 per UTC day, manual and push-triggered together, effective now. Quiet windows unchanged (21:30 UTC until the night's data commit; one hour before a deadline). W1b's cap constant becomes 12.
+
+## Ruling, Tue 20 Oct, 21:00 Prague (point 1: the merge on Wednesday; verbatim)
+
+Ruling, Tue 20 Oct, 21:00 Prague.
+
+1. W1b: not tonight; S2b was today's runner change (one per night). Merge Wednesday before 21:00 UTC as planned.
+2. Haaland: the live gate (status 'a') sets him to 0 in xp_v2 because FPL flags him 'd', 75%. The gate stays as it is for the picks, the CSV and the grading. Add to the bundle on s8c-wip an information block for every player in our 15 whose status is not 'a': status, chance_next_round, news, and xp_v2 recomputed as if available (the same inputs with only the status gate lifted for that player, P(sub) scaled by chance as now; own too if its gate is the same one-line check), labelled "if he plays; the picks treat him as 0", plus his place in the captain table on that number. The picks, the CSV values and the picker test do not change; test that the rest of the print is byte-identical. The verifier checks the diff. Done by Thu 22 Oct 14:00 UTC; the new head becomes the bundle commit.
+3. Record in BUILD_PLAN Part F as F-M (no code): the status gate drops 'd' players entirely whatever their chance. Each week, record what our flagged players actually score; revisit at GW15 with a prereg if the gate is costing points.
