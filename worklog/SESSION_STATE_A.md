@@ -7,7 +7,35 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (20 Oct, 13:45 UTC on): "Ruling, Tue 20 Oct evening"** (verbatim
+- **NOW (20 Oct, 14:45 UTC on): "Ruling, Tue 20 Oct night"** (verbatim in
+  `prereg/S8c.md` amendment 3, `prereg/W3.md` amendment 2, `prereg/S2b.md`,
+  master `6e7c918`, and the scratchpad `ruling_20oct_night.txt`). The
+  item count reset to 0 of 6.
+  - **Point 1 done:** S2b's after-report is corrected, with an amending
+    CHANGELOG entry (master `8df892a`).
+  - **Point 2:** "appended last in the table" is confirmed.
+  - **Point 3, s8c-wip** (`ea95cf6`, pushed):
+    - the bundle also writes `xp_v2_all.csv`: every export player, those
+      not forecast at 0 with "not forecast" (the design choice, open for
+      Boris);
+    - the print is byte-identical with and without the CSV;
+    - mutations 8 of 8; suite 764 → 767 bare;
+    - GW8 run: 668 rows, Haaland "not forecast".
+    - Verifier running.
+    - **The new head is Thursday's bundle commit** once it passes (due
+      Thu 14:00 UTC).
+  - **Points 3–4, w3-wip** (`bbe770a`, pushed):
+    - REALISED reads the CSV at the newest commit whose committer time and
+      `run.txt` end are both before the deadline, with the SHA-256 as
+      `run.txt` records it;
+    - our actual GW8 15; `realised_on` for both models; one of the 15
+      missing gives "not recorded";
+    - mutations 8 of 8; the real CSV reads end to end.
+    - Suite and verifier running.
+  - **Next (Wednesday):** W1b (tell Boris the dry-run time, before 21:00
+    UTC), then Step 16's prereg.
+
+- (Earlier) **NOW (20 Oct, 13:45 UTC on): "Ruling, Tue 20 Oct evening"** (verbatim
   in `prereg/S8c.md` amendment 2, `prereg/S2b.md`, `prereg/W3.md`
   amendment 1, and the scratchpad `ruling_20oct_evening.txt`).
   - **Point 1:** `s8c-wip` `71c9d17` stays the bundle commit; the
