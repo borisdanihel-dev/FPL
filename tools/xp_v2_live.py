@@ -196,9 +196,11 @@ def target_fixtures(d, target):
     return out
 
 
-def forecast(d, target, book, model, prior, names):
+def forecast(d, target, book, model, prior, names, lift=()):
     """xp_v2 as tested for `target` from one export d (its gameweek is
-    target - 1): ({pid: xp_v2}, detail, the sources of the lambdas)."""
+    target - 1): ({pid: xp_v2}, detail, the sources of the lambdas). `lift`:
+    players whose status gate is set to True, nothing else changed
+    (prereg/S8c.md amendment 4: "if he plays"; empty = the forecast)."""
     if d["gameweek"] + 1 != target:
         raise MissingInput(f"the export is for GW{d['gameweek'] + 1}, not GW{target}")
     c = E.canonical_through(E.canonical_from_export(d), d["gameweek"])   # the training slice: never the target's rows
@@ -222,6 +224,8 @@ def forecast(d, target, book, model, prior, names):
     if missing:
         raise MissingInput(f"{len(missing)} players have no name for the prior (fpl.sqlite players)")
     gate = {int(p["id"]): p["status"] == "a" for p in d["all_players"]}
+    for pid in lift:
+        gate[int(pid)] = True
     chance = XV.chance_scale(d)                         # S6's live rule on P(sub)
     out, detail = core(inp, names, by_round, target, rows, {}, tot, prior, fixtures_of, lam_team, lam_opp,
                        ict=ict_live(d), chance=chance, gate=gate)
@@ -241,7 +245,7 @@ def _model(fixtures, dl):
     return OL.fit_fallback(results, dl)
 
 
-def live(data_dir, hist_root, now=None):
+def live(data_dir, hist_root, now=None, lift=()):
     """The deadline pass: the newest export (generated before the next
     deadline), the newest Odds API snapshot before it. Returns a dict with
     the forecast, its detail and the provenance of every input."""
@@ -261,7 +265,7 @@ def live(data_dir, hist_root, now=None):
     names, by_code = prior_names(os.path.join(data_dir, "fpl.sqlite"),
                                  os.path.join(hist_root, "2026-27", "elements_positions.csv"),
                                  os.path.join(hist_root, PRIOR_SEASON))
-    xp, detail, srcs = forecast(d, target, book, _model(fixtures, dl), prior, names)
+    xp, detail, srcs = forecast(d, target, book, _model(fixtures, dl), prior, names, lift=lift)
     return {"target": target, "deadline": dl, "export": os.path.basename(path), "generated": gen, "xp": xp, "detail": detail,
             "sources": srcs, "snapshot": (os.path.basename(snap[0]), snap[2]) if snap else None, "by_code": by_code,
             "d": d}

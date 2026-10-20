@@ -295,6 +295,65 @@ def write_xp_v2_csv(out_dir, res):
     return path
 
 
+OWN_HORIZON = 6                     # fpl_edge.py --record's default --horizon, the nightly's own
+FLAG_HEADER = ("  information - our players FPL flags (status not 'a'): the status gate stays for the picks, the CSV and "
+               "the grading (Ruling, Tue 20 Oct, 21:00 Prague, point 2)")
+
+
+def own_if_plays(d, p, target, horizon=OWN_HORIZON):
+    """Amendment 4: own for one player as fpl_edge.record_status's own
+    branch computes it, with the status part of its gate lifted (the
+    minutes part stays): (value, None) or (None, why)."""
+    if (p.get("mins_last4") or 0) < 45:
+        return None, "under 45 minutes in the last four"
+    tick, _ = E.build_ticker(d, horizon)
+    fx = [f for f in tick.get(p["team"], []) if f[0] == target]
+    if not fx:
+        return None, f"no GW{target} fixture"
+    priors, personal = E.positional_priors(d["all_players"]), E.personal_priors(d)
+    return sum(E.project(p, {p["team"]: [f]}, horizon, d["gameweek"], priors, personal)[0] for f in fx), None
+
+
+def if_he_plays(data_dir, hist_root, now, res, squad, out):
+    """Amendment 4: for every player in our 15 whose status is not 'a':
+    status, chance, news, and xp_v2 and own as if available (only the
+    status gate lifted), with his place in the captain table on that
+    number. Information only: the picks, the CSV and the grading keep the
+    gate. Returns [(pid, xp_v2 or None, own or None, place or None)]."""
+    d, target = res["d"], res["target"]
+    allp = {int(p["id"]): p for p in d["all_players"]}
+    flagged = [r for r in squad if allp[r["id"]]["status"] != "a"]
+    if not flagged:
+        return []
+    out(FLAG_HEADER)
+    sums = PM.live_pmfs(res)
+    done = []
+    for r in flagged:
+        p = allp[r["id"]]
+        ch = p.get("chance_next_round")
+        out(f"    {r['name']} ({r['team']} {BT.POS_NAME.get(r['pos'], '?')}): status {p['status']}, chance_next_round "
+            f"{'none' if ch is None else ch}, news \"{p.get('news') or ''}\"")
+        own, why = own_if_plays(d, p, target)
+        own_txt = f"own {own:.2f}" if own is not None else f"own none even if he plays ({why})"
+        lifted = XL.live(data_dir, hist_root, now, lift=(r["id"],))
+        if r["id"] not in lifted["xp"]:
+            gone = "under 45 minutes in the last four" if (p.get("mins_last4") or 0) < 45 else f"no GW{target} fixture"
+            out(f"      if he plays; the picks treat him as 0: no xp_v2 even if he plays ({gone}); {own_txt}")
+            done.append((r["id"], None, own, None))
+            continue
+        x, det = lifted["xp"][r["id"]], lifted["detail"][r["id"]]
+        one = PM.live_pmfs(dict(lifted, xp={r["id"]: x}, detail={r["id"]: det}))[r["id"]]
+        sums2 = dict(sums)
+        sums2[r["id"]] = one
+        order = sorted(squad, key=lambda q: -(sums2[q["id"]]["mean"] if q["id"] in sums2 else -1))   # section 7's sort
+        k = [q["id"] for q in order].index(r["id"]) + 1
+        out(f"      if he plays; the picks treat him as 0: xp_v2 {x:.2f} (P(start) {det['p_start']:.2f}, P(sub) {det['p_sub']:.2f} "
+            f"scaled by chance); {own_txt}; captain table place on that number: {k} of {len(squad)} (mean {one['mean']:.2f}, "
+            f"P>=10 {one['p10']:.3f}, P>=15 {one['p15']:.3f}, p90 {one['p90']})")
+        done.append((r["id"], x, own, k))
+    return done
+
+
 def bundle(data_dir, out=print, now=None, hist_root=None, keep=None):
     hist_root = hist_root or os.path.join(ROOT, "historical")
     d, path = CH.newest_export(data_dir)
@@ -384,6 +443,7 @@ def bundle(data_dir, out=print, now=None, hist_root=None, keep=None):
             keep["res"] = res                    # amendment 3: the same run's forecast, for xp_v2_all.csv
         out(f"  {sbs['changed']} slots differ; the XI {'differs' if sbs['xi_differs'] else 'is the same set'}; DEFAULT = xp_v2 as tested "
             f"(slots 1-11, the bench order and the captain)" + CF.flag(squad))
+        if_he_plays(data_dir, hist_root, now, res, squad, out)              # amendment 4: information only
         return sbs
     section(out, SECTIONS[4], own_v_xp)
 

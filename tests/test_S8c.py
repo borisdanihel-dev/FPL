@@ -27,6 +27,8 @@ import gw_pass as G                                               # noqa: E402
 import planner as PL                                              # noqa: E402
 import planner_live as PLV                                        # noqa: E402
 import xp_v2_live as XL                                           # noqa: E402
+import points_pmf as PM                                           # noqa: E402
+import fpl_edge as FE                                             # noqa: E402
 from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot, NOW9   # noqa: E402
 from tests.test_S5 import api_event, toy_snapshot                 # noqa: E402
 
@@ -391,6 +393,113 @@ class XpV2Csv(unittest.TestCase):
         self.assertEqual(self.main(self.out), 0)
         self.assertTrue(os.path.exists(os.path.join(self.out, "gw9_pass.txt")))
         self.assertFalse(os.path.exists(os.path.join(self.out, "xp_v2_all.csv")))
+
+
+class IfHePlays(unittest.TestCase):
+    """Amendment 4: for our players FPL flags, xp_v2 and own as if available, the captain table place; the rest unchanged."""
+
+    def setUp(self):
+        import gzip, json
+        self.tmp, self.hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        for p in (self.tmp, self.hist):
+            self.addCleanup(shutil.rmtree, p, True)
+        toy_live(self.tmp); toy_hist_root(self.hist)
+        gw9_snapshot(self.tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+        for p in (mock.patch.object(G.E, "selling_budget", return_value=(100.0, "")), mock.patch.object(G, "datetime", FixedNow)):
+            p.start(); self.addCleanup(p.stop)
+        self.path = os.path.join(self.tmp, "exports", sorted(os.listdir(os.path.join(self.tmp, "exports")))[-1])
+        with gzip.open(self.path, "rt", encoding="utf-8") as fh:
+            d = json.load(fh)
+        mine = [r["player_id"] for r in sorted(d["squads"], key=lambda r: r["slot"]) if r["entry_id"] == d["my_entry"]]
+        self.flag = next(int(p["id"]) for p in d["all_players"] if p["id"] in mine and p["pos"] == 3)
+        self.plain = next(int(p["id"]) for p in d["all_players"] if p["id"] in mine and p["pos"] == 2)
+        self.base = XL.live(self.tmp, self.hist, NOW9)                                       # before the flag
+        self.other = next(int(p["id"]) for p in d["all_players"]
+                          if p["id"] not in mine and int(p["id"]) in self.base["xp"])           # flagged too, not ours
+        for p in d["all_players"]:
+            if int(p["id"]) == self.flag:
+                p.update(status="d", chance_next_round=75, news="Knock - 75% chance of playing")
+            if int(p["id"]) == self.other:
+                p.update(status="i", chance_next_round=0, news="Injured")
+        with gzip.open(self.path, "wt", encoding="utf-8") as fh:
+            json.dump(d, fh)
+
+    def run_main(self, block=True):
+        out = tempfile.mkdtemp(); self.addCleanup(shutil.rmtree, out, True)
+        ctx = mock.patch.object(G, "if_he_plays", return_value=[]) if not block else mock.patch.object(G, "OWN_HORIZON", G.OWN_HORIZON)
+        with ctx, redirect_stdout(io.StringIO()):
+            self.assertEqual(G.main(["--data", self.tmp, "--hist", self.hist, "--out", out]), 0)
+        return (open(os.path.join(out, "gw9_pass.txt"), "rb").read(), open(os.path.join(out, "xp_v2_all.csv"), "rb").read())
+
+    def test_the_lift_changes_only_that_player(self):
+        real = XL.XR.sub_inputs_2526
+
+        def sub_inputs(*a, **k):                                                     # a P(sub) to scale (the toy's are 0)
+            p_sub, e_sub = real(*a, **k)
+            p_sub = dict(p_sub); p_sub[self.flag] = 0.4
+            return p_sub, e_sub
+        with mock.patch.object(XL.XR, "sub_inputs_2526", side_effect=sub_inputs):
+            gated = XL.live(self.tmp, self.hist, NOW9)
+            lifted = XL.live(self.tmp, self.hist, NOW9, lift=(self.flag,))
+        self.assertNotIn(self.flag, gated["xp"]); self.assertIn(self.flag, lifted["xp"])
+        self.assertNotIn(self.other, lifted["xp"])                                                       # only his gate is lifted
+        self.assertEqual({k: v for k, v in lifted["xp"].items() if k != self.flag}, gated["xp"])        # nothing else moves
+        self.assertAlmostEqual(lifted["detail"][self.flag]["p_sub"], 0.4 * 0.75, places=12)            # P(sub) scaled by chance as now
+        d, _ = CH.newest_export(self.tmp)
+        inp = FE.reliability_inputs(FE.canonical_through(FE.canonical_from_export(d), d["gameweek"]), gws_played=d["gameweek"])
+        self.assertEqual(lifted["detail"][self.flag]["p_start"], inp["players"][self.flag]["p_start"])   # the same P(start) input
+
+    def test_the_block(self):
+        text = self.run_main()[0].decode("utf-8")
+        lines = text.splitlines()
+        i = lines.index(G.FLAG_HEADER)
+        self.assertTrue(lines[i - 1].startswith("  ") and " slots differ; the XI " in lines[i - 1])   # the end of section 5
+        self.assertTrue(lines[i + 1].startswith("    ") and 'status d, chance_next_round 75, news "Knock - 75% chance of playing"' in lines[i + 1])
+        lifted = XL.live(self.tmp, self.hist, NOW9, lift=(self.flag,))
+        x, det = lifted["xp"][self.flag], lifted["detail"][self.flag]
+        d, _ = CH.newest_export(self.tmp)
+        p = next(q for q in d["all_players"] if int(q["id"]) == self.flag)
+        own, why = G.own_if_plays(d, p, 9)
+        squad = CH.my_squad(d)
+        sums = PM.live_pmfs(XL.live(self.tmp, self.hist, NOW9))
+        one = PM.live_pmfs(dict(lifted, xp={self.flag: x}, detail={self.flag: det}))[self.flag]
+        sums[self.flag] = one
+        k = [q["id"] for q in sorted(squad, key=lambda q: -(sums[q["id"]]["mean"] if q["id"] in sums else -1))].index(self.flag) + 1
+        self.assertEqual(lines[i + 2], f"      if he plays; the picks treat him as 0: xp_v2 {x:.2f} (P(start) {det['p_start']:.2f}, "
+                                       f"P(sub) {det['p_sub']:.2f} scaled by chance); own {own:.2f}; captain table place on that number: "
+                                       f"{k} of 15 (mean {one['mean']:.2f}, P>=10 {one['p10']:.3f}, P>=15 {one['p15']:.3f}, p90 {one['p90']})")
+        self.assertEqual(lines[i + 3], "")                                                              # then section 6
+
+    def test_the_rest_is_byte_identical_and_the_csv_too(self):
+        with_block, csv_a = self.run_main()
+        without, csv_b = self.run_main(block=False)
+        lines = with_block.decode("utf-8").splitlines(keepends=True)
+        i = [l.rstrip("\r\n") for l in lines].index(G.FLAG_HEADER)
+        self.assertEqual("".join(lines[:i] + lines[i + 3:]).encode("utf-8"), without)
+        self.assertEqual(csv_a, csv_b)
+
+    def test_own_is_the_record_branch(self):
+        d, _ = CH.newest_export(self.tmp)
+        tmp_log = os.path.join(self.tmp, "own_check.csv")
+        FE.record_status(d, 6, "own", path=tmp_log)
+        rows = {int(r["player_id"]): float(r["predicted"]) for r in FE.read_log(tmp_log) if r["source"] == "own"}
+        p = next(q for q in d["all_players"] if int(q["id"]) == self.plain)
+        self.assertEqual(round(G.own_if_plays(d, p, 9)[0], 3), rows[self.plain])                      # an unflagged player: the recorded row
+        self.assertNotIn(self.flag, rows)                                                                # the gate drops the flagged one
+
+    def test_no_flagged_player_no_block(self):
+        import gzip, json
+        with gzip.open(self.path, "rt", encoding="utf-8") as fh:
+            d = json.load(fh)
+        for p in d["all_players"]:
+            if int(p["id"]) == self.flag:
+                p["status"] = "a"
+        with gzip.open(self.path, "wt", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        with_block, _ = self.run_main()
+        without, _ = self.run_main(block=False)
+        self.assertEqual(with_block, without)
+        self.assertNotIn(G.FLAG_HEADER.encode("utf-8"), with_block)
 
 
 class BenchBoost(unittest.TestCase):
