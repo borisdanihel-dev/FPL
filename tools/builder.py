@@ -311,7 +311,7 @@ class Origin:
         self.weeks = sorted(fc)
         self.weeks_xp = [fc[u] for u in self.weeks]
         self.fc = fc
-        self.market = sorted(season.market(t, pos), key=lambda r: r["id"])
+        self.market = sorted((r for r in season.market(t, pos) if r["pos"] in QUOTA), key=lambda r: r["id"])   # 2024/25's assistant managers (AM, from GW23) are no players
         c = BT.canonical_at(season.hist, t)
         self.inp = E.reliability_inputs(E.canonical_through(c, t - 1), gws_played=t - 1)
         window = range((t - 1) - min(4, t - 1) + 1, t)

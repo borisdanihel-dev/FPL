@@ -242,6 +242,10 @@ class Season(unittest.TestCase):
         self.assertGreaterEqual(r["builder_proj"], r["cap_proj"] - 1e-9)
         self.assertEqual(len(r["builder_ids"]), 15); self.assertEqual(len(r["rule_ids"]), 15)
         o = B.Origin(s, 5)
+        real_market = s.market
+        with mock.patch.object(s, "market", side_effect=lambda t, pos: real_market(t, pos) + [{"id": 9999, "name": "AM", "team": "AAA",
+                                                                                              "pos": 0, "price": 1.0, "status": "a"}]):
+            self.assertNotIn(9999, {p["id"] for p in B.Origin(s, 5).market})                # no assistant manager in the market
         want = B.realised(s, [p for p in o.market if p["id"] in set(r["builder_ids"])], o)
         self.assertAlmostEqual(want, r["builder"])
         self.assertAlmostEqual(r["builder"], sum(s.realised([{"id": p["id"], "pos": p["pos"], "team": p["team"], "name": "x"}
