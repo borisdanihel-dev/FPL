@@ -3993,3 +3993,20 @@ W1b's cap moves to 12 when W1b is worked.
   the harness (shared with the parked F-D).
 - **Checks:** suite 692; mutations 6 of 6 after the test-gap fix; verifier
   PASS (`worklog/verify_S6e.md`).
+
+## 2026-10-20 — S17 (F-H): the mini-league win simulator passes its redesigned test (`07c3fff` prereg; `011b072`, `e17c5e5` code; on `s17-wip`)
+
+- **Test:** 200 synthetic 2025/26 leagues of 10 (S7's sampler, styles
+  4 template / 3 mixed / 3 differential, fixed squads, no chips). The
+  truth replays GW2–38 with S6b's point-in-time choices. P(win) comes from
+  2,000 shared-draw simulations of Step 14's PMFs at GW20, 26 and 32.
+- **Primary:** Brier skill v the current leader +0.084, 90% CI [−0.022,
+  +0.169] → **PASS** (bar ≥ 0.05, point estimate). Per origin −0.075 /
+  +0.241 / +0.209.
+- **Deciles:** overconfident at the top (0.862 predicted v 0.728
+  observed).
+- **Limitations:** no autosubs inside; dead differential squads; the
+  sources line double counts (true 31 / 360).
+- **Status:** information only; live use needs Boris.
+- **Checks:** verifier PASS (Fable 5.1), its own recomputation within
+  0.001; mutations 12 of 12, plus 3 closed after it.
