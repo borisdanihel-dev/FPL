@@ -3993,3 +3993,24 @@ W1b's cap moves to 12 when W1b is worked.
   the harness (shared with the parked F-D).
 - **Checks:** suite 692; mutations 6 of 6 after the test-gap fix; verifier
   PASS (`worklog/verify_S6e.md`).
+
+## 2026-10-20 — S15 (F-G): the unified squad builder passes its A/B and is accepted (`ae1d368`, `3b31599` prereg; `6f362a8`, `91f401d` code; on `s15-wip`)
+
+- **A/B:** 68 hypothetical wildcards (2025/26 and 2024/25 GW5–38), the
+  same xp_v2 horizon matrix for both sides. Builder − frozen three-layer
+  rule: +33.31 window points per date, 90% CI [+25.29, +41.54].
+  - The builder is ≥ the rule on 0.78 of dates, and its projected value is
+    ≥ the rule's on every date → **PASS**.
+  - Per season +23.94 / +42.68; non-overlapping dates +44.75 [+24.08,
+    +66.00].
+  - The builder never picks 4-3-3 in week t (cost 1.66); the GK+DEF cap
+    costs 0.49 projected.
+  - The frozen rule leaves budget unspent: part of the edge.
+- **Fix before any result:** 2024/25's assistant-manager rows (AM, from
+  GW23) leave the market.
+- **Checks:** verifier PASS (Fable 5.1; full regeneration byte-identical);
+  mutations 18 of 18.
+- **Accepted** (Ruling, Tue 20 Oct, point 2): `tools/builder.py` is the
+  default for Free Hit and Wildcard builds, the GK+DEF cap on live with its
+  cost printed and the three-layer rule's squad beside it. Not used for
+  GW8.
