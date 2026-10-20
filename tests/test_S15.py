@@ -79,6 +79,10 @@ class Objective(unittest.TestCase):
         self.assertFalse(B.legal(sq, sum(p["price"] for p in sq) - 0.1, False))            # the budget
         same = [dict(p, team="AAA") for p in sq]
         self.assertFalse(B.legal(same, 100.0, False))                                      # 3 per club
+        spread = [dict(p, team=f"T{i}") for i, p in enumerate(sq)]
+        three = [dict(p, team="AAA") if i < 3 else p for i, p in enumerate(spread)]
+        four = [dict(p, team="AAA") if i < 4 else p for i, p in enumerate(spread)]
+        self.assertTrue(B.legal(three, 100.0, False)); self.assertFalse(B.legal(four, 100.0, False))   # exactly 3, never 4
         gd = [dict(p, team="AAA" if p["pos"] in (1, 2) and i < 3 else f"Z{i}") for i, p in enumerate(sorted(sq, key=lambda p: p["pos"]))]
         self.assertTrue(B.legal(gd, 100.0, False)); self.assertFalse(B.legal(gd, 100.0, True))   # the GK+DEF cap toggle
 
@@ -105,6 +109,56 @@ class Search(unittest.TestCase):
         self.assertTrue(B.legal(capped, 100.0, True)); self.assertLessEqual(cv, bv + 1e-9)
         self.assertEqual(B.build_pool(mk, weeks, ids).keys(), {1, 2, 3, 4})
         self.assertTrue(all(len(v) <= B.POOL and not ({p["id"] for p in v} & ids) for v in pool.values()))   # S8's pool, outside the 15
+
+
+class Gaps(unittest.TestCase):
+    """Cases built so that one rule alone decides the answer."""
+
+    def squad15(self):
+        out, pid = [], 0
+        for pos, n in ((1, 2), (2, 5), (3, 5), (4, 3)):
+            for _ in range(n):
+                pid += 1
+                out.append({"id": pid, "name": f"S{pid}", "team": f"C{pid}", "pos": pos, "price": 5.0})
+        return out
+
+    def test_only_a_pair_improves(self):
+        sq = self.squad15()
+        xp = {p["id"]: 1.0 for p in sq}
+        a = {"id": 101, "name": "A", "team": "CA", "pos": 3, "price": 6.0}                  # better, one more
+        b = {"id": 102, "name": "B", "team": "CB", "pos": 2, "price": 4.0}                  # a little worse, one less
+        xp.update({101: 5.0, 102: 0.9})
+        mk, weeks = sq + [a, b], [xp]
+        for o in sq:                                                                        # no single swap improves
+            for i in (a, b):
+                if i["pos"] == o["pos"]:
+                    new = [p for p in sq if p["id"] != o["id"]] + [i]
+                    self.assertFalse(B.legal(new, 75.0, False) and B.objective(new, weeks) > B.objective(sq, weeks) + 1e-9)
+        out, v = B.local_search(sq, mk, weeks, 75.0, False)
+        self.assertEqual({101, 102} <= {p["id"] for p in out}, True)                         # the pair found
+        self.assertGreater(v, B.objective(sq, weeks))
+
+    def test_the_pool_is_outside_the_15(self):
+        sq = self.squad15()
+        xp = {p["id"]: 2.0 for p in sq}
+        fw = [p["id"] for p in sq if p["pos"] == 4]
+        xp.update({fw[0]: 3.0, fw[1]: 3.0, fw[2]: 1.0})
+        c = {"id": 201, "name": "C", "team": "CC", "pos": 4, "price": 5.0}
+        xp[201] = 2.5
+        out, v = B.local_search(sq, sq + [c], [xp], 75.0, False, pool_n=2)
+        self.assertIn(201, {p["id"] for p in out})                                         # the top 2 outside the 15 hold C
+
+    def test_layer_one_at_the_frozen_share(self):
+        players = [{"id": 1, "name": "A", "team": "T1", "pos": 3, "price": 5.0, "status": "a", "mins_last4": 216.0},   # 0.600
+                   {"id": 2, "name": "B", "team": "T1", "pos": 3, "price": 5.0, "status": "a", "mins_last4": 252.0}]   # 0.700
+        cands, exc = B.rule_candidates(players, {"players": {}}, {6: {"T1": [("T2", True)]}}, [6], {"T1": 4}, {6: {1: 1.0, 2: 1.0}})
+        self.assertEqual([c["id"] for c in cands[3]], [2]); self.assertEqual(exc, {f"minutes share <= {E.FLAG_SHARE_MAX}": 1})
+
+    def test_the_share_bar_is_60_percent(self):
+        recs = [{"builder": 10.0, "rule": 0.0, "builder_proj": 1.0, "rule_proj": 0.0} for _ in range(11)] + \
+               [{"builder": 0.0, "rule": 0.1, "builder_proj": 1.0, "rule_proj": 0.0} for _ in range(9)]
+        v = B.verdict(recs)
+        self.assertGreater(v["boot"]["lo"], 0); self.assertAlmostEqual(v["share"], 0.55); self.assertFalse(v["pass"])
 
 
 class RulePort(unittest.TestCase):
@@ -179,7 +233,11 @@ class Season(unittest.TestCase):
 
     def test_a_date_and_point_in_time(self):
         s = self.season()
-        r = B.one_date(s, 5)
+        with mock.patch.object(B, "build", wraps=B.build) as bld:
+            r = B.one_date(s, 5)
+        first = bld.call_args_list[0]
+        self.assertEqual(sorted(p["id"] for p in first.kwargs["starts"][0]), r["rule_ids"])   # the rule's squad is a start
+        self.assertEqual([c.args[3] for c in bld.call_args_list], [False, True])            # the A/B without the cap; its cost with it
         self.assertGreaterEqual(r["builder_proj"], r["rule_proj"] - 1e-9)                    # the rule's squad is a start
         self.assertGreaterEqual(r["builder_proj"], r["cap_proj"] - 1e-9)
         self.assertEqual(len(r["builder_ids"]), 15); self.assertEqual(len(r["rule_ids"]), 15)
@@ -213,12 +271,16 @@ class Live(unittest.TestCase):
                 outs = {}
                 for mode in ("wildcard", "freehit", "bb"):
                     lines = []
-                    res = B.live(tmp, hist, mode, lines.append)
+                    with mock.patch.object(B, "build", wraps=B.build) as bld:
+                        res = B.live(tmp, hist, mode, lines.append)
+                    self.assertEqual([c.args[3] for c in bld.call_args_list], [True, False])     # live: the cap on, its cost off
                     outs[mode] = (res, lines)
                     self.assertTrue(lines[0].startswith(f"BUILDER  --{mode}  GW9")); self.assertIn("information only", lines[0])
                     self.assertIn("the GK+DEF 2-per-club cap ON", lines[1])
                     self.assertTrue(B.legal(res["squad"], 100.0, True)); self.assertLessEqual(res["value"], res["value_off"] + 1e-9)
             self.assertIn("GW9-14", outs["wildcard"][1][0])
+            for mode in ("freehit", "bb"):
+                self.assertIn("GW9 from", outs[mode][1][0])                                    # one week, no decay
             self.assertIn("odds", outs["freehit"][1][0])
         finally:
             shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
