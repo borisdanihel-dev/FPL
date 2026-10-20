@@ -45,8 +45,11 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       `5c90e08`. **Merged:** master `ce357fb`; suite 708 OK, bare and with
       the data. Pushed 11:45 UTC. The untracked `verify_S2b_pre.md` (an
       older draft) was moved to the scratchpad `aside/`.
+    - **S8b verifier PASS** → accepted (point 1): `s8b-wip` `cfa7a36` with
+      report, verifier file and CHANGELOG. +19.58 [+1.28, +38.70].
+      Reported to Boris 11:50 UTC. Open: land the S8b and S15 CHANGELOG
+      entries on master before Thu 11:30 UTC?
   - **In progress:**
-    - the S8b verifier;
     - the S8c verifier (with S15 amendment 2), and the `s8c-wip` suites;
     - **waiting on Boris:** the real nightly dispatch of master `ce357fb`
       before 21:00 UTC. It is the first real re-fetch of GW1-6 (expect 73
