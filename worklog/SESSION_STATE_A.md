@@ -25,11 +25,17 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
        stands; the keeper-saves line closed.
     2. **S8b (F-F)** (`s8b-wip` `7580cf2`): built; real run in progress;
        mutations 13 of 14 (b2 equivalent).
-    3. **S15 (F-G)** (`s15-wip` `0f72c86`): built; the rule port equals
-       `wildcard_candidates` on the real GW7 export; A/B run in progress;
-       mutations 18 of 18.
-    4. **S17 (F-H)** (`s17-wip` `e17c5e5`): built; real run in progress;
-       mutations 12 of 12.
+    3. **S15 (F-G)** (`s15-wip` `91f401d`): built; the rule port equals
+       `wildcard_candidates` on the real GW7 export; mutations 18 of 18.
+       The first A/B run crashed at 2024/25 GW23 on assistant-manager rows
+       (AM); fixed (they leave the market, tested); the A/B is rerunning.
+    4. **S17 (F-H) DONE** (`s17-wip` `90b62d4`): Brier skill +0.084
+       [−0.022, +0.169] → PASS on the point estimate (bar ≥ 0.05). GW20
+       −0.075, GW26 +0.241, GW32 +0.209; overconfident deciles. Verifier
+       PASS (Fable 5.1); its 3 survivors closed. Information only;
+       adoption needs Boris.
+    - W3 point 3 needs `finished_provisional`, which the sync does not
+      store: a fixtures migration in W3.
     5. **F-I proposal** on `fi-wip` (`worklog/proposal_F-I_sources.md`):
        nothing downloaded; three questions for Boris in it.
   - F-L is recorded in BUILD_PLAN Part F (`6ae5923`).
