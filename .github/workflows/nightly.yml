@@ -6,12 +6,12 @@
 # A dry run (S2 amendment 2, point 5) runs the same pipeline on its branch's
 # code and force-pushes the result to data-dryrun only: never to data, no
 # release, no issue, its own concurrency group. Any branch but master is
-# always dry; a scheduled run never is. At most 6 dry runs a day (point 9).
+# always dry; a scheduled run never is. At most 12 dry runs a day (F-A; 6 under point 9).
 # A push to dry/<item> is a dry run too (RULING W1b): its result goes to
 # data-dryrun-<item>, the Odds API key is not passed, and the --due gate
 # (fpl_dryrun.py) skips it, green, in the quiet windows (21:30 UTC until the
 # nightly has committed, at the latest 04:00; within 1 hour of a deadline) or
-# when 6 dry runs, pushed and manual together, already ran that UTC day.
+# when 12 dry runs, pushed and manual together, already ran that UTC day.
 # The checks (checks.py, Step 3) write reports/status.txt; a FAIL commits
 # nothing. A red run opens or updates the issue "Nightly run failed", a green
 # one closes it (fpl_alert.py). A second cron at 03:17 UTC is the backup run:

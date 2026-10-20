@@ -348,7 +348,7 @@ def due_main(data, env=None, now=None, say=print):
     """--due: print whether this run is due and, on the runner, write
     run=true|false to GITHUB_OUTPUT for the later steps. Exit 0 either way.
     A dry run - pushed to dry/<item> or dispatched - also passes the gate of
-    fpl_dryrun.py: the quiet windows and the cap of 6 a day (RULING W1b)."""
+    fpl_dryrun.py: the quiet windows and the cap of 12 a day (RULING W1b; F-A)."""
     env = os.environ if env is None else env
     now = now or datetime.now(timezone.utc)
     due, why = backup_due(data, now, env.get("FPL_SCHEDULE", ""))

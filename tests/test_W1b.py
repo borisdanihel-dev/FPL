@@ -344,6 +344,24 @@ class DueGate(unittest.TestCase):
         self.assertEqual(lines, ["DUE          not the backup cron",
                                  "DRY RUN      1 of 12 today; the result goes to data-dryrun-S16"])
 
+    def test_a_manual_dry_run_is_gated_too(self):
+        manual = {"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/master", "GITHUB_REF_NAME": "master",
+                  "FPL_DRY_RUN": "true", "GITHUB_REPOSITORY": "o/r", "GITHUB_RUN_ID": "900", "GH_TOKEN": "t-not-a-real-token",
+                  "GITHUB_WORKFLOW_REF": "o/r/.github/workflows/nightly.yml@refs/heads/master"}
+        out, lines, _ = self._due(manual, NOW)
+        self.assertEqual(out, "run=true")
+        self.assertEqual(lines[-1], "DRY RUN      1 of 12 today; the result goes to data-dryrun")
+        runs = [_run(i, f"dry run dry/X{i}", f"{TODAY}{i:02d}:00:00Z") for i in range(1, 13)]
+        out, lines, _ = self._due(manual, NOW, runs)
+        self.assertEqual(out, "run=false"); self.assertEqual(lines[-1], "DRY RUN SKIPPED: 12 of 12 today")   # the cap
+        out, lines, _ = self._due(manual, at("2026-10-20T03:59"))
+        self.assertEqual(out, "run=false"); self.assertTrue(lines[-1].startswith("DRY RUN SKIPPED: "), lines)   # the night window
+        out, _, _ = self._due(manual, at("2026-10-23T17:00"))
+        self.assertEqual(out, "run=false")                                                                    # within 1 hour of GW8's deadline
+        real = dict(manual, FPL_DRY_RUN="false")
+        out, lines, seen = self._due(real, NOW, runs)
+        self.assertEqual(out, "run=true"); self.assertFalse(seen)                                             # a real run never reaches the gate
+
     def test_a_push_at_the_cap_skips_green(self):
         runs = [_run(i, f"dry run dry/X{i}", f"{TODAY}{i:02d}:00:00Z") for i in range(1, 13)]
         out, lines, _ = self._due(PUSH, NOW, runs)
