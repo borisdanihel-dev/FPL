@@ -3993,3 +3993,19 @@ W1b's cap moves to 12 when W1b is worked.
   the harness (shared with the parked F-D).
 - **Checks:** suite 692; mutations 6 of 6 after the test-gap fix; verifier
   PASS (`worklog/verify_S6e.md`).
+
+## 2026-10-20 — S6e2: xp_v2 + discretised save points on 2024/25, the test FAILS; the line closes (`f485223` and `3b74e0c` prereg; `639a11a`, `21d1c3a` code; on `s6e2-wip`)
+
+- **Model:** for goalkeepers, xp_v2 + P(start) × Σ over fixtures of
+  E[floor(S/3)], S ~ Poisson(S6e's E[saves] for the fixture); k from
+  2023/24 split-half (17.40).
+- **Run:** S6e's loop unchanged on S6f's 2024/25 harness.
+- **Primary,** keeper points: +0.024 per squad per gameweek, 90% CI
+  [−0.016, +0.066] → **FAIL**.
+- **Information:** MAE +0.305 (worse); the choice differs 0.05; mean
+  E[floor(S/3)] 0.767 v E[S]/3 1.100.
+- **Amendment 1:** `floor_points` is bounded (pmf underflow, J_CAP), after
+  the verifier's WARN (it could hang for μ ≥ 12.765). The real output is
+  byte-identical; re-verification PASS (Fable 5.1).
+- **Not adopted.** The keeper-saves line closes (no S6e3); keepers stay on
+  xp_v2, with bottomup_lambda as the tie-break.
