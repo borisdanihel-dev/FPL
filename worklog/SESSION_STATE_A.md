@@ -49,8 +49,14 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       report, verifier file and CHANGELOG. +19.58 [+1.28, +38.70].
       Reported to Boris 11:50 UTC. Open: land the S8b and S15 CHANGELOG
       entries on master before Thu 11:30 UTC?
+    - **S8c done** (with S15 amendment 2): verifier PASS
+      (`worklog/verify_S8c.md`, Fable 5.1); `s8c-wip` `ca96b6a` with report
+      and CHANGELOG; suite 727 → 756, bare and with the data. Ready for
+      Thursday's bundle. Open: run the bundle from `s8c-wip`, or land it
+      before Thu 11:30 UTC (a dry run, because the nightly runs `tests/`)?
+      Also open: tests for the verifier's two survivors, and whether to
+      print when the rule's squad is not cap-legal.
   - **In progress:**
-    - the S8c verifier (with S15 amendment 2), and the `s8c-wip` suites;
     - **waiting on Boris:** the real nightly dispatch of master `ce357fb`
       before 21:00 UTC. It is the first real re-fetch of GW1-6 (expect 73
       calls). After it: `s2b_measure.py` (copied to the scratchpad) on
