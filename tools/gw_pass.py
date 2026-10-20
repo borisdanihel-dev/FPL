@@ -50,11 +50,12 @@ import xp_v2_live as XL                                           # noqa: E402
 import points_pmf as PM                                           # noqa: E402
 import minutes_v2 as MV                                           # noqa: E402
 import planner as PL                                              # noqa: E402
+import planner_live as PLV                                        # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
 from provenance import Run                                        # noqa: E402
 
-MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, XL, PM, MV, PL)) if c is not None)
-SECTIONS = ("S5 ODDS CLEAN SHEETS", "S7 CHIPS", "S8 TRANSFER PLANNER AND THE BASELINE", "S9 LEAGUE, CAPTAIN AND EFFECTIVE OWNERSHIP",
+MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, XL, PM, MV, PL, PLV)) if c is not None)
+SECTIONS = ("S5 ODDS CLEAN SHEETS", "S7 CHIPS", "TRANSFER PLANNER: THE XP_V2 NO-HIT DEFAULT, S8 AND THE BASELINE", "S9 LEAGUE, CAPTAIN AND EFFECTIVE OWNERSHIP",
             "OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN", "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK",
             "CAPTAIN TABLE: S14 POINTS DISTRIBUTIONS (INFORMATION ONLY)")
 
@@ -266,11 +267,19 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
     now = now or datetime.now(timezone.utc)
     dl = sqlite_deadline(data_dir, target)                   # RULING landing + S11 item 3: fpl.sqlite events.deadline_time, as the runner reads it
     out(f"GW PASS  GW{target} (deadline {f'{dl:%Y-%m-%d %H:%M} UTC' if dl else 'not in fpl.sqlite events'}) from {os.path.basename(path)}; generated {now:%Y-%m-%d %H:%M} UTC; "
-        f"information only - no section here is adopted or recorded; the baseline is the default where the planner differs")
+        f"information only - no section here is recorded; the transfer default from GW8 is the no-hit planner on xp_v2 (section 3, "
+        f"Ruling, Tue 20 Oct, point 1), the simple rule beside it")
     section(out, SECTIONS[0], lambda: OL.live(data_dir, out, now=now))
     section(out, SECTIONS[1], lambda: CH.live(data_dir, out))
 
     def planner():
+        try:
+            PLV.plan(data_dir, hist_root, out)
+            out("")
+            out("  below, information: S8's planner on own xP, its baseline and the named plans (the default is the xp_v2 planner above)")
+        except Exception as e:                   # missing or failed: said, and the ruling's fallback; nothing substituted
+            out(f"  the xp_v2 planner: {'missing input' if isinstance(e, MISSING + (PLV.MissingInput,)) else 'failed: ' + type(e).__name__}: {e}")
+            out("  the ruling's fallback (Ruling, Tue 20 Oct, point 1): S8's planner and the simple rule below, and the decision by hand")
         results = PL.live(data_dir, out)
         inp = planner_inputs(d, log_rows)
         b_text, p_text, n_text, default = baseline_note(results, inp)
