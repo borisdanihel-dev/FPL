@@ -59,6 +59,9 @@ class Toy(unittest.TestCase):
         self.assertTrue(any(l.startswith("  DEFAULT: ") for l in lines))
         self.assertTrue(any(l.startswith("  the simple rule beside it") for l in lines))
         self.assertTrue(any(l.startswith("  lambdas GW9: ") and "odds" in l for l in lines))
+        with mock.patch.object(PLV.PL, "baseline_plan", wraps=PL.baseline_plan) as bp:
+            PLV.plan(self.tmp, self.hist, lambda s: None)
+        self.assertEqual(bp.call_args.args[3], weeks_xp[0]); self.assertNotEqual(weeks_xp[0], weeks_xp[1])   # the simple rule on week t
         with mock.patch.object(PLV.PL, "rank_plans", wraps=PL.rank_plans) as rp:
             PLV.plan(self.tmp, self.hist, lambda s: None)
         args, kw = rp.call_args
