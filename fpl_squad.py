@@ -18,6 +18,9 @@ committed S11 prior and the projection log through fpl_edge.forecasts. The
 models are the runner's verbatim copies (fpl_xpv2, fpl_pmf, fpl_mv2,
 fpl_xpr). Standard library only; nothing under tools/.
 """
+import csv
+import hashlib
+import io
 import os
 import re
 import sqlite3
@@ -36,7 +39,7 @@ import fpl_xpv2 as XL
 ENTRY = 3073318                     # 1. FC Kiripolcz
 FIRST_GW = 8                        # F-B (3): after each locked-down gameweek from GW8
 SOURCES = ("own", "xp_v2")
-BUNDLE_GWS = (8,)                   # amendment 1 (C): GW8's xp_v2 from the bundle (the night ruling, point 2)
+BUNDLE_GWS = (8,)                   # GW8's xp_v2 from the bundle's xp_v2_all.csv (amendments 1-2; the night rulings)
 REPO = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -216,109 +219,45 @@ def recorded(log_rows, source, event, d_ev):
     return {int(r["player_id"]): float(r["predicted"]) for r in rows}, rows[0]["made_at"]
 
 
-ROW = re.compile(r"^\s+(\d+)( \* |   )(.+?)\s+(GK|DEF|MID|FWD)\s+(-?\d+\.\d\d)\s+(.+?)\s+(GK|DEF|MID|FWD)\s+(-?\d+\.\d\d)$")
-CAP = re.compile(r"\|  xp_v2 as tested (.+) \((-?\d+\.\d\d)\)")
-POS = {"GK": 1, "DEF": 2, "MID": 3, "FWD": 4}
-
-
-def parse_bundle(text):
-    """xp_v2's 15 from the bundle's section "OWN v XP_V2 AS TESTED" (the
-    right-hand column, slots 1-15: the XI, the bench keeper, the bench) and
-    its captain: ([(slot, name, pos)], captain name); None when absent."""
-    lines = text.splitlines()
-    try:
-        i = next(k for k, l in enumerate(lines) if l.startswith("OWN v XP_V2 AS TESTED"))
-    except StopIteration:
-        return None
-    rows, cap = [], None
-    for l in lines[i + 1:]:
-        if l.startswith("=" * 20) and rows:
-            break
-        m = ROW.match(l)
-        if m:
-            rows.append((int(m.group(1)), m.group(6), POS[m.group(7)]))
-        c = CAP.search(l) if l.startswith("  captain: ") else None
-        if c:
-            cap = c.group(1)
-    if [s for s, _, _ in rows] != list(range(1, 16)) or cap is None:
-        return None
-    return rows, cap
-
-
 def git(repo, *args):
-    """stdout of `git -C repo args` as text, None on any failure (no git, no history)."""
+    """stdout of `git -C repo args` as bytes, None on any failure (no git, no history)."""
     try:
         r = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, timeout=60)
     except (OSError, subprocess.SubprocessError):
         return None
-    return r.stdout.decode("utf-8") if r.returncode == 0 else None
+    return r.stdout if r.returncode == 0 else None
 
 
-def bundle_commit(repo, g, deadline):
-    """The newest commit touching worklog/gw_pass/gw<g>/gw<g>_pass.txt whose
-    committer time is before the deadline, with the file and run.txt at it:
-    (commit, text, run_txt or None); None when there is none."""
-    path = f"worklog/gw_pass/gw{g}/gw{g}_pass.txt"
-    log = git(repo, "log", "--format=%H %cI", "--", path)
+def _utc(text):
+    return datetime.fromisoformat(text.strip().replace("Z", "+00:00"))
+
+
+def bundle_csv(repo, g, deadline):
+    """Amendment 2: worklog/gw_pass/gw<g>/xp_v2_all.csv at the newest commit
+    touching it whose committer time is before the deadline and whose
+    run.txt (at the same commit) ends before the deadline and records the
+    CSV's SHA-256: (commit, {pid: xp_v2}, the tools commit); None when no
+    commit qualifies."""
+    folder = f"worklog/gw_pass/gw{g}"
+    log = git(repo, "log", "--format=%H %cI", "--", f"{folder}/xp_v2_all.csv")
     if not log:
         return None
-    for line in log.splitlines():
+    for line in log.decode("utf-8").splitlines():
         h, t = line.split()
-        if datetime.fromisoformat(t.replace("Z", "+00:00")) < deadline:
-            text = git(repo, "show", f"{h}:{path}")
-            if text is None:
-                return None
-            return h, text, git(repo, "show", f"{h}:worklog/gw_pass/gw{g}/run.txt")
+        if _utc(t) >= deadline:
+            continue
+        raw, run = git(repo, "show", f"{h}:{folder}/xp_v2_all.csv"), git(repo, "show", f"{h}:{folder}/run.txt")
+        if raw is None or run is None:
+            continue
+        run = run.decode("utf-8")
+        end = re.search(r"^end_utc: (\S+)$", run, re.M)
+        sha = re.search(r"^  xp_v2_all\.csv  sha256 ([0-9a-f]{64})$", run, re.M)
+        tool = re.search(r"^commit: ([0-9a-f]{7,40})$", run, re.M)
+        if not (end and sha and _utc(end.group(1)) < deadline and hashlib.sha256(raw).hexdigest() == sha.group(1)):
+            continue
+        rows = csv.DictReader(io.StringIO(raw.decode("utf-8")))
+        return h, {int(r["id"]): float(r["xp_v2"]) for r in rows}, (tool.group(1) if tool else "unknown")
     return None
-
-
-def realised_order(xi, bench, cap_id, actual):
-    """realised_on's arithmetic on a given XI, bench order (the keeper first)
-    and captain: rule_autosubs on the minutes, the captain doubled."""
-    lineup = [{"slot": s, "pos": r["pos"], "id": r["id"], "minutes": actual.get(r["id"], (0, 0))[1]}
-              for s, r in enumerate(xi, 1)]
-    lineup += [{"slot": s, "pos": r["pos"], "id": r["id"], "minutes": actual.get(r["id"], (0, 0))[1]}
-               for s, r in enumerate(bench, 12)]
-    pts = sum(actual.get(r["id"], (0.0, 0))[0] for r in xi)
-    for cand, gone in E.rule_autosubs(lineup):
-        pts += actual.get(cand["id"], (0.0, 0))[0] - actual.get(gone["id"], (0.0, 0))[0]
-    return pts + actual.get(cap_id, (0.0, 0))[0]
-
-
-def bundle_xp_v2(repo, g, deadline, squad, web, actual):
-    """GW g's xp_v2 from the bundle (amendment 1, (C)): (points, captain id,
-    label) when graded; (None, None, the reason) when the bundle's 15 is not
-    ours; None when no commit before the deadline holds the bundle."""
-    found = bundle_commit(repo, g, deadline)
-    if found is None:
-        return None
-    h, text, run_txt = found
-    m = re.search(r"^commit: ([0-9a-f]{7,40})", run_txt or "", re.M)
-    tag = f"GW{g} bundle {h[:7]} (tools {m.group(1)[:7] if m else 'no run.txt at that commit'})"
-    parsed = parse_bundle(text)
-    if parsed is None:
-        return None, None, f"xp_v2 ({tag}): no 15 and captain in its section 5: not graded"
-    rows, cap_name = parsed
-    by_name = defaultdict(list)
-    for r in squad:
-        by_name[web.get(r["id"])].append(r)
-    ids, bad = [], []
-    for slot, name, pos in rows:
-        hit = [r for r in by_name.get(name, []) if r["pos"] == pos]
-        if len(hit) == 1:
-            ids.append(hit[0])
-        else:
-            bad.append(name)
-    ours = {web.get(r["id"]) for r in squad}
-    if bad or {r["id"] for r in ids} != {r["id"] for r in squad}:
-        only_b = sorted({n for _, n, _ in rows} - ours)
-        only_p = sorted(ours - {n for _, n, _ in rows})
-        return None, None, (f"xp_v2 ({tag}): the bundle's 15 is not our GW{g} 15 (only in the bundle: {', '.join(only_b) or '-'}; "
-                            f"only in our picks: {', '.join(only_p) or '-'}): not graded")
-    cap = [r for r in ids[:11] if web.get(r["id"]) == cap_name]
-    if len(cap) != 1:
-        return None, None, f"xp_v2 ({tag}): its captain {cap_name} is not one of its XI: not graded"
-    return realised_order(ids[:11], ids[11:], cap[0]["id"], actual), cap[0]["id"], f"source: {tag}"
 
 
 def realised(data_dir, out, now=None, entry=ENTRY, first=FIRST_GW, repo=None):
@@ -370,14 +309,20 @@ def realised(data_dir, out, now=None, entry=ENTRY, first=FIRST_GW, repo=None):
             rec, parts = {"gw": g, "graded": True}, []
             for src in SOURCES:
                 proj, made = recorded(log_rows, src, g, d_ev)
-                if not proj and src == "xp_v2" and g in BUNDLE_GWS:      # amendment 1 (C): the bundle's pre-deadline commit
-                    b = bundle_xp_v2(repo, g, deadline[g], squad, web, actual)
-                    if b is not None and b[0] is not None:
-                        rec[src], rec[src + "_cap"] = b[0], b[1]
-                        parts.append(f"{src} {rec[src]:.0f} (captain {web.get(b[1], b[1])}; {b[2]})")
-                        continue
+                if not proj and src == "xp_v2" and g in BUNDLE_GWS:      # amendment 2: the bundle's xp_v2_all.csv
+                    b = bundle_csv(repo, g, deadline[g])
                     if b is not None:
-                        parts.append(b[2])
+                        h, values, tool = b
+                        tag = f"GW{g} bundle {h[:7]} (tools {tool[:7]})"
+                        absent = [pid for pid in (r["id"] for r in squad) if pid not in values]
+                        if absent:
+                            parts.append(f"{src}: not recorded before the deadline ({tag}: {len(absent)} of our 15 not in "
+                                         f"xp_v2_all.csv)")
+                            continue
+                        rec[src], rec[src + "_cap"] = RL.realised_on(squad, {pid: values[pid] for pid in (r["id"] for r in squad)},
+                                                                     actual)
+                        parts.append(f"{src} {rec[src]:.0f} (captain {web.get(rec[src + '_cap'], rec[src + '_cap'])}; "
+                                     f"source: {tag})")
                         continue
                 if not proj:
                     parts.append(f"{src}: not recorded before the deadline")

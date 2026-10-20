@@ -10,6 +10,7 @@ import io
 import json
 import math
 import os
+import hashlib
 import random
 import shutil
 import sqlite3
@@ -654,27 +655,24 @@ def git_commit(repo, files, when):
     return subprocess.run(base + ["rev-parse", "HEAD"], check=True, capture_output=True, env=env, encoding="utf-8").stdout.strip()
 
 
-POS_NAME = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
-
-
-def bundle_text(order, names, pos, cap, own_order=None):
-    """Section 5 of tools/gw_pass.py as it prints (its f-strings), xp_v2's order on the right."""
-    own_order = own_order or order
-    lines = ["GW PASS  GW8 ...", "", "=" * 78, "OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN", "=" * 78, "  GW8: ...", "  own = ...",
-             f"  {'slot':>4}  {'own':<34}{'xp_v2 as tested':<34}"]
-    for slot, (a, b) in enumerate(zip(own_order, order), 1):
-        tag = "   " if a == b else " * "
-        lines.append(f"  {slot:>4}{tag}{names[a]:<16}{POS_NAME[pos[a]]:>4} {1.0:5.2f}       {names[b]:<16}{POS_NAME[pos[b]]:>4} {2.0:5.2f}")
-    lines.append(f"  captain: own {names[own_order[0]]} (1.00)  |  xp_v2 as tested {names[cap]} (2.00)" + ("" if cap == own_order[0] else "   *"))
-    lines += ["  9 slots differ; ...", "", "=" * 78, "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK"]
-    return "\n".join(lines) + "\n"
-
-
-RUN_TXT = "tool: tools/gw_pass.py\ncommit: 71c9d17d72888e69f47213f156388daf1081bcba\nmodified tracked files at the run: 0\n"
+def bundle_files(values, end, commit="71c9d17d72888e69f47213f156388daf1081bcba", sha=None):
+    """xp_v2_all.csv as tools/gw_pass.py writes it (amendment 3 of prereg/S8c.md) and its run.txt."""
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(("id", "name", "team", "position", "xp_v2", "p_start", "lambda_source"))
+    for pid, v in sorted(values.items()):
+        w.writerow((pid, f"P{pid}", "AAA", "MID", repr(float(v)), "" if v == 0 else "0.9", "odds" if v else "not forecast"))
+    text = buf.getvalue()
+    sha = sha or hashlib.sha256(text.encode("utf-8")).hexdigest()
+    run = (f"tool: tools/gw_pass.py\nargs: --out worklog/gw_pass/gw8\ncommit: {commit}\nmodified tracked files at the run: 0\n"
+           f"start_utc: 2026-10-22T15:58:00+00:00\nend_utc: {end}\nduration_s: 60\noutputs:\n"
+           f"  gw8_pass.txt  sha256 {'0' * 64}\n  xp_v2_all.csv  sha256 {sha}\n")
+    return {"worklog/gw_pass/gw8/xp_v2_all.csv": text, "worklog/gw_pass/gw8/run.txt": run}
 
 
 class BundleGrading(unittest.TestCase):
-    """Amendment 1 (C): GW8's xp_v2 from worklog/gw_pass/gw8/ at its last commit before the deadline."""
+    """Amendment 2: GW8's xp_v2 from worklog/gw_pass/gw8/xp_v2_all.csv at the newest commit whose committer
+    time and run.txt end are both before the deadline; our actual GW8 15; realised_on for each model."""
 
     def setUp(self):
         self.tmp, self.repo = tempfile.mkdtemp(), tempfile.mkdtemp()
@@ -684,16 +682,12 @@ class BundleGrading(unittest.TestCase):
         with open(os.path.join(self.tmp, E.LOG_PATH), "w", encoding="utf-8", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
         c = sqlite3.connect(os.path.join(self.tmp, "fpl.sqlite"))
-        c.execute("update players set web_name = 'De Cuyper' where id = 5")                       # a name with a space
-        c.commit()
         self.pos = dict(c.execute("select id, position from players"))
-        self.names = dict(c.execute("select id, web_name from players"))
         self.actual = {pid: (float(p), float(m)) for pid, p, m in c.execute("select player_id, total_points, minutes from player_gw where event = 8")}
         c.close()
         git_repo(self.repo)
-        # xp_v2's order: GKs 1 and 2, then the XI by id descending within the legal shape, the bench last
-        self.order = [2, 7, 6, 5, 4, 12, 11, 10, 9, 15, 14, 1, 3, 8, 13]
-        self.cap = 12
+        self.values = {i: float(16 - i) + 0.123456789 for i in range(1, 16)}
+        self.values[99] = 0.0                                                                    # a player not forecast: 0
         self.now = datetime(2026, 11, 1, tzinfo=timezone.utc)
 
     def run_(self):
@@ -701,76 +695,63 @@ class BundleGrading(unittest.TestCase):
         recs = SQ.realised(self.tmp, out.append, now=self.now, entry=self.entry, repo=self.repo)
         return recs[0], out[1]
 
-    def want(self, order, cap):
-        rows = [{"id": i, "pos": self.pos[i]} for i in order]
-        return SQ.realised_order(rows[:11], rows[11:], cap, self.actual)
+    def want(self, ids, values):
+        rows = [{"id": i, "pos": self.pos[i]} for i in ids]
+        return fpl_realised.realised_on(rows, {i: values[i] for i in ids}, self.actual)
 
-    def test_graded_from_the_commit_before_the_deadline(self):
-        h = git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, self.names, self.pos, self.cap),
-                                   "worklog/gw_pass/gw8/run.txt": RUN_TXT}, "2026-10-22T16:00:00+00:00")
-        later = list(self.order); later[0], later[11] = later[11], later[0]
-        git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(later, self.names, self.pos, 15)},
-                   "2026-10-24T09:00:00+00:00")                                                       # after the deadline: ignored
+    def test_graded_when_both_times_are_before_the_deadline(self):
+        h = git_commit(self.repo, bundle_files(self.values, "2026-10-22T15:59:00+00:00"), "2026-10-22T16:00:00+00:00")
+        later = {i: float(i) for i in self.values}
+        git_commit(self.repo, bundle_files(later, "2026-10-24T08:59:00+00:00"), "2026-10-24T09:00:00+00:00")   # after: ignored
         g8, line = self.run_()
-        self.assertEqual(g8["xp_v2"], self.want(self.order, self.cap)); self.assertEqual(g8["xp_v2_cap"], self.cap)
-        self.assertIn(f"xp_v2 {g8['xp_v2']:.0f} (captain P12; source: GW8 bundle {h[:7]} (tools 71c9d17))", line)
+        pts, cap = self.want(range(1, 16), self.values)
+        self.assertEqual((g8["xp_v2"], g8["xp_v2_cap"]), (pts, cap))
+        self.assertIn(f"xp_v2 {pts:.0f} (captain P{cap}; source: GW8 bundle {h[:7]} (tools 71c9d17))", line)
         self.assertIn(f"xp_v2 - own {g8['xp_v2'] - g8['own']:+.0f}", line)
 
-    def test_only_after_the_deadline_is_not_recorded(self):
-        git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, self.names, self.pos, self.cap),
-                               "worklog/gw_pass/gw8/run.txt": RUN_TXT}, "2026-10-23T17:30:00+00:00")   # at the deadline: not before
+    def test_the_newest_valid_commit_wins(self):
+        git_commit(self.repo, bundle_files(self.values, "2026-10-22T15:59:00+00:00"), "2026-10-22T16:00:00+00:00")   # Thursday
+        friday = {i: float(i) + 0.5 for i in self.values}
+        h = git_commit(self.repo, bundle_files(friday, "2026-10-23T11:59:00+00:00"), "2026-10-23T12:00:00+00:00")   # Friday's refresh
+        g8, line = self.run_()
+        self.assertEqual(g8["xp_v2"], self.want(range(1, 16), friday)[0]); self.assertIn(f"source: GW8 bundle {h[:7]}", line)
+
+    def test_a_run_ending_after_the_deadline_is_skipped(self):
+        h = git_commit(self.repo, bundle_files(self.values, "2026-10-22T15:59:00+00:00"), "2026-10-22T16:00:00+00:00")
+        late = {i: float(i) for i in self.values}
+        git_commit(self.repo, bundle_files(late, "2026-10-23T17:30:00+00:00"), "2026-10-23T17:20:00+00:00")   # committed before, ran to the deadline
+        g8, line = self.run_()
+        self.assertEqual(g8["xp_v2"], self.want(range(1, 16), self.values)[0])                # the older bundle
+        self.assertIn(f"source: GW8 bundle {h[:7]}", line)
+
+    def test_only_at_or_after_the_deadline_is_not_recorded(self):
+        git_commit(self.repo, bundle_files(self.values, "2026-10-22T15:59:00+00:00"), "2026-10-23T17:30:00+00:00")   # committed at the deadline
         g8, line = self.run_()
         self.assertNotIn("xp_v2", g8); self.assertIn("xp_v2: not recorded before the deadline", line)
 
-    def test_a_different_15_is_not_graded(self):
-        names = dict(self.names); names[13] = "Other"
-        h = git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, names, self.pos, self.cap),
-                                   "worklog/gw_pass/gw8/run.txt": RUN_TXT}, "2026-10-22T16:00:00+00:00")
+    def test_a_csv_not_as_run_txt_records_it_is_skipped(self):
+        git_commit(self.repo, bundle_files(self.values, "2026-10-22T15:59:00+00:00", sha="ab" * 32), "2026-10-22T16:00:00+00:00")
+        g8, line = self.run_()
+        self.assertNotIn("xp_v2", g8); self.assertIn("xp_v2: not recorded before the deadline", line)
+
+    def test_one_of_the_15_missing_is_not_recorded(self):
+        values = dict(self.values); del values[13]
+        h = git_commit(self.repo, bundle_files(values, "2026-10-22T15:59:00+00:00"), "2026-10-22T16:00:00+00:00")
         g8, line = self.run_()
         self.assertNotIn("xp_v2", g8)
-        self.assertIn(f"xp_v2 (GW8 bundle {h[:7]} (tools 71c9d17)): the bundle's 15 is not our GW8 15 (only in the bundle: Other; "
-                      f"only in our picks: P13): not graded", line)
+        self.assertIn(f"xp_v2: not recorded before the deadline (GW8 bundle {h[:7]} (tools 71c9d17): 1 of our 15 not in "
+                      f"xp_v2_all.csv)", line)
 
-    def test_no_run_txt_is_said(self):
-        h = git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, self.names, self.pos, self.cap)},
-                       "2026-10-22T16:00:00+00:00")
+    def test_our_actual_15_after_a_transfer(self):
+        c = sqlite3.connect(os.path.join(self.tmp, "fpl.sqlite"))
+        c.execute("update picks set player_id = 99 where entry_id = ? and event = 8 and player_id = 13", (self.entry,))   # a GW8 transfer
+        c.commit(); c.close()
+        values = dict(self.values); values[99] = 20.0                                            # forecast at the bundle, bought after it
+        git_commit(self.repo, bundle_files(values, "2026-10-22T15:59:00+00:00"), "2026-10-22T16:00:00+00:00")
         g8, line = self.run_()
-        self.assertIn(f"source: GW8 bundle {h[:7]} (tools no run.txt at that commit)", line)
-
-    def test_realised_order_is_realised_on(self):
-        rng = random.Random(7)
-        rows = [{"id": i, "pos": self.pos[i]} for i in range(1, 16)]
-        matters = 0
-        for _ in range(50):
-            proj = {i: rng.uniform(0, 8) for i in range(1, 16)}
-            actual = {i: (float(rng.randint(0, 12)), float(rng.choice((0, 45, 90, 90, 90, 90, 90)))) for i in range(1, 16)}   # one blank in seven: the bench order matters
-            xi, bench, gk = fpl_chips.xi_and_bench([dict(r) for r in rows], proj)
-            cap = max(xi, key=lambda r: (r["proj"], -r["id"]))
-            got = SQ.realised_order(xi, [gk] + list(bench), cap["id"], actual)
-            self.assertEqual(got, fpl_realised.realised_on(rows, proj, actual)[0])
-            b = [gk] + list(bench)
-            matters += got != SQ.realised_order(xi, b[:1] + b[:0:-1], cap["id"], actual)
-        self.assertGreater(matters, 5)                                                     # the cases test the bench order
-
-    def test_the_parser_reads_the_tools_own_print(self):
-        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
-        try:
-            toy_live(tmp); toy_hist_root(hist)
-            gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
-            buf = io.StringIO()
-            with mock.patch.object(G.E, "selling_budget", return_value=(100.0, "")):
-                G.bundle(tmp, out=lambda s="": buf.write(s + chr(10)), now=NOW9, hist_root=hist)
-            rows, cap = SQ.parse_bundle(buf.getvalue())
-            d, _ = CHt.newest_export(tmp)
-            sq = CHt.my_squad(d)
-            res = XL.live(tmp, hist, NOW9)
-            log_rows = E.read_log(os.path.join(tmp, E.LOG_PATH))
-            weeks, pts, src = CHt.own_week_points(d, log_rows)
-            sbs = G.side_by_side(sq, pts[weeks[0]], res["xp"])
-            self.assertEqual(rows, [(slot, b["name"], b["pos"]) for slot, a, b in sbs["rows"]])
-            self.assertEqual(cap, sbs["captain"][1]["name"])
-        finally:
-            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+        ids = [i for i in range(1, 16) if i != 13] + [99]
+        self.assertEqual((g8["xp_v2"], g8["xp_v2_cap"]), self.want(ids, values))              # the post-deadline picks
+        self.assertEqual(g8["xp_v2_cap"], 99)
 
     def test_the_nightly_checks_out_the_history(self):
         with open(os.path.join(ROOT, ".github", "workflows", "nightly.yml"), encoding="utf-8") as fh:
