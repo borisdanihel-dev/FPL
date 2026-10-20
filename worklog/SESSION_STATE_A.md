@@ -20,8 +20,13 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - Mutations 8 of 9 (own's horizon equivalent).
     - GW8: Haaland if he plays 4.25 xp_v2, 4.44 own, captain 9 of 15. The
       CSV and the rest of the print are unchanged.
-    - Suite and verifier running. **Once they pass, `4d4bfa9` (or its
-      report commit) is the bundle commit.**
+    - Suite 768 → 773, bare and with the data. **Verifier PASS**
+      (`worklog/verify_S8c_a4.md`; its independent `core` recompute
+      differs by 0).
+    - **Thursday's bundle commit = `s8c-wip` `d9071b8`** (tools as at
+      `4d4bfa9`).
+    - Landing tests (Sun 25 Oct): sorted clubs, the two CSV toy gaps,
+      own's minutes gate, the lifted value against `core`.
   - **Point 3:** F-M is recorded (no code). From GW8, each week, record
     what our flagged players actually score; revisit at GW15.
   - Then Step 16's prereg.
@@ -80,7 +85,7 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       first real run) or Wednesday?
     - Then: tag `pre-W1b`, merge, real dispatch, final verifier.
   - **Then:** Step 16's prereg.
-  - **Thursday's bundle (procedure):** in the s8c worktree at `3750334`:
+  - **Thursday's bundle (procedure):** in the s8c worktree at `d9071b8`:
     1. `git -C C:\GIT\FPL-data pull --ff-only`;
     2. `--restore`;
     3. `python tools/gw_pass.py --out <dir>`;
