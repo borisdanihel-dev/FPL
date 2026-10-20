@@ -30,6 +30,7 @@ bundle continues; nothing is substituted.
     python tools/gw_pass.py [--data DIR] [--hist ROOT] [--out DIR]
 """
 import argparse
+import csv
 import os
 import sqlite3
 import sys
@@ -260,7 +261,41 @@ def keeper_line(keepers, own_ps, lock):
     return [(r["name"], r["team"], own_ps.get(r["id"]), lock.get(r["id"])) for r in keepers]
 
 
-def bundle(data_dir, out=print, now=None, hist_root=None):
+CSV_NAME = "xp_v2_all.csv"
+CSV_COLUMNS = ("id", "name", "team", "position", "xp_v2", "p_start", "lambda_source")
+
+
+def xp_v2_rows(res):
+    """Amendment 3: one row per player in the export's all_players, by id.
+    Forecast players carry section 5's xp_v2 and P(start) (repr, exact)
+    and their club's target-week lambda sources in kickoff order; the
+    others carry 0 (the bundle's "0 in the choice"), no P(start) and
+    "not forecast"."""
+    d, xp, detail, target = res["d"], res["xp"], res["detail"], res["target"]
+    fx = sorted(XL.target_fixtures(d, target).items(), key=lambda kv: (kv[1]["kickoff"], kv[0]))
+    rows = []
+    for p in sorted(d["all_players"], key=lambda p: int(p["id"])):
+        pid = int(p["id"])
+        if pid in xp:
+            src = ";".join(res["sources"][fid] for fid, f in fx if p["team"] in (f["home"], f["away"]))
+            rows.append((pid, p["web_name"], p["team"], BT.POS_NAME.get(p["pos"], "?"), repr(float(xp[pid])),
+                         repr(float(detail[pid]["p_start"])), src))
+        else:
+            rows.append((pid, p["web_name"], p["team"], BT.POS_NAME.get(p["pos"], "?"), repr(0.0), "", "not forecast"))
+    return rows
+
+
+def write_xp_v2_csv(out_dir, res):
+    """xp_v2_all.csv beside the bundle's text (amendment 3); its path."""
+    path = os.path.join(out_dir, CSV_NAME)
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh, lineterminator="\n")
+        w.writerow(CSV_COLUMNS)
+        w.writerows(xp_v2_rows(res))
+    return path
+
+
+def bundle(data_dir, out=print, now=None, hist_root=None, keep=None):
     hist_root = hist_root or os.path.join(ROOT, "historical")
     d, path = CH.newest_export(data_dir)
     log_rows = E.read_log(os.path.join(data_dir, E.LOG_PATH))
@@ -345,6 +380,8 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
             out(f"  {slot:>4}{tag}{a['name']:<16}{BT.POS_NAME.get(a['pos'], '?'):>4} {a['proj']:5.2f}       {b['name']:<16}{BT.POS_NAME.get(b['pos'], '?'):>4} {b['proj']:5.2f}")
         co, cv = sbs["captain"]
         out(f"  captain: own {co['name']} ({co['proj']:.2f})  |  xp_v2 as tested {cv['name']} ({cv['proj']:.2f})" + ("" if co["id"] == cv["id"] else "   *"))
+        if keep is not None:
+            keep["res"] = res                    # amendment 3: the same run's forecast, for xp_v2_all.csv
         out(f"  {sbs['changed']} slots differ; the XI {'differs' if sbs['xi_differs'] else 'is the same set'}; DEFAULT = xp_v2 as tested "
             f"(slots 1-11, the bench order and the captain)" + CF.flag(squad))
         return sbs
@@ -398,8 +435,9 @@ def main(argv=None):
 
     def out(s=""):
         print(s); lines.append(s)
+    keep = {}
     try:
-        target = bundle(args.data, out, hist_root=args.hist)
+        target = bundle(args.data, out, hist_root=args.hist, keep=keep)
     except MISSING + (MissingInput,) as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
@@ -407,6 +445,8 @@ def main(argv=None):
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
     run.wrote(path)
+    if keep.get("res") is not None:              # amendment 3: no section 5, no CSV (the print says why)
+        run.wrote(write_xp_v2_csv(args.out, keep["res"]))
     run.close()
     return 0
 

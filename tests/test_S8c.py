@@ -2,6 +2,8 @@
 section (tools/planner_live.py, tools/gw_pass.py; prereg/S8c.md, Ruling Tue
 20 Oct point 1). Hermetic: S6d's toy 2026/27 data folder and toy history
 root in temporary folders; no real data."""
+import csv
+import hashlib
 import io
 import os
 import shutil
@@ -10,6 +12,8 @@ import sys
 import tempfile
 import unittest
 from collections import Counter
+from contextlib import redirect_stdout
+from datetime import datetime
 from unittest import mock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,6 +26,7 @@ import chips as CH                                                # noqa: E402
 import gw_pass as G                                               # noqa: E402
 import planner as PL                                              # noqa: E402
 import planner_live as PLV                                        # noqa: E402
+import xp_v2_live as XL                                           # noqa: E402
 from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot, NOW9   # noqa: E402
 from tests.test_S5 import api_event, toy_snapshot                 # noqa: E402
 
@@ -253,6 +258,91 @@ class CapFlag(unittest.TestCase):
         summary = next(l for l in lines if " slots differ; the XI " in l)
         self.assertTrue(summary.endswith("   breaks the cap: ARS 3"), summary)
         self.assertTrue(next(l for l in lines if l.startswith("  DEFAULT: roll") or l.startswith("  DEFAULT: ")))
+
+
+class FixedNow(datetime):
+    @classmethod
+    def now(cls, tz=None):
+        return NOW9
+
+
+class XpV2Csv(unittest.TestCase):
+    """Amendment 3: the bundle writes xp_v2_all.csv from the same run; the print is unchanged."""
+
+    def setUp(self):
+        self.tmp, self.hist, self.out = tempfile.mkdtemp(), tempfile.mkdtemp(), tempfile.mkdtemp()
+        for p in (self.tmp, self.hist, self.out):
+            self.addCleanup(shutil.rmtree, p, True)
+        toy_live(self.tmp); toy_hist_root(self.hist)
+        _, _, fixtures, _, _ = OL.sqlite_tables(self.tmp)
+        gw9 = [f for f in fixtures if f["event"] == 9]
+        events = [api_event(f["home"], f["away"], f["kickoff"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            [("b1", 2.0, 3.4, 3.8, 1.9, 1.9, False)]) for f in gw9[:1]]          # one priced, the rest on the fallback
+        toy_snapshot(self.tmp, "odds_2098-12-31T10-00-00Z.json.gz", events, fetched_at="2098-12-31T10:00:00Z")
+        import gzip, json
+        path = os.path.join(self.tmp, "exports", sorted(os.listdir(os.path.join(self.tmp, "exports")))[-1])
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            d = json.load(fh)
+        mine = {r["player_id"] for r in d["squads"] if r["entry_id"] == d["my_entry"]}
+        self.out_id = next(int(p["id"]) for p in d["all_players"] if p["id"] not in mine and p["status"] == "a")
+        for p in d["all_players"]:
+            if int(p["id"]) == self.out_id:
+                p["status"] = "i"                                                            # injured: not forecast
+        with gzip.open(path, "wt", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        for p in (mock.patch.object(G.E, "selling_budget", return_value=(100.0, "")), mock.patch.object(G, "datetime", FixedNow)):
+            p.start(); self.addCleanup(p.stop)
+
+    def main(self, out):
+        with redirect_stdout(io.StringIO()):
+            return G.main(["--data", self.tmp, "--hist", self.hist, "--out", out])
+
+    def test_the_rows_are_the_forecast(self):
+        self.assertEqual(self.main(self.out), 0)
+        with open(os.path.join(self.out, "xp_v2_all.csv"), encoding="utf-8", newline="") as fh:
+            rows = list(csv.reader(fh))
+        self.assertEqual(rows[0], ["id", "name", "team", "position", "xp_v2", "p_start", "lambda_source"])
+        res = XL.live(self.tmp, self.hist, NOW9)
+        d = res["d"]
+        self.assertEqual([int(r[0]) for r in rows[1:]], sorted(int(p["id"]) for p in d["all_players"]))   # every player, by id
+        by = {int(r[0]): r for r in rows[1:]}
+        fx = XL.target_fixtures(d, res["target"])
+        seen = Counter()
+        for p in d["all_players"]:
+            pid, r = int(p["id"]), by[int(p["id"])]
+            self.assertEqual(r[1:4], [p["web_name"], p["team"], {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}[p["pos"]]])
+            if pid in res["xp"]:
+                self.assertEqual(r[4:6], [repr(float(res["xp"][pid])), repr(float(res["detail"][pid]["p_start"]))])   # exact, repr
+                want = ";".join(res["sources"][fid] for fid, f in sorted(fx.items(), key=lambda kv: (kv[1]["kickoff"], kv[0]))
+                                if p["team"] in (f["home"], f["away"]))
+                self.assertEqual(r[6], want)
+                seen[r[6]] += 1
+            else:
+                self.assertEqual(r[4:], ["0.0", "", "not forecast"])                                 # the bundle's "0 in the choice"
+                seen["not forecast"] += 1
+        self.assertTrue(seen["odds"] and seen["fallback"] and seen["not forecast"], seen)
+        self.assertEqual(by[self.out_id][4:], ["0.0", "", "not forecast"])
+        with open(os.path.join(self.out, "run.txt"), encoding="utf-8") as fh:
+            run = fh.read()
+        sha = hashlib.sha256(open(os.path.join(self.out, "xp_v2_all.csv"), "rb").read()).hexdigest()
+        self.assertIn(f"  xp_v2_all.csv  sha256 {sha}", run)
+
+    def test_the_print_is_the_same_without_the_csv(self):
+        self.assertEqual(self.main(self.out), 0)
+        real = G.bundle
+        other = tempfile.mkdtemp(); self.addCleanup(shutil.rmtree, other, True)
+        with mock.patch.object(G, "bundle", side_effect=lambda *a, **k: real(*a, **dict(k, keep=None))):
+            self.assertEqual(self.main(other), 0)
+        self.assertTrue(os.path.exists(os.path.join(self.out, "xp_v2_all.csv")))
+        self.assertFalse(os.path.exists(os.path.join(other, "xp_v2_all.csv")))
+        a, b = (open(os.path.join(p, "gw9_pass.txt"), "rb").read() for p in (self.out, other))
+        self.assertEqual(a, b)                                                                       # byte-identical
+
+    def test_no_section_5_no_csv(self):
+        shutil.rmtree(os.path.join(self.hist, "2025-26"))
+        self.assertEqual(self.main(self.out), 0)
+        self.assertTrue(os.path.exists(os.path.join(self.out, "gw9_pass.txt")))
+        self.assertFalse(os.path.exists(os.path.join(self.out, "xp_v2_all.csv")))
 
 
 class BenchBoost(unittest.TestCase):
