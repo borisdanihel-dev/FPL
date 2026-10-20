@@ -7,7 +7,42 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (20 Oct morning on): the night ruling ("Ruling, Mon 19 Oct",
+- **NOW (20 Oct, 11:00 UTC on): "Ruling, Tue 20 Oct"** (verbatim in
+  `prereg/S8c.md` and the scratchpad `ruling_20oct.txt`). The item count
+  reset to 0 of 6.
+  - **Order:**
+    - a. the landing and S2b today, the real run before 21:00 UTC;
+    - b. report S8b's and S15's verifiers at once;
+    - c. push `s17-wip`;
+    - d. the live planner for the bundle by Thu 14:00 UTC;
+    - e. W1b Wednesday;
+    - f. W3 points 2, 3 and 5;
+    - g. the F-I downloads, then Step 16 parts 3–4 and Step 18.
+  - **Rules:** no runner pushes from Thu 22 Oct 11:30 UTC to the GW8
+    deadline; no merges without Boris; stop at 6.
+  - **Done:**
+    - Boris's dry runs were green at 10:52 and 10:56 UTC: landing at
+      `4f1c240`, s2b-wip at `a00ccc7`. The S2b dry run: WARN 28/29 (only
+      ODDS SKIPPED in the dry run); check 22 equal for 42 entry-gameweeks.
+    - **Landed:** master fast-forwarded to `8d0a50b` (the landing branch
+      + master's docs); tag `pre-landing2` at `ce51207`; suite 687 OK,
+      bare and runner-like.
+    - `s17-wip` pushed (`90b62d4`; the earlier push had failed).
+    - **S15 verifier PASS** → accepted (point 2); `s15-wip` `b22ee1c` with
+      report and CHANGELOG. Still to do: print the three-layer rule's
+      squad beside the builder's in live.
+    - **S8c (point 1, the live planner)** built on `s8c-wip` `50e89dd`
+      (prereg master `de8ca68`). It has the GW8 bundle section; mutations
+      11 of 11. Read-only live run on GW8: default Branthwaite → De Cuyper;
+      simple rule Tarkowski → Gabriel. Suite and verifier next.
+  - **In progress:**
+    - the S8b verifier;
+    - the S2b verifier on the dry run and the delta (`s2b-wip` `df867cb` =
+      a00ccc7 + master 8d0a50b; bare suite 708 OK; runner-like running);
+    - then tag `pre-S2b`, merge, and Boris's real dispatch before 21:00
+      UTC, then the after-measurement.
+
+- (Earlier) **NOW (20 Oct morning on): the night ruling ("Ruling, Mon 19 Oct",
   verbatim in `prereg/S6e2.md` amendment 1, `prereg/S8b.md`,
   `prereg/S15.md`, `prereg/S17.md`, and the scratchpad
   `ruling_19oct_night.txt`).** The item count reset to 0 of 6.
