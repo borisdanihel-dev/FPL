@@ -42,7 +42,7 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     restriction). The 20 files are fetched, read with `python -I`, and
     placed read-only under `historical/football-data/`. The record is
     `worklog/downloads_2026-10-20.md` on `fi-wip` `aab64bf`; verifier PASS
-    running.
+    (`worklog/verify_F-I_downloads.md`, `fi-wip` `eceae17`).
   - **Item count: 6 of 6** since "Ruling, Tue 20 Oct": S2b, S8b, S8c, S8c
     amendment 1, W3 amendment 1, F-I downloads.
     - Step 16's prereg (parts 3–4) and W1b (Wednesday) wait for a chat
