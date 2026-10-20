@@ -4000,3 +4000,40 @@ W1b's cap moves to 12 when W1b is worked.
 - **Accepted** (Ruling, Tue 20 Oct, point 1): from GW8 the no-hit planner
   on xp_v2 is the default transfer suggestion, the simple rule printed
   beside it; hits stay a manual call. The live tool is S8c.
+
+## 2026-10-20 — S2b done: the final re-fetch until data_checked, merged, real dispatch green (`ce357fb`; data `63e6a44`)
+
+**Merged** `ce357fb` (`s2b-wip` `434df0b`); tag `pre-S2b` = `5c90e08`.
+
+**Built:**
+- `events.data_checked_seen_utc` is set the first time the sync sees
+  data_checked = 1, and never changed after.
+- A stored `player_gw`, `entry_gw` or `picks` row is final only if it was
+  fetched after that time; otherwise the sync re-fetches it.
+- `picks.fetched_at_utc` was added.
+- Check 22 now reconciles every locked-down gameweek.
+
+**Measured:**
+- tests 687 → 708;
+- the dry run (`data-dryrun` `4b199eb`) and the verifier PASS
+  (`worklog/verify_S2b.md`, Fable 5.1).
+- **The real dispatch,** `63e6a44` (13:01 UTC):
+  - STATUS OK 29/29; 73 calls, all HTTP 200 (25 + 48).
+  - GW1–6 first sight 13:00:50, every row fetched after it; GW7 still
+    open.
+- **Stored v final, entry_gw points:**
+  - GW3: 7 of 7 managers moved, +6 to +21;
+  - GW4: 6 of 7, +2 to +11;
+  - GW6: 5 of 7, +1 to +6;
+  - GW1, 2, 5: none.
+  - Our GW3 is 53 → 59, GW4 58 → 64, and GW6 bench 11 → 22.
+- player_gw total_points unchanged GW1–7; `automatic_subs` 0 → 18 rows.
+- **Earlier results re-run** on the before and after databases (same
+  exports and log):
+  - S4's 2026/27 backtest, S5's 2026/27 condition, S6's xp_v2
+    development and validation, and the S6c GW5–7 print are identical.
+  - S9's league report loses its 18 provisional warnings. Its sigma_d
+    18.03, our sigma 13.76 and line 102.0 stand. Three rivals' GW6 XIs now
+    count FPL's autosubs, and P(above) moves by −0.067 to −0.018.
+
+Report: `worklog/cc_2026-10-19_S2b.md`; after: `worklog/cc_2026-10-20_S2b_after.md`.
