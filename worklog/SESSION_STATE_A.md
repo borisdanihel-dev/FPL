@@ -7,7 +7,46 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (20 Oct, 13:00 UTC on): "Ruling, Tue 20 Oct afternoon"**
+- **NOW (20 Oct, 13:45 UTC on): "Ruling, Tue 20 Oct evening"** (verbatim
+  in `prereg/S8c.md` amendment 2, `prereg/S2b.md`, `prereg/W3.md`
+  amendment 1, and the scratchpad `ruling_20oct_evening.txt`).
+  - **Point 1:** `s8c-wip` `71c9d17` stays the bundle commit; the
+    sorted-clubs test is added at the Sun 25 Oct landing.
+  - **Point 2:** the S2b after-measurement verifier: **WARN**
+    (`worklog/verify_S2b_after.md`, master `f9dc78c`). Its four report
+    defects are not corrected yet: they wait for Boris (an amending
+    CHANGELOG line, report corrections):
+    - the P(above) range −0.069, not −0.067;
+    - the fetch-time end 13:01:33;
+    - the xG/xA/ruleset cells not listed;
+    - S6d's live forecast missing from the list (20 of the top 25 move,
+      max 0.03).
+  - **W3 amendment 1** (prereg master `0596125`; `w3-wip` `d3ea9c6` takes
+    master, then `aea1f42`, pushed):
+    - `fixtures.finished_provisional` is appended last;
+    - BAN RISK counts provisional results, labelled;
+    - REALISED grades GW8's xp_v2 from the bundle's pre-deadline commit
+      (git history; the nightly checkout gains `fetch-depth: 0`), only if
+      the bundle's 15 is our GW8 15.
+    - Mutations 14 of 15 red; the survivor is equivalent.
+    - Suite 737 → 748 bare.
+    - On the real data copy: BAN RISK lists Thiago (4 cautions, P(ban)
+      0.444).
+    - Verifier running.
+  - **F-I (1) done:** the disclaimer was read (a liability text, no
+    restriction). The 20 files are fetched, read with `python -I`, and
+    placed read-only under `historical/football-data/`. The record is
+    `worklog/downloads_2026-10-20.md` on `fi-wip` `aab64bf`. Verifier
+    running.
+  - **Item count: 6 of 6** since "Ruling, Tue 20 Oct": S2b, S8b, S8c, S8c
+    amendment 1, W3 amendment 1, F-I downloads.
+    - Step 16's prereg (parts 3–4) and W1b (Wednesday) wait for a chat
+      review.
+    - Step 16 needs decisions the plan leaves open: the bracket model,
+      the blank and double rules, and the 2024/25–2025/26 European
+      calendars for the backtest.
+
+- (Earlier) **NOW (20 Oct, 13:00 UTC on): "Ruling, Tue 20 Oct afternoon"**
   (verbatim in `prereg/S8c.md` amendment 1, master `9ed7919`, and the
   scratchpad `ruling_20oct_afternoon.txt`).
   - **Points:**
