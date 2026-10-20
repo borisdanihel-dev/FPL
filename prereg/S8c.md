@@ -225,3 +225,14 @@ Ruling, Tue 20 Oct night.
    - w3-wip: REALISED takes the actual GW8 15 from the post-deadline picks, own from the projection log, and xp_v2 from that CSV; each model picks its XI and captain from those 15. The condition "the bundle's 15 equals the GW8 squad" is replaced by "all 15 are in the CSV"; otherwise "not recorded".
 4. Committer time: OK, and the bundle's run.txt end time must also be before the deadline. Both are required.
 5. Yes: the item count resets to 0 of 6. Wednesday: point 3, then W1b as planned (tell Boris when his dry-run click is needed, before 21:00 UTC), then Step 16's prereg. Same rules: branches only; no merges without Boris; no runner pushes 21:00 UTC to the end of the nightly or from Thu 22 Oct 11:30 UTC to the GW8 deadline.
+
+## Amendment 3, point 3 clarified (verbatim below; pinned before its test)
+
+- **The value:** the bundle's xp_v2 XI picker is `chips.xi_and_bench` (via `side_by_side`). It values a player as `pts.get(id, 0.0)` on section 5's forecast. A player xp_v2 does not forecast is therefore used at 0.0. The CSV already writes `repr(0.0)` and the flag `not forecast` in `lambda_source`, so no code changes.
+- **The test:** every CSV value equals the value the picker used.
+  - For our 15: the values `xi_and_bench` assigned in the bundle's own run, captured as it ran. One of the 15 is made not forecast on the toy.
+  - For every other export player: the picker's value, got by putting him in our 15 in place of a player of his position and calling `xi_and_bench` on the same forecast.
+  - The test goes red when a not-forecast player is written at any other value.
+- `s8c-wip`'s new head is Thursday's bundle commit after the verifier.
+
+Ruling, Tue 20 Oct night, point 3 clarified: xp_v2_all.csv lists every player in the export. A player xp_v2 does not forecast gets the value the bundle's xp_v2 XI picker actually used for him (0 if it treats him as 0), with the flag "not forecast". A test asserts that every CSV value equals the value the picker used. W3's condition becomes "all 15 are in the CSV" (always true for the export's players); "not recorded" only if the CSV is missing or was committed after the deadline.
