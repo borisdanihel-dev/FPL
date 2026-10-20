@@ -101,3 +101,14 @@ RULING 19 Oct afternoon:
 5. Dry-run cap: today's six are used. The landing-2026-10-19b and s2b-wip dry runs move to Tuesday after 00:00 UTC.
 6. Reconcile before relying on the GW5-7 retro: our actual GW6 (wildcard, captain Saka) scored 49 officially, while the retro scores our squad 59 (own's picks) and 61 (xp_v2's picks). Check that the retro used the actual GW6 15 (post-wildcard), the official points and FPL's actual autosubs, and explain the gap in the S6c/S6d report. Captain in reality was Saka (the vice was Haaland).
 END RULING
+
+## After the first real run: a verifier on the after-measurement (Ruling, Tue 20 Oct evening, point 2, verbatim)
+
+The after-measurement is `worklog/cc_2026-10-20_S2b_after.md` (data `63e6a44`). A Fable verifier checks it tonight; it blocks nothing.
+
+Ruling, Tue 20 Oct evening.
+
+1. No new test now: s8c-wip 71c9d17 stays the commit Thursday's bundle runs from, exactly as verified. Add the sorted-clubs flag test when s8c-wip lands on Sun 25 Oct.
+2. Yes: a Fable verifier on S2b's after-measurement (worklog/cc_2026-10-20_S2b_after.md) tonight; it blocks nothing.
+
+Then tonight, on branches only: W3 points 2, 3 and 5 on w3-wip (merge by Thu 29 Oct via dry/W3), then the F-I downloads and Step 16's prereg. Wednesday: W1b as planned; tell Boris when his dry-run click is needed. Same rules: no runner pushes 21:00 UTC to the end of the nightly; no merges without Boris; stop at 6 items.

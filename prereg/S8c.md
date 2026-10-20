@@ -161,3 +161,14 @@ Then: W1b on Wednesday as planned, then W3 (points 2, 3, 5), then F-I. Same rule
 - *Report and CHANGELOG:* `worklog/cc_<date>_S8c_a1.md` and a CHANGELOG
   entry on `s8c-wip`.
 - *Deadline:* Wed 21 Oct 20:00 UTC.
+
+## Amendment 2: the bundle commit stays as verified (Ruling, Tue 20 Oct evening, point 1, verbatim)
+
+`s8c-wip` `71c9d17` is the commit Thursday's bundle and Friday's refresh run from. The sorted-clubs flag test (the amendment-1 verifier's one survivor) is added when `s8c-wip` lands on Sun 25 Oct.
+
+Ruling, Tue 20 Oct evening.
+
+1. No new test now: s8c-wip 71c9d17 stays the commit Thursday's bundle runs from, exactly as verified. Add the sorted-clubs flag test when s8c-wip lands on Sun 25 Oct.
+2. Yes: a Fable verifier on S2b's after-measurement (worklog/cc_2026-10-20_S2b_after.md) tonight; it blocks nothing.
+
+Then tonight, on branches only: W3 points 2, 3 and 5 on w3-wip (merge by Thu 29 Oct via dry/W3), then the F-I downloads and Step 16's prereg. Wednesday: W1b as planned; tell Boris when his dry-run click is needed. Same rules: no runner pushes 21:00 UTC to the end of the nightly; no merges without Boris; stop at 6 items.
