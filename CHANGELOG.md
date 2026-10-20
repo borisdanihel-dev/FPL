@@ -4014,3 +4014,27 @@ W1b's cap moves to 12 when W1b is worked.
   default for Free Hit and Wildcard builds, the GK+DEF cap on live with its
   cost printed and the three-layer rule's squad beside it. Not used for
   GW8.
+
+## 2026-10-20 — S8c: the live no-hit planner on xp_v2 for the GW8 bundle; S15 amendment 2, the rule's squad beside the builder's (`de8ca68`, `5c90e08` preregs; `7773a58`, `50e89dd`, `615b35b` code; on `s8c-wip`)
+
+- **Built (tools only):**
+  - `tools/planner_live.py`: S8's `rank_plans` unchanged on S15's live
+    xp_v2 horizon matrix, with each fixture's source printed. 1 FT, no
+    hits, decay 0.85, Boris's schedule. The simple rule is printed
+    beside it, and the GW8 Bench Boost re-score (top 3) as information.
+  - `tools/gw_pass.py` section 3: the planner is the default. The ruling's
+    fallback (S8's planner and the simple rule) is printed when an input
+    is missing.
+  - `tools/builder.py` live: prints the frozen three-layer rule's squad,
+    its spend, its objective and builder − rule. The rule's squad is a
+    start when it is cap-legal.
+- **Measured (read-only, GW8):**
+  - planner default Branthwaite → De Cuyper, 4.17;
+  - simple rule Tarkowski → Gabriel, +2.18 in week t;
+  - lambdas: week t 10 odds; later weeks 10 odds + 40 fallback;
+  - `--freehit`: builder 65.93 v rule 61.98 (spent 87.2), +3.95; the cap
+    costs 0.00.
+- **Checks:** suite 727 → 756; mutations 11 of 11 and 6 of 6; verifier
+  PASS (`worklog/verify_S8c.md`, Fable 5.1). Its recomputation matches
+  326 plans to 1e-13; 9 of its 11 mutations went red, and the 2
+  survivors are toy-coverage gaps.
