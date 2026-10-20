@@ -4072,3 +4072,18 @@ W1b's cap moves to 12 when W1b is worked.
 - **Checks:** suite 764 → 767; mutations 8 of 8; verifier PASS
   (`worklog/verify_S8c_a3.md`, Fable 5.1; 7 of its 9 mutations red, two
   toy gaps). This commit is Thursday's bundle commit.
+
+## 2026-10-20 — S8c amendment 3, point 3 clarified: every CSV value is the picker's (`65d6797` prereg; `2ff26dd` tests; on `s8c-wip`)
+
+- **The value:** the bundle's xp_v2 XI picker (`chips.xi_and_bench`) uses
+  `pts.get(id, 0.0)`. A player xp_v2 does not forecast is therefore used
+  at 0.0, which is the CSV's value with the flag "not forecast". No tool
+  changed.
+- **The test:** it captures the picker's values in the bundle's own run,
+  for our 15 including one not-forecast player. It puts every other
+  export player through the same picker. Red with a not-forecast value
+  of 0.5, and with a rounded xp_v2.
+- **Checks:** suite 767 → 768. Verifier PASS (`worklog/verify_S8c_a3b.md`,
+  Fable 5.1). On the real data, all 668 rows equal the picker's values,
+  Haaland (411, in our 15) at 0.0. 4 of its 4 mutations red. This commit
+  is Thursday's bundle commit.
