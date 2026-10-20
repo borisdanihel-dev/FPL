@@ -24,10 +24,11 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - **Verifier PASS** (`worklog/verify_S8c_a3.md`). Report and
       CHANGELOG are on `s8c-wip` `93579dc`.
     - The clarified point 3 (prereg `65d6797`): a test that every CSV
-      value is the picker's (`2ff26dd`, tests only, red twice). Its
-      verifier is running.
-    - **Thursday's bundle commit = `2ff26dd` (or its report commit)
-      once that passes.**
+      value is the picker's (`2ff26dd`, tests only). Verifier PASS
+      (`worklog/verify_S8c_a3b.md`): all 668 real rows equal the
+      picker's values.
+    - **Thursday's bundle commit = `s8c-wip` `3750334`** (tools as at
+      `ea95cf6`).
     - Open: the CSV's "every export player at 0" choice; two toy-gap tests
       for the landing.
   - **Points 3–4, w3-wip** (`bbe770a`, pushed):
@@ -54,11 +55,13 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       skipped in a dry run), 739 tests. 25 sync calls: GW1–6 final, not
       re-fetched (S2b in a live run). Check 22: 49 entry-gameweeks GW1–7
       equal.
+    - Re-check of the fix: PASS (`worklog/verify_W1b_fix.md`, `5979985`).
+      Suite 739 OK, bare and with the data.
     - **Open:** merge tonight (before 21:00 UTC; the 21:40 nightly is the
       first real run) or Wednesday?
     - Then: tag `pre-W1b`, merge, real dispatch, final verifier.
   - **Then:** Step 16's prereg.
-  - **Thursday's bundle (procedure):** in the s8c worktree at `93579dc`:
+  - **Thursday's bundle (procedure):** in the s8c worktree at `3750334`:
     1. `git -C C:\GIT\FPL-data pull --ff-only`;
     2. `--restore`;
     3. `python tools/gw_pass.py --out <dir>`;
