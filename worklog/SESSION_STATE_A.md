@@ -7,7 +7,26 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (20 Oct, 14:45 UTC on): "Ruling, Tue 20 Oct night"** (verbatim in
+- **NOW (20 Oct, 19:00 UTC on): "Ruling, Tue 20 Oct, 21:00 Prague"** (verbatim
+  in `prereg/S8c.md` amendment 4, `prereg/W1b.md`, BUILD_PLAN Part F F-M,
+  master `6a46a79`; the scratchpad `ruling_20oct_2100.txt`).
+  - **Point 1:** W1b merges Wednesday before 21:00 UTC (S2b was today's
+    runner change). `w1b-wip` `5979985` is ready: verifiers PASS, Boris's
+    dry run #40 green.
+  - **Point 2:** the "if he plays" block for our flagged players, on
+    `s8c-wip` `4d4bfa9`, pushed.
+    - The gate is lifted only for that player: `xp_v2_live` gains
+      `lift`; own is the record branch.
+    - Mutations 8 of 9 (own's horizon equivalent).
+    - GW8: Haaland if he plays 4.25 xp_v2, 4.44 own, captain 9 of 15. The
+      CSV and the rest of the print are unchanged.
+    - Suite and verifier running. **Once they pass, `4d4bfa9` (or its
+      report commit) is the bundle commit.**
+  - **Point 3:** F-M is recorded (no code). From GW8, each week, record
+    what our flagged players actually score; revisit at GW15.
+  - Then Step 16's prereg.
+
+- (Earlier) **NOW (20 Oct, 14:45 UTC on): "Ruling, Tue 20 Oct night"** (verbatim in
   `prereg/S8c.md` amendment 3, `prereg/W3.md` amendment 2, `prereg/S2b.md`,
   master `6e7c918`, and the scratchpad `ruling_20oct_night.txt`). The
   item count reset to 0 of 6.
