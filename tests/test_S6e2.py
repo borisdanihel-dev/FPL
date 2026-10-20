@@ -33,6 +33,27 @@ def direct(mu, per=3, n=400):
     return sum((k // per) * math.exp(-mu + k * math.log(mu) - math.lgamma(k + 1)) for k in range(n))
 
 
+def exact(mu, per=3):
+    """E[floor(S/per)] to 60 digits (decimal), the reference where the float
+    direct sum itself loses 1e-11 (large mu)."""
+    from decimal import Decimal, localcontext
+    with localcontext() as ctx:
+        ctx.prec = 60
+        m = Decimal(repr(mu))
+        p, tot, k = (-m).exp(), Decimal(0), 0
+        while k <= mu + 40 * mu ** 0.5 + 100:
+            tot += (k // per) * p
+            k += 1
+            p = p * m / k
+        return float(tot)
+
+
+def direct_part(mu, j_max, per=3):
+    """sum over j = 1..j_max of P(S >= per j), by the pmf."""
+    pmf = [math.exp(-mu + k * math.log(mu) - math.lgamma(k + 1)) for k in range(per * j_max)]
+    return sum(1.0 - sum(pmf[:per * j]) for j in range(1, j_max + 1))
+
+
 class ByHand(unittest.TestCase):
     def test_floor_points(self):
         self.assertEqual(T.floor_points(0.0), 0.0); self.assertEqual(T.floor_points(-1.0), 0.0)
@@ -45,6 +66,16 @@ class ByHand(unittest.TestCase):
             self.assertLess(T.floor_points(mu), mu / 3)                                   # the floor: below E[S]/3
             self.assertGreater(T.floor_points(mu), mu / 3 - 1)                            # and within one point of it
         self.assertAlmostEqual(T.floor_points(5.0, per=1), 5.0, places=10)               # per 1: the mean itself
+
+    def test_floor_points_always_returns(self):
+        """Amendment 1: the verifier's non-terminating mu (rounding froze 1 - cdf
+        above the tail) return, and equal the 60-digit sum to 1e-11."""
+        for mu in (120.0, 12.765, 13.818, 14.592, 16.173) + tuple(float(m) for m in range(41, 400)):
+            self.assertAlmostEqual(T.floor_points(mu), exact(mu), delta=1e-11, msg=mu)
+        self.assertAlmostEqual(T.floor_points(9.0, j_cap=2), direct_part(9.0, 2), places=13)   # the cap: j = 1, 2 only
+        for mu in (12.765, 120.0, 700.0):
+            self.assertAlmostEqual(T.floor_points(mu, j_cap=10 ** 6), exact(mu), delta=1e-10)   # the underflow stop, not the cap, ends it
+        self.assertGreaterEqual(T.J_CAP, 1000)
 
 
 class Toy(unittest.TestCase):

@@ -43,6 +43,7 @@ from console_utf8 import utf8_console                             # noqa: E402
 from provenance import Run                                        # noqa: E402
 
 TAIL = 1e-15                        # E[floor(S/3)]'s sum stops when P(S >= 3j) is below this
+J_CAP = 10000                       # and after this many terms whatever happens (amendment 1)
 SEASON, PRIOR = F.SEASON, F.PRIOR
 
 
@@ -50,21 +51,25 @@ class MissingInput(XR.MissingInput):
     """A required input is missing: reported, never substituted."""
 
 
-def floor_points(mu, per=SV.SAVES_PER_POINT, tail=TAIL):
-    """E[floor(S / per)] for S ~ Poisson(mu) = sum over j >= 1 of P(S >= per j)."""
+def floor_points(mu, per=SV.SAVES_PER_POINT, tail=TAIL, j_cap=J_CAP):
+    """E[floor(S / per)] for S ~ Poisson(mu) = sum over j >= 1 of P(S >= per j).
+    The sum stops when the tail is below `tail`, once the pmf has underflowed
+    past the mode (rounding can hold 1 - cdf just above `tail` for ever;
+    amendment 1), or after j_cap terms."""
     if mu <= 0:
         return 0.0
     total, cdf, p, k, j = 0.0, 0.0, math.exp(-mu), 0, 1
-    while True:
+    while j <= j_cap:
         while k <= per * j - 1:
             cdf += p
             k += 1
             p *= mu / k
         surv = 1.0 - cdf
-        if surv < tail:
+        if surv < tail or (k > mu and p == 0.0):
             return total
         total += surv
         j += 1
+    return total
 
 
 class Season2(SV.Season):
