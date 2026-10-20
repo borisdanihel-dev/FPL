@@ -22,7 +22,12 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - mutations 8 of 8; suite 764 → 767 bare;
     - GW8 run: 668 rows, Haaland "not forecast".
     - **Verifier PASS** (`worklog/verify_S8c_a3.md`). Report and
-      CHANGELOG are on `s8c-wip` **`93579dc`: Thursday's bundle commit**.
+      CHANGELOG are on `s8c-wip` `93579dc`.
+    - The clarified point 3 (prereg `65d6797`): a test that every CSV
+      value is the picker's (`2ff26dd`, tests only, red twice). Its
+      verifier is running.
+    - **Thursday's bundle commit = `2ff26dd` (or its report commit)
+      once that passes.**
     - Open: the CSV's "every export player at 0" choice; two toy-gap tests
       for the landing.
   - **Points 3–4, w3-wip** (`bbe770a`, pushed):
@@ -41,9 +46,16 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     (F-A), tests at 7, 12 and 13, the docs say 12, red at 6 and at 13.
     Pushed.
     - Suites and the delta verifier are running.
-    - **Waiting on Boris:** the last manual dry run (nightly on ref
-      `w1b-wip`, `dry_run` ticked), before 21:30 UTC tonight or Wednesday
-      before 21:00 UTC.
+    - **The delta verifier passed** (`worklog/verify_W1b.md`, `a81e2b1`).
+      Its two slips (comments still saying 6; no manual-dispatch test) are
+      fixed in `596de21`; a re-check is running.
+    - **Boris's dry run #40** on `596de21` (17:22–17:24 UTC) was green:
+      `data-dryrun` `516326d`, STATUS WARN 28/29 (only check 30, odds
+      skipped in a dry run), 739 tests. 25 sync calls: GW1–6 final, not
+      re-fetched (S2b in a live run). Check 22: 49 entry-gameweeks GW1–7
+      equal.
+    - **Open:** merge tonight (before 21:00 UTC; the 21:40 nightly is the
+      first real run) or Wednesday?
     - Then: tag `pre-W1b`, merge, real dispatch, final verifier.
   - **Then:** Step 16's prereg.
   - **Thursday's bundle (procedure):** in the s8c worktree at `93579dc`:
