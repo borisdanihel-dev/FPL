@@ -7,7 +7,39 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (20 Oct, 11:00 UTC on): "Ruling, Tue 20 Oct"** (verbatim in
+- **NOW (20 Oct, 13:00 UTC on): "Ruling, Tue 20 Oct afternoon"**
+  (verbatim in `prereg/S8c.md` amendment 1, master `9ed7919`, and the
+  scratchpad `ruling_20oct_afternoon.txt`).
+  - **Points:**
+    1. Thursday's bundle and Friday's refresh run from `s8c-wip`'s final
+       commit. The output goes to master under `worklog/gw_pass/gw8/`
+       before the deadline, with that commit in `run.txt`. `s8c-wip` lands
+       Sun 25 Oct, dry run first.
+    2. Tests for the two verifier gaps;
+    3. the cap flag on every printed squad or move. Points 2 and 3 are due
+       Wed 21 Oct 20:00 UTC.
+    4. The S8b and S15 CHANGELOG entries go on master (done, `684cd3f`).
+  - **Then:** W1b Wednesday, W3 (points 2, 3, 5), then F-I.
+  - **Done:**
+    - the real nightly dispatch (Boris, 12:59 UTC): data `63e6a44`, STATUS
+      OK 29/29, 73 calls. S2b's after-measurement is in
+      `worklog/cc_2026-10-20_S2b_after.md`, and the "S2b done" CHANGELOG
+      entry is on master `f61d267`.
+    - S8c amendment 1 code `52b2a65` on `s8c-wip` (pushed): new
+      `tools/capflag.py`; flags in planner_live, S8's planner, the bundle
+      and builder; the two gap tests; mutations 19 of 19. GW8 read-only:
+      only the rule's line is flagged (ARS 3).
+  - **In progress:** the full suite at `52b2a65`, bare and with the data;
+    the amendment's verifier. Then the report
+    `worklog/cc_2026-10-20_S8c_a1.md`, the CHANGELOG on `s8c-wip`, and
+    the push.
+  - **Thursday (bundle):** from the s8c worktree at the final commit:
+    `git -C C:\GIT\FPL-data pull --ff-only`, `--restore`, then
+    `python tools/gw_pass.py --out <dir>`. Copy the output and `run.txt` to
+    master `worklog/gw_pass/gw8/` and commit (worklog only) before Fri
+    17:30 UTC.
+
+- (Earlier) **NOW (20 Oct, 11:00 UTC on): "Ruling, Tue 20 Oct"** (verbatim in
   `prereg/S8c.md` and the scratchpad `ruling_20oct.txt`). The item count
   reset to 0 of 6.
   - **Order:**
