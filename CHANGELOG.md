@@ -4104,3 +4104,22 @@ W1b's cap moves to 12 when W1b is worked.
     count FPL's autosubs, and P(above) moves by −0.067 to −0.018.
 
 Report: `worklog/cc_2026-10-19_S2b.md`; after: `worklog/cc_2026-10-20_S2b_after.md`.
+
+## 2026-10-20 — W3 amendment 1: fixtures.finished_provisional, ban risk on provisional results, GW8 graded from the bundle (`0596125` prereg; `aea1f42` code; on `w3-wip`, not merged)
+
+- **Built:**
+  - `fixtures.finished_provisional` is appended last (1/0/NULL from the
+    API).
+  - BAN RISK counts results FPL has ended but not yet marked finished,
+    labelled "provisional"; matches in progress do not count.
+  - REALISED grades GW8's xp_v2 from `worklog/gw_pass/gw8/` at its newest
+    commit before the deadline, labelled "source: GW8 bundle <commit>".
+    It grades only when the bundle's 15 is our GW8 15.
+  - The nightly's master checkout fetches the full history.
+- **Measured:**
+  - suite 737 → 748; mutations 14 of 15 (one equivalent);
+  - the projection log is byte-identical under a frozen clock (verifier).
+  - On the real data, BAN RISK lists Thiago: 4 cautions, P(ban) 0.444
+    for a GW9 ban.
+- **Verifier:** PASS (`worklog/verify_W3_a1.md`, Fable 5.1). Merge by Thu
+  29 Oct via `dry/W3`.
