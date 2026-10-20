@@ -4087,3 +4087,17 @@ W1b's cap moves to 12 when W1b is worked.
   Fable 5.1). On the real data, all 668 rows equal the picker's values,
   Haaland (411, in our 15) at 0.0. 4 of its 4 mutations red. This commit
   is Thursday's bundle commit.
+
+## 2026-10-20 — S8c amendment 4: "if he plays" for our flagged players (Ruling, Tue 20 Oct, 21:00 Prague, point 2; `6a46a79` prereg; `4d4bfa9` code; on `s8c-wip`)
+
+- **Built:** the bundle's section 5 ends with an information block for
+  every player in our 15 whose status is not 'a': status, chance and
+  news, then xp_v2 and own as if available, and his captain-table place.
+  - Only the status gate is lifted: `xp_v2_live` gains `lift`; own is the
+    record branch.
+  - The picks, the CSV and the grading keep the gate.
+- **Measured (GW8):** Haaland (d, 75%) if he plays: xp_v2 4.25, own 4.44,
+  captain table 9 of 15. The CSV and the rest of the print are unchanged.
+- **Checks:** suite 768 → 773; mutations 8 of 9; verifier PASS
+  (`worklog/verify_S8c_a4.md`, Fable 5.1; its independent `core` recompute
+  differs by 0). This commit is Thursday's bundle commit.
