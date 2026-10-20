@@ -83,3 +83,81 @@ e. Wednesday: W1b as planned.
 f. W3: points 2, 3 and 5.
 g. F-I downloads, then Step 16 parts 3-4 and Step 18.
 Thursday's bundle carries own and xp_v2 for all 15, the captain table and the planner. Same rules: no runner pushes from Thu 22 Oct 11:30 UTC to the GW8 deadline; no merges without Boris; stop at 6 items.
+
+## Amendment 1: the bundle from s8c-wip, two test gaps, the cap flag (Ruling, Tue 20 Oct afternoon, verbatim)
+
+Ruling, Tue 20 Oct afternoon.
+
+1. Thursday's bundle (and Friday's refresh) runs from s8c-wip's final commit, not master. Its output is committed to master under worklog/gw_pass/gw8/ (worklog only, no runner files) before the GW8 deadline, with the s8c-wip commit in its provenance file. s8c-wip lands on master after the deadline, dry run first: Sun 25 Oct (Saturday is W2's night).
+2. Yes: tests for both verifier gaps (a fixture with no odds price; the rule's score under Bench Boost) on s8c-wip, tests only, mutations red, by Wed 21 Oct 20:00 UTC.
+3. Yes: every printed squad or suggested move that breaks the GK+DEF 2-per-club cap gets a flag on its line (e.g. "breaks the cap: ARS 3"). Print only; no rule changes. Re-run the suite and the GW8 read-only run; the verifier checks the diff. Done by Wed 21 Oct 20:00 UTC.
+4. The S8b and S15 CHANGELOG entries go on master today, docs only.
+
+Then: W1b on Wednesday as planned, then W3 (points 2, 3, 5), then F-I. Same rules: no runner pushes from Thu 22 Oct 11:30 UTC to the GW8 deadline; no merges without Boris; stop at 6 items.
+
+### Design for amendment 1 (pinned before any of its code)
+
+**Point 1, the bundle.**
+- Thursday's bundle and Friday's refresh run `tools/gw_pass.py` from
+  `s8c-wip`'s final commit: the commit after points 2 and 3, once their
+  verifier passes. The data is `C:\GIT\FPL-data`, pulled, read-only.
+- The output (the bundle text and its `run.txt`, which names that
+  commit) is committed to master under `worklog/gw_pass/gw8/` before the
+  GW8 deadline (Fri 23 Oct 17:30 UTC). That commit holds worklog files
+  only.
+- `s8c-wip` lands on master on Sun 25 Oct, after a dry run.
+
+**Point 2, the two verifier gaps (tests only, on `s8c-wip`).**
+- *A fixture with no odds price:* a toy whose odds snapshot prices only
+  some of week t's fixtures.
+  - The planner prints "fallback" for each unpriced fixture and "odds"
+    for the others.
+  - The printed counts equal `builder.live_matrix`'s sources.
+  - The test goes red when every source is printed as "odds" (the
+    verifier's m6).
+- *The rule's score under Bench Boost:* for `--bb`, the rule's objective
+  is scored with week t's bench at full weight (`bench_full=True`).
+  - It equals `builder.objective(rule, weeks_xp, 1.0, True)`.
+  - On the toy it differs from the score with `bench_full=False`.
+  - The test goes red when the rule is scored without `bench_full` (the
+    verifier's n4).
+
+**Point 3, the cap flag (print only).**
+- *When it applies:* a squad breaks the cap when one club has more than
+  2 goalkeepers and defenders among its 15.
+- *Moves:* a suggested move is judged on the squad after it: our 15,
+  minus the players out, plus the players in.
+- *The flag:* "breaks the cap: ARS 3", appended to the line it belongs
+  to, after three spaces.
+  - Several clubs are joined by ", ", sorted by club.
+  - A line that names more than one squad or move (S8's decay
+    alternative in brackets) flags each where it is named.
+- *Where:*
+  - `tools/planner_live.py`: the top 5 plans, the DEFAULT line, the
+    simple rule's line, and the Bench Boost top 3.
+  - `tools/planner.py` live (S8's planner, printed in the bundle as
+    information): each schedule's top plans, the decay alternative in
+    brackets, and the exploratory lines.
+  - `tools/gw_pass.py` section 3: the BASELINE, "planner top plan" and
+    "planner, no hits" lines, and the named plans.
+  - `tools/gw_pass.py` section 5: our 15 (shown as the XI and bench) is
+    flagged on its summary line ("... slots differ; ...") if our current
+    squad breaks the cap.
+  - `tools/builder.py` live: the builder's squad (its "formation ...;
+    spent ..." line) and the three-layer rule's "beside it" line.
+- *Not flagged:* lines that print no squad and suggest no move. These are
+  S7's chip values (no squad is printed), S9's league and
+  effective-ownership lines (rivals' squads, not suggestions), the keeper
+  line, the captain table, and the builder's `--test` A/B (aggregates
+  only).
+- *No rule changes:* no ranking, legality, budget, score or plan changes.
+  A squad or move that keeps the cap prints exactly as before.
+- *Tests:* each location flagged on a case that breaks the cap and
+  unflagged on one that keeps it, the flag's text included; mutations
+  shown red.
+- *Checks:* the full suite before and after; the GW8 read-only runs
+  (`planner_live.py`, `builder.py --freehit`, the bundle) re-run.
+- *The verifier* checks the diff and the cap-flag prints.
+- *Report and CHANGELOG:* `worklog/cc_<date>_S8c_a1.md` and a CHANGELOG
+  entry on `s8c-wip`.
+- *Deadline:* Wed 21 Oct 20:00 UTC.
