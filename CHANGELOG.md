@@ -4058,3 +4058,17 @@ W1b's cap moves to 12 when W1b is worked.
 - **Checks:** suite 756 → 764; mutations 19 of 19; verifier PASS
   (`worklog/verify_S8c_a1.md`, Fable 5.1; 15 of its 16 mutations red, one
   sort-order coverage note).
+
+## 2026-10-20 — S8c amendment 3: the bundle writes xp_v2_all.csv (Ruling, Tue 20 Oct night, point 3; `6e7c918` prereg; `ea95cf6` code; on `s8c-wip`)
+
+- **Built:** `tools/gw_pass.py` also writes `xp_v2_all.csv` in the same
+  run: one row per export player, with id, name, team, position, xp_v2,
+  P(start) and the lambda source. Floats are exact. Players not forecast
+  are at 0 and marked "not forecast". It is recorded in `run.txt`. The
+  print is unchanged.
+- **Measured (GW8, data `63e6a44`):** 668 rows, of which 277 are forecast
+  (all from odds). Haaland is "not forecast". The print is byte-identical
+  to before, apart from the stamp.
+- **Checks:** suite 764 → 767; mutations 8 of 8; verifier PASS
+  (`worklog/verify_S8c_a3.md`, Fable 5.1; 7 of its 9 mutations red, two
+  toy gaps). This commit is Thursday's bundle commit.
