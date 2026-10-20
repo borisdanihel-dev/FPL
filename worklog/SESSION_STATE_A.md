@@ -29,18 +29,30 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       bare and runner-like.
     - `s17-wip` pushed (`90b62d4`; the earlier push had failed).
     - **S15 verifier PASS** → accepted (point 2); `s15-wip` `b22ee1c` with
-      report and CHANGELOG. Still to do: print the three-layer rule's
-      squad beside the builder's in live.
-    - **S8c (point 1, the live planner)** built on `s8c-wip` `50e89dd`
-      (prereg master `de8ca68`). It has the GW8 bundle section; mutations
-      11 of 11. Read-only live run on GW8: default Branthwaite → De Cuyper;
-      simple rule Tarkowski → Gabriel. Suite and verifier next.
+      report and CHANGELOG.
+    - **S15 amendment 2** (prereg master `5c90e08`): the rule's squad
+      beside the builder's in live, on `s8c-wip` `615b35b`; mutations 6
+      of 6. The header now names the acceptance (`--bb` stays
+      information), which is a decision for the chat. Live GW8 `--freehit`:
+      builder 65.93, rule 61.98 (spent 87.2), +3.95.
+    - **S8c (point 1, the live planner)** built on `s8c-wip` (`7773a58`,
+      `50e89dd`; prereg master `de8ca68`). It has the GW8 bundle section;
+      mutations 11 of 11. Read-only live run on GW8: default Branthwaite →
+      De Cuyper; simple rule Tarkowski → Gabriel. `s8c-wip` `518f69e`
+      takes master `ce357fb`.
+    - **S2b verifier PASS** on the dry run and the delta
+      (`worklog/verify_S2b.md`, `s2b-wip` `434df0b`). Tag `pre-S2b` =
+      `5c90e08`. **Merged:** master `ce357fb`; suite 708 OK, bare and with
+      the data. Pushed 11:45 UTC. The untracked `verify_S2b_pre.md` (an
+      older draft) was moved to the scratchpad `aside/`.
   - **In progress:**
     - the S8b verifier;
-    - the S2b verifier on the dry run and the delta (`s2b-wip` `df867cb` =
-      a00ccc7 + master 8d0a50b; bare suite 708 OK; runner-like running);
-    - then tag `pre-S2b`, merge, and Boris's real dispatch before 21:00
-      UTC, then the after-measurement.
+    - the S8c verifier (with S15 amendment 2), and the `s8c-wip` suites;
+    - **waiting on Boris:** the real nightly dispatch of master `ce357fb`
+      before 21:00 UTC. It is the first real re-fetch of GW1-6 (expect 73
+      calls). After it: `s2b_measure.py` (copied to the scratchpad) on
+      `e1154dd` against the new data commit, then the CHANGELOG entry
+      "S2b done".
 
 - (Earlier) **NOW (20 Oct morning on): the night ruling ("Ruling, Mon 19 Oct",
   verbatim in `prereg/S6e2.md` amendment 1, `prereg/S8b.md`,
