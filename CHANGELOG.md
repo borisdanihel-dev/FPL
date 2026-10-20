@@ -4123,3 +4123,20 @@ Report: `worklog/cc_2026-10-19_S2b.md`; after: `worklog/cc_2026-10-20_S2b_after.
     for a GW9 ban.
 - **Verifier:** PASS (`worklog/verify_W3_a1.md`, Fable 5.1). Merge by Thu
   29 Oct via `dry/W3`.
+
+## 2026-10-20 — W3 amendment 2: GW8 graded from the bundle's xp_v2_all.csv (Ruling, Tue 20 Oct night; `6e7c918` prereg; `bbe770a` code; on `w3-wip`, not merged)
+
+- **Built:** REALISED reads `worklog/gw_pass/gw8/xp_v2_all.csv` at the
+  newest commit where both the committer time and `run.txt`'s end are
+  before the deadline, and `run.txt` records the CSV's SHA-256.
+  - Our actual GW8 15; own from the log, xp_v2 from the CSV;
+    `realised_on` for both.
+  - Any of the 15 missing from the CSV gives "not recorded".
+  - Amendment 1's text parser is removed.
+- **Measured:**
+  - suite 748 → 749; mutations 8 of 8;
+  - the real GW8 CSV (668 players, from `s8c-wip` `ea95cf6`) reads end to
+    end;
+  - the projection log is byte-identical under a frozen clock
+    (verifier).
+- **Verifier:** PASS (`worklog/verify_W3_a2.md`, Fable 5.1).
