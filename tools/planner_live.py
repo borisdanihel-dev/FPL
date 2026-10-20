@@ -26,6 +26,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import builder as B                                               # noqa: E402
+import capflag as CF                                              # noqa: E402
 import chips as CH                                                # noqa: E402
 import odds_lambda as OL                                          # noqa: E402
 import planner as PL                                              # noqa: E402
@@ -128,13 +129,15 @@ def plan(data_dir, hist_root, out=print):
     out(f"  {'#':>2} {'score':>7} {'gain':>7} {'lostFT':>7}  {'weekly dxP':<36} plan")
     for i, ev in enumerate(scored[:TOP], 1):
         weekly = " ".join(f"{g:+5.1f}" for g in ev["gains"])
-        out(f"  {i:>2} {ev['score']:7.2f} {ev['gain']:7.2f} {ev['lost']:7.2f}  {weekly:<36} {plan_text(ev)}")
-    out(f"  DEFAULT: {plan_text(scored[0])}")
+        out(f"  {i:>2} {ev['score']:7.2f} {ev['gain']:7.2f} {ev['lost']:7.2f}  {weekly:<36} {plan_text(ev)}"
+            + CF.move_flag(squad, ev["outs"], ev["ins"]))
+    out(f"  DEFAULT: {plan_text(scored[0])}" + CF.move_flag(squad, scored[0]["outs"], scored[0]["ins"]))
     out(f"  the simple rule beside it (best one-week move when its gain > 0, else roll): {plan_text({'outs': simple[0], 'ins': simple[1]})}"
+        + CF.move_flag(squad, simple[0], simple[1])
         + (f"; on the planner's score {simple_ev['score']:.2f}, week-t gain {simple_ev['gains'][0]:+.2f}" if simple_ev else ""))
     out(f"  information, a Bench Boost in GW{target} (week t's bench at full weight), top {TOP_BB}:")
     for i, ev in enumerate(bb[:TOP_BB], 1):
-        out(f"    {i} {ev['score']:7.2f}  week-t gain {ev['gains'][0]:+5.2f}  {plan_text(ev)}")
+        out(f"    {i} {ev['score']:7.2f}  week-t gain {ev['gains'][0]:+5.2f}  {plan_text(ev)}" + CF.move_flag(squad, ev["outs"], ev["ins"]))
     return {"target": target, "scored": scored, "simple": simple, "bb": bb, "sources": srcs, "bank": bank}
 
 

@@ -348,6 +348,52 @@ class Live(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
 
+    def test_the_rule_under_bench_boost(self):
+        """Amendment 1 of prereg/S8c.md, point 2: under --bb the rule is scored with week t's bench at full weight."""
+        from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            toy_live(tmp); toy_hist_root(hist)
+            gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+            add_fixtures_played(tmp)
+            with mock.patch.object(B.E, "selling_budget", return_value=(100.0, "")):
+                res = B.live(tmp, hist, "bb", lambda s: None)
+            weeks_xp = B.live_matrix(tmp, hist, 1)[3]
+            self.assertAlmostEqual(res["rule_value"], B.objective(res["rule"], weeks_xp, 1.0, True), places=9)
+            self.assertGreater(abs(res["rule_value"] - B.objective(res["rule"], weeks_xp, 1.0, False)), 1e-6)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
+    def test_the_cap_flag(self):
+        """Amendment 1 of prereg/S8c.md, point 3: the builder's squad and the rule's line flag a squad over the cap."""
+        from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            toy_live(tmp); toy_hist_root(hist)
+            gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+            add_fixtures_played(tmp)
+            with mock.patch.object(B.E, "selling_budget", return_value=(100.0, "")):
+                lines = []
+                res = B.live(tmp, hist, "freehit", lines.append)
+                form = next(l for l in lines if l.startswith("  formation "))
+                self.assertNotIn("breaks the cap", form)                                           # the cap is on
+                over = lambda sq: [dict(p, team=sq[0]["team"]) if p["pos"] in (1, 2) else dict(p) for p in sq]   # every GK+DEF one club
+                real_rule, real_build = B.live_rule, B.build
+
+                def build(*a, **k):
+                    sq, v = real_build(*a, **k)
+                    return over(sq), v
+                with mock.patch.object(B, "live_rule", side_effect=lambda *a: (over(real_rule(*a)[0]), real_rule(*a)[1])), \
+                     mock.patch.object(B, "build", side_effect=build):
+                    lines = []
+                    B.live(tmp, hist, "freehit", lines.append)
+            form = next(l for l in lines if l.startswith("  formation "))
+            beside = next(l for l in lines if l.startswith("  beside it, the three-layer rule"))
+            self.assertRegex(form, r"   breaks the cap: [A-Z]+ 7$")
+            self.assertRegex(beside, r"   breaks the cap: [A-Z]+ 7$")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
     def test_rule_keeps_to_the_live_budget(self):
         from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot
         tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()

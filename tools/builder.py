@@ -37,6 +37,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
+import capflag as CF                                              # noqa: E402
 import chips as CH                                                # noqa: E402
 import odds_lambda as OL                                          # noqa: E402
 import planner as PL                                              # noqa: E402
@@ -561,13 +562,13 @@ def live(data_dir, hist_root, mode, out=print):
     for p in sorted(sq_on, key=lambda p: (p["id"] not in xi_ids, p["pos"], -t_xp.get(p["id"], 0.0))):
         tag = ("C" if p["id"] == cap["id"] else "XI") if p["id"] in xi_ids else "bench"
         out(f"  {p['name']:<16}{BT.POS_NAME.get(p['pos'], '?'):>4}{p['team']:>5}{p['price']:7.1f}{t_xp.get(p['id'], 0.0):9.2f}  {tag}")
-    out(f"  formation {'-'.join(map(str, form))}; spent {sum(p['price'] for p in sq_on):.1f} of {budget:.1f}")
+    out(f"  formation {'-'.join(map(str, form))}; spent {sum(p['price'] for p in sq_on):.1f} of {budget:.1f}" + CF.flag(sq_on))
     if not full:
         out(f"  beside it, the three-layer rule (frozen, 4-3-3, the quota split, the same matrix): no full squad ({len(rsq)} "
             f"players passed its layers); nothing is substituted")
     else:
         out(f"  beside it, the three-layer rule (frozen, 4-3-3, the quota split, the same matrix): objective {r_obj:.2f}, spent "
-            f"{rspent:.1f}; builder - rule {v_on - r_obj:+.2f}")
+            f"{rspent:.1f}; builder - rule {v_on - r_obj:+.2f}" + CF.flag(rsq))
         for pos in (1, 2, 3, 4):
             out(f"    {BT.POS_NAME.get(pos, '?'):>3}: " + ", ".join(f"{p['name']} ({p['team']}, {p['price']:.1f})"
                                                            for p in sorted(rsq, key=lambda p: (-t_xp.get(p["id"], 0.0), p["id"]))

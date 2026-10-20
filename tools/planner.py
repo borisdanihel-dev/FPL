@@ -42,6 +42,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
+import capflag as CF                                              # noqa: E402
 import chips as CH                                                # noqa: E402
 import hist_pit as PIT                                            # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
@@ -269,14 +270,16 @@ def live(data_dir, out=print):
         out(f"  TOP {TOP_PLANS} PLANS  decay {DECAY}, schedule {name} {schedule}: score = decayed gain - 4 x hits - lost FT value")
         out(f"  {'#':>2} {'score':>7} {'gain':>7} {'hits':>5} {'lostFT':>7}  {'weekly dxP':<36} plan")
         for i, ev in enumerate(scored[:TOP_PLANS], 1):
-            plan = "roll" if not ev["outs"] else "; ".join(f"{o['name']} -> {n['name']} ({n['team']}, £{n['price']:.1f}m)" for o, n in zip(ev["outs"], ev["ins"]))
+            plan = ("roll" if not ev["outs"] else "; ".join(f"{o['name']} -> {n['name']} ({n['team']}, £{n['price']:.1f}m)" for o, n in zip(ev["outs"], ev["ins"]))) \
+                + CF.move_flag(squad, ev["outs"], ev["ins"])
             weekly = " ".join(f"{g:+5.1f}" for g in ev["gains"])
             flags = []
             for dc in DECAYS_CHECK:
                 alt = results[(dc, name)]
                 if alt and plan_key(alt[0]) != plan_key(scored[0]) and i == 1:
                     flags.append(f"decay {dc} prefers "
-                                 + ("roll" if not alt[0]["outs"] else "; ".join(f"{o['name']} -> {n['name']}" for o, n in zip(alt[0]["outs"], alt[0]["ins"]))))
+                                 + ("roll" if not alt[0]["outs"] else "; ".join(f"{o['name']} -> {n['name']}" for o, n in zip(alt[0]["outs"], alt[0]["ins"])))
+                                 + CF.move_flag(squad, alt[0]["outs"], alt[0]["ins"]))
             out(f"  {i:>2} {ev['score']:7.2f} {ev['gain']:7.2f} {ev['hits']:5d} {ev['lost']:7.2f}  {weekly:<36} {plan}"
                 + (f"   [{'; '.join(flags)}]" if flags else ""))
     # exploratory lines (RULING morning 19 Oct item 2): the same ranking with no hits, and with the buffer at 3.0
@@ -285,7 +288,8 @@ def live(data_dir, out=print):
         scored, _ = rank_plans(squad, bank, market, xp_weeks, k, p_start, DECAY, SCHEDULES["boris"], **kw)
         results[(label, "boris")] = scored
         ev = scored[0] if scored else None
-        plan = "none" if ev is None else ("roll" if not ev["outs"] else "; ".join(f"{o['name']} -> {n['name']}" for o, n in zip(ev["outs"], ev["ins"])))
+        plan = "none" if ev is None else ("roll" if not ev["outs"] else "; ".join(f"{o['name']} -> {n['name']}" for o, n in zip(ev["outs"], ev["ins"]))) \
+            + CF.move_flag(squad, ev["outs"], ev["ins"])
         out(f"  exploratory, {label} (Boris's schedule, no bar): top plan {plan}" + (f"  score {ev['score']:.2f}, gain {ev['gain']:.2f}, hits {ev['hits']}" if ev else ""))
     return results
 

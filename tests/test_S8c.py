@@ -16,11 +16,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 import builder as B                                               # noqa: E402
+import capflag as CF                                              # noqa: E402
+import odds_lambda as OL                                          # noqa: E402
 import chips as CH                                                # noqa: E402
 import gw_pass as G                                               # noqa: E402
 import planner as PL                                              # noqa: E402
 import planner_live as PLV                                        # noqa: E402
 from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot, NOW9   # noqa: E402
+from tests.test_S5 import api_event, toy_snapshot                 # noqa: E402
 
 
 class Toy(unittest.TestCase):
@@ -81,6 +84,175 @@ class Toy(unittest.TestCase):
         self.assertIn("the xp_v2 planner: missing input", sec); self.assertIn("the ruling's fallback", sec)
         self.assertNotIn("TRANSFER PLANNER ON XP_V2", sec)
         self.assertIn("TRANSFER PLANNER  export", sec)                                         # S8's own planner still printed
+
+
+class UnpricedFixture(unittest.TestCase):
+    """Amendment 1, point 2: a fixture the snapshot does not price is printed as the fallback."""
+
+    def setUp(self):
+        self.tmp, self.hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        toy_live(self.tmp); toy_hist_root(self.hist)
+        _, _, fixtures, _, _ = OL.sqlite_tables(self.tmp)
+        gw9 = [f for f in fixtures if f["event"] == 9]
+        self.assertGreaterEqual(len(gw9), 2)
+        events = [api_event(f["home"], f["away"], f["kickoff"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            [("b1", 2.0, 3.4, 3.8, 1.9, 1.9, False)]) for f in gw9[:1]]          # only the first is priced
+        toy_snapshot(self.tmp, "odds_2098-12-31T10-00-00Z.json.gz", events, fetched_at="2098-12-31T10:00:00Z")
+        self.budget = mock.patch.object(PLV.E, "selling_budget", return_value=(100.0, ""))
+        self.budget.start()
+
+    def tearDown(self):
+        self.budget.stop()
+        shutil.rmtree(self.tmp, ignore_errors=True); shutil.rmtree(self.hist, ignore_errors=True)
+
+    def test_the_unpriced_fixture_prints_fallback(self):
+        d, path, target, weeks_xp, srcs, p_start, snap = PLV.live_inputs(self.tmp, self.hist)
+        week_t = [s for u, _, _, s in srcs if u == target]
+        self.assertEqual(week_t.count("odds"), 1); self.assertEqual(week_t.count("fallback"), len(week_t) - 1)
+        self.assertEqual(Counter(("week t" if u == target else "later weeks", s) for u, _, _, s in srcs),
+                         B.live_matrix(self.tmp, self.hist, PL.HORIZON)[4])                        # the matrix's own sources
+        lines = []
+        PLV.plan(self.tmp, self.hist, lines.append)
+        self.assertEqual([l for l in lines if l.startswith(f"  lambdas GW{target}: ")],
+                         [f"  lambdas GW{target}: " + ", ".join(f"{h}-{a} {s}" for u, h, a, s in srcs if u == target)])
+        self.assertIn(" fallback", lines[[l.startswith(f"  lambdas GW{target}: ") for l in lines].index(True)])
+
+
+def breaking_move(squad, n0=90000):
+    """(club, outs, ins): a move that brings one club to 3 goalkeepers and defenders,
+    the players out being midfielders and forwards."""
+    club = next(r["team"] for r in squad if r["pos"] in (1, 2))
+    k = 3 - sum(1 for r in squad if r["pos"] in (1, 2) and r["team"] == club)
+    outs = [r for r in squad if r["pos"] in (3, 4)][:k]
+    ins = [{"id": n0 + j, "name": f"New{j}", "team": club, "pos": 2, "price": 4.0, "status": "a"} for j in range(k)]
+    return club, outs, ins
+
+
+def ev_of(outs, ins, score):
+    return {"score": score, "gain": score, "gains": [score / 6] * 6, "lost": 0.0, "used": len(ins), "hits": 0,
+            "outs": list(outs), "ins": list(ins)}
+
+
+class CapFlag(unittest.TestCase):
+    """Amendment 1, point 3: every printed squad or suggested move that breaks the GK+DEF 2-per-club cap is flagged."""
+
+    def test_the_helper(self):
+        rows = [{"id": 1, "team": "ARS", "pos": 1}, {"id": 2, "team": "ARS", "pos": 2}, {"id": 3, "team": "ARS", "pos": 3},
+                {"id": 4, "team": "LIV", "pos": 2}, {"id": 5, "team": "LIV", "pos": 2}]
+        self.assertEqual(CF.flag(rows), "")                                                        # 2 is the cap; a MID does not count
+        more = rows + [{"id": 6, "team": "LIV", "pos": 1}, {"id": 7, "team": "ARS", "pos": 2}, {"id": 8, "team": "ARS", "pos": 2}]
+        self.assertEqual(CF.flag(more), "   breaks the cap: ARS 4, LIV 3")                        # sorted by club
+        self.assertEqual(CF.move_flag(rows, [rows[2]], [{"id": 9, "team": "ARS", "pos": 2}]), "   breaks the cap: ARS 3")
+        self.assertEqual(CF.move_flag(more, [more[5]], []), "   breaks the cap: ARS 4")            # judged after the move
+        self.assertEqual(CF.move_flag(more, [more[0], more[6]], []), "   breaks the cap: LIV 3")
+        self.assertEqual(CF.move_flag(more, [more[0], more[6], more[5]], []), "")
+        self.assertEqual(CF.move_flag(rows, [], []), "")
+
+    def setUp(self):
+        self.tmp, self.hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        toy_live(self.tmp); toy_hist_root(self.hist)
+        gw9_snapshot(self.tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+        self.budget = mock.patch.object(PLV.E, "selling_budget", return_value=(100.0, ""))
+        self.budget.start()
+        d, _ = CH.newest_export(self.tmp)
+        self.orig = CH.my_squad
+        self.toy15 = self.orig(d)
+        self.assertEqual(CF.flag(self.toy15), "   breaks the cap: ARS 3")                         # the toy's own 15 is over the cap
+        teams = sorted({p["team"] for p in d["all_players"]})
+
+        def kept(dd):                                    # a copy of the toy's 15 that keeps the cap: the excess GK+DEF moved to a free club
+            rows = [dict(r) for r in self.orig(dd)]
+            while CF.breaks(rows):
+                club = CF.breaks(rows)[0][0]
+                r = [r for r in rows if r["pos"] in (1, 2) and r["team"] == club][-1]
+                gkdef, total = Counter(x["team"] for x in rows if x["pos"] in (1, 2)), Counter(x["team"] for x in rows)
+                r["team"] = next(t for t in teams if gkdef[t] == 0 and total[t] < 3)
+            return rows
+        self.mine = mock.patch.object(CH, "my_squad", side_effect=kept)
+        self.mine.start()
+        self.squad = CH.my_squad(d)
+        self.assertEqual(CF.flag(self.squad), "")
+        self.club, self.outs, self.ins = breaking_move(self.squad)
+        self.flag = f"   breaks the cap: {self.club} 3"
+        self.brk, self.keep = ev_of(self.outs, self.ins, 9.0), ev_of([], [], 1.0)
+
+    def tearDown(self):
+        self.mine.stop(); self.budget.stop()
+        shutil.rmtree(self.tmp, ignore_errors=True); shutil.rmtree(self.hist, ignore_errors=True)
+
+    def test_planner_live(self):
+        real = PL.rank_plans
+
+        def rank(*a, **k):
+            _, pool = real(*a, **k)
+            return [self.brk, self.keep], pool
+        lines = []
+        with mock.patch.object(PL, "rank_plans", side_effect=rank), \
+             mock.patch.object(PL, "baseline_plan", return_value=(tuple(self.outs), tuple(self.ins))):
+            PLV.plan(self.tmp, self.hist, lines.append)
+        top = [l for l in lines if l.startswith(("   1 ", "   2 "))]
+        self.assertTrue(top[0].endswith(self.flag), top[0]); self.assertNotIn("breaks the cap", top[1])
+        self.assertTrue(next(l for l in lines if l.startswith("  DEFAULT: ")).endswith(self.flag))
+        simple = next(l for l in lines if l.startswith("  the simple rule beside it"))
+        self.assertIn(PLV.plan_text(self.brk) + self.flag + "; on the planner's score", simple)
+        bb = [l for l in lines if l.startswith(("    1 ", "    2 "))]
+        self.assertEqual(sorted(l.endswith(self.flag) for l in bb), [False, True])
+        self.assertTrue(all(("roll" in l) != l.endswith(self.flag) for l in bb))
+
+    def test_s8s_planner(self):
+        real = PL.rank_plans
+
+        def rank(squad, bank, market, xp_weeks, k, p_start, decay=PL.DECAY, schedule=None, **kw):
+            _, pool = real(squad, bank, market, xp_weeks, k, p_start, decay, schedule or PL.SCHEDULES["boris"])
+            if kw:
+                return [self.brk], pool                                        # the exploratory lines
+            return ([self.keep, self.brk] if decay == PL.DECAY else [self.brk]), pool
+        lines = []
+        with mock.patch.object(PL, "rank_plans", side_effect=rank):
+            PL.live(self.tmp, lines.append)
+        firsts = [l for l in lines if l.startswith("   1 ")]
+        self.assertEqual(len(firsts), len(PL.SCHEDULES))
+        for l in firsts:                                                           # the roll, and the decay alternatives flagged in brackets
+            self.assertNotIn("roll" + self.flag, l)
+            self.assertIn("[decay 0.8 prefers " + "; ".join(f"{o['name']} -> {n['name']}" for o, n in zip(self.outs, self.ins))
+                          + self.flag + "; decay 0.9 prefers ", l)
+            self.assertTrue(l.endswith(self.flag + "]"), l)
+        for l in [l for l in lines if l.startswith("   2 ")]:
+            self.assertTrue(l.endswith(self.flag), l)
+        expl = [l for l in lines if l.startswith("  exploratory, ")]
+        self.assertEqual(len(expl), 2)
+        for l in expl:
+            self.assertIn(self.flag + "  score ", l)
+
+    def test_the_bundle(self):
+        real = PL.rank_plans
+
+        def rank(*a, **k):
+            _, pool = real(*a, **k)
+            return [self.brk, self.keep], pool
+        named = [("a named move", self.brk, None), ("roll", self.keep, None)]
+        buf = io.StringIO()
+        with mock.patch.object(PL, "rank_plans", side_effect=rank), \
+             mock.patch.object(PL, "baseline_plan", return_value=(tuple(self.outs), tuple(self.ins))), \
+             mock.patch.object(G, "named_plans", return_value=named):
+            G.bundle(self.tmp, out=lambda s="": buf.write(s + chr(10)), now=NOW9, hist_root=self.hist)
+        lines = buf.getvalue().splitlines()
+        for head in ("  BASELINE (", "  planner top plan: ", "  planner, no hits: "):
+            l = next(l for l in lines if l.startswith(head))
+            self.assertTrue(l.endswith(self.flag), l)
+        self.assertTrue(next(l for l in lines if "a named move: " in l).endswith(self.flag))
+        self.assertTrue(next(l for l in lines if l.rstrip().endswith("roll: roll")))               # the roll keeps the cap: no flag
+        summary = next(l for l in lines if " slots differ; the XI " in l)
+        self.assertNotIn("breaks the cap", summary)                                                 # our 15 keeps the cap
+
+    def test_the_bundle_flags_our_15(self):
+        buf = io.StringIO()
+        with mock.patch.object(CH, "my_squad", side_effect=self.orig):                           # the toy's own 15, over the cap
+            G.bundle(self.tmp, out=lambda s="": buf.write(s + chr(10)), now=NOW9, hist_root=self.hist)
+        lines = buf.getvalue().splitlines()
+        summary = next(l for l in lines if " slots differ; the XI " in l)
+        self.assertTrue(summary.endswith("   breaks the cap: ARS 3"), summary)
+        self.assertTrue(next(l for l in lines if l.startswith("  DEFAULT: roll") or l.startswith("  DEFAULT: ")))
 
 
 class BenchBoost(unittest.TestCase):

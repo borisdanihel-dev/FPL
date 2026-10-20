@@ -42,6 +42,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
+import capflag as CF                                              # noqa: E402
 import chips as CH                                                # noqa: E402
 import odds_lambda as OL                                          # noqa: E402
 import league as LG                                               # noqa: E402
@@ -128,12 +129,12 @@ def baseline_note(results, inp):
     top = results.get((PL.DECAY, "boris")) or []
     nohit = results.get(("no hits", "boris")) or []
     base_key = (tuple(sorted(o["id"] for o in b_outs)), tuple(sorted(i["id"] for i in b_ins)))
-    p_text = plan_text(top[0]["outs"], top[0]["ins"]) if top else "none"
-    n_text = plan_text(nohit[0]["outs"], nohit[0]["ins"]) if nohit else "none"
+    p_text = plan_text(top[0]["outs"], top[0]["ins"]) + CF.move_flag(inp["squad"], top[0]["outs"], top[0]["ins"]) if top else "none"
+    n_text = plan_text(nohit[0]["outs"], nohit[0]["ins"]) + CF.move_flag(inp["squad"], nohit[0]["outs"], nohit[0]["ins"]) if nohit else "none"
     agree = bool(top) and PL.plan_key(top[0]) == base_key
     default = ("the planner agrees with the baseline" if agree
                else "DEFAULT = the baseline; the planner's top plan is the note (RULING S8 verifier FAIL item d)")
-    return plan_text(b_outs, b_ins), p_text, n_text, default
+    return plan_text(b_outs, b_ins) + CF.move_flag(inp["squad"], b_outs, b_ins), p_text, n_text, default
 
 
 CONFIRMED_FT = {8: 1}                      # Boris, 19 Oct: 1 free transfer for GW8 (the planner's estimate was right)
@@ -301,7 +302,7 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
             if ev is None:
                 out(f"  {i:>2} {'-':>7} {'-':>7} {'-':>5} {'-':>7}  {'':<36} {label}: {note}")
                 continue
-            plan = plan_text(ev["outs"], ev["ins"]) if ev["outs"] else "roll"
+            plan = (plan_text(ev["outs"], ev["ins"]) if ev["outs"] else "roll") + CF.move_flag(inp["squad"], ev["outs"], ev["ins"])
             weekly = " ".join(f"{g:+5.1f}" for g in ev["gains"])
             out(f"  {i:>2} {ev['score']:7.2f} {ev['gain']:7.2f} {ev['hits']:5d} {ev['lost']:7.2f}  {weekly:<36} {label}: {plan}"
                 + ("   (GW term 1 under Bench Boost)" if label.startswith("best single bench") else ""))
@@ -345,7 +346,7 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
         co, cv = sbs["captain"]
         out(f"  captain: own {co['name']} ({co['proj']:.2f})  |  xp_v2 as tested {cv['name']} ({cv['proj']:.2f})" + ("" if co["id"] == cv["id"] else "   *"))
         out(f"  {sbs['changed']} slots differ; the XI {'differs' if sbs['xi_differs'] else 'is the same set'}; DEFAULT = xp_v2 as tested "
-            f"(slots 1-11, the bench order and the captain)")
+            f"(slots 1-11, the bench order and the captain)" + CF.flag(squad))
         return sbs
     section(out, SECTIONS[4], own_v_xp)
 
