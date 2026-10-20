@@ -21,9 +21,10 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - the print is byte-identical with and without the CSV;
     - mutations 8 of 8; suite 764 → 767 bare;
     - GW8 run: 668 rows, Haaland "not forecast".
-    - Verifier running.
-    - **The new head is Thursday's bundle commit** once it passes (due
-      Thu 14:00 UTC).
+    - **Verifier PASS** (`worklog/verify_S8c_a3.md`). Report and
+      CHANGELOG are on `s8c-wip` **`93579dc`: Thursday's bundle commit**.
+    - Open: the CSV's "every export player at 0" choice; two toy-gap tests
+      for the landing.
   - **Points 3–4, w3-wip** (`bbe770a`, pushed):
     - REALISED reads the CSV at the newest commit whose committer time and
       `run.txt` end are both before the deadline, with the SHA-256 as
@@ -31,9 +32,29 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - our actual GW8 15; `realised_on` for both models; one of the 15
       missing gives "not recorded";
     - mutations 8 of 8; the real CSV reads end to end.
-    - Suite and verifier running.
-  - **Next (Wednesday):** W1b (tell Boris the dry-run time, before 21:00
-    UTC), then Step 16's prereg.
+    - Suite 748 → 749. **Verifier PASS** (`worklog/verify_W3_a2.md`).
+      Report and CHANGELOG are on `w3-wip` `6aca78b`.
+    - Open: a +02:00 test and the `nightly.yml` comment, before the
+      merge.
+  - **W1b (started early):** `w1b-wip` takes master (`cd6d039`, the
+    BUILD_PLAN conflict resolved keeping both). Then `09fcff4`: CAP 6 → 12
+    (F-A), tests at 7, 12 and 13, the docs say 12, red at 6 and at 13.
+    Pushed.
+    - Suites and the delta verifier are running.
+    - **Waiting on Boris:** the last manual dry run (nightly on ref
+      `w1b-wip`, `dry_run` ticked), before 21:30 UTC tonight or Wednesday
+      before 21:00 UTC.
+    - Then: tag `pre-W1b`, merge, real dispatch, final verifier.
+  - **Then:** Step 16's prereg.
+  - **Thursday's bundle (procedure):** in the s8c worktree at `93579dc`:
+    1. `git -C C:\GIT\FPL-data pull --ff-only`;
+    2. `--restore`;
+    3. `python tools/gw_pass.py --out <dir>`;
+    4. copy `gw8_pass.txt`, `xp_v2_all.csv` and `run.txt` to master
+       `worklog/gw_pass/gw8/`, and commit (worklog only) well before Fri
+       17:30 UTC. Both the commit time and `run.txt`'s end must be before
+       it.
+    5. Friday's refresh: the same, a new commit.
 
 - (Earlier) **NOW (20 Oct, 13:45 UTC on): "Ruling, Tue 20 Oct evening"** (verbatim
   in `prereg/S8c.md` amendment 2, `prereg/S2b.md`, `prereg/W3.md`
