@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS price_history (
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY, name TEXT, deadline_time TEXT, finished INTEGER,
     average_score INTEGER, highest_score INTEGER, most_captained INTEGER,
-    data_checked INTEGER);
+    data_checked INTEGER, data_checked_seen_utc TEXT);
 
 CREATE TABLE IF NOT EXISTS fixtures (
     id INTEGER PRIMARY KEY, event INTEGER, kickoff_time TEXT,
@@ -275,7 +275,7 @@ CREATE TABLE IF NOT EXISTS entry_gw (
 
 CREATE TABLE IF NOT EXISTS picks (
     entry_id INTEGER, event INTEGER, player_id INTEGER, position INTEGER,
-    multiplier INTEGER, is_captain INTEGER, is_vice INTEGER,
+    multiplier INTEGER, is_captain INTEGER, is_vice INTEGER, fetched_at_utc TEXT,
     PRIMARY KEY (entry_id, event, player_id));
 
 CREATE TABLE IF NOT EXISTS transfers (
@@ -302,7 +302,8 @@ MIGRATIONS = {
                 "code INTEGER"],                 # W2: the cross-season key (Step 10 Q2 b)
     "teams": ["att_h INTEGER", "att_a INTEGER", "def_h INTEGER", "def_a INTEGER"],
     "player_gw": ["starts INTEGER", "fetched_at_utc TEXT", "ruleset TEXT"],
-    "events": ["data_checked INTEGER"],
+    "events": ["data_checked INTEGER",
+               "data_checked_seen_utc TEXT"],   # S2b: first sight of data_checked = 1
     # S2: added with ALTER TABLE; rows already stored keep NULL - their fetch
     # time was never recorded (S2 ruling 3)
     "price_history": ["fetched_at_utc TEXT", "london_date TEXT"],
@@ -315,6 +316,7 @@ MIGRATIONS = {
     # W2 (RULING W2 standings): label_error = 1 marks a row whose event label
     # is wrong; every reader skips it
     "standings": ["fetched_at_utc TEXT", "label_error INTEGER"],
+    "picks": ["fetched_at_utc TEXT"],             # S2b: stored picks keep NULL = not final
 }
 
 PLAYER_COLS = ("id, web_name, first_name, second_name, team_id, position, now_cost, "
@@ -413,12 +415,25 @@ def sync_bootstrap(db):
     db.executemany("INSERT OR REPLACE INTO players (%s) VALUES (%s)" % (PLAYER_COLS, ",".join("?" * 36)), rows)
 
     # data_checked = points and bonus are final. `finished` only means the
-    # matches ended; grading keys on data_checked.
-    db.executemany("INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
-                   [(e["id"], e["name"], required(e, "deadline_time"), int(e["finished"]),
-                     e.get("average_entry_score"), e.get("highest_score"),
-                     e.get("most_captained"), int(required(e, "data_checked") is True))
-                    for e in bs["events"]])
+    # matches ended; grading keys on data_checked. data_checked_seen_utc = this
+    # fetch's time the first time a sync sees data_checked = 1, never changed
+    # after: a row fetched no later than that is provisional (RULING S2b, point 1)
+    events = [(e["id"], e["name"], required(e, "deadline_time"), int(e["finished"]),
+               e.get("average_entry_score"), e.get("highest_score"),
+               e.get("most_captained"), int(required(e, "data_checked") is True))
+              for e in bs["events"]]
+    db.executemany("""
+        INSERT INTO events (id, name, deadline_time, finished, average_score, highest_score,
+                            most_captained, data_checked, data_checked_seen_utc)
+        VALUES (?,?,?,?,?,?,?,?,?)
+        ON CONFLICT (id) DO UPDATE SET
+            name = excluded.name, deadline_time = excluded.deadline_time,
+            finished = excluded.finished, average_score = excluded.average_score,
+            highest_score = excluded.highest_score, most_captained = excluded.most_captained,
+            data_checked = excluded.data_checked,
+            data_checked_seen_utc = COALESCE(events.data_checked_seen_utc,
+                                             excluded.data_checked_seen_utc)""",
+                   [ev + ((now if ev[7] else None),) for ev in events])
     db.commit()
     if early:
         print(f"PRICE DATE FLAG: fetched {now} = after 00:00 UK - this snapshot holds "
@@ -460,11 +475,38 @@ def sync_fixtures(db):
     db.commit()
 
 
+def _utc(text):
+    """An ISO time with an offset as a datetime; None for NULL or anything else."""
+    try:
+        t = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return t if t.tzinfo else None
+
+
+def is_final(db, table, gw, entry=None):
+    """True when `table` (player_gw, entry_gw or picks) holds rows for gameweek
+    `gw` (and `entry`), every one fetched strictly later than the first sight of
+    the event's data_checked = 1 (RULING S2b, point 1). A gameweek whose
+    data_checked was never seen, a NULL or unreadable fetch time, or no rows at
+    all: not final, so the sync fetches it again."""
+    row = db.execute("SELECT data_checked_seen_utc FROM events WHERE id=?", (gw,)).fetchone()
+    seen = _utc(row[0]) if row else None
+    if seen is None:
+        return False
+    sql, args = f"SELECT fetched_at_utc FROM {table} WHERE event=?", [gw]
+    if entry is not None:
+        sql, args = sql + " AND entry_id=?", args + [entry]
+    times = [_utc(r[0]) for r in db.execute(sql, args)]
+    return bool(times) and all(t is not None and t > seen for t in times)
+
+
 def sync_player_gw(db, last_gw, refetch=False):
     for gw in range(1, last_gw + 1):
-        finished = db.execute("SELECT finished FROM events WHERE id=?", (gw,)).fetchone()
         done = db.execute("SELECT COUNT(*) FROM player_gw WHERE event=?", (gw,)).fetchone()[0]
-        if done > 300 and finished and finished[0] and not refetch:
+        # final = every row fetched after the first sight of data_checked (S2b);
+        # `finished` alone left rows fetched before data_checked provisional
+        if done > 300 and is_final(db, "player_gw", gw) and not refetch:
             continue          # stored and final, skip (unless --refetch)
         print(f"live stats GW{gw} ...")
         live = get(f"event/{gw}/live/")
@@ -561,10 +603,9 @@ def sync_entries(db, entries, last_gw):
                        (eid, t["event"], t["time"], t["element_in"], t["element_out"],
                         t["element_in_cost"], t["element_out_cost"], stamp))
         for gw in range(1, last_gw + 1):
-            have = db.execute("SELECT 1 FROM entry_gw WHERE entry_id=? AND event=?",
-                              (eid, gw)).fetchone()
-            final = db.execute("SELECT finished FROM events WHERE id=?", (gw,)).fetchone()
-            if have and final and final[0]:
+            # final = this entry's entry_gw and picks rows all fetched after
+            # the first sight of data_checked (RULING S2b, point 1)
+            if is_final(db, "entry_gw", gw, eid) and is_final(db, "picks", gw, eid):
                 continue
             pk = get(f"entry/{eid}/event/{gw}/picks/")
             if not pk:
@@ -583,9 +624,11 @@ def sync_entries(db, entries, last_gw):
                            "element_out, fetched_at_utc) VALUES (?,?,?,?,?)",
                            [(eid, gw, a["element_in"], a["element_out"], fetched)
                             for a in pk["automatic_subs"]])
-            db.executemany("INSERT OR REPLACE INTO picks VALUES (?,?,?,?,?,?,?)",
+            db.executemany("INSERT OR REPLACE INTO picks (entry_id, event, player_id, position, "
+                           "multiplier, is_captain, is_vice, fetched_at_utc) VALUES (?,?,?,?,?,?,?,?)",
                            [(eid, gw, p["element"], p["position"], p["multiplier"],
-                             int(p["is_captain"]), int(p["is_vice_captain"])) for p in pk["picks"]])
+                             int(p["is_captain"]), int(p["is_vice_captain"]), fetched)
+                            for p in pk["picks"]])
         db.commit()
 
 # ----------------------------------------------------------------------------

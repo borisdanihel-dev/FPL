@@ -4028,3 +4028,79 @@ W1b's cap moves to 12 when W1b is worked.
   - the prior file on master and the export keys;
   - GW8's xp_v2 in REALISED;
   - the ban line's finished-fixture rule.
+## 2026-10-20 — S15 (F-G): the unified squad builder passes its A/B and is accepted (`ae1d368`, `3b31599` prereg; `6f362a8`, `91f401d` code; on `s15-wip`)
+
+- **A/B:** 68 hypothetical wildcards (2025/26 and 2024/25 GW5–38), the
+  same xp_v2 horizon matrix for both sides. Builder − frozen three-layer
+  rule: +33.31 window points per date, 90% CI [+25.29, +41.54].
+  - The builder is ≥ the rule on 0.78 of dates, and its projected value is
+    ≥ the rule's on every date → **PASS**.
+  - Per season +23.94 / +42.68; non-overlapping dates +44.75 [+24.08,
+    +66.00].
+  - The builder never picks 4-3-3 in week t (cost 1.66); the GK+DEF cap
+    costs 0.49 projected.
+  - The frozen rule leaves budget unspent: part of the edge.
+- **Fix before any result:** 2024/25's assistant-manager rows (AM, from
+  GW23) leave the market.
+- **Checks:** verifier PASS (Fable 5.1; full regeneration byte-identical);
+  mutations 18 of 18.
+- **Accepted** (Ruling, Tue 20 Oct, point 2): `tools/builder.py` is the
+  default for Free Hit and Wildcard builds, the GK+DEF cap on live with its
+  cost printed and the three-layer rule's squad beside it. Not used for
+  GW8.
+
+## 2026-10-20 — S8b (F-F): the no-hit planner on xp_v2 passes on 2024/25 and is accepted (`bd4d044` prereg; `401fb20` code, `7580cf2` tests; on `s8b-wip`)
+
+- **Test:** S8's replay loop unchanged, hits forbidden, decay 0.85,
+  Boris's schedule; 2024/25 GW2–38, S7's 50 squads, 1 FT, no chips;
+  xp_v2 as tested over six weeks (week t S5's odds lambdas, else the
+  fallback; weeks t+1..t+5 the origin's fallback); outcomes S10b's
+  re-score under the 2026/27 table (no DEFCON in 2024/25).
+- **Measured:** planner 2074.9 v baseline 2055.3 points per squad-season;
+  paired gain **+19.58, 90% CI [+1.28, +38.70]** → **PASS** (bar: mean
+  ≥ +5 and lower bound > 0). Transfers 37 on both sides, hits 0.
+  - Decay 0.80 or 0.90 chose a different plan in 7, 3, 5, 8, 6 of 37
+    weeks (first 5 squads).
+- **Checks:** suite 709 → 715; mutations 13 of 14 (one equivalent);
+  verifier PASS (`worklog/verify_S8b.md`, Fable 5.1), its 5-squad rerun
+  reproducing the run.
+- **Accepted** (Ruling, Tue 20 Oct, point 1): from GW8 the no-hit planner
+  on xp_v2 is the default transfer suggestion, the simple rule printed
+  beside it; hits stay a manual call. The live tool is S8c.
+
+## 2026-10-20 — S2b done: the final re-fetch until data_checked, merged, real dispatch green (`ce357fb`; data `63e6a44`)
+
+**Merged** `ce357fb` (`s2b-wip` `434df0b`); tag `pre-S2b` = `5c90e08`.
+
+**Built:**
+- `events.data_checked_seen_utc` is set the first time the sync sees
+  data_checked = 1, and never changed after.
+- A stored `player_gw`, `entry_gw` or `picks` row is final only if it was
+  fetched after that time; otherwise the sync re-fetches it.
+- `picks.fetched_at_utc` was added.
+- Check 22 now reconciles every locked-down gameweek.
+
+**Measured:**
+- tests 687 → 708;
+- the dry run (`data-dryrun` `4b199eb`) and the verifier PASS
+  (`worklog/verify_S2b.md`, Fable 5.1).
+- **The real dispatch,** `63e6a44` (13:01 UTC):
+  - STATUS OK 29/29; 73 calls, all HTTP 200 (25 + 48).
+  - GW1–6 first sight 13:00:50, every row fetched after it; GW7 still
+    open.
+- **Stored v final, entry_gw points:**
+  - GW3: 7 of 7 managers moved, +6 to +21;
+  - GW4: 6 of 7, +2 to +11;
+  - GW6: 5 of 7, +1 to +6;
+  - GW1, 2, 5: none.
+  - Our GW3 is 53 → 59, GW4 58 → 64, and GW6 bench 11 → 22.
+- player_gw total_points unchanged GW1–7; `automatic_subs` 0 → 18 rows.
+- **Earlier results re-run** on the before and after databases (same
+  exports and log):
+  - S4's 2026/27 backtest, S5's 2026/27 condition, S6's xp_v2
+    development and validation, and the S6c GW5–7 print are identical.
+  - S9's league report loses its 18 provisional warnings. Its sigma_d
+    18.03, our sigma 13.76 and line 102.0 stand. Three rivals' GW6 XIs now
+    count FPL's autosubs, and P(above) moves by −0.067 to −0.018.
+
+Report: `worklog/cc_2026-10-19_S2b.md`; after: `worklog/cc_2026-10-20_S2b_after.md`.
