@@ -32,11 +32,16 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - Suite 737 → 748 bare.
     - On the real data copy: BAN RISK lists Thiago (4 cautions, P(ban)
       0.444).
-    - Verifier running.
+    - **Verifier PASS** (`worklog/verify_W3_a1.md`): the frozen-clock log
+      is byte-identical, and 10 of its 10 mutations went red.
+    - Report and CHANGELOG are on `w3-wip` `191b0b0`. The merge is by Thu
+      29 Oct via `dry/W3`.
+    - Open: the "CSV" reading; the 15-equality guard (Friday's refresh
+      after Boris's transfer); committer time as "timestamped".
   - **F-I (1) done:** the disclaimer was read (a liability text, no
     restriction). The 20 files are fetched, read with `python -I`, and
     placed read-only under `historical/football-data/`. The record is
-    `worklog/downloads_2026-10-20.md` on `fi-wip` `aab64bf`. Verifier
+    `worklog/downloads_2026-10-20.md` on `fi-wip` `aab64bf`; verifier PASS
     running.
   - **Item count: 6 of 6** since "Ruling, Tue 20 Oct": S2b, S8b, S8c, S8c
     amendment 1, W3 amendment 1, F-I downloads.
