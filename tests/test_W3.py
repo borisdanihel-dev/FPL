@@ -10,8 +10,10 @@ import io
 import json
 import math
 import os
+import random
 import shutil
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -23,6 +25,8 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 import fpl_edge as E                                              # noqa: E402
 import checks as C                                                # noqa: E402
+import fpl_gate                                                   # noqa: E402
+import fpl_sync                                                   # noqa: E402
 import fpl_chips                                                  # noqa: E402
 import fpl_mv2                                                    # noqa: E402
 import fpl_realised                                               # noqa: E402
@@ -477,7 +481,7 @@ class Realised(unittest.TestCase):
             entry = toy_realised(tmp)
             now = datetime(2026, 11, 1, tzinfo=timezone.utc)
             out = []
-            recs = SQ.realised(tmp, out.append, now=now, entry=entry)
+            recs = SQ.realised(tmp, out.append, now=now, entry=entry, repo=tmp)
             self.assertEqual([r["gw"] for r in recs], [8, 9])                           # GW7 is before GW8; GW10 not yet
             g8 = recs[0]
             log_rows = E.read_log(os.path.join(tmp, E.LOG_PATH))
@@ -492,12 +496,12 @@ class Realised(unittest.TestCase):
             self.assertEqual(out[2], "  GW9: not locked down: not graded (data_checked 0, 1 of 2 fixtures finished)")
             self.assertTrue(out[-1].startswith("  total over 1 gameweek with both: own"))
             out = []
-            SQ.realised(tmp, out.append, now=datetime(2026, 10, 23, tzinfo=timezone.utc), entry=entry)
+            SQ.realised(tmp, out.append, now=datetime(2026, 10, 23, tzinfo=timezone.utc), entry=entry, repo=tmp)
             self.assertEqual(out[-1], "  no gameweek from GW8 has passed its deadline yet")
             c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
             c.execute("update events set data_checked = 0 where id = 8"); c.commit(); c.close()
             out = []
-            self.assertFalse(SQ.realised(tmp, out.append, now=now, entry=entry)[0]["graded"])
+            self.assertFalse(SQ.realised(tmp, out.append, now=now, entry=entry, repo=tmp)[0]["graded"])
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
@@ -508,12 +512,272 @@ class Realised(unittest.TestCase):
             rows = [r for r in E.read_log(os.path.join(tmp, E.LOG_PATH)) if r["source"] != "xp_v2"]
             with open(os.path.join(tmp, E.LOG_PATH), "w", encoding="utf-8", newline="") as fh:
                 w = csv.DictWriter(fh, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
+            git_repo(tmp)                                                                  # a repository without the bundle
             out = []
-            SQ.realised(tmp, out.append, now=datetime(2026, 11, 1, tzinfo=timezone.utc), entry=entry)
+            SQ.realised(tmp, out.append, now=datetime(2026, 11, 1, tzinfo=timezone.utc), entry=entry, repo=tmp)
             self.assertIn("xp_v2: not recorded before the deadline", out[1])
             self.assertFalse(any(l.startswith("  total") for l in out))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+
+OLD_FIXTURES = """CREATE TABLE fixtures (
+    id INTEGER PRIMARY KEY, event INTEGER, kickoff_time TEXT,
+    team_h INTEGER, team_a INTEGER, team_h_difficulty INTEGER,
+    team_a_difficulty INTEGER, team_h_score INTEGER, team_a_score INTEGER,
+    finished INTEGER, started INTEGER, fetched_at_utc TEXT)"""
+
+
+class FinishedProvisional(unittest.TestCase):
+    """Amendment 1 (A): fixtures.finished_provisional, appended last; old rows NULL; the dump's positions kept."""
+
+    def test_the_migration_appends_it_last(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            old = sqlite3.connect(os.path.join(tmp, "old.sqlite"))
+            old.execute(OLD_FIXTURES)
+            row = (1, 7, "2026-10-04T14:00:00Z", 1, 2, 3, 4, 2, 1, 1, 1, "2026-10-05T21:40:00+00:00")
+            old.execute("INSERT INTO fixtures VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", row)
+            old.executescript(fpl_sync.SCHEMA)
+            fpl_sync.migrate(old)
+            cols = [r[1] for r in old.execute("PRAGMA table_info(fixtures)")]
+            self.assertEqual(cols[-1], "finished_provisional"); self.assertEqual(len(cols), 13)
+            self.assertEqual(old.execute("SELECT * FROM fixtures").fetchone(), row + (None,))   # the stored row keeps NULL
+            new = sqlite3.connect(os.path.join(tmp, "new.sqlite"))
+            new.executescript(fpl_sync.SCHEMA)
+            fpl_sync.migrate(new)
+            self.assertEqual([r[1:3] for r in new.execute("PRAGMA table_info(fixtures)")],
+                             [r[1:3] for r in old.execute("PRAGMA table_info(fixtures)")])      # a fresh database, the same order
+            old.commit(); old.close(); new.close()
+            dump = os.path.join(tmp, "fpl.sql")
+            fpl_gate.write_dump(os.path.join(tmp, "old.sqlite"), dump)
+            with open(dump, encoding="utf-8") as fh:
+                ins = [l for l in fh if l.startswith('INSERT INTO "fixtures"')]
+            self.assertEqual(ins, ["INSERT INTO \"fixtures\" VALUES(1,7,'2026-10-04T14:00:00Z',1,2,3,4,2,1,1,1,"
+                                   "'2026-10-05T21:40:00+00:00',NULL);\n"])                      # the first 12 values in place
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_the_sync_writes_it(self):
+        db = sqlite3.connect(":memory:")
+        db.executescript(fpl_sync.SCHEMA)
+        base = {"event": 8, "kickoff_time": "2026-10-24T14:00:00Z", "team_h": 1, "team_a": 2, "team_h_difficulty": 3,
+                "team_a_difficulty": 3, "team_h_score": None, "team_a_score": None, "finished": False, "started": True}
+        fx = [dict(base, id=1, finished_provisional=True), dict(base, id=2, finished_provisional=False), dict(base, id=3)]
+        with mock.patch.object(fpl_sync, "get", return_value=fx), mock.patch("builtins.print"):
+            fpl_sync.sync_fixtures(db)
+        self.assertEqual(db.execute("SELECT id, finished, finished_provisional FROM fixtures ORDER BY id").fetchall(),
+                         [(1, 0, 1), (2, 0, 0), (3, 0, None)])                                  # absent: NULL, nothing substituted
+
+
+class BanRiskProvisional(unittest.TestCase):
+    """Amendment 1 (B): a result FPL ended but has not marked finished counts, labelled; one in progress does not."""
+
+    def setup_toy(self, tmp, hist):
+        toy_live(tmp); toy_hist_root(hist)
+        d = runner_export(tmp, hist)
+        ours = fpl_chips.my_squad(d)[5]["id"]
+        c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
+        if "finished_provisional" not in {r[1] for r in c.execute("PRAGMA table_info(fixtures)")}:
+            c.execute("ALTER TABLE fixtures ADD COLUMN finished_provisional INTEGER")
+        evs = [e for (e,) in c.execute("select event from player_gw where player_id = ? and minutes > 0 order by event", (ours,))]
+        for e in evs[:4]:
+            c.execute("update player_gw set yellow = 1 where player_id = ? and event = ?", (ours, e))
+        club = c.execute("select team_id from players where id = ?", (ours,)).fetchone()[0]
+        fid, h, a = c.execute("select f.id, th.short_name, ta.short_name from fixtures f join teams th on th.id = f.team_h "
+                              "join teams ta on ta.id = f.team_a where f.event = ? and ? in (f.team_h, f.team_a)",
+                              (evs[3], club)).fetchone()
+        c.commit(); c.close()
+        return ours, fid, f"{h}-{a}"
+
+    def lines(self, tmp):
+        out = []
+        n = SQ.ban_risk(tmp, out.append)
+        return n, out
+
+    def test_provisional_counted_and_labelled_in_progress_not(self):
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            ours, fid, ha = self.setup_toy(tmp, hist)
+            n, out = self.lines(tmp)                                                       # all finished: listed, no label
+            self.assertEqual(n, 1); self.assertNotIn("provisional:", out[-1])
+            self.assertIn("a result FPL has ended but not yet marked finished counts, labelled provisional", out[0])
+            db = os.path.join(tmp, "fpl.sqlite")
+            c = sqlite3.connect(db)
+            c.execute("update fixtures set finished = 1, finished_provisional = 1 where id = ?", (fid,)); c.commit()
+            n, out = self.lines(tmp)                                                       # finished (and provisional): no label
+            self.assertEqual(n, 1); self.assertNotIn("provisional:", out[-1])
+            c.execute("update fixtures set finished = 0, finished_provisional = 1 where id = ?", (fid,)); c.commit()
+            n, out = self.lines(tmp)
+            self.assertEqual(n, 1)
+            self.assertTrue(out[-1].endswith(f"   provisional: {ha} not yet marked finished by FPL"), out[-1])
+            self.assertIn("cautions 4", out[-1])
+            c.execute("update fixtures set finished = 0, finished_provisional = 0 where id = ?", (fid,)); c.commit()
+            n, out = self.lines(tmp)                                                       # in progress: not counted
+            self.assertEqual(n, 0); self.assertEqual(out[-1], "  none of our 15 is one booking from a ban")
+            c.execute("update fixtures set finished = 0, finished_provisional = NULL where id = ?", (fid,)); c.commit()
+            self.assertEqual(self.lines(tmp)[0], 0)                                        # NULL: not provisional
+            c.close()
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
+    def test_without_provisional_the_rows_are_s12s(self):
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            self.setup_toy(tmp, hist)
+            d, _ = fpl_chips.newest_export(tmp)
+            mine, prov = SQ.ban_rows(tmp, d)
+            theirs = fpl_mv2.rows_2627(tmp, d)
+            self.assertEqual(prov, {})
+            for k in ("matches", "played", "club_of", "pos", "names", "known"):
+                self.assertEqual(getattr(mine, k), getattr(theirs, k), k)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
+
+def git_repo(path):
+    """A git repository at `path`, hermetic: identity, line endings and dates given per command."""
+    subprocess.run(["git", "init", "-q", path], check=True, capture_output=True)
+    return path
+
+
+def git_commit(repo, files, when):
+    for rel, text in files.items():
+        full = os.path.join(repo, *rel.split("/"))
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        with open(full, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+    env = dict(os.environ, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when)
+    base = ["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false"]
+    subprocess.run(base + ["add", "-A"], check=True, capture_output=True, env=env)
+    subprocess.run(base + ["commit", "-q", "-m", "bundle"], check=True, capture_output=True, env=env)
+    return subprocess.run(base + ["rev-parse", "HEAD"], check=True, capture_output=True, env=env, encoding="utf-8").stdout.strip()
+
+
+POS_NAME = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
+
+
+def bundle_text(order, names, pos, cap, own_order=None):
+    """Section 5 of tools/gw_pass.py as it prints (its f-strings), xp_v2's order on the right."""
+    own_order = own_order or order
+    lines = ["GW PASS  GW8 ...", "", "=" * 78, "OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN", "=" * 78, "  GW8: ...", "  own = ...",
+             f"  {'slot':>4}  {'own':<34}{'xp_v2 as tested':<34}"]
+    for slot, (a, b) in enumerate(zip(own_order, order), 1):
+        tag = "   " if a == b else " * "
+        lines.append(f"  {slot:>4}{tag}{names[a]:<16}{POS_NAME[pos[a]]:>4} {1.0:5.2f}       {names[b]:<16}{POS_NAME[pos[b]]:>4} {2.0:5.2f}")
+    lines.append(f"  captain: own {names[own_order[0]]} (1.00)  |  xp_v2 as tested {names[cap]} (2.00)" + ("" if cap == own_order[0] else "   *"))
+    lines += ["  9 slots differ; ...", "", "=" * 78, "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK"]
+    return "\n".join(lines) + "\n"
+
+
+RUN_TXT = "tool: tools/gw_pass.py\ncommit: 71c9d17d72888e69f47213f156388daf1081bcba\nmodified tracked files at the run: 0\n"
+
+
+class BundleGrading(unittest.TestCase):
+    """Amendment 1 (C): GW8's xp_v2 from worklog/gw_pass/gw8/ at its last commit before the deadline."""
+
+    def setUp(self):
+        self.tmp, self.repo = tempfile.mkdtemp(), tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, True); self.addCleanup(shutil.rmtree, self.repo, True)
+        self.entry = toy_realised(self.tmp)
+        rows = [r for r in E.read_log(os.path.join(self.tmp, E.LOG_PATH)) if r["source"] != "xp_v2"]   # W3 merges after GW8
+        with open(os.path.join(self.tmp, E.LOG_PATH), "w", encoding="utf-8", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
+        c = sqlite3.connect(os.path.join(self.tmp, "fpl.sqlite"))
+        c.execute("update players set web_name = 'De Cuyper' where id = 5")                       # a name with a space
+        c.commit()
+        self.pos = dict(c.execute("select id, position from players"))
+        self.names = dict(c.execute("select id, web_name from players"))
+        self.actual = {pid: (float(p), float(m)) for pid, p, m in c.execute("select player_id, total_points, minutes from player_gw where event = 8")}
+        c.close()
+        git_repo(self.repo)
+        # xp_v2's order: GKs 1 and 2, then the XI by id descending within the legal shape, the bench last
+        self.order = [2, 7, 6, 5, 4, 12, 11, 10, 9, 15, 14, 1, 3, 8, 13]
+        self.cap = 12
+        self.now = datetime(2026, 11, 1, tzinfo=timezone.utc)
+
+    def run_(self):
+        out = []
+        recs = SQ.realised(self.tmp, out.append, now=self.now, entry=self.entry, repo=self.repo)
+        return recs[0], out[1]
+
+    def want(self, order, cap):
+        rows = [{"id": i, "pos": self.pos[i]} for i in order]
+        return SQ.realised_order(rows[:11], rows[11:], cap, self.actual)
+
+    def test_graded_from_the_commit_before_the_deadline(self):
+        h = git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, self.names, self.pos, self.cap),
+                                   "worklog/gw_pass/gw8/run.txt": RUN_TXT}, "2026-10-22T16:00:00+00:00")
+        later = list(self.order); later[0], later[11] = later[11], later[0]
+        git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(later, self.names, self.pos, 15)},
+                   "2026-10-24T09:00:00+00:00")                                                       # after the deadline: ignored
+        g8, line = self.run_()
+        self.assertEqual(g8["xp_v2"], self.want(self.order, self.cap)); self.assertEqual(g8["xp_v2_cap"], self.cap)
+        self.assertIn(f"xp_v2 {g8['xp_v2']:.0f} (captain P12; source: GW8 bundle {h[:7]} (tools 71c9d17))", line)
+        self.assertIn(f"xp_v2 - own {g8['xp_v2'] - g8['own']:+.0f}", line)
+
+    def test_only_after_the_deadline_is_not_recorded(self):
+        git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, self.names, self.pos, self.cap),
+                               "worklog/gw_pass/gw8/run.txt": RUN_TXT}, "2026-10-23T17:30:00+00:00")   # at the deadline: not before
+        g8, line = self.run_()
+        self.assertNotIn("xp_v2", g8); self.assertIn("xp_v2: not recorded before the deadline", line)
+
+    def test_a_different_15_is_not_graded(self):
+        names = dict(self.names); names[13] = "Other"
+        h = git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, names, self.pos, self.cap),
+                                   "worklog/gw_pass/gw8/run.txt": RUN_TXT}, "2026-10-22T16:00:00+00:00")
+        g8, line = self.run_()
+        self.assertNotIn("xp_v2", g8)
+        self.assertIn(f"xp_v2 (GW8 bundle {h[:7]} (tools 71c9d17)): the bundle's 15 is not our GW8 15 (only in the bundle: Other; "
+                      f"only in our picks: P13): not graded", line)
+
+    def test_no_run_txt_is_said(self):
+        h = git_commit(self.repo, {"worklog/gw_pass/gw8/gw8_pass.txt": bundle_text(self.order, self.names, self.pos, self.cap)},
+                       "2026-10-22T16:00:00+00:00")
+        g8, line = self.run_()
+        self.assertIn(f"source: GW8 bundle {h[:7]} (tools no run.txt at that commit)", line)
+
+    def test_realised_order_is_realised_on(self):
+        rng = random.Random(7)
+        rows = [{"id": i, "pos": self.pos[i]} for i in range(1, 16)]
+        matters = 0
+        for _ in range(50):
+            proj = {i: rng.uniform(0, 8) for i in range(1, 16)}
+            actual = {i: (float(rng.randint(0, 12)), float(rng.choice((0, 45, 90, 90, 90, 90, 90)))) for i in range(1, 16)}   # one blank in seven: the bench order matters
+            xi, bench, gk = fpl_chips.xi_and_bench([dict(r) for r in rows], proj)
+            cap = max(xi, key=lambda r: (r["proj"], -r["id"]))
+            got = SQ.realised_order(xi, [gk] + list(bench), cap["id"], actual)
+            self.assertEqual(got, fpl_realised.realised_on(rows, proj, actual)[0])
+            b = [gk] + list(bench)
+            matters += got != SQ.realised_order(xi, b[:1] + b[:0:-1], cap["id"], actual)
+        self.assertGreater(matters, 5)                                                     # the cases test the bench order
+
+    def test_the_parser_reads_the_tools_own_print(self):
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            toy_live(tmp); toy_hist_root(hist)
+            gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+            buf = io.StringIO()
+            with mock.patch.object(G.E, "selling_budget", return_value=(100.0, "")):
+                G.bundle(tmp, out=lambda s="": buf.write(s + chr(10)), now=NOW9, hist_root=hist)
+            rows, cap = SQ.parse_bundle(buf.getvalue())
+            d, _ = CHt.newest_export(tmp)
+            sq = CHt.my_squad(d)
+            res = XL.live(tmp, hist, NOW9)
+            log_rows = E.read_log(os.path.join(tmp, E.LOG_PATH))
+            weeks, pts, src = CHt.own_week_points(d, log_rows)
+            sbs = G.side_by_side(sq, pts[weeks[0]], res["xp"])
+            self.assertEqual(rows, [(slot, b["name"], b["pos"]) for slot, a, b in sbs["rows"]])
+            self.assertEqual(cap, sbs["captain"][1]["name"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
+    def test_the_nightly_checks_out_the_history(self):
+        with open(os.path.join(ROOT, ".github", "workflows", "nightly.yml"), encoding="utf-8") as fh:
+            text = fh.read()
+        first = text.split("- uses: actions/checkout@")[1]
+        self.assertIn("fetch-depth: 0", first.split("- uses:")[0])                             # the master checkout
+        self.assertNotIn("ref: data", first.split("- uses:")[0])
 
 
 class Sections(unittest.TestCase):
@@ -526,7 +790,8 @@ class Sections(unittest.TestCase):
             toy_live(tmp); toy_hist_root(hist)
             runner_export(tmp, hist)
             prior = prior_file(hist, side)
-            with mock.patch.object(fpl_xpv2, "PRIOR_FILE", prior):
+            git_repo(side)                                                                 # REALISED reads this repository, not ours
+            with mock.patch.object(fpl_xpv2, "PRIOR_FILE", prior), mock.patch.object(SQ, "REPO", side):
                 res = FS.sections(tmp, now=NOW9)
             self.assertEqual([t for t, _, _ in res], ["CHIPS", "LEAGUE", "CAPTAIN", "BAN RISK", "REALISED"])
             st = {t: s for t, _, s in res}
@@ -538,7 +803,7 @@ class Sections(unittest.TestCase):
             level, detail = C.c31(C.Ctx(run_log=log))
             for t in ("CAPTAIN", "BAN RISK", "REALISED"):
                 self.assertIn(st[t][len(t) + 4:], detail if level == C.OK else st[t])
-            with mock.patch.object(fpl_xpv2, "PRIOR_FILE", os.path.join(side, "none.json")):
+            with mock.patch.object(fpl_xpv2, "PRIOR_FILE", os.path.join(side, "none.json")), mock.patch.object(SQ, "REPO", side):
                 res = dict((t, s) for t, _, s in FS.sections(tmp, now=NOW9))
             self.assertTrue(res["CAPTAIN"].startswith("CAPTAIN SKIPPED: FileNotFoundError: "))
             self.assertRegex(res["BAN RISK"], r"^BAN RISK OK \d+ lines$")                # the others go on

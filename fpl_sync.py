@@ -249,7 +249,8 @@ CREATE TABLE IF NOT EXISTS fixtures (
     id INTEGER PRIMARY KEY, event INTEGER, kickoff_time TEXT,
     team_h INTEGER, team_a INTEGER, team_h_difficulty INTEGER,
     team_a_difficulty INTEGER, team_h_score INTEGER, team_a_score INTEGER,
-    finished INTEGER, started INTEGER, fetched_at_utc TEXT);
+    finished INTEGER, started INTEGER, fetched_at_utc TEXT,
+    finished_provisional INTEGER);
 
 CREATE TABLE IF NOT EXISTS player_gw (
     player_id INTEGER, event INTEGER, minutes INTEGER, total_points INTEGER,
@@ -307,7 +308,8 @@ MIGRATIONS = {
     # S2: added with ALTER TABLE; rows already stored keep NULL - their fetch
     # time was never recorded (S2 ruling 3)
     "price_history": ["fetched_at_utc TEXT", "london_date TEXT"],
-    "fixtures": ["started INTEGER", "fetched_at_utc TEXT"],
+    "fixtures": ["started INTEGER", "fetched_at_utc TEXT",
+                 "finished_provisional INTEGER"],  # W3 amendment 1: appended last; stored rows keep NULL
     "entry_gw": ["fetched_at_utc TEXT"],
     # W2 (Step 9 item 4): stored rows keep NULL, every write sets the time
     "transfers": ["fetched_at_utc TEXT"],
@@ -466,11 +468,12 @@ def sync_fixtures(db):
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     db.executemany("INSERT OR REPLACE INTO fixtures (id, event, kickoff_time, team_h, team_a, "
                    "team_h_difficulty, team_a_difficulty, team_h_score, team_a_score, "
-                   "finished, started, fetched_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                   "finished, started, fetched_at_utc, finished_provisional) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                    [(f["id"], f.get("event"), f.get("kickoff_time"), f["team_h"], f["team_a"],
                      f["team_h_difficulty"], f["team_a_difficulty"],
                      f.get("team_h_score"), f.get("team_a_score"), int(f["finished"]),
-                     int(required(f, "started") is True), now)
+                     int(required(f, "started") is True), now,
+                     None if f.get("finished_provisional") is None else int(f["finished_provisional"] is True))
                     for f in fx])
     db.commit()
 

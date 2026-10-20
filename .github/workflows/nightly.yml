@@ -69,7 +69,11 @@ jobs:
     steps:
       # actions pinned to full commit SHAs, read from their release pages
       # (ruling S3, point 2): checkout v7.0.1, setup-python v7.0.0
+      # the full history: REALISED reads GW8's bundle at its last commit before
+      # the deadline (W3 amendment 1, (C))
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
