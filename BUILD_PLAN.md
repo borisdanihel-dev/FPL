@@ -118,6 +118,40 @@ RULING FAST-TRACK amendment 1:
 Append verbatim to prereg/FAST.md and BUILD_PLAN.md Part E. On this account Fable has its own weekly limit, separate from the main allowance. Replace item 9: the verifier runs on Fable for every item; it falls back to Opus at xhigh only if the Fable weekly bar is above 80% before its reset. Lane B's main session runs on Fable (Boris selects it); lane A's stays on Opus 5.5. Each report names the models used.
 END RULING
 
+
+## Part F - queued rulings
+
+RULINGS PART F, 19 Oct 2026, verbatim (with RULING S14 (Boris accepts) +
+Part F, `prereg/S14.md`). It queues behind the GW8 queue; each item's text
+goes verbatim into its prereg before any of its code.
+
+RULINGS PART F (19 Oct 2026). Record this whole block verbatim in BUILD_PLAN.md as "Part F - queued rulings", and each item's text verbatim in its prereg before any of its code. Order: the current GW8 queue (S6c/S6d done, Step 14, S2b, the landing, W1b, the GW8 bundle, W2) keeps priority. Then F-B, F-C, F-D, F-E, F-F, F-G, F-H, F-I; F-J is calendar-bound. Usual gates: prereg first, tests and mutations, Fable verifier (Opus xhigh while the Fable bar is above 80%), write guard, provenance run.txt, quoted heredocs or the file tool only. Stop on a FAIL, an open decision, a result that would change a live decision, or after 6 items without a chat review.
+
+F-A. Dry-run limit: 12 per UTC day, manual and push-triggered together, effective now. Quiet windows unchanged (21:30 UTC until the night's data commit; one hour before a deadline). W1b's cap constant becomes 12.
+
+F-B. W3 (wiring, runner work): (1) record "xp_v2 as tested" nightly as source xp_v2 for the next gameweek, ported into the runner path and tested byte-identical to tools/xp_v2_live.py on the same inputs; the runner never imports tools/. (2) Report sections: the Step 14 captain table if Step 14 has passed (else one line saying so); a ban-risk line for our 15 (players one booking from a ban, per-90 booking rate, P(ban for the following gameweek), S12's rule). (3) After each locked-down gameweek from GW8: our squad's realised points under own's XI and captain and under xp_v2's, from the recorded pre-deadline rows. Merge by Thu 29 Oct, outside 9d, via dry/W3, then Boris's real dispatch.
+
+F-C. Step 10b: re-score 2023/24 and 2024/25 under the 2026/27 rules with Step 10's method; bonus stays official; DEFCON only where the defensive-action counts exist, otherwise flagged missing. Reproduction test per season: its own rules reproduce official points within +/-1 for >= 99% of player-gameweeks. Downloads approved (record URL, fetch time, SHA-256; data only, read with python -I): vaastav data/2022-23, 2023-24, 2024-25 (merged_gw.csv, fixtures.csv, teams.csv, players_raw.csv) and football-data E0 2023-24 and 2024-25 CSVs (pre-closing odds only).
+
+F-D. S6f: S6b and S6c repeated on 2024/25 GW5-38 (priors 2023/24, odds from football-data 2024/25), same squads method (50, seed 7, sampled from 2024/25 GW1 ownership), metric, bootstrap and bar (90% lower bound > 0, primary against own_rebuilt). A fail does not revert GW8+ by itself; it goes to the chat, and the GW10 revert rule still governs.
+
+F-E. S6e (xp_v2 + saves): for goalkeepers add E[save points | start] = E[saves] / 3, E[saves] = the keeper's saves per 90 shrunk to the positional mean (S11's credibility method) x (lambda_opp / league mean lambda). Test on 2025/26, and on 2024/25 after F-C: per squad-gameweek, the starting keeper chosen by xp_v2 v by xp_v2 + saves; realised keeper points paired; block bootstrap over gameweeks; pass: 90% lower bound > 0. Secondary: MAE of keeper points. Adoption at the GW10 checkpoint at the earliest.
+
+F-F. S8b (planner without hits): on 2024/25 GW2-38, 50 squads (seed 7, 2024/25 GW1 ownership), planner with hits forbidden, xP = xp_v2, decay 0.85, Boris's FT schedule, against the baseline (best one-week move when its gain > 0, else roll). Pass: mean >= +5 points per squad-season and 90% lower bound > 0. Otherwise the simple rule stays the default.
+
+F-G. Step 15 (squad builder) as BUILD_PLAN.md Step 15, with: xP = xp_v2 per fixture, decay 0.85 over 6 gameweeks; bench weights as S7; stdlib greedy plus local search only (no MILP); A/B against the frozen three-layer rule on 2025/26 GW5-38 and 2024/25 after F-C, every gameweek a hypothetical Wildcard at that gameweek's prices with a 100.0 budget, realised points over the next 6 gameweeks with rule_autosubs and the captain = highest xp_v2 in the XI. Pass as BUILD_PLAN (mean > 0 with the CI excluding 0, and the builder >= the rule on >= 60% of dates; the builder's projected xP must always be >= the rule's). Live: tools/builder.py --wildcard / --freehit / --bb printing the best 15 at selling prices, information only until it passes and Boris accepts.
+
+F-H. Step 17 (redesigned test; the original needs public league picks that are not archived): simulator = joint draws from the Step 14 PMFs with shared players correlated and each manager's chips. Test: 200 synthetic leagues of 10 managers from the 2025/26 replay (S7 sampler, each manager a fixed style: template-heavy, differential, mixed), P(win) from GW20, GW26 and GW32 against the replayed final standings; pass: Brier skill >= 0.05 v "the current leader wins", plus a decile calibration table. Live output: P(win) for league 455565 and dP(win) for candidate captain and transfer moves, information only.
+
+F-I. Step 16 parts 3-4 and Step 18: first a source proposal for Boris (URL, size, licence, what each gives): cup draws and dates, the 2026/27 European calendar, club ratings built from football-data results (E0-E3 and EC). No download before his OK. Then part 3 (cup Monte Carlo), part 4 (point-in-time backtest 2024/25 and 2025/26, Brier skill >= 0.10 v the base rate), then Step 18 (second-half chips, replay 2025/26, gain >= 0 v the default order of Part C rule 10). Needed before the GW19 deadline (Fri 1 Jan 2027 18:30 UTC).
+
+F-J. GW10 checkpoint (Step 20), after GW10 locks down (about Mon 9 Nov): (1) the revert rule on GW8-10, per squad-gameweek paired differences on our squad and 50 squads sampled from 2026/27 GW1 ownership, using the recorded pre-deadline rows; (2) S6's validation rerun (cut 6); (3) F-E adoption if it passed; (4) every source's accuracy report and drift; (5) the DEF calibration re-check; (6) a chip plan for GW11-19.
+
+F-K. Parked: Step 19 (needs a planner that passes); the MILP solver (optional, after Step 15, only with Boris's OK to install).
+
+F-L. Recorded by the night ruling of Mon 19 Oct, point 4 (record only, no code), verbatim: "S6f: recorded as FAIL. GW8 stays on xp_v2 for XI and captain, own shown beside it; the GW10 revert rule is unchanged. Record in BUILD_PLAN Part F as F-L (record only, no code): the same revert rule is applied again at GW15 over GW8–15, same metric, same bar."
+END RULINGS
+
 ---
 
 ## Verifier agent (created in Step 0)

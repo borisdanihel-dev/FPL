@@ -292,7 +292,7 @@ class CLI(unittest.TestCase):
                 rc = L.main(["--data", tmp, "--out", out])
             self.assertEqual(rc, 0)
             files = os.listdir(out)
-            self.assertEqual(len(files), 1); self.assertTrue(files[0].startswith("league_"))
+            self.assertEqual(sorted(files), sorted([next(f for f in files if f.startswith("league_")), "run.txt"]))   # the report and its provenance (run.txt), nothing else
             self.assertEqual(sorted(os.listdir(tmp)), sorted(before + ["out"]))
         code = ("import sys, os; import fpl_nightly, fpl_ship, fpl_edge, fpl_sync, fpl_gate, fpl_publish; "
                 "bad = [m for m, mod in sys.modules.items() if (getattr(mod, '__file__', None) or '')"
