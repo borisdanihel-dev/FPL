@@ -29,10 +29,17 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       `tools/capflag.py`; flags in planner_live, S8's planner, the bundle
       and builder; the two gap tests; mutations 19 of 19. GW8 read-only:
       only the rule's line is flagged (ARS 3).
-  - **In progress:** the full suite at `52b2a65`, bare and with the data;
-    the amendment's verifier. Then the report
-    `worklog/cc_2026-10-20_S8c_a1.md`, the CHANGELOG on `s8c-wip`, and
-    the push.
+    - **S8c amendment 1 done:** suite 756 → 764, bare and with the data.
+      Verifier PASS (`worklog/verify_S8c_a1.md`, Fable 5.1); 15 of its 16
+      mutations went red, and the survivor is a sort-order coverage note.
+      Report and CHANGELOG are on `s8c-wip` **`71c9d17`, the final commit
+      for Thursday's bundle**.
+  - **Item count since "Ruling, Tue 20 Oct":** 4 of 6 (S2b, S8b, S8c with
+    S15 amendment 2, S8c amendment 1).
+  - **Open for Boris:**
+    - a post-dispatch verifier for S2b?
+    - a sort-order test for the cap flag?
+  - **Next:** W1b on Wednesday 21 Oct, on Boris's word.
   - **Thursday (bundle):** from the s8c worktree at the final commit:
     `git -C C:\GIT\FPL-data pull --ff-only`, `--restore`, then
     `python tools/gw_pass.py --out <dir>`. Copy the output and `run.txt` to
