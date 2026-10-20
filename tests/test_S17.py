@@ -52,6 +52,13 @@ class ByHand(unittest.TestCase):
         sk, lo, hi = LS.skill_ci(per, b=200)
         self.assertAlmostEqual(sk, 0.5); self.assertAlmostEqual(lo, 0.5); self.assertAlmostEqual(hi, 0.5)
 
+    def test_a_player_without_a_pmf_draws_zero(self):
+        keys, idx = LS.plan([[(5, [3], 3, 2)], [(5, [4], 4, 2)]])
+        p, _ = LS.simulate(keys, {5: {4: {1: 1.0}}}, idx, [0, 0], [[0, 1]], 20, 1)
+        self.assertEqual(p, [0.0, 1.0])                                                      # 3 has no PMF: 0, never 1
+        p2, _ = LS.simulate(keys, {}, idx, [10, 0], [[0, 1]], 20, 1)
+        self.assertEqual(p2, [1.0, 0.0])                                                     # the base counts
+
     def test_cdf_draws_follow_the_pmf(self):
         vals, cum = LS.cdf_of({0: 0.2, 2: 0.3, 9: 0.5 - 1e-15})
         self.assertEqual(vals, [0, 2, 9]); self.assertEqual(cum[-1], 1.0)
@@ -131,7 +138,13 @@ class Toy(unittest.TestCase):
         self.assertEqual(s.point_in_time(4), {k: v for k, v in want4.items() if v})            # the truth's choices: S6b's xp_v2(u)
 
     def test_the_run_the_truth_and_the_bar(self):
-        res, lines = self.run_test()
+        with mock.patch.object(LS, "simulate", wraps=LS.simulate) as sim:
+            res, lines = self.run_test()
+        last = res["last"]
+        for call, T in zip(sim.call_args_list, (4, 5)):
+            keys, pmfs, idx, base = call.args[:4]
+            self.assertEqual({u for _, u in keys}, set(range(T, last + 1)))                  # every week from T, none before
+            self.assertEqual(base, res["per_origin"][T]["base"])
         s = self.season()
         lgs = LS.leagues(CH.gw1_candidates(s.rp.hist), 3, SMALL)
         sq = lgs[0][0][1]
