@@ -1,4 +1,4 @@
-WATCH  GW8  export 2026-10-20T13:01  forecasts recorded 2026-10-20T13:01  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
+WATCH  GW8  export 2026-10-20T22:06  forecasts recorded 2026-10-20T22:06  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
   id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
   109   Verbruggen     BHA  GK    4.6 a    -   2.7   3.4   4.0  1.00  LIV (A) 4
   82    Kelleher       BRE  GK    5.0 a    -   2.3   4.5   3.9  1.00  HUL (A) 2
@@ -12,7 +12,7 @@ WATCH  GW8  export 2026-10-20T13:01  forecasts recorded 2026-10-20T13:01  (own /
   165   João Pedro     CHE  FWD   7.9 a  100   3.3   3.8   3.1  0.75  TOT (H) 2
   183   Rudoni         COV  MID   4.9 a  100   2.7   6.1   4.5  1.00  FUL (H) 2
   290   Slater         HUL  MID   4.5 a    -   1.5   3.3   3.2  1.00  BRE (H) 3
-  411   Haaland        MCI  FWD  15.7 d   75     -     -     -     -  AVL (A) 3              Unspecified injury - 75% chance of playing
+  411   Haaland        MCI  FWD  15.7 a  100   4.4   6.4   5.1  1.00  AVL (A) 3
   249   Barry          EVE  FWD   5.7 a    -   1.8   5.4   4.5  1.00  ARS (A) 5
   106   Thiago         BRE  FWD   7.8 a    -   2.7   5.1   4.1  1.00  HUL (A) 2
   124   Groß           BHA  MID   6.2 a    -   3.6   4.8   4.5  1.00  LIV (A) 4
@@ -22,12 +22,12 @@ WATCH  GW8  export 2026-10-20T13:01  forecasts recorded 2026-10-20T13:01  (own /
 
 FREE HIT SCREEN  budget £99.8m; FH candidate: gap > 8 or 3+ of our XI not 'a' (item N)
   GW   metric      FH XI   ours    gap  not a   shape FH / ours   flag
-  GW8  own          35.8   31.9   +3.9      1   4-4-2 / 4-4-2
-  GW9  bottomup     54.0   51.9   +2.0      0   5-4-1 / 5-4-1
-  GW10 bottomup     57.1   54.4   +2.7      0   5-4-1 / 5-4-1
-  GW11 bottomup     57.9   53.1   +4.8      0   5-4-1 / 5-4-1
-  GW12 bottomup     57.1   52.3   +4.8      0   5-4-1 / 5-4-1
-  GW13 bottomup     54.9   51.8   +3.2      0   5-4-1 / 5-4-1
+  GW8  own          37.3   32.5   +4.8      0   4-4-2 / 4-4-2
+  GW9  bottomup     54.5   52.7   +1.9      0   5-4-1 / 5-3-2
+  GW10 bottomup     57.6   55.1   +2.5      0   5-4-1 / 5-3-2
+  GW11 bottomup     58.4   53.7   +4.7      0   5-4-1 / 4-4-2
+  GW12 bottomup     57.7   52.9   +4.7      0   5-4-1 / 4-4-2
+  GW13 bottomup     55.5   52.4   +3.1      0   5-4-1 / 4-4-2
 
 TOP 12 PER POSITION BY OWN, GW8
   id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
@@ -67,6 +67,7 @@ TOP 12 PER POSITION BY OWN, GW8
   129   Ayari          BHA  MID   5.4 a  100   2.8   3.9   3.6  1.00  LIV (A) 4
   428   Cunha          MUN  MID   7.9 a    -   2.7   3.5   2.7  0.75  BOU (H) 3
   183   Rudoni         COV  MID   4.9 a  100   2.7   6.1   4.5  1.00  FUL (H) 2
+  411   Haaland        MCI  FWD  15.7 a  100   4.4   6.4   5.1  1.00  AVL (A) 3
   165   João Pedro     CHE  FWD   7.9 a  100   3.3   3.8   3.1  0.75  TOT (H) 2
   138   Kostoulas      BHA  FWD   5.7 a    -   2.9   4.2   3.5  1.00  LIV (A) 4
   346   Calvert-Lewin  LEE  FWD   6.0 a    -   2.9   5.0   4.0  1.00  SUN (A) 3
@@ -78,4 +79,3 @@ TOP 12 PER POSITION BY OWN, GW8
   166   N.Jackson      AVL  FWD   6.6 a    -   2.1   4.5   3.7  1.00  MCI (H) 4
   569   Gonzalo        FUL  FWD   6.1 a    -   2.1   5.1   4.2  1.00  COV (A) 2
   26    Havertz        ARS  FWD   7.5 a  100   1.9   4.4   3.6  1.00  EVE (H) 3
-  167   Delap          NFO  FWD   5.5 a    -   1.9   4.6   4.0  1.00  IPS (A) 2
