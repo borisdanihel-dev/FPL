@@ -74,6 +74,22 @@ class Styles(unittest.TestCase):
         self.assertEqual(lg[1][0][1], LS.sample_style(cands, 2, 7 * 100000 + 10 * 1 + 0, lambda s: s)[0])   # seed 7 x 100000 + 10 i + j
         self.assertEqual([s for s, _, _ in LS.STYLES], ["template", "mixed", "differential"])
         self.assertEqual([k for _, k, _ in LS.STYLES], [4, 3, 3])
+        self.assertEqual([w(4.0) for _, _, w in LS.STYLES], [4.0, 2.0, 0.25])                 # selected, its root, its inverse
+
+
+class Chips(unittest.TestCase):
+    def test_tc_and_bb_weeks(self):
+        squad = [{"id": i, "pos": pos, "team": f"T{i}"} for i, pos in enumerate((1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4), 1)]
+        xps = {9: {i: 1.0 for i in range(1, 16)}, 10: {i: (9.0 if i == 8 else 1.0) for i in range(1, 16)},
+               11: {i: 3.0 for i in range(1, 16)}, 20: {i: 9.0 for i in range(1, 16)}}
+        tc, bb = LS.chip_weeks(squad, xps, 9, True, True)
+        self.assertEqual(tc, 10); self.assertEqual(bb, 11)                                   # the best of the half (GW20 is the next half)
+        self.assertEqual(LS.chip_weeks(squad, xps, 9, False, False), (None, None))
+        mw = LS.manager_weeks(squad, xps, 9, tc=10, bb=11, captain=3)
+        by = {u: (xi, cap, mult) for u, xi, cap, mult in mw}
+        self.assertEqual(by[10][2], 3); self.assertEqual(by[9][2], 2)                        # TC triples its week only
+        self.assertEqual(len(by[11][0]), 15); self.assertEqual(len(by[9][0]), 11)            # BB: the bench counts
+        self.assertEqual(by[9][1], 3); self.assertEqual(by[10][1], 8)                        # a captain option in the target week only
 
 
 class Toy(unittest.TestCase):
@@ -122,6 +138,9 @@ class Toy(unittest.TestCase):
         truth = sum(s.realised([{"id": p["id"], "pos": p["pos"], "team": p["team"], "name": "x"} for p in sq], u, s.point_in_time(u))
                     for u in range(2, s.through + 1))
         self.assertAlmostEqual(res["final"][0], truth)                                        # GW2..last, S6b's choices
+        rows0 = [{"id": p["id"], "pos": p["pos"], "team": p["team"], "name": "x"} for p in sq]
+        for T in (4, 5):                                                                     # the base: GW2..T-1
+            self.assertAlmostEqual(res["per_origin"][T]["base"][0], sum(s.realised(rows0, u, s.point_in_time(u)) for u in range(2, T)))
         self.assertTrue(lines[0].startswith("S17 TEST  3 synthetic leagues of 4")); self.assertIn("GW4, 5", lines[0])
         self.assertEqual(res["pass"], res["skill"] >= 0.05)
         for skill, want in ((0.05, True), (0.0499, False)):

@@ -315,7 +315,7 @@ def test(hist_root, out=print, out_dir=None, n_leagues=N_LEAGUES, origins=ORIGIN
                 per_league[li][1] += (pl - won[m]) ** 2
                 per_league[li][2] += 1
         lead_pairs = [(pl, won[m]) for g in groups for m, pl in zip(g, leader_p([base[m] for m in g]))]
-        per_origin[T] = {"sim": brier(pairs), "leader": brier(lead_pairs)}
+        per_origin[T] = {"sim": brier(pairs), "leader": brier(lead_pairs), "base": base}
         pairs_all += pairs
     skill, lo, hi = skill_ci(list(per_league.values()), seed=seed)
     res = {"styles": [(n_, k_) for n_, k_, _ in styles], "skill": skill, "lo": lo, "hi": hi, "per_origin": per_origin, "deciles": deciles(pairs_all), "pass": skill >= PASS_SKILL,
