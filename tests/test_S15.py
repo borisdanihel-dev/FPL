@@ -263,6 +263,23 @@ class Season(unittest.TestCase):
                               if row["player_id"] == p["id"] and 1 <= row["event"] <= 4) for p in o.players])
 
 
+def add_fixtures_played(tmp):
+    """The toy export gains fixtures_played from its fpl.sqlite (finished fixtures), as the real export carries it."""
+    import gzip, json, sqlite3
+    c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
+    short = dict(c.execute("select id, short_name from teams"))
+    played = [{"event": ev, "home": short[h], "away": short[a], "h_goals": hg, "a_goals": ag, "kickoff_time": ko}
+              for ev, ko, h, a, hg, ag in c.execute("select event, kickoff_time, team_h, team_a, team_h_score, team_a_score "
+                                                    "from fixtures where finished = 1 order by kickoff_time, id")]
+    c.close()
+    path = os.path.join(tmp, "exports", sorted(os.listdir(os.path.join(tmp, "exports")))[-1])
+    with gzip.open(path, "rt", encoding="utf-8") as fh:
+        d = json.load(fh)
+    d["fixtures_played"] = played
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(d, fh)
+
+
 class Live(unittest.TestCase):
     def test_wildcard_freehit_bb(self):
         from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot
@@ -270,6 +287,7 @@ class Live(unittest.TestCase):
         try:
             toy_live(tmp); toy_hist_root(hist)
             gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+            add_fixtures_played(tmp)
             from datetime import datetime, timezone
             with mock.patch.object(B.E, "selling_budget", return_value=(100.0, "")):
                 outs = {}
@@ -278,14 +296,94 @@ class Live(unittest.TestCase):
                     with mock.patch.object(B, "build", wraps=B.build) as bld:
                         res = B.live(tmp, hist, mode, lines.append)
                     self.assertEqual([c.args[3] for c in bld.call_args_list], [True, False])     # live: the cap on, its cost off
+                    rule_start = bld.call_args_list[0].kwargs["starts"][1]
+                    self.assertEqual(sorted(p["id"] for p in rule_start), sorted(p["id"] for p in res["rule"]))   # the rule's squad a start
+                    beside = [l for l in lines if l.startswith("  beside it, the three-layer rule (frozen, 4-3-3")]
+                    self.assertEqual(len(beside), 1)
+                    self.assertTrue(beside[0].endswith(f"objective {res['rule_value']:.2f}, spent "
+                                                       f"{sum(p['price'] for p in res['rule']):.1f}; builder - rule "
+                                                       f"{res['value'] - res['rule_value']:+.2f}"), beside[0])
+                    self.assertEqual(len(res["rule"]), 15)
+                    self.assertLessEqual(sum(p["price"] for p in res["rule"]), 100.0 + 1e-9)       # within the live budget
+                    self.assertEqual([sum(1 for p in res["rule"] if p["pos"] == k) for k in (1, 2, 3, 4)], [2, 5, 5, 3])
+                    self.assertTrue(any(l.startswith("     GK: ") for l in lines))
+                    if B.legal(res["rule"], 100.0, True):
+                        self.assertGreaterEqual(res["value"], res["rule_value"] - 1e-9)                 # >= the rule, as in the A/B
                     outs[mode] = (res, lines)
-                    self.assertTrue(lines[0].startswith(f"BUILDER  --{mode}  GW9")); self.assertIn("information only", lines[0])
+                    self.assertTrue(lines[0].startswith(f"BUILDER  --{mode}  GW9"))
+                    if mode == "bb":
+                        self.assertIn("); information only (the ruling makes the builder the default for Free Hit and Wildcard only)",
+                                      lines[0])
+                    else:
+                        self.assertTrue(lines[0].endswith("); the default for Free Hit and Wildcard builds (Ruling, Tue 20 Oct, "
+                                                          "point 2; not used for GW8)"), lines[0])
                     self.assertIn("the GK+DEF 2-per-club cap ON", lines[1])
                     self.assertTrue(B.legal(res["squad"], 100.0, True)); self.assertLessEqual(res["value"], res["value_off"] + 1e-9)
             self.assertIn("GW9-14", outs["wildcard"][1][0])
             for mode in ("freehit", "bb"):
                 self.assertIn("GW9 from", outs[mode][1][0])                                    # one week, no decay
             self.assertIn("odds", outs["freehit"][1][0])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
+    def test_the_difference_is_against_the_cap_on_build(self):
+        from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            toy_live(tmp); toy_hist_root(hist)
+            gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+            add_fixtures_played(tmp)
+            real = B.build
+
+            def build(*a, **k):                                              # the cap-off build worth 1.0 more, as if the cap bound
+                sq, v = real(*a, **k)
+                return sq, v + (0.0 if a[3] else 1.0)
+            with mock.patch.object(B.E, "selling_budget", return_value=(100.0, "")), mock.patch.object(B, "build", side_effect=build):
+                lines = []
+                res = B.live(tmp, hist, "freehit", lines.append)
+            self.assertAlmostEqual(res["value_off"] - res["value"], 1.0, places=9)
+            beside = [l for l in lines if l.startswith("  beside it, the three-layer rule (frozen, 4-3-3")]
+            self.assertEqual(len(beside), 1)
+            self.assertTrue(beside[0].endswith(f"builder - rule {res['value'] - res['rule_value']:+.2f}"), beside[0])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
+    def test_rule_keeps_to_the_live_budget(self):
+        from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            toy_live(tmp); toy_hist_root(hist)
+            gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+            add_fixtures_played(tmp)
+            d, _, target, weeks_xp, _ = B.live_matrix(tmp, hist, 1)
+            sq, spent = B.live_rule(d, weeks_xp, target, 100.0)
+            self.assertEqual(len(sq), 15)
+            tight = round(spent - 1.0, 1)                                    # below what it spends at 100.0
+            sq2, spent2 = B.live_rule(d, weeks_xp, target, tight)
+            self.assertLessEqual(sum(p["price"] for p in sq2), tight + 1e-9)
+            self.assertAlmostEqual(spent2, sum(p["price"] for p in sq2), places=6)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
+
+    def test_rule_short_of_a_squad_is_reported_not_substituted(self):
+        from tests.test_S6d import toy_live, toy_hist_root, gw9_snapshot
+        tmp, hist = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            toy_live(tmp); toy_hist_root(hist)
+            gw9_snapshot(tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+            add_fixtures_played(tmp)
+            real = B.live_rule
+            with mock.patch.object(B.E, "selling_budget", return_value=(100.0, "")), \
+                 mock.patch.object(B, "live_rule", side_effect=lambda *a: (real(*a)[0][:14], 0.0)), \
+                 mock.patch.object(B, "build", wraps=B.build) as bld:
+                lines = []
+                res = B.live(tmp, hist, "freehit", lines.append)
+            self.assertEqual([len(c.kwargs["starts"]) for c in bld.call_args_list], [1, 1])   # only the own squad a start
+            self.assertIsNone(res["rule_value"])
+            self.assertEqual([l for l in lines if l.startswith("  beside it")],
+                             ["  beside it, the three-layer rule (frozen, 4-3-3, the quota split, the same matrix): no full squad "
+                              "(14 players passed its layers); nothing is substituted"])
+            self.assertFalse(any(l.startswith("     GK: ") for l in lines))
         finally:
             shutil.rmtree(tmp, ignore_errors=True); shutil.rmtree(hist, ignore_errors=True)
 

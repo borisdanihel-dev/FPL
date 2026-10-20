@@ -1,7 +1,9 @@
 """tools/builder.py - S15, the unified squad builder (BUILD_PLAN.md Step 15;
 Part F item F-G; prereg/S15.md). Offline; standard library only; the
-nightly never imports it. Information only until the A/B passes and Boris
-accepts.
+nightly never imports it. Accepted (Ruling, Tue 20 Oct, point 2): the
+default for Free Hit and Wildcard builds, the cap on live with its cost, the
+three-layer rule's squad printed beside it (prereg/S15.md amendment 2); not
+used for GW8. --bb stays information.
 
 One objective: the decayed six-week value of a 15, sum over k of
 0.85^k x V_k, V_k = the best legal XI by week k's xP (any of the 7
@@ -453,7 +455,7 @@ def report(res, out, seasons):
 
 
 # ---------------------------------------------------------------------------
-# live: --wildcard / --freehit / --bb (information only)
+# live: --wildcard / --freehit (the default, Ruling, Tue 20 Oct, point 2) / --bb (information)
 # ---------------------------------------------------------------------------
 
 def live_matrix(data_dir, hist_root, weeks_n):
@@ -503,6 +505,30 @@ def live_matrix(data_dir, hist_root, weeks_n):
     return d, path, target, weeks, srcs
 
 
+def live_rule(d, weeks_xp, target, budget):
+    """The frozen three-layer rule's squad on the live export (amendment 2):
+    rule_candidates with the live xp_v2 matrix as the GK/DEF six-week sum,
+    then fpl_edge.build_three_layer_squad unchanged (4-3-3, the quota
+    split), at current prices within the live budget."""
+    fx = E.week_fixtures(d)
+    weeks = list(range(target, target + len(weeks_xp)))
+    pairings = {w: {team: fx[team].get(w, []) for team in fx} for w in weeks}
+    gw = d["gameweek"]
+    window = range(gw - min(4, gw) + 1, gw + 1)
+    played = Counter()
+    for f in d.get("fixtures_played") or []:
+        if f["event"] in window:
+            played[f["home"]] += 1
+            played[f["away"]] += 1
+    inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=gw)
+    players = [{"id": int(p["id"]), "name": p["web_name"], "team": p["team"], "pos": p["pos"], "price": p["price"],
+                "status": p.get("status"), "mins_last4": p.get("mins_last4")} for p in d["all_players"]]
+    cands, _ = rule_candidates(players, inp, pairings, weeks, dict(played), {w: weeks_xp[i] for i, w in enumerate(weeks)})
+    sq, spent = rule_squad(cands, budget)
+    names = {p["id"]: p["name"] for p in players}
+    return [dict(p, name=names.get(p["id"], str(p["id"]))) for p in sq], spent
+
+
 def live(data_dir, hist_root, mode, out=print):
     weeks_n = HORIZON if mode == "wildcard" else 1
     d, path, target, weeks_xp, srcs = live_matrix(data_dir, hist_root, weeks_n)
@@ -515,14 +541,19 @@ def live(data_dir, hist_root, mode, out=print):
               for p in d["all_players"] if p.get("status") == "a" or int(p["id"]) in mine]
     decay = DECAY if mode == "wildcard" else 1.0
     bench_full = mode == "bb"
-    sq_on, v_on = build(market, weeks_xp, budget, True, starts=[list(mine.values())], decay=decay, bench_full=bench_full)
-    sq_off, v_off = build(market, weeks_xp, budget, False, starts=[list(mine.values())], decay=decay, bench_full=bench_full)
+    rsq, rspent = live_rule(d, weeks_xp, target, budget)
+    full = len(rsq) == sum(QUOTA.values())
+    r_obj = objective(rsq, weeks_xp, decay, bench_full) if full else None
+    starts = [list(mine.values())] + ([rsq] if full else [])
+    sq_on, v_on = build(market, weeks_xp, budget, True, starts=starts, decay=decay, bench_full=bench_full)
+    sq_off, v_off = build(market, weeks_xp, budget, False, starts=starts, decay=decay, bench_full=bench_full)
     t_xp = weeks_xp[0]
     _, xi, form = week_value(sq_on, t_xp, bench_full)
     cap = max(xi, key=lambda p: (t_xp.get(p["id"], 0.0), -p["id"]))
     out(f"BUILDER  --{mode}  GW{target}" + (f"-{target + weeks_n - 1}" if weeks_n > 1 else "") + f" from {os.path.basename(path)}; "
         f"budget {budget:.1f} = bank + selling prices; xp_v2 as tested (" + ", ".join(f"{k[0]} {k[1]} {c}" for k, c in sorted(srcs.items()))
-        + f"); information only until S15's A/B passes and Boris accepts")
+        + ("); the default for Free Hit and Wildcard builds (Ruling, Tue 20 Oct, point 2; not used for GW8)"
+           if mode != "bb" else "); information only (the ruling makes the builder the default for Free Hit and Wildcard only)"))
     out(f"  the GK+DEF 2-per-club cap ON (Boris's choice): objective {v_on:.2f}; without it {v_off:.2f}; the cap costs "
         f"{v_off - v_on:.2f}")
     out(f"  {'player':<16}{'pos':>4}{'team':>5}{'price':>7}{'xP GW' + str(target):>9}  {'XI' if not bench_full else ''}")
@@ -531,7 +562,17 @@ def live(data_dir, hist_root, mode, out=print):
         tag = ("C" if p["id"] == cap["id"] else "XI") if p["id"] in xi_ids else "bench"
         out(f"  {p['name']:<16}{BT.POS_NAME.get(p['pos'], '?'):>4}{p['team']:>5}{p['price']:7.1f}{t_xp.get(p['id'], 0.0):9.2f}  {tag}")
     out(f"  formation {'-'.join(map(str, form))}; spent {sum(p['price'] for p in sq_on):.1f} of {budget:.1f}")
-    return {"squad": sq_on, "value": v_on, "value_off": v_off, "target": target}
+    if not full:
+        out(f"  beside it, the three-layer rule (frozen, 4-3-3, the quota split, the same matrix): no full squad ({len(rsq)} "
+            f"players passed its layers); nothing is substituted")
+    else:
+        out(f"  beside it, the three-layer rule (frozen, 4-3-3, the quota split, the same matrix): objective {r_obj:.2f}, spent "
+            f"{rspent:.1f}; builder - rule {v_on - r_obj:+.2f}")
+        for pos in (1, 2, 3, 4):
+            out(f"    {BT.POS_NAME.get(pos, '?'):>3}: " + ", ".join(f"{p['name']} ({p['team']}, {p['price']:.1f})"
+                                                           for p in sorted(rsq, key=lambda p: (-t_xp.get(p["id"], 0.0), p["id"]))
+                                                           if p["pos"] == pos))
+    return {"squad": sq_on, "value": v_on, "value_off": v_off, "target": target, "rule": rsq, "rule_value": r_obj}
 
 
 def main(argv=None):
