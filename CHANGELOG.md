@@ -3960,3 +3960,43 @@ Calafiori 5.83; Haaland 5.68 and Mbeumo 5.67 just outside. Suite 686 →
 RULINGS PART F are verbatim in BUILD_PLAN.md "Part F - queued rulings",
 queued after the GW8 queue. F-A (12 dry runs per UTC day) applies now, and
 W1b's cap moves to 12 when W1b is worked.
+
+## 2026-10-20 — S15 (F-G): the unified squad builder passes its A/B and is accepted (`ae1d368`, `3b31599` prereg; `6f362a8`, `91f401d` code; on `s15-wip`)
+
+- **A/B:** 68 hypothetical wildcards (2025/26 and 2024/25 GW5–38), the
+  same xp_v2 horizon matrix for both sides. Builder − frozen three-layer
+  rule: +33.31 window points per date, 90% CI [+25.29, +41.54].
+  - The builder is ≥ the rule on 0.78 of dates, and its projected value is
+    ≥ the rule's on every date → **PASS**.
+  - Per season +23.94 / +42.68; non-overlapping dates +44.75 [+24.08,
+    +66.00].
+  - The builder never picks 4-3-3 in week t (cost 1.66); the GK+DEF cap
+    costs 0.49 projected.
+  - The frozen rule leaves budget unspent: part of the edge.
+- **Fix before any result:** 2024/25's assistant-manager rows (AM, from
+  GW23) leave the market.
+- **Checks:** verifier PASS (Fable 5.1; full regeneration byte-identical);
+  mutations 18 of 18.
+- **Accepted** (Ruling, Tue 20 Oct, point 2): `tools/builder.py` is the
+  default for Free Hit and Wildcard builds, the GK+DEF cap on live with its
+  cost printed and the three-layer rule's squad beside it. Not used for
+  GW8.
+
+## 2026-10-20 — S8b (F-F): the no-hit planner on xp_v2 passes on 2024/25 and is accepted (`bd4d044` prereg; `401fb20` code, `7580cf2` tests; on `s8b-wip`)
+
+- **Test:** S8's replay loop unchanged, hits forbidden, decay 0.85,
+  Boris's schedule; 2024/25 GW2–38, S7's 50 squads, 1 FT, no chips;
+  xp_v2 as tested over six weeks (week t S5's odds lambdas, else the
+  fallback; weeks t+1..t+5 the origin's fallback); outcomes S10b's
+  re-score under the 2026/27 table (no DEFCON in 2024/25).
+- **Measured:** planner 2074.9 v baseline 2055.3 points per squad-season;
+  paired gain **+19.58, 90% CI [+1.28, +38.70]** → **PASS** (bar: mean
+  ≥ +5 and lower bound > 0). Transfers 37 on both sides, hits 0.
+  - Decay 0.80 or 0.90 chose a different plan in 7, 3, 5, 8, 6 of 37
+    weeks (first 5 squads).
+- **Checks:** suite 709 → 715; mutations 13 of 14 (one equivalent);
+  verifier PASS (`worklog/verify_S8b.md`, Fable 5.1), its 5-squad rerun
+  reproducing the run.
+- **Accepted** (Ruling, Tue 20 Oct, point 1): from GW8 the no-hit planner
+  on xp_v2 is the default transfer suggestion, the simple rule printed
+  beside it; hits stay a manual call. The live tool is S8c.
