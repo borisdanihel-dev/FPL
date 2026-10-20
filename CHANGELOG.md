@@ -3993,3 +3993,22 @@ W1b's cap moves to 12 when W1b is worked.
   the harness (shared with the parked F-D).
 - **Checks:** suite 692; mutations 6 of 6 after the test-gap fix; verifier
   PASS (`worklog/verify_S6e.md`).
+
+## 2026-10-20 — S8b (F-F): the no-hit planner on xp_v2 passes on 2024/25 and is accepted (`bd4d044` prereg; `401fb20` code, `7580cf2` tests; on `s8b-wip`)
+
+- **Test:** S8's replay loop unchanged, hits forbidden, decay 0.85,
+  Boris's schedule; 2024/25 GW2–38, S7's 50 squads, 1 FT, no chips;
+  xp_v2 as tested over six weeks (week t S5's odds lambdas, else the
+  fallback; weeks t+1..t+5 the origin's fallback); outcomes S10b's
+  re-score under the 2026/27 table (no DEFCON in 2024/25).
+- **Measured:** planner 2074.9 v baseline 2055.3 points per squad-season;
+  paired gain **+19.58, 90% CI [+1.28, +38.70]** → **PASS** (bar: mean
+  ≥ +5 and lower bound > 0). Transfers 37 on both sides, hits 0.
+  - Decay 0.80 or 0.90 chose a different plan in 7, 3, 5, 8, 6 of 37
+    weeks (first 5 squads).
+- **Checks:** suite 709 → 715; mutations 13 of 14 (one equivalent);
+  verifier PASS (`worklog/verify_S8b.md`, Fable 5.1), its 5-squad rerun
+  reproducing the run.
+- **Accepted** (Ruling, Tue 20 Oct, point 1): from GW8 the no-hit planner
+  on xp_v2 is the default transfer suggestion, the simple rule printed
+  beside it; hits stay a manual call. The live tool is S8c.
