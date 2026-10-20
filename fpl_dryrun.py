@@ -16,7 +16,7 @@ calls gate(), and the run skips - green, with one line saying why - when:
     (events.deadline_time in the data checkout; a gameweek without a readable
     deadline is named in a WARN line, and the rest are checked);
   * CAP dry runs have already run this UTC day (point 4), push-triggered and
-    manual together: "DRY RUN SKIPPED: 6 of 6 today". They are counted with
+    manual together: "DRY RUN SKIPPED: 12 of 12 today". They are counted with
     the Actions API (actions: read, the one job's token): a run counts once
     its "Nightly run" step has started, this run left out. Every dry run is
     named "dry run <ref>" (the workflow's run-name) so the count can find it.
@@ -39,7 +39,7 @@ from pathlib import Path
 import fpl_publish
 
 UTC = timezone.utc
-CAP = 6                         # dry runs a UTC day, push and manual together (S2 amendment 2, point 9)
+CAP = 12                        # dry runs a UTC day, push and manual together (RULINGS PART F, F-A; was 6)
 NIGHT_START = time(21, 30)      # the nightly's window opens (the nightly starts 21:40)
 NIGHT_END = time(4, 0)          # ... and closes at the latest at 04:00, after the backup run
 DEADLINE_GAP = timedelta(hours=1)

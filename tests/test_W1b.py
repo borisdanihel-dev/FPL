@@ -5,7 +5,7 @@ goes to data-dryrun-<item>; the key is not passed; the run waits in the
 nightly-dryrun group, never nightly-data. Before it does anything the --due
 gate skips it, green, in a quiet window (21:30 UTC until the night's nightly
 has committed, at the latest 04:00 UTC; within 1 hour of a deadline) or at
-the cap of 6 dry runs a UTC day, counted with the Actions API. Manual
+the cap of 12 dry runs a UTC day (F-A), counted with the Actions API. Manual
 dispatch keeps its inputs and data-dryrun.
 """
 
@@ -229,11 +229,11 @@ TODAY = "2026-10-19T"
 
 
 class Cap(unittest.TestCase):
-    """Point 4: 6 a UTC day, push and manual together, counted once their
+    """Point 4 and F-A: 12 a UTC day, push and manual together, counted once their
     "Nightly run" step started; this run left out; cannot count = skip."""
 
     def runs(self, n):
-        return [_run(i, f"dry run dry/X{i}", f"{TODAY}0{i}:00:00Z") for i in range(1, n + 1)]
+        return [_run(i, f"dry run dry/X{i}", f"{TODAY}{i:02d}:00:00Z") for i in range(1, n + 1)]
 
     def test_counting(self):
         runs = self.runs(3) + [
@@ -256,18 +256,21 @@ class Cap(unittest.TestCase):
         get, _ = _api(runs, **kw)
         return D.decide(env, NOW, {"8": at("2026-10-23T17:30")}, at("2026-10-18T21:58"), get)
 
-    def test_the_sixth_runs_and_the_seventh_skips_green(self):
-        self.assertEqual(self._gate(self.runs(5)),
-                         (True, "DRY RUN      6 of 6 today; the result goes to data-dryrun-S16"))
-        self.assertEqual(self._gate(self.runs(6)), (False, "DRY RUN SKIPPED: 6 of 6 today"))
-        self.assertEqual(self._gate(self.runs(7))[0], False)
+    def test_the_twelfth_runs_and_the_thirteenth_skips_green(self):
+        self.assertEqual(D.CAP, 12)                                                    # F-A
+        self.assertEqual(self._gate(self.runs(6)),
+                         (True, "DRY RUN      7 of 12 today; the result goes to data-dryrun-S16"))   # the old cap no longer stops it
+        self.assertEqual(self._gate(self.runs(11)),
+                         (True, "DRY RUN      12 of 12 today; the result goes to data-dryrun-S16"))
+        self.assertEqual(self._gate(self.runs(12)), (False, "DRY RUN SKIPPED: 12 of 12 today"))
+        self.assertEqual(self._gate(self.runs(13))[0], False)
 
     def test_a_manual_dry_run_counts_and_is_capped_too(self):
         manual = {"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/master",
                   "FPL_DRY_RUN": "true", "GITHUB_REPOSITORY": "o/r", "GITHUB_RUN_ID": "900"}
-        self.assertEqual(self._gate(self.runs(6), env=manual), (False, "DRY RUN SKIPPED: 6 of 6 today"))
+        self.assertEqual(self._gate(self.runs(12), env=manual), (False, "DRY RUN SKIPPED: 12 of 12 today"))
         self.assertEqual(self._gate(self.runs(2), env=manual),
-                         (True, "DRY RUN      3 of 6 today; the result goes to data-dryrun"))
+                         (True, "DRY RUN      3 of 12 today; the result goes to data-dryrun"))
 
     def test_when_it_cannot_count_it_skips(self):
         for kw, why in (({"fail": "HTTP 403"}, "HTTP 403"), ({"total": 101}, "more than one page")):
@@ -339,13 +342,13 @@ class DueGate(unittest.TestCase):
         out, lines, _ = self._due(PUSH, NOW)
         self.assertEqual(out, "run=true")
         self.assertEqual(lines, ["DUE          not the backup cron",
-                                 "DRY RUN      1 of 6 today; the result goes to data-dryrun-S16"])
+                                 "DRY RUN      1 of 12 today; the result goes to data-dryrun-S16"])
 
     def test_a_push_at_the_cap_skips_green(self):
-        runs = [_run(i, f"dry run dry/X{i}", f"{TODAY}0{i}:00:00Z") for i in range(1, 7)]
+        runs = [_run(i, f"dry run dry/X{i}", f"{TODAY}{i:02d}:00:00Z") for i in range(1, 13)]
         out, lines, _ = self._due(PUSH, NOW, runs)
         self.assertEqual(out, "run=false")
-        self.assertEqual(lines[-1], "DRY RUN SKIPPED: 6 of 6 today")
+        self.assertEqual(lines[-1], "DRY RUN SKIPPED: 12 of 12 today")
 
     def test_near_a_deadline_it_skips(self):
         out, lines, seen = self._due(PUSH, at("2026-10-23T17:00"))

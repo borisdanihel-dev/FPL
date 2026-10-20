@@ -136,8 +136,8 @@ procedure both lanes use from its landing). Boris clicks only real runs.
    - from 21:30 UTC until that night's nightly has committed, 04:00 UTC at the
      latest (RULING morning 19 Oct, point 4);
    - within 1 hour either side of a deadline;
-   - once 6 dry runs, pushed and manual together, have run that UTC day (`6 of
-     6 today`);
+   - once 12 dry runs, pushed and manual together, have run that UTC day (`12
+     of 12 today`; F-A, was 6);
    - when the count cannot be made. The count uses the Actions API, with
      `actions: read` granted to the one job.
 5. After the item lands, its lane deletes its own `dry/<item>` and

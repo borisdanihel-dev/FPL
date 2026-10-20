@@ -174,7 +174,8 @@ h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3)
     - from 21:30 UTC until that night's nightly has committed (04:00 UTC at the
       latest);
     - within 1 hour of a deadline;
-    - once 6 dry runs, pushed and manual together, have run that UTC day;
+    - once 12 dry runs, pushed and manual together, have run that UTC day
+      (RULINGS PART F, F-A);
     - when it cannot count them.
   - After the item lands, its lane deletes both:
     `git push origin --delete dry/<item> data-dryrun-<item>`. That is a
