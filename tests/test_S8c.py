@@ -260,6 +260,10 @@ class CapFlag(unittest.TestCase):
         self.assertTrue(next(l for l in lines if l.startswith("  DEFAULT: roll") or l.startswith("  DEFAULT: ")))
 
 
+def CHt_newest(tmp):
+    return CH.newest_export(tmp)[0]
+
+
 class FixedNow(datetime):
     @classmethod
     def now(cls, tz=None):
@@ -337,6 +341,50 @@ class XpV2Csv(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(other, "xp_v2_all.csv")))
         a, b = (open(os.path.join(p, "gw9_pass.txt"), "rb").read() for p in (self.out, other))
         self.assertEqual(a, b)                                                                       # byte-identical
+
+    def test_every_value_is_the_pickers(self):
+        """The clarified point 3: every CSV value equals the value the bundle's xp_v2 XI picker used."""
+        import gzip, json
+        path = os.path.join(self.tmp, "exports", sorted(os.listdir(os.path.join(self.tmp, "exports")))[-1])
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            d = json.load(fh)
+        mine = [r["player_id"] for r in sorted(d["squads"], key=lambda r: r["slot"]) if r["entry_id"] == d["my_entry"]]
+        ours_out = next(int(p["id"]) for p in d["all_players"] if p["id"] in mine and p["pos"] == 3)
+        for p in d["all_players"]:
+            if int(p["id"]) == ours_out:
+                p["status"] = "d"                                                          # one of our 15 not forecast
+        with gzip.open(path, "wt", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        res = XL.live(self.tmp, self.hist, NOW9)
+        self.assertNotIn(ours_out, res["xp"])
+        calls, real = [], CH.xi_and_bench
+
+        def spy(squad, pts):
+            xi, bench, gk = real(squad, pts)
+            calls.append((pts, {r["id"]: r["proj"] for r in list(xi) + list(bench) + [gk]}))
+            return xi, bench, gk
+        with mock.patch.object(G.CH, "xi_and_bench", side_effect=spy):
+            self.assertEqual(self.main(self.out), 0)
+        with open(os.path.join(self.out, "xp_v2_all.csv"), encoding="utf-8", newline="") as fh:
+            by = {int(r["id"]): r for r in csv.DictReader(fh)}
+        used = [u for pts, u in calls if pts == res["xp"]]                                   # the xp_v2 XI picker's call in section 5
+        self.assertTrue(used)
+        self.assertEqual(set(used[0]), {int(x) for x in mine})
+        for pid, v in used[0].items():                                                       # our 15, as the picker ran
+            self.assertEqual(by[pid]["xp_v2"], repr(float(v)), pid)
+        self.assertEqual(used[0][ours_out], 0.0); self.assertEqual(by[ours_out]["lambda_source"], "not forecast")
+        squad = CH.my_squad(CHt_newest(self.tmp))
+        for p in d["all_players"]:                                                           # every export player through the picker
+            pid = int(p["id"])
+            if pid in {r["id"] for r in squad}:
+                continue
+            slot = next(i for i, r in enumerate(squad) if r["pos"] == p["pos"])
+            trial = [dict(r) for r in squad]
+            trial[slot] = dict(trial[slot], id=pid)
+            xi, bench, gk = real(trial, res["xp"])
+            got = {r["id"]: r["proj"] for r in list(xi) + list(bench) + [gk]}[pid]
+            self.assertEqual(by[pid]["xp_v2"], repr(float(got)), pid)
+            self.assertEqual(by[pid]["lambda_source"] == "not forecast", pid not in res["xp"], pid)
 
     def test_no_section_5_no_csv(self):
         shutil.rmtree(os.path.join(self.hist, "2025-26"))
