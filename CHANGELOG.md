@@ -4038,3 +4038,23 @@ W1b's cap moves to 12 when W1b is worked.
   PASS (`worklog/verify_S8c.md`, Fable 5.1). Its recomputation matches
   326 plans to 1e-13; 9 of its 11 mutations went red, and the 2
   survivors are toy-coverage gaps.
+
+## 2026-10-20 — S8c amendment 1: two test gaps and the GK+DEF cap flag (Ruling, Tue 20 Oct afternoon; `9ed7919` prereg; `52b2a65` code; on `s8c-wip`)
+
+- **Point 2 (tests only):**
+  - a toy fixture with no odds price prints "fallback";
+  - under `--bb` the rule is scored with the bench at full weight.
+  - Together they close the S8c verifier's two surviving mutations.
+- **Point 3 (print only):** `tools/capflag.py`. Every printed squad or
+  suggested move over the 2-per-club GK+DEF cap ends with "breaks the
+  cap: ARS 3". It covers the live planner, S8's planner, the bundle
+  (planner section and our 15) and the builder. No rule, ranking or plan
+  changed.
+- **Measured (GW8, data `63e6a44`):**
+  - nothing the planner or the bundle suggests breaks the cap (default
+    Branthwaite → De Cuyper; simple rule Tarkowski → Gabriel);
+  - only the three-layer rule's squad does (ARS 3);
+  - the outputs are byte-identical to `ca96b6a` apart from that flag.
+- **Checks:** suite 756 → 764; mutations 19 of 19; verifier PASS
+  (`worklog/verify_S8c_a1.md`, Fable 5.1; 15 of its 16 mutations red, one
+  sort-order coverage note).
