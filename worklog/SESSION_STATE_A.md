@@ -7,7 +7,38 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (19 Oct evening on): RULING 19 Oct evening.** It is verbatim in
+- **NOW (20 Oct morning on): the night ruling ("Ruling, Mon 19 Oct",
+  verbatim in `prereg/S6e2.md` amendment 1, `prereg/S8b.md`,
+  `prereg/S15.md`, `prereg/S17.md`, and the scratchpad
+  `ruling_19oct_night.txt`).** The item count reset to 0 of 6.
+  - Order: the S6e2 fix → F-F → F-G → F-H → F-I (a proposal doc only).
+  - Branches only. On master only preregs and this file, plus F-L in
+    BUILD_PLAN, as ruled. No merges, landings or dispatch requests.
+  - Points 1–3 (W3) are recorded, but their code has not started:
+    - point 2: GW8 graded from the bundle file if its commit is before the
+      deadline;
+    - point 3: ban risk counts `finished_provisional` fixtures, labelled.
+    W3 needs both before its merge (by Thu 29 Oct), and Thursday's bundle
+    must carry own + xp_v2 for all 15 plus the captain table.
+  - **Items:**
+    1. **S6e2 DONE** (`s6e2-wip` `d87f8aa`): fix re-verified PASS; the FAIL
+       stands; the keeper-saves line closed.
+    2. **S8b (F-F)** (`s8b-wip` `7580cf2`): built; real run in progress;
+       mutations 13 of 14 (b2 equivalent).
+    3. **S15 (F-G)** (`s15-wip` `0f72c86`): built; the rule port equals
+       `wildcard_candidates` on the real GW7 export; A/B run in progress;
+       mutations 18 of 18.
+    4. **S17 (F-H)** (`s17-wip` `e17c5e5`): built; real run in progress;
+       mutations 12 of 12.
+    5. **F-I proposal** on `fi-wip` (`worklog/proposal_F-I_sources.md`):
+       nothing downloaded; three questions for Boris in it.
+  - F-L is recorded in BUILD_PLAN Part F (`6ae5923`).
+  - Nightly 21:40 UTC 19 Oct: STATUS OK 28/28; 614 tests; own 281,
+    xg/minutes/bottomup 261, fpl_ep 668; odds 20 events, 484 credits.
+  - Tuesday dry runs: not clicked as of 07:10 UTC; the last data-dryrun
+    commit is 19 Oct 10:58.
+
+- (Earlier) **NOW (19 Oct evening on): RULING 19 Oct evening.** It is verbatim in
   `prereg/W2.md` (amendment 2), `prereg/W3.md` and `prereg/S6f.md`, and in
   the scratchpad `ruling_19oct_evening.txt`. The item count restarted at 0.
   - Tonight, in order: F-B (W3) off `w2-wip`, then F-D (S6f), then S6e2,
