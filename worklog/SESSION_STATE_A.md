@@ -23,12 +23,14 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
   - **Items:**
     1. **S6e2 DONE** (`s6e2-wip` `d87f8aa`): fix re-verified PASS; the FAIL
        stands; the keeper-saves line closed.
-    2. **S8b (F-F)** (`s8b-wip` `7580cf2`): built; real run in progress;
-       mutations 13 of 14 (b2 equivalent).
-    3. **S15 (F-G)** (`s15-wip` `91f401d`): built; the rule port equals
-       `wildcard_candidates` on the real GW7 export; mutations 18 of 18.
-       The first A/B run crashed at 2024/25 GW23 on assistant-manager rows
-       (AM); fixed (they leave the market, tested); the A/B is rerunning.
+    2. **S8b (F-F)** (`s8b-wip` `7580cf2`): **PASS**. Planner (no hits)
+       − baseline +19.58 per squad-season [+1.28, +38.70]; 2024/25, a 4 h
+       10 min run. Mutations 13 of 14 (b2 equivalent). Verifier running.
+    3. **S15 (F-G)** (`s15-wip` `91f401d`): **PASS**. Builder − rule
+       +33.31 window points per date [+25.29, +41.54]; ≥ the rule on
+       0.78 of dates; projected ≥ on every date; 68 dates. The first run
+       crashed on 2024/25's AM rows (fixed before any result). Mutations
+       18 of 18. Verifier running.
     4. **S17 (F-H) DONE** (`s17-wip` `90b62d4`): Brier skill +0.084
        [−0.022, +0.169] → PASS on the point estimate (bar ≥ 0.05). GW20
        −0.075, GW26 +0.241, GW32 +0.209; overconfident deciles. Verifier
