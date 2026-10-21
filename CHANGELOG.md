@@ -4056,3 +4056,34 @@ except one:
   - S7 is identical, and so are the calibration lines.
 
 The report `worklog/cc_2026-10-20_S2b_after.md` is corrected in place.
+
+## 2026-10-21 — W1b done: automatic dry runs by push, merged, real run green, final verifier PASS (`f367cbd`; data `7dbc319`)
+
+**Merged** `f367cbd` (`w1b-wip` `dd10f24`, tree identical). Tag `pre-W1b` = `87485f3`.
+
+**Built:**
+- A push to `dry/<item>` runs the nightly as a dry run. Its result goes to
+  `data-dryrun-<item>`, and the Odds API key is not passed.
+- The `--due` gate (`fpl_dryrun.py`) skips a dry run, green, in the quiet
+  windows: 21:30 UTC until the night's commit (04:00 at the latest), and
+  within 1 hour of a deadline. It also skips once 12 dry runs, push and
+  manual together, have run that UTC day (RULINGS PART F, F-A; it was 6).
+- A real run never reaches the gate.
+
+**Measured:**
+- tests 708 → 739; Boris's dry run #40 green (`data-dryrun` `516326d`).
+- **The real run** (Boris's dispatch, 14:18 UTC, data `7dbc319`):
+  - STATUS OK 29/29; 739 tests;
+  - RECORD own 276, xg/minutes/bottomup 256, fpl_ep 668;
+  - odds 20 events, 472 credits left;
+  - 3 core calls: GW1–7 are all final now.
+- The projection log is last night's byte for byte, plus 1,712 GW8 rows,
+  all made before the deadline.
+
+**Verifiers** (Fable 5.1), all PASS:
+- the pre-check (`verify_W1b_pre.md`);
+- the delta (`verify_W1b.md`);
+- the fix of its two slips (`verify_W1b_fix.md`);
+- the final on the real run (`verify_W1b_final.md`).
+
+Report: `worklog/cc_2026-10-19_W1b.md`.
