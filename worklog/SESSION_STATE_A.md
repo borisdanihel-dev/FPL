@@ -7,7 +7,33 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (20 Oct, 19:00 UTC on): "Ruling, Tue 20 Oct, 21:00 Prague"** (verbatim
+- **NOW (21 Oct, 10:00 UTC on): "Wednesday 21 Oct"** (verbatim in
+  `prereg/W1b.md`, `W2.md`, `W3.md`, `S16.md`, master `87485f3`; the
+  scratchpad `ruling_21oct.txt`). Item count 0 of 6.
+  - Last night's nightly (22:06 UTC): STATUS OK 29/29, check 22 equal for 49
+    entries in GW1–7, odds credits 476.
+  - **W1b merged:** `w1b-wip` `dd10f24` took master (docs only), suite 739
+    OK bare and with the data. Tag `pre-W1b` = `87485f3`. Master
+    `f367cbd`, the tree identical to the tested branch, pushed 10:21
+    UTC. The untracked `verify_W1b_pre.md` (identical to the branch's) was
+    moved to the scratchpad `aside/`.
+    - **Waiting on Boris:** the real run on master (`dry_run` unticked).
+      Then the final verifier. If it is red: revert master to
+      `pre-W1b` before 21:00 UTC (the OK is in the ruling), park, tell
+      Boris.
+  - **W2 prep:** `w2-wip` `84c9725` takes master (S2b; MIGRATIONS and
+    CHANGELOG both kept), 492 sync tests OK, pushed. After the real W1b
+    run: merge master (W1b) in, full suite, push `dry/W2`.
+  - **W3 prep:** `w3-wip` `16e154d` takes master (docs only), pushed.
+  - **Schedule:**
+    - W2 Sat 24 Oct after the GW8 deadline (Boris's click);
+    - `s8c-wip` Sun 25 Oct, with the landing tests;
+    - W3 Mon 26 Oct via `dry/W3`.
+  - **Step 16 parts 3–4:** the prereg next, then a branch off master.
+  - **Thursday:** no runner pushes from 11:30 UTC; Boris pastes the
+    bundle run about 16:00 UTC (from `s8c-wip` `d9071b8`).
+
+- (Earlier) **NOW (20 Oct, 19:00 UTC on): "Ruling, Tue 20 Oct, 21:00 Prague"** (verbatim
   in `prereg/S8c.md` amendment 4, `prereg/W1b.md`, BUILD_PLAN Part F F-M,
   master `6a46a79`; the scratchpad `ruling_20oct_2100.txt`).
   - **Point 1:** W1b merges Wednesday before 21:00 UTC (S2b was today's

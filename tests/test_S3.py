@@ -854,11 +854,13 @@ class FailureIssue(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             self.assertEqual(self._run(self.GREEN, FakeGitHub(fail=True))[0], 0)
 
-    def test_the_workflow_grants_issues_write_and_contents_write_only(self):
+    def test_the_workflow_grants_contents_and_issues_write_and_actions_read_only(self):
+        """S3: contents and issues write; RULING W1b, point 4: actions read, for
+        the dry-run gate's count."""
         y = _yml("nightly.yml")
         job = y[y.index("    permissions:"):y.index("    env:")]
         self.assertEqual([l.split("#")[0].strip() for l in job.splitlines()[1:] if l.strip()],
-                         ["contents: write", "issues: write"])
+                         ["contents: write", "issues: write", "actions: read"])
         step = y[y.index("name: Failure issue"):]
         self.assertIn("if: always() && steps.due.outputs.run == 'true' && env.FPL_DRY_RUN != 'true'", step)
         self.assertIn("run: python fpl_alert.py data", step)
