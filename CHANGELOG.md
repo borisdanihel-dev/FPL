@@ -4093,3 +4093,28 @@ except one:
   - S7 is identical, and so are the calibration lines.
 
 The report `worklog/cc_2026-10-20_S2b_after.md` is corrected in place.
+
+## 2026-10-21 — W2 amendment 3: the multiplier check reads the chip as entry_gw stores it (`5d4ad2b` prereg on master, `ba138c7` code; on `w2-wip`)
+
+- Boris's message on dry/W2's check 31, verbatim in `prereg/W2.md`.
+- The cause: `check_multipliers` took the chip from the totals chain, which
+  cannot settle the newest gameweek (GW7, no GW8 row yet), so every GW7
+  chip read None. It was not one chip per entry: `entry_gw` holds both of
+  4866471's chips.
+- Our own GW7 Triple Captain fails the old lookup the same way; it was not
+  reached. The offline `tools/league.py` on master carries the same
+  lookup.
+- The fix: `load` passes the stored `entry_gw` rows to the check, one line
+  in `tools/league.py` and one in `fpl_league.py`. Nothing else changes.
+- Measured:
+  - suite 751 → 752, OK bare and with the data;
+  - the new test (chips in two consecutive gameweeks, both row orders,
+    both modules) red on the old lookup;
+  - mutations 3 of 3 red;
+  - real data `7dbc319`: CHIPS OK 37 lines, LEAGUE OK 58 lines;
+  - dry/W2 at `ba138c7` → data-dryrun-W2 `62ce283`: checks 29/30, check 31
+    OK; the one WARN is check 30, odds skipped by design in a push dry run.
+- Verifier: PASS (Fable 5.1, `worklog/verify_W2_a3.md`). The merge stays
+  Saturday 24 Oct after the GW8 deadline.
+
+Report: `worklog/cc_2026-10-21_W2a3.md`.
