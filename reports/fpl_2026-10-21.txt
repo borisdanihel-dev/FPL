@@ -1,4 +1,4 @@
-STATUS OK | generated 2026-10-21T14:20:58Z | next deadline GW8 2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 29/29 | repo 8 MB
+STATUS WARN | generated 2026-10-21T16:31:04Z | next deadline GW8 2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 29/30 | repo 8 MB
 
 ==============================================================================
 DIFF  GW6 -> GW7
@@ -290,7 +290,7 @@ FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
     player         team     £   L4  pts/£m   fdr  score   own%
     Groß           BHA    6.2   42    6.77  3.33   5.65   45.4
     Rudoni         COV    4.9   20    4.08  2.50   5.10    0.3
-    Henderson      CHE    4.9   23    4.69  2.83   5.09    1.1
+    Henderson      CHE    4.9   23    4.69  2.83   5.09    1.2
     Belloumi       HUL    5.2   25    4.81  3.17   4.41    9.1
     McGinn         AVL    5.4   23    4.26  3.00   4.26    2.8
     Ayari          BHA    5.4   27    5.00  3.33   4.17    0.5
@@ -442,7 +442,7 @@ POSITION ARBITRAGE  (the scoring system is wrong about these players)
     player         team     £  threat/90   G+A   xG+xA   own%
     Barry          EVE    5.7       51.5     3    4.86    8.3
     Haaland        MCI   15.7       48.3     8    6.46   76.8
-    Isak           LIV    9.0       46.6     5    3.97   13.0
+    Isak           LIV    9.0       46.6     5    3.97   13.1
     Saka           ARS    9.6       40.2     3    4.83   16.7
     Yalcouyé       BHA    4.5       38.1     2    1.91    3.4
     Kluivert       BOU    5.9       37.7     1    1.37    0.6
@@ -500,3 +500,106 @@ CONSISTENCY  (delivery pattern, not total)
   swing is the standard deviation of gameweek scores. Three matches is
   far too few to trust an individual figure - read it again at GW8.
 
+
+==============================================================================
+CHIPS (W2: S7 chip calculator)
+==============================================================================
+CHIP CALCULATOR  export fpl_export_gw7_2026-10-21.json.gz (GW7 played), next GW8, chips left: BB, FH; budget £99.8m = bank + selling prices
+  xP source: own - the recorded row for GW8 where the log holds one, else the own
+  formula on each week's real fixtures from the fixtures table, GW8-GW19 (no proxy weeks).
+  Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).
+
+    GW     metric    V_BB    V_FH  ours XI   FH XI   V(none)  V(BB)  V(FH)  V(BB+FH)   action with all chips
+     8        own    6.68    4.86    32.50   37.36        0.00       7.37       5.35      12.72   HOLD
+     9  own-model    7.37    3.68    30.71   34.39        0.00       7.37       5.35      12.72   PLAY BB
+    10  own-model    6.37    4.70    35.47   40.17        0.00       7.18       5.35      12.53   HOLD
+    11  own-model    7.18    5.13    34.80   39.93        0.00       7.18       5.35      12.53   PLAY BB
+    12  own-model    6.63    4.73    31.18   35.90        0.00       7.15       5.35      12.51   HOLD
+    13  own-model    6.47    5.00    33.75   38.75        0.00       7.15       5.35      12.51   HOLD
+    14  own-model    6.50    4.29    34.82   39.11        0.00       7.15       5.35      12.51   HOLD
+    15  own-model    7.10    5.10    32.04   37.14        0.00       7.15       5.35      12.51   HOLD
+    16  own-model    6.67    5.35    33.98   39.34        0.00       7.15       5.35      12.51   PLAY FH
+    17  own-model    6.80    4.76    33.79   38.55        0.00       7.15       5.25      12.23   HOLD
+    18  own-model    7.15    5.25    33.48   38.73        0.00       7.15       5.25      12.23   PLAY FH
+    19  own-model    6.98    4.25    33.84   38.09        0.00       6.98       0.00       6.98   PLAY BB
+
+  NEXT GAMEWEEK GW8: HOLD   (margin over the best other action +0.50 xP)
+  residuals by position (2026/27 own, graded gameweeks): GK n=83, DEF n=400, MID n=496, FWD n=113
+  uncertainty: 1000 residual resamples by position (XIs held fixed): margin of HOLD over the best other action 90% [-7.02, +18.41], same action in 82%
+
+  BENCH PREP for GW9: one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)
+    Rudoni            2.40 -> McGinn            2.98 (£5.4m, AVL)  gain +0.58
+    Thomas            2.27 -> De Cuyper         3.13 (£5.3m, BHA)  gain +0.86
+    Slater            1.72 -> McGinn            2.98 (£5.4m, AVL)  gain +1.25
+    Kelleher          2.03 -> Raya              2.80 (£6.1m, ARS)  gain +0.77
+
+  FREE HIT SCREEN (item N: own where recorded, else bottomup; budget = bank + selling prices)
+  GW   metric      FH XI   ours    gap  not a   shape FH / ours   flag
+  GW8  own          37.4   32.5   +4.9      0   5-3-2 / 4-4-2
+  GW9  bottomup     54.5   52.7   +1.9      0   5-4-1 / 5-3-2
+  GW10 bottomup     57.6   55.1   +2.5      0   5-4-1 / 5-3-2
+  GW11 bottomup     58.4   53.7   +4.7      0   5-4-1 / 4-4-2
+  GW12 bottomup     57.7   52.9   +4.7      0   5-4-1 / 4-4-2
+  GW13 bottomup     55.5   52.4   +3.1      0   5-4-1 / 4-4-2
+
+==============================================================================
+LEAGUE (W2: S9 league)
+==============================================================================
+LEAGUE  2026-10-21: settled through GW6, 32 gameweeks left; coming deadline GW8 (GW7 played, not yet settled); points net of hits; B=10000, 90% CI, seed 20261018; information only
+  scores from the totals chain (RULING S9 decisions, point 2): every stored row equals the chain; 7 rows the chain cannot correct, excluded
+    excluded: Bruno Dos Tres GW7 (no later row to correct it)
+    excluded: Revelstoke FC GW7 (no later row to correct it)
+    excluded: ReturnOfTheDjedi FC GW7 (no later row to correct it)
+    excluded: No More Mr. Rice Guy GW7 (no later row to correct it)
+    excluded: 1. FC Kiripolcz GW7 (no later row to correct it)
+    excluded: Skori FC GW7 (no later row to correct it)
+    excluded: PyroNeniZlocin GW7 (no later row to correct it)
+  pooled sigma_d = 18.03 [10.45, 20.31] points a gameweek (root mean square over rivals); our sigma = 13.76 [3.01, 18.35]; without chip weeks sigma_d = 17.87 [5.62, 19.72]
+  variance line = sigma_d x sqrt(n) = 102.0 points
+
+  rival                   n         sigma_j [90%]        sigma_dj [90%]    rho   gap        P(above j) [90%]  line
+  ReturnOfTheDjedi FC     6    26.94 [14.0, 32.4]     21.74 [6.9, 26.9]   0.60    29    0.388 [0.312, 0.400]  inside
+  Bruno Dos Tres          6    22.76 [10.8, 27.2]     20.35 [9.7, 25.5]   0.47    56    0.291 [0.172, 0.313]  inside
+  Skori FC                6     22.74 [6.5, 30.1]     14.96 [3.0, 19.2]   0.77    21    0.418 [0.361, 0.427]  inside
+  No More Mr. Rice Guy    6     24.63 [4.9, 32.5]     13.95 [2.8, 16.7]   0.89     2    0.492 [0.487, 0.493]  inside
+  Revelstoke FC           6     21.74 [5.3, 28.4]    22.08 [10.4, 27.8]   0.29    42    0.340 [0.239, 0.357]  inside
+  PyroNeniZlocin          6     13.41 [5.4, 16.0]     12.53 [5.6, 16.2]   0.57   -44    0.667 [0.649, 0.772]  inside
+
+  threat set (rivals ahead of us): ReturnOfTheDjedi FC w=0.199, Bruno Dos Tres w=0.231, Skori FC w=0.189, No More Mr. Rice Guy w=0.165, Revelstoke FC w=0.215
+  drift version (information only): our XI by own for GW8 from GW7 picks = 36.9 xP
+    ReturnOfTheDjedi FC    their XI (GW7 picks)  36.2 xP, drift  +0.7/GW over 6 -> P(above) 0.404 (zero drift 0.388)
+    Bruno Dos Tres         their XI (GW7 picks)  36.8 xP, drift  +0.1/GW over 6 -> P(above) 0.294 (zero drift 0.291)
+    Skori FC               their XI (GW7 picks)  26.5 xP (1 starters without an own row), drift +10.5/GW over 6 -> P(above) 0.659 (zero drift 0.418)
+    No More Mr. Rice Guy   their XI (GW7 picks)  42.1 xP, drift  -5.1/GW over 6 -> P(above) 0.374 (zero drift 0.492)
+    Revelstoke FC          their XI (GW7 picks)  36.6 xP, drift  +0.3/GW over 6 -> P(above) 0.348 (zero drift 0.340)
+    PyroNeniZlocin         their XI (GW7 picks)  25.3 xP (3 starters without an own row), drift +11.7/GW over 6 -> P(above) 0.868 (zero drift 0.667)
+
+  league EO from the threat set's last settled picks (ReturnOfTheDjedi FC GW7, Bruno Dos Tres GW7, Skori FC GW7, No More Mr. Rice Guy GW7, Revelstoke FC GW7); the coming gameweek's picks are hidden until its deadline
+  our 15 (GW7 picks) for GW8: relative xP = (our multiplier - EO) x own
+  player           pos   own mult    EO  rel xP
+  Haaland          FWD  4.44    2  1.79    0.95
+  Groß             MID  3.61    1  0.58    1.52
+  Calafiori        DEF  3.18    1  1.00    0.00
+  Mbeumo           MID  2.89    1  0.00    2.89
+  Saka             MID  2.85    1  0.60    1.15
+  Thiago           FWD  2.71    1  0.00    2.71
+  Rudoni           MID  2.69    1  0.00    2.69
+  Verbruggen        GK  2.68    1  0.23    2.06
+  Muharemović      DEF  2.56    1  0.23    1.97
+  Thomas           DEF  2.54    1  0.00    2.54
+  Tarkowski        DEF  2.35    1  0.00    2.35
+
+  CAPTAIN TABLE GW8: our XI by own xP, any position; allowed differential = cost <= 0.5 xP (before GW25) and a lower threat-set EO than the top; free variance = cost < 0.3 and a lower EO
+  rank player           pos   own    EO  cost  flags
+     1 Haaland          FWD  4.44  1.79  0.00  
+     2 Groß             MID  3.61  0.58  0.83  
+     3 Calafiori        DEF  3.18  1.00  1.26  
+     4 Mbeumo           MID  2.89  0.00  1.55  
+     5 Saka             MID  2.85  0.60  1.59  
+     6 Thiago           FWD  2.71  0.00  1.73  
+     7 Rudoni           MID  2.69  0.00  1.75  
+     8 Verbruggen        GK  2.68  0.23  1.76  
+     9 Muharemović      DEF  2.56  0.23  1.89  
+    10 Thomas           DEF  2.54  0.00  1.90  
+    11 Tarkowski        DEF  2.35  0.00  2.09  
+  a DEF or GK topped our XI's own xP in 1 of 4 settled gameweeks with own rows
