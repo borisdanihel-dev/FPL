@@ -127,7 +127,7 @@ def load(data_dir):
     for r in E.forecasts(log_rows, d_events):
         if r["source"] == "own":
             own[int(r["event"])][int(r["player_id"])] = float(r["predicted"])
-    check_multipliers(gw, picks)
+    check_multipliers(stored, picks)             # the chip as entry_gw stores it, whatever the chain settles (W2 amendment 3)
     return {"entries": entries, "gw": gw, "picks": picks, "players": players, "own": own,
             "settled": sorted(settled), "deadlines": deadlines, "provisional": provisional, "excluded": excluded}
 

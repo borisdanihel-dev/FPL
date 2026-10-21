@@ -383,5 +383,55 @@ class ReportSections(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+
+def chips_in_a_row(tmp, reverse):
+    """S9's toy league with rival B playing a wildcard in GW4 and a Triple
+    Captain in GW5, GW5 the newest settled gameweek with no later entry_gw
+    row (so the totals chain cannot settle it), B's entry_gw rows inserted
+    in event order or reversed (amendment 3)."""
+    from tests.test_S9 import toy_league, RIVAL_B
+    db = toy_league(tmp)
+    c = sqlite3.connect(db)
+    rows = [list(r) for r in c.execute("select * from entry_gw where entry_id = ? and event <= 5 order by event", (RIVAL_B,))]
+    c.execute("delete from entry_gw where entry_id = ?", (RIVAL_B,))
+    for r in rows:
+        r[7] = {4: "wildcard", 5: "3xc"}.get(r[1], r[7])
+    for r in (rows[::-1] if reverse else rows):
+        c.execute("insert into entry_gw values (?,?,?,?,?,?,?,?)", r)
+    c.execute("update picks set multiplier = 3 where entry_id = ? and event = 5 and is_captain = 1", (RIVAL_B,))
+    c.commit(); c.close()
+    return RIVAL_B
+
+
+class ChipLookup(unittest.TestCase):
+    """Amendment 3: the multiplier check reads each settled gameweek's chip
+    from entry_gw, whatever the totals chain can settle."""
+
+    def modules(self):
+        sys.path.insert(0, os.path.join(HERE, "tools"))
+        import fpl_league
+        import league as LGt
+        return fpl_league, LGt
+
+    def test_chips_in_consecutive_gameweeks_both_row_orders(self):
+        import shutil, tempfile
+        for mod in self.modules():
+            for reverse in (False, True):
+                tmp = tempfile.mkdtemp()
+                try:
+                    b = chips_in_a_row(tmp, reverse)
+                    data = mod.load(tmp)                                                    # the 3xc in GW5 passes
+                    self.assertIn((b, 5), data["excluded"])                                 # the chain cannot settle GW5
+                    self.assertNotIn(5, data["gw"][b])
+                    c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
+                    c.execute("update picks set multiplier = 2 where entry_id = ? and event = 5 and is_captain = 1", (b,))
+                    c.commit(); c.close()
+                    with self.assertRaises(mod.MissingInput) as e:                         # a wrong multiplier still stops the run
+                        mod.load(tmp)
+                    self.assertIn(f"entry {b} GW5", str(e.exception)); self.assertIn("(chip 3xc)", str(e.exception))
+                finally:
+                    shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()
