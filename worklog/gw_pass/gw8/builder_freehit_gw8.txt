@@ -1,0 +1,24 @@
+BUILDER  --freehit  GW8 from fpl_export_gw7_2026-10-21.json.gz; budget 99.8 = bank + selling prices; xp_v2 as tested (week t odds 10); the default for Free Hit and Wildcard builds (Ruling, Tue 20 Oct, point 2; not used for GW8)
+  the GK+DEF 2-per-club cap ON (Boris's choice): objective 66.01; without it 66.01; the cap costs 0.00
+  player           pos team  price   xP GW8  XI
+  Kelleher          GK  BRE    5.0     3.53  XI
+  Gabriel          DEF  ARS    7.9     5.85  XI
+  Calafiori        DEF  ARS    5.9     5.79  XI
+  Murillo          DEF  NFO    5.5     5.33  XI
+  Mukiele          DEF  SUN    5.4     5.26  XI
+  Thomas           DEF  COV    4.0     4.90  XI
+  Saka             MID  ARS    9.5     6.03  C
+  Mbeumo           MID  MUN    7.8     5.66  XI
+  Rogers           MID  CHE    8.0     5.32  XI
+  E.Le Fée         MID  SUN    5.7     4.71  XI
+  Haaland          FWD  MCI   15.6     5.69  XI
+  Forster           GK  BOU    4.0     0.00  bench
+  Rudoni           MID  COV    4.9     4.70  bench
+  Barry            FWD  EVE    5.6     4.19  bench
+  Thomas-Asante    FWD  COV    5.0     2.55  bench
+  formation 5-4-1; spent 99.8 of 99.8
+  beside it, the three-layer rule (frozen, 4-3-3, the quota split, the same matrix): objective 62.83, spent 95.1; builder - rule +3.18   breaks the cap: ARS 3
+     GK: Raya (ARS, 6.1), Walton (IPS, 4.4)
+    DEF: Gabriel (ARS, 7.9), Calafiori (ARS, 6.0), Murillo (NFO, 5.5), Mukiele (SUN, 5.4), Diop (IPS, 3.9)
+    MID: Mbeumo (MUN, 7.8), Tavernier (BOU, 6.2), Ndoye (NFO, 5.5), Slater (HUL, 4.5), Crooks (HUL, 4.4)
+    FWD: Haaland (MCI, 15.7), Gonzalo (FUL, 6.1), Barry (EVE, 5.7)

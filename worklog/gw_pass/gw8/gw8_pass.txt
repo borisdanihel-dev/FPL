@@ -1,0 +1,189 @@
+GW PASS  GW8 (deadline 2026-10-23 17:30 UTC) from fpl_export_gw7_2026-10-21.json.gz; generated 2026-10-21 15:08 UTC; information only - no section here is recorded; the transfer default from GW8 is the no-hit planner on xp_v2 (section 3, Ruling, Tue 20 Oct, point 1), the simple rule beside it
+
+==============================================================================
+S5 ODDS CLEAN SHEETS
+==============================================================================
+ODDS LAMBDA LIVE  next deadline GW8 2026-10-23 17:30 UTC; information only (no decision input until adopted)
+  method: per fixture the mean decimal price across bookmakers for h2h (home, draw, away; h2h_lay excluded)
+  and for totals at the 2.5 line (over, under); power de-margin; lambda_total from P(under 2.5)
+  by bisection on the Poisson CDF at 2, the home/away split by bisection on P(home win); P(cs) = exp(-lambda_opp).
+  snapshot odds_2026-10-21T1420Z.json.gz taken 2026-10-21 14:20 UTC (51.2 h before the deadline): 20 events aggregated
+
+  kickoff           home away  lam_h  lam_a P(cs home) P(cs away) books h2h/tot  source
+  2026-10-23 19:00  IPS  NFO   1.27   1.61      0.199      0.280         42/20  odds
+  2026-10-24 11:30  AVL  MCI   1.18   2.11      0.121      0.308          41/3  odds
+  2026-10-24 14:00  ARS  EVE   2.11   0.70      0.498      0.121         42/20  odds
+  2026-10-24 14:00  COV  FUL   1.31   1.57      0.207      0.269         42/20  odds
+  2026-10-24 16:30  CHE  TOT   2.11   1.23      0.292      0.122          42/3  odds
+  2026-10-25 14:00  CRY  NEW   1.43   1.65      0.192      0.240         42/17  odds
+  2026-10-25 14:00  HUL  BRE   1.04   1.94      0.144      0.354         42/17  odds
+  2026-10-25 14:00  LIV  BHA   1.75   1.44      0.238      0.174         42/10  odds
+  2026-10-25 14:00  MUN  BOU   1.89   1.26      0.283      0.152         42/14  odds
+  2026-10-25 16:30  SUN  LEE   1.13   1.34      0.261      0.323         41/19  odds
+
+  our GK/DEF for GW8 (export fpl_export_gw7_2026-10-21.json.gz): bottomup, bottomup_lambda, P(cs) of each fixture, source
+    Verbruggen        BHA  bottomup  4.02  bottomup_lambda  2.18  P(cs) 0.174  odds
+    Muharemović       LEE  bottomup  5.13  bottomup_lambda  4.39  P(cs) 0.323  odds
+    Calafiori         ARS  bottomup  5.65  bottomup_lambda  5.34  P(cs) 0.498  odds
+    Tarkowski         EVE  bottomup  4.52  bottomup_lambda  2.91  P(cs) 0.121  odds
+    Thomas            COV  bottomup  4.38  bottomup_lambda  4.17  P(cs) 0.207  odds
+    Kelleher          BRE  bottomup  3.92  bottomup_lambda  3.12  P(cs) 0.354  odds
+    Branthwaite       EVE  bottomup  4.47  bottomup_lambda  2.85  P(cs) 0.121  odds
+
+==============================================================================
+S7 CHIPS
+==============================================================================
+CHIP CALCULATOR  export fpl_export_gw7_2026-10-21.json.gz (GW7 played), next GW8, chips left: BB, FH; budget £99.8m = bank + selling prices
+  xP source: own - the recorded row for GW8 where the log holds one, else the own
+  formula on each week's real fixtures from the fixtures table, GW8-GW19 (no proxy weeks).
+  Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).
+
+    GW     metric    V_BB    V_FH  ours XI   FH XI   V(none)  V(BB)  V(FH)  V(BB+FH)   action with all chips
+     8        own    6.68    4.86    32.50   37.36        0.00       7.37       5.35      12.72   HOLD
+     9  own-model    7.37    3.68    30.71   34.39        0.00       7.37       5.35      12.72   PLAY BB
+    10  own-model    6.37    4.70    35.47   40.17        0.00       7.18       5.35      12.53   HOLD
+    11  own-model    7.18    5.13    34.80   39.93        0.00       7.18       5.35      12.53   PLAY BB
+    12  own-model    6.63    4.73    31.18   35.90        0.00       7.15       5.35      12.51   HOLD
+    13  own-model    6.47    5.00    33.75   38.75        0.00       7.15       5.35      12.51   HOLD
+    14  own-model    6.50    4.29    34.82   39.11        0.00       7.15       5.35      12.51   HOLD
+    15  own-model    7.10    5.10    32.04   37.14        0.00       7.15       5.35      12.51   HOLD
+    16  own-model    6.67    5.35    33.98   39.34        0.00       7.15       5.35      12.51   PLAY FH
+    17  own-model    6.80    4.76    33.79   38.55        0.00       7.15       5.25      12.23   HOLD
+    18  own-model    7.15    5.25    33.48   38.73        0.00       7.15       5.25      12.23   PLAY FH
+    19  own-model    6.98    4.25    33.84   38.09        0.00       6.98       0.00       6.98   PLAY BB
+
+  NEXT GAMEWEEK GW8: HOLD   (margin over the best other action +0.50 xP)
+  residuals by position (2026/27 own, graded gameweeks): GK n=83, DEF n=400, MID n=496, FWD n=113
+  uncertainty: 1000 residual resamples by position (XIs held fixed): margin of HOLD over the best other action 90% [-7.02, +18.41], same action in 82%
+
+  BENCH PREP for GW9: one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)
+    Rudoni            2.40 -> McGinn            2.98 (£5.4m, AVL)  gain +0.58
+    Thomas            2.27 -> De Cuyper         3.13 (£5.3m, BHA)  gain +0.86
+    Slater            1.72 -> McGinn            2.98 (£5.4m, AVL)  gain +1.25
+    Kelleher          2.03 -> Raya              2.80 (£6.1m, ARS)  gain +0.77
+
+  FREE HIT SCREEN (item N: own where recorded, else bottomup; budget = bank + selling prices)
+  GW   metric      FH XI   ours    gap  not a   shape FH / ours   flag
+  GW8  own          37.4   32.5   +4.9      0   5-3-2 / 4-4-2
+  GW9  bottomup     54.5   52.7   +1.9      0   5-4-1 / 5-3-2
+  GW10 bottomup     57.6   55.1   +2.5      0   5-4-1 / 5-3-2
+  GW11 bottomup     58.4   53.7   +4.7      0   5-4-1 / 4-4-2
+  GW12 bottomup     57.7   52.9   +4.7      0   5-4-1 / 4-4-2
+  GW13 bottomup     55.5   52.4   +3.1      0   5-4-1 / 4-4-2
+
+==============================================================================
+TRANSFER PLANNER: THE XP_V2 NO-HIT DEFAULT, S8 AND THE BASELINE
+==============================================================================
+TRANSFER PLANNER ON XP_V2  GW8-13 from fpl_export_gw7_2026-10-21.json.gz; xp_v2 as tested (odds odds_2026-10-21T1420Z.json.gz, else the fallback); 1 free transfer, no hits (a hit stays a manual call), decay 0.85, schedule boris (1.5, 1.0, 0.6, 0.3); bank 1.9; the default from GW8 (Ruling, Tue 20 Oct, point 1)
+  lambdas GW8: ARS-EVE odds, AVL-MCI odds, CHE-TOT odds, COV-FUL odds, CRY-NEW odds, HUL-BRE odds, IPS-NFO odds, LIV-BHA odds, MUN-BOU odds, SUN-LEE odds
+  lambdas GW9: AVL-FUL odds, BOU-LEE odds, BRE-NFO odds, CHE-MUN odds, COV-SUN odds, HUL-IPS odds, LIV-ARS odds, MCI-BHA odds, NEW-EVE odds, TOT-CRY odds
+  lambdas GW10: ARS-HUL fallback, BHA-BRE fallback, CRY-LIV fallback, EVE-COV fallback, FUL-NEW fallback, IPS-BOU fallback, LEE-TOT fallback, MUN-AVL fallback, NFO-MCI fallback, SUN-CHE fallback
+  lambdas GW11: AVL-SUN fallback, BOU-NFO fallback, BRE-EVE fallback, CHE-LEE fallback, COV-CRY fallback, HUL-BHA fallback, LIV-MUN fallback, MCI-FUL fallback, NEW-ARS fallback, TOT-IPS fallback
+  lambdas GW12: ARS-MCI fallback, BHA-NEW fallback, CRY-HUL fallback, EVE-LIV fallback, FUL-BOU fallback, IPS-AVL fallback, LEE-COV fallback, MUN-BRE fallback, NFO-CHE fallback, SUN-TOT fallback
+  lambdas GW13: AVL-EVE fallback, BOU-BHA fallback, BRE-ARS fallback, CHE-CRY fallback, COV-IPS fallback, HUL-NFO fallback, LIV-SUN fallback, MCI-LEE fallback, NEW-MUN fallback, TOT-FUL fallback
+   #   score    gain  lostFT  weekly dxP                           plan
+   1    4.03    5.03    1.00   +0.1  +0.0  +0.8  +2.3  +4.0  +2.0  Branthwaite -> De Cuyper (BHA, 5.3)
+   2    3.90    4.90    1.00   +0.1  +0.0  +0.8  +2.3  +3.9  +1.9  Tarkowski -> De Cuyper (BHA, 5.3)
+   3    3.44    4.44    1.00   -0.6  -0.9  +1.6  +1.7  +4.9  +2.4  Thomas -> De Cuyper (BHA, 5.3)
+   4    3.10    4.10    1.00   +0.3  +0.0  +0.7  +2.4  +2.2  +1.7  Branthwaite -> Vuskovic (BHA, 5.1)
+   5    2.97    3.97    1.00   +0.3  +0.0  +0.6  +2.3  +2.1  +1.7  Tarkowski -> Vuskovic (BHA, 5.1)
+  DEFAULT: Branthwaite -> De Cuyper (BHA, 5.3)
+  the simple rule beside it (best one-week move when its gain > 0, else roll): Tarkowski -> Gabriel (ARS, 7.9); on the planner's score 2.36, week-t gain +1.66
+  information, a Bench Boost in GW8 (week t's bench at full weight), top 3:
+    1    4.58  week-t gain +0.62  Branthwaite -> De Cuyper (BHA, 5.3)
+    2    4.40  week-t gain +0.57  Tarkowski -> De Cuyper (BHA, 5.3)
+    3    3.65  week-t gain +0.83  Branthwaite -> Vuskovic (BHA, 5.1)
+
+  below, information: S8's planner on own xP, its baseline and the named plans (the default is the xp_v2 planner above)
+TRANSFER PLANNER  export fpl_export_gw7_2026-10-21.json.gz, next GW8, horizon GW8-13; bank £1.9m, free transfers 1 (estimated from the transfer log; confirm in the app); xP = own; pool = top 25 per position by decayed xP; information only
+  price predictor: no source
+
+  TOP 5 PLANS  decay 0.85, schedule boris (1.5, 1.0, 0.6, 0.3): score = decayed gain - 4 x hits - lost FT value
+   #   score    gain  hits  lostFT  weekly dxP                           plan
+   1    4.85    5.85     0    1.00   +1.1  +0.7  +1.7  +2.1  +1.9  +1.6  Thomas -> De Cuyper (BHA, £5.3m)
+   2    4.76    5.76     0    1.00   +1.3  +0.6  +1.3  +2.1  +1.9  +1.6  Branthwaite -> De Cuyper (BHA, £5.3m)
+   3    4.21    5.21     0    1.00   +1.1  +0.6  +1.3  +2.2  +1.3  +1.7  Muharemović -> De Cuyper (BHA, £5.3m)
+   4    3.53    8.53     1    1.00   +2.0  +1.2  +1.9  +2.9  +2.6  +2.4  Thomas -> De Cuyper (BHA, £5.3m); Branthwaite -> Dasilva (COV, £4.0m)
+   5    2.98    7.98     1    1.00   +1.8  +1.1  +1.8  +2.9  +1.9  +2.5  Muharemović -> De Cuyper (BHA, £5.3m); Thomas -> Dasilva (COV, £4.0m)
+
+  TOP 5 PLANS  decay 0.85, schedule solver (2.1, 1.8, 1.5, 1.1): score = decayed gain - 4 x hits - lost FT value
+   #   score    gain  hits  lostFT  weekly dxP                           plan
+   1    4.05    5.85     0    1.80   +1.1  +0.7  +1.7  +2.1  +1.9  +1.6  Thomas -> De Cuyper (BHA, £5.3m)
+   2    3.96    5.76     0    1.80   +1.3  +0.6  +1.3  +2.1  +1.9  +1.6  Branthwaite -> De Cuyper (BHA, £5.3m)
+   3    3.41    5.21     0    1.80   +1.1  +0.6  +1.3  +2.2  +1.3  +1.7  Muharemović -> De Cuyper (BHA, £5.3m)
+   4    2.73    8.53     1    1.80   +2.0  +1.2  +1.9  +2.9  +2.6  +2.4  Thomas -> De Cuyper (BHA, £5.3m); Branthwaite -> Dasilva (COV, £4.0m)
+   5    2.18    7.98     1    1.80   +1.8  +1.1  +1.8  +2.9  +1.9  +2.5  Muharemović -> De Cuyper (BHA, £5.3m); Thomas -> Dasilva (COV, £4.0m)
+
+  exploratory, no hits (Boris's schedule, no bar): top plan Thomas -> De Cuyper  score 4.85, gain 5.85, hits 0
+  exploratory, hit buffer 3.0 (Boris's schedule, no bar): top plan Thomas -> De Cuyper  score 4.85, gain 5.85, hits 0
+
+  BASELINE (best one-week move with a free transfer when its gain > 0, else roll; never a hit): Tarkowski -> De Cuyper (BHA, £5.3m)
+  planner top plan: Thomas -> De Cuyper (BHA, £5.3m)
+  planner, no hits: Thomas -> De Cuyper (BHA, £5.3m)
+  DEFAULT = the baseline; the planner's top plan is the note (RULING S8 verifier FAIL item d)
+
+  NAMED PLANS (bundle amendment 1): free transfers 1 confirmed by Boris, planner estimate 1; score = decayed gain - 4 x hits - lost FT value, Boris's schedule, decay 0.85
+   #   score    gain  hits  lostFT  weekly dxP                           plan
+   1    1.19    2.19     0    1.00   +0.6  +0.2  +0.5  +0.5  +0.7  +0.9  Thiago -> Joao Pedro: Thiago -> João Pedro (CHE, £7.9m)
+   2    0.00    0.00     0    0.00   +0.0  +0.0  +0.0  +0.0  +0.0  +0.0  roll: roll
+   3    5.21    6.21     0    1.00   +1.7  +0.6  +1.3  +2.1  +1.9  +1.6  best single bench upgrade under Bench Boost (the first week's term values all 15): Branthwaite -> De Cuyper (BHA, £5.3m)   (GW term 1 under Bench Boost)
+
+==============================================================================
+S9 LEAGUE, CAPTAIN AND EFFECTIVE OWNERSHIP
+==============================================================================
+  missing input: entry 4866471 GW7 player 411: multiplier 3 but the rule says 2 (chip None)
+
+==============================================================================
+OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN
+==============================================================================
+  GW8: from GW8 xp_v2 as tested picks the XI and captain (RULING S6b acceptance point 1); own is printed beside it; vetoes on hard facts only
+  own = the recorded row where the log holds one (15 of 15); xp_v2 as tested = tools/xp_v2_live.py (not recorded) from fpl_export_gw7_2026-10-21.json.gz, odds odds_2026-10-21T1420Z.json.gz (10 of 10 fixtures from odds), priors 2025/26 (S11)
+  slot  own                               xp_v2 as tested                   
+     1 * Verbruggen        GK  2.68       Kelleher          GK  3.53
+     2   Calafiori        DEF  3.18       Calafiori        DEF  5.79
+     3   Muharemović      DEF  2.56       Muharemović      DEF  5.05
+     4   Thomas           DEF  2.54       Thomas           DEF  4.90
+     5 * Tarkowski        DEF  2.35       Saka             MID  6.03
+     6 * Groß             MID  3.61       Mbeumo           MID  5.66
+     7 * Mbeumo           MID  2.89       Rudoni           MID  4.70
+     8 * Saka             MID  2.85       Groß             MID  4.49
+     9 * Rudoni           MID  2.69       Haaland          FWD  5.69
+    10 * Haaland          FWD  4.44       Thiago           FWD  4.82
+    11 * Thiago           FWD  2.71       Barry            FWD  4.19
+    12 * Kelleher          GK  2.28       Verbruggen        GK  2.70
+    13 * Branthwaite      DEF  1.90       Tarkowski        DEF  3.68
+    14 * Barry            FWD  1.83       Branthwaite      DEF  3.64
+    15   Slater           MID  1.54       Slater           MID  3.24
+  captain: own Haaland (4.44)  |  xp_v2 as tested Saka (6.03)   *
+  11 slots differ; the XI differs; DEFAULT = xp_v2 as tested (slots 1-11, the bench order and the captain)
+
+==============================================================================
+KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK
+==============================================================================
+  GW8: own P(start) = the recorded minutes row; keeper lock = S12 minutes v2 (not adopted; 0.95 / 0.05 / 0 by starts in the club's last 3); xp_v2 = xp_v2 as tested (section 5)
+  Verbruggen        BHA  own P(start)  1.00   keeper lock  0.95   xp_v2  2.70
+  Kelleher          BRE  own P(start)  1.00   keeper lock  0.95   xp_v2  3.53
+
+==============================================================================
+CAPTAIN TABLE: S14 POINTS DISTRIBUTIONS (INFORMATION ONLY)
+==============================================================================
+  GW8: the points distribution of xp_v2 as tested (S14, option (a): its mean is xp_v2; no saves term); information only until S14 passes and Boris accepts
+  player           pos   mean   P>=10   P>=15  p90
+  Saka             MID   6.03   0.186   0.052   12
+  Calafiori        DEF   5.79   0.132   0.032   12
+  Haaland          FWD   5.69   0.170   0.034   12
+  Mbeumo           MID   5.66   0.175   0.051   12
+  Muharemović      DEF   5.05   0.105   0.010   10
+  Thomas           DEF   4.90   0.113   0.011   10
+  Thiago           FWD   4.82   0.110   0.018   10
+  Rudoni           MID   4.70   0.121   0.017   10
+  Groß             MID   4.49   0.096   0.011    9
+  Barry            FWD   4.19   0.056   0.004    9
+  Tarkowski        DEF   3.68   0.053   0.002    8
+  Branthwaite      DEF   3.64   0.049   0.001    8
+  Kelleher          GK   3.53   0.001   0.000    7
+  Slater           MID   3.24   0.027   0.001    7
+  Verbruggen        GK   2.70   0.004   0.000    6
+  within 0.3 xP of the captain (information; the captain rule is unchanged - highest xp_v2 in the XI - and there is no tie-break):
+    captain Saka             xp_v2  6.03  mean  6.03  P>=10 0.186  P>=15 0.052  p90 12
+    option  Calafiori        xp_v2  5.79  mean  5.79  P>=10 0.132  P>=15 0.032  p90 12
