@@ -225,3 +225,78 @@ Ruling, Tue 20 Oct night.
    - w3-wip: REALISED takes the actual GW8 15 from the post-deadline picks, own from the projection log, and xp_v2 from that CSV; each model picks its XI and captain from those 15. The condition "the bundle's 15 equals the GW8 squad" is replaced by "all 15 are in the CSV"; otherwise "not recorded".
 4. Committer time: OK, and the bundle's run.txt end time must also be before the deadline. Both are required.
 5. Yes: the item count resets to 0 of 6. Wednesday: point 3, then W1b as planned (tell Boris when his dry-run click is needed, before 21:00 UTC), then Step 16's prereg. Same rules: branches only; no merges without Boris; no runner pushes 21:00 UTC to the end of the nightly or from Thu 22 Oct 11:30 UTC to the GW8 deadline.
+
+## Amendment 3, point 3 clarified (verbatim below; pinned before its test)
+
+- **The value:** the bundle's xp_v2 XI picker is `chips.xi_and_bench` (via `side_by_side`). It values a player as `pts.get(id, 0.0)` on section 5's forecast. A player xp_v2 does not forecast is therefore used at 0.0. The CSV already writes `repr(0.0)` and the flag `not forecast` in `lambda_source`, so no code changes.
+- **The test:** every CSV value equals the value the picker used.
+  - For our 15: the values `xi_and_bench` assigned in the bundle's own run, captured as it ran. One of the 15 is made not forecast on the toy.
+  - For every other export player: the picker's value, got by putting him in our 15 in place of a player of his position and calling `xi_and_bench` on the same forecast.
+  - The test goes red when a not-forecast player is written at any other value.
+- `s8c-wip`'s new head is Thursday's bundle commit after the verifier.
+
+Ruling, Tue 20 Oct night, point 3 clarified: xp_v2_all.csv lists every player in the export. A player xp_v2 does not forecast gets the value the bundle's xp_v2 XI picker actually used for him (0 if it treats him as 0), with the flag "not forecast". A test asserts that every CSV value equals the value the picker used. W3's condition becomes "all 15 are in the CSV" (always true for the export's players); "not recorded" only if the CSV is missing or was committed after the deadline.
+
+## Amendment 4: "if he plays" for our flagged players (Ruling, Tue 20 Oct, 21:00 Prague, point 2, verbatim at the end)
+
+Pinned before any of its code. Tools only.
+
+- **Unchanged:** the status gate stays as it is for the picks, the CSV
+  and the grading. The CSV's values, the picks and the picker test do not
+  change.
+- **Who:** every player in our 15 (`chips.my_squad`) whose export status
+  is not 'a'. With none, nothing is printed and the bundle's print is
+  exactly as before.
+- **Where:** an information block at the end of section 5 (OWN v XP_V2),
+  after its "slots differ" line. One header line, then two lines per
+  player.
+  - **The header:** `  information - our players FPL flags (status not
+    'a'): the status gate stays for the picks, the CSV and the grading`.
+  - **Line 1:** name, club, position, `status <s>`, `chance_next_round <c>`
+    (or `none`), and `news "<news>"`.
+  - **Line 2:** `if he plays; the picks treat him as 0:`, then xp_v2,
+    own, and his place in the captain table, as below.
+- **xp_v2 if he plays:** `tools/xp_v2_live.forecast` and `live` gain an
+  optional `lift` (default empty). It sets the status gate to True for
+  the players in it, and nothing else.
+  - Every other input is section 5's: the export, the snapshot, the
+    fallback, the prior, P(start), and P(sub) scaled by `chance_scale` as
+    now.
+  - The block calls `live(..., lift=(pid,))` once per flagged player and
+    reads that player's xp_v2, P(start) and P(sub).
+  - A test holds every other player's value equal to the run without
+    `lift`, and the lifted value to `core` with that one gate flipped.
+  - **If the minutes gate (under 45 in the last four) or a blank still
+    drops him:** "no xp_v2 even if he plays: <reason>".
+- **own if he plays:** own's gate in `fpl_edge.record_status` is the same
+  one-line check (`status != "a" or mins_last4 < 45`).
+  - So own is the record branch's own computation with the status part
+    lifted: `project(p, {team: [f]}, 6, gameweek, positional_priors,
+    personal_priors)` summed over his GW8 fixtures (horizon 6, the
+    record's default).
+  - A test holds this computation to the recorded own row for an
+    unflagged player.
+- **The captain table place:** his PMF from `points_pmf.live_pmfs` on the
+  lifted forecast (the captain table's own summary). He is placed by the
+  captain table's own sort (`-mean`, the others' sums as in section 7).
+  - The line says "captain table place on that number: k of 15", with
+    mean, P(>=10), P(>=15) and p90.
+- **Tests:**
+  - a flagged squad player on the toy (status d, chance 75, news);
+  - the values as above;
+  - the rest of the print byte-identical: the print with the block's
+    lines removed equals the print with the block switched off;
+  - the CSV byte-identical with and without the block;
+  - no flagged player, no block.
+  - Mutations are shown red.
+- **Then:** the full suite; the GW8 read-only run (Haaland); the verifier
+  on the diff; report and CHANGELOG on `s8c-wip`. The new head becomes
+  the bundle commit. Due Thu 22 Oct 14:00 UTC.
+
+Ruling, Tue 20 Oct, 21:00 Prague (verbatim):
+
+Ruling, Tue 20 Oct, 21:00 Prague.
+
+1. W1b: not tonight; S2b was today's runner change (one per night). Merge Wednesday before 21:00 UTC as planned.
+2. Haaland: the live gate (status 'a') sets him to 0 in xp_v2 because FPL flags him 'd', 75%. The gate stays as it is for the picks, the CSV and the grading. Add to the bundle on s8c-wip an information block for every player in our 15 whose status is not 'a': status, chance_next_round, news, and xp_v2 recomputed as if available (the same inputs with only the status gate lifted for that player, P(sub) scaled by chance as now; own too if its gate is the same one-line check), labelled "if he plays; the picks treat him as 0", plus his place in the captain table on that number. The picks, the CSV values and the picker test do not change; test that the rest of the print is byte-identical. The verifier checks the diff. Done by Thu 22 Oct 14:00 UTC; the new head becomes the bundle commit.
+3. Record in BUILD_PLAN Part F as F-M (no code): the status gate drops 'd' players entirely whatever their chance. Each week, record what our flagged players actually score; revisit at GW15 with a prereg if the gate is costing points.
