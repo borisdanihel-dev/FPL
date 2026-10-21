@@ -69,6 +69,12 @@ Windows, Python 3.14. The measured findings are the product; the code serves the
   header containing it, to a file, a log or a report.
 - **Masking.** Every report and verifier report masks key-like strings: the
   first 4 characters, then "...".
+- **Provenance** (RULING S8 verifier FAIL item (e); Boris's queue, 19 Oct). Every
+  output folder of a tool holds a `run.txt`, written by the tool itself
+  (`tools/provenance.py`): the commit it ran on, the modified tracked files
+  at the run, its start and end times (UTC) and the SHA-256 of each output.
+  A report cites a run only when that commit is the item's final code; a
+  number from any other run is regenerated, never cited.
 - **When `BUILD_PLAN.md` and the code disagree, stop and report** instead of
   guessing.
 - **Fast track** (RULING FAST-TRACK, `prereg/FAST.md`; all nine items in

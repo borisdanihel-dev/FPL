@@ -427,31 +427,55 @@ def entry_points(con, entry, event):
     return sum(pts[p] * eff[p] for p in pts), fpl[0][0]
 
 
+def _gw_span(gws):
+    """[1, 2, 3, 5] -> "GW1-GW3, GW5"."""
+    out, run = [], []
+    for g in sorted(gws):
+        if run and g != run[-1] + 1:
+            out.append(f"GW{run[0]}" + (f"-GW{run[-1]}" if len(run) > 1 else ""))
+            run = []
+        run.append(g)
+    if run:
+        out.append(f"GW{run[0]}" + (f"-GW{run[-1]}" if len(run) > 1 else ""))
+    return ", ".join(out)
+
+
 def c22(x):
+    """Every locked-down gameweek, not only the latest (RULING S2b, point 2):
+    each entry's points computed from its stored picks, player points and
+    substitutions against FPL's. Each mismatch is listed - none is cut - and
+    any makes a WARN. The gameweek in progress stays silent (ruling S3,
+    point 6)."""
     if x.export is None:
         return SKIP, "no export"
     import fpl_edge
     deadline = _deadlines(x.db)
-    started = [int(e) for e, dl in deadline.items() if dl <= x.now]
+    started = sorted(int(e) for e, dl in deadline.items() if dl <= x.now)
     if not started:
         return SKIP, "no gameweek has started"
-    event = max(started)
-    settled, _ = fpl_edge.gameweek_settled(x.export, event, x.now)
-    if not settled:
-        return SKIP, f"GW{event} not locked down: silent mid-gameweek (ruling S3, point 6)"
-    bad, n = [], 0
-    for (entry,) in _q(x.db, "SELECT DISTINCT entry_id FROM entry_gw WHERE event = ?", (event,)):
-        got = entry_points(x.db, entry, event)
-        if got is None:
-            continue
-        n += 1
-        if got[0] != got[1]:
-            bad.append(f"{entry}: FPL {got[1]}, computed {got[0]}")
+    locked = [g for g in started if fpl_edge.gameweek_settled(x.export, g, x.now)[0]]
+    quiet = ("" if started[-1] in locked else
+             f"GW{started[-1]} not locked down: silent mid-gameweek (ruling S3, point 6)")
+    bad, n, seen = [], 0, []
+    for event in locked:
+        for (entry,) in _q(x.db, "SELECT DISTINCT entry_id FROM entry_gw WHERE event = ? "
+                                 "ORDER BY entry_id", (event,)):
+            got = entry_points(x.db, entry, event)
+            if got is None:
+                continue
+            n += 1
+            seen.append(event)
+            if got[0] != got[1]:
+                bad.append(f"GW{event} {entry}: FPL {got[1]}, computed {got[0]}")
+    tail = f"; {quiet}" if quiet else ""
     if bad:
-        return WARN, f"GW{event}: {len(bad)} of {n} entries differ: {_short(bad)}"
+        return WARN, (f"{len(bad)} of {n} entry-gameweeks differ in {_gw_span(set(seen))}: "
+                      + "; ".join(bad) + tail)
     if not n:
-        return SKIP, f"GW{event}: no entry with its substitutions stored"
-    return OK, f"GW{event}: {n} entries, every one equal"
+        return SKIP, (quiet or "no entry with its substitutions stored in a locked-down gameweek"
+                      if not locked else
+                      f"no entry with its substitutions stored in {_gw_span(locked)}" + tail)
+    return OK, f"{n} entry-gameweeks in {_gw_span(set(seen))}, every one equal" + tail
 
 
 def c23(x):

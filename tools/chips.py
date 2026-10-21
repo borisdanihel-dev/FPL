@@ -48,6 +48,7 @@ import fpl_hist as H                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
 import hist_pit as PIT                                            # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
+from provenance import Run                                        # noqa: E402
 
 BENCH_W = (0.30, 0.10, 0.03)      # outfield bench, in forecast order
 SUBGK_W = 0.03
@@ -668,12 +669,13 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default=os.path.join(os.path.dirname(ROOT), "FPL-data"))
     ap.add_argument("--hist", default=os.path.join(ROOT, "historical", "2025-26"))
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "tools", "out", "chips"))   # one folder per tool: its run.txt
     ap.add_argument("--replay", action="store_true")
     ap.add_argument("--squads", type=int, default=N_SQUADS)
     ap.add_argument("--resamples", type=int, default=RESAMPLES)
     args = ap.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
+    run = Run("tools/chips.py", args.out, argv)
     lines = []
 
     def out(s=""):
@@ -688,8 +690,11 @@ def main(argv=None):
     except MissingInput as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
-    with open(os.path.join(args.out, name), "w", encoding="utf-8") as fh:
+    path = os.path.join(args.out, name)
+    with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
+    run.wrote(path)
+    run.close()
     return 0
 
 

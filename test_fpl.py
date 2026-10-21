@@ -2189,8 +2189,8 @@ class SyncExportsSettledFlags(unittest.TestCase):
             ns["migrate"](db)
             ns["migrate"](db)                                  # idempotent
         cols = [r[1] for r in db.execute("PRAGMA table_info(events)")]
-        self.assertEqual(cols[-1], "data_checked")
-        self.assertEqual(len(cols), 8)
+        self.assertEqual(cols[-2:], ["data_checked", "data_checked_seen_utc"])   # S2b adds the 9th
+        self.assertEqual(len(cols), 9)
 
 
 class ExportWindow(unittest.TestCase):
@@ -5146,7 +5146,9 @@ class DataGate(unittest.TestCase):
         never deletes from it. The evidence, from the source: no DELETE, DROP,
         TRUNCATE or VACUUM; every write is INSERT OR REPLACE into a table whose
         only uniqueness constraint is its primary key (so a replace removes at
-        most the one row it collides with)."""
+        most the one row it collides with), or (S2b, events) a plain INSERT
+        whose conflict on the primary key is an UPDATE in place - it removes
+        no row at all."""
         import re
         here = os.path.dirname(os.path.abspath(__file__))
         src = ""
@@ -5156,7 +5158,11 @@ class DataGate(unittest.TestCase):
         self.assertIsNone(re.search(r"(?i)\b(delete\s+from|drop\s+table|truncate|vacuum)\b", src))
         writes = re.findall(r"INSERT(?: OR (\w+))? INTO (\w+)", src)
         self.assertEqual({t for _, t in writes}, set(G.EXPECTED_TABLES))
-        self.assertEqual({mode for mode, _ in writes}, {"REPLACE"})
+        self.assertEqual({mode for mode, _ in writes} - {""}, {"REPLACE"})
+        upserts = re.findall(r"INSERT INTO (\w+) \([\w,\s]*\)\s*VALUES \([?,]*\)\s*"
+                             r"ON CONFLICT \(id\) DO UPDATE SET", src)
+        self.assertEqual(upserts, ["events"])
+        self.assertEqual([t for mode, t in writes if mode == ""], upserts)
         for name, body in re.findall(r"CREATE TABLE IF NOT EXISTS (\w+) \((.*?)\);", src, re.S):
             self.assertNotIn("UNIQUE", body.upper(), name)
             self.assertEqual(body.upper().count("PRIMARY KEY"), 1, name)
@@ -5434,7 +5440,10 @@ class BackupStep(unittest.TestCase):
                    FAKE_VIEW=view, FAKE_CREATE=create, FAKE_LOG=log, FAKE_STATE=state, GH_TOKEN="x")
         r = subprocess.run([self.bash, self.script.replace("\\", "/")], env=env, cwd=self.tmp,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
-        calls = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+        calls = ""
+        if os.path.exists(log):
+            with open(log, encoding="utf-8") as fh:     # closed: no ResourceWarning
+                calls = fh.read()
         return r.returncode, r.stdout, calls
 
     def test_the_scheduled_run_backs_up_on_sunday(self):

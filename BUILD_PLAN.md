@@ -148,6 +148,10 @@ F-I. Step 16 parts 3-4 and Step 18: first a source proposal for Boris (URL, size
 F-J. GW10 checkpoint (Step 20), after GW10 locks down (about Mon 9 Nov): (1) the revert rule on GW8-10, per squad-gameweek paired differences on our squad and 50 squads sampled from 2026/27 GW1 ownership, using the recorded pre-deadline rows; (2) S6's validation rerun (cut 6); (3) F-E adoption if it passed; (4) every source's accuracy report and drift; (5) the DEF calibration re-check; (6) a chip plan for GW11-19.
 
 F-K. Parked: Step 19 (needs a planner that passes); the MILP solver (optional, after Step 15, only with Boris's OK to install).
+
+F-L. Recorded by the night ruling of Mon 19 Oct, point 4 (record only, no code), verbatim: "S6f: recorded as FAIL. GW8 stays on xp_v2 for XI and captain, own shown beside it; the GW10 revert rule is unchanged. Record in BUILD_PLAN Part F as F-L (record only, no code): the same revert rule is applied again at GW15 over GW8–15, same metric, same bar."
+
+F-M. Recorded by the Ruling of Tue 20 Oct, 21:00 Prague, point 3 (record only, no code), verbatim: "Record in BUILD_PLAN Part F as F-M (no code): the status gate drops 'd' players entirely whatever their chance. Each week, record what our flagged players actually score; revisit at GW15 with a prereg if the gate is costing points."
 END RULINGS
 
 ---
