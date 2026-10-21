@@ -4378,8 +4378,9 @@ class NightlyWorkflow(unittest.TestCase):
         self.assertLess(y.index("pip install -r requirements.txt"), y.index("run: python fpl_nightly.py\n"))
         code = "\n".join(l for l in y.splitlines() if not l.strip().startswith("#"))
         # S1 amendment 1, item 1 (W1): exactly the ODDS_API_KEY reference, and
-        # only in the nightly step and the commit step
-        key = "          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}\n"
+        # only in the nightly step and the commit step; never to a run pushed
+        # to dry/** (RULING W1b, point 2)
+        key = "          ODDS_API_KEY: ${{ github.event_name != 'push' && secrets.ODDS_API_KEY || '' }}\n"
         self.assertEqual(code.count(key), 2)
         for step in ("name: Nightly run", "name: Commit outputs to the data branch"):
             body = y[y.index(step):]
@@ -4420,7 +4421,8 @@ class NightlyWorkflow(unittest.TestCase):
 
     def test_push_safety_and_least_privilege(self):
         """D1 (Step 1.5, 1.6): one concurrency group, never cancelled; write
-        access for the pushing job only; triggers schedule and dispatch only."""
+        access for the pushing job only; triggers schedule and dispatch, and
+        (RULING W1b) a push to dry/** - tests/test_W1b.py pins that filter."""
         y = self._read(".github", "workflows", "nightly.yml")
         conc = y[y.index("\nconcurrency:\n"):y.index("\njobs:")]
         self.assertIn("|| 'nightly-data' }}\n  cancel-in-progress: false", conc)
@@ -4430,8 +4432,9 @@ class NightlyWorkflow(unittest.TestCase):
         self.assertEqual(y.count("contents: write"), 1)
         on = y[y.index("\non:\n") + 5:y.index("\npermissions:")]
         triggers = [l.strip().rstrip(":") for l in on.splitlines()
-                    if l.startswith("  ") and not l.startswith("   ") and l.strip()]
-        self.assertEqual(triggers, ["schedule", "workflow_dispatch"])
+                    if l.startswith("  ") and not l.startswith("   ") and l.strip()
+                    and not l.strip().startswith("#")]
+        self.assertEqual(triggers, ["push", "schedule", "workflow_dispatch"])
 
     def test_weekly_backup_on_sundays_keeps_the_last_eight(self):
         """D1 (Step 1.3): fpl.sqlite and fpl.sql as release assets, Sundays,

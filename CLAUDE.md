@@ -163,6 +163,25 @@ h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3)
 - **No manual nightly dispatch within 1 hour either side of an FPL deadline.** A
   dispatch across a deadline fails the gate (its forecasts were recorded before
   it, the gate runs after) and commits nothing that night.
+- **Dry runs by push (RULING W1b, `prereg/W1b.md`; both lanes).** Boris clicks
+  only real runs.
+  - To ask for a dry run, push the work to `dry/<item>` (a normal push). A
+    second run after a rebase goes to `dry/<item>-2`, never a force-push.
+  - It runs as a dry run in group `nightly-dryrun`: never data, no release, no
+    issue, no Odds API key.
+  - Read the result back from `data-dryrun-<item>`.
+  - It skips, green, with a `DRY RUN SKIPPED:` line:
+    - from 21:30 UTC until that night's nightly has committed (04:00 UTC at the
+      latest);
+    - within 1 hour of a deadline;
+    - once 12 dry runs, pushed and manual together, have run that UTC day
+      (RULINGS PART F, F-A);
+    - when it cannot count them.
+  - After the item lands, its lane deletes both:
+    `git push origin --delete dry/<item> data-dryrun-<item>`. That is a
+    deletion, never a force-push.
+  - Manual dispatch is unchanged, writes `data-dryrun`, and is the only way to
+    run `odds_live`.
 
 ## Where things are
 - `CLAUDE_fable chat.md` — project handoff: data flow, design rules, FPL context.
