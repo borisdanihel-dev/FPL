@@ -17,10 +17,21 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     `f367cbd`, the tree identical to the tested branch, pushed 10:21
     UTC. The untracked `verify_W1b_pre.md` (identical to the branch's) was
     moved to the scratchpad `aside/`.
-    - **Waiting on Boris:** the real run on master (`dry_run` unticked).
-      Then the final verifier. If it is red: revert master to
-      `pre-W1b` before 21:00 UTC (the OK is in the ruling), park, tell
-      Boris.
+    - **W1b DONE:** Boris's real run (14:18 UTC, data `7dbc319`) green:
+      STATUS OK 29/29, 739 tests. Final verifier PASS
+      (`worklog/verify_W1b_final.md`); CHANGELOG "W1b done" (`6220e85`).
+  - **dry/W2 pushed** (`f6fb2fa` = `w2-wip` with master and W1b; suite 751 OK,
+    bare and with the data). The automatic dry run worked (W1b's first live
+    exercise): `data-dryrun-W2` `1f66d69`, STATUS WARN 28/30.
+    - check 30: odds skipped (expected);
+    - **check 31: LEAGUE SKIPPED, "entry 4866471 GW7 player 411:
+      multiplier 3 but the rule says 2 (chip None)"**, a rival's Triple
+      Captain not in the chips record. Open for W2 before Saturday.
+  - **The early GW8 look (Boris, Wed):** the bundle and `builder --freehit`
+    from a clean `d9071b8` worktree on data `7dbc319`, committed to master
+    `worklog/gw_pass/gw8/` (`f59c7ec`, 15:10 UTC; the CSV's blob
+    SHA-256 = `run.txt`'s). Haaland is status 'a' again, so no flagged
+    block.
   - **W2 prep:** `w2-wip` `84c9725` takes master (S2b; MIGRATIONS and
     CHANGELOG both kept), 492 sync tests OK, pushed. After the real W1b
     run: merge master (W1b) in, full suite, push `dry/W2`.
