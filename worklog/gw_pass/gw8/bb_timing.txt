@@ -1,0 +1,49 @@
+BENCH BOOST TIMING  GW8, GW9 or GW10 (Boris's rule: before the international break); information for Friday's deadline pass, read-only, no tool change
+  data 7dbc319, export fpl_export_gw7_2026-10-21.json.gz; code d9071b8 (modified tracked files 0); script sha256 5a8db16643ce242ff34815cf661ed90e55550f94fa1dc4871ea033d74f54587f; generated 2026-10-21 16:39 UTC
+  matrix: the planner's xp_v2 horizon matrix GW8-13 (planner_live.live_inputs; odds odds_2026-10-21T1420Z.json.gz where they price the fixture, else the fallback)
+  check: the GW8 column against the bundle's xp_v2_all.csv: 668 of 668 players equal
+  W3's ban-risk line (fpl_squad.ban_risk from w3-wip 16e154d (modified tracked files 0) on data 7dbc319, 2026-10-21T16:39:43Z): Thiago            BRE FWD  cautions 4, club match 8 next  rate90 0.444  P(start) 1.00  P(ban) 0.444
+  Thiago's GW9 xp_v2 4.64 x (1 - 0.444) = 2.58 in every section below (Boris: P(ban) 0.44)
+  free transfers: 1 now (planner_live's FREE_TRANSFERS, the ruling), +1 a week, up to 5; no hits; bank 1.9; decay 0.85; Boris's FT schedule (1.5, 1.0, 0.6, 0.3)
+
+1. BENCH BOOST VALUE ON XP_V2, our 15 held (the four outside xp_v2's best XI; S8's xi_value)
+  GW8    13.27   bench: Verbruggen 2.70, Tarkowski 3.68, Branthwaite 3.64, Slater 3.24
+  GW9    12.51   bench: Verbruggen 2.37, Branthwaite 4.14, Slater 3.42, Thiago 2.58   (Thiago x (1 - P(ban)))
+  GW10   13.09   bench: Kelleher 1.73, Rudoni 4.33, Thiago 3.93, Slater 3.10
+  GW11   15.41   bench: Kelleher 4.11, Barry 4.21, Muharemović 4.07, Slater 3.02
+  GW12   14.79   bench: Kelleher 2.87, Barry 4.26, Rudoni 4.20, Slater 3.46
+  GW13   15.01   bench: Kelleher 3.10, Barry 4.26, Thiago 4.10, Slater 3.55
+
+  check, the unadjusted matrix: the planner's default Branthwaite -> De Cuyper (BHA, 5.3) 4.03; its BB GW8 rescore, best transfer Branthwaite -> De Cuyper (BHA, 5.3) 4.58 (the bundle's planner section prints both); this script's held score for that step: Branthwaite -> De Cuyper (BHA, 5.3) 4.58
+2. THREE PLANS GW8-13, no hits; the planner's score = sum 0.85^t W_t - lost FT value (lost = V(5) - V(FTs into GW14)); W_t = XI + captain, all 15 + captain in the BB week; after the BB week the planner's default each week
+  search: A exhaustive over 330 single transfers (rolling instead: -4.58 on the held score); B exhaustive over 150533 GW8-9 move sequences; C a beam: after GW9 the best M per FT stock, M = 50 and 100 (2100403 and 4216077 GW8-10 sequences scored): the same best moves at both widths: yes
+  (our 15 held, no Bench Boost, for scale: 260.37)
+  plan            score  decayed xP  FTs GW14  lost FT  undecayed xP
+  A  BB GW8      282.97      284.87         1     1.90        412.89
+  B  BB GW9      281.25      283.15         1     1.90        413.21
+  C  BB GW10     281.64      283.54         1     1.90        416.90
+  differences on the score: A - B +1.71, A - C +1.32, B - C -0.39; undecayed xP, information: A - B -0.31, A - C -4.01, B - C -3.70
+  A, week by week (FTs before -> into the next week; W = the week's XI + captain xP, BB = all 15 + captain):
+    GW8   BB  FT 1 -> 1  W  74.76  Branthwaite -> De Cuyper (BHA, 5.3)
+    GW9       FT 1 -> 1  W  57.37  default: Mbeumo -> Rogers (CHE, 8.0)
+    GW10      FT 1 -> 1  W  70.20  default: Thomas -> Bogle (LEE, 4.7)
+    GW11      FT 1 -> 1  W  67.10  default: Bogle -> Silva (BOU, 5.0)
+    GW12      FT 1 -> 1  W  73.56  default: Saka -> Palmer (CHE, 9.7)
+    GW13      FT 1 -> 1  W  69.90  default: Silva -> Egan (HUL, 4.1)
+    after GW13: bank 1.6
+  B, week by week (FTs before -> into the next week; W = the week's XI + captain xP, BB = all 15 + captain):
+    GW8       FT 1 -> 1  W  62.53  Tarkowski -> Gabriel (ARS, 7.9)
+    GW9   BB  FT 1 -> 1  W  70.15  Branthwaite -> De Cuyper (BHA, 5.3)
+    GW10      FT 1 -> 1  W  69.34  default: Mbeumo -> Rogers (CHE, 8.0)
+    GW11      FT 1 -> 2  W  67.27  default: roll
+    GW12      FT 2 -> 1  W  73.10  default: Haaland -> João Pedro (CHE, 7.9); Slater -> Palmer (CHE, 9.7)
+    GW13      FT 1 -> 1  W  70.81  default: Muharemović -> Egan (HUL, 4.1)
+    after GW13: bank 3.6
+  C, week by week (FTs before -> into the next week; W = the week's XI + captain xP, BB = all 15 + captain):
+    GW8       FT 1 -> 1  W  61.39  Tarkowski -> Justin (LEE, 4.5)
+    GW9       FT 1 -> 1  W  58.27  Slater -> Rogers (CHE, 8.0)
+    GW10  BB  FT 1 -> 1  W  84.77  Branthwaite -> De Cuyper (BHA, 5.3)
+    GW11      FT 1 -> 2  W  66.12  default: roll
+    GW12      FT 2 -> 1  W  74.57  default: Rudoni -> Palmer (CHE, 9.7); Haaland -> João Pedro (CHE, 7.9)
+    GW13      FT 1 -> 1  W  71.78  default: Muharemović -> Egan (HUL, 4.1)
+    after GW13: bank 4.1

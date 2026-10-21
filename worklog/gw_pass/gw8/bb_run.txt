@@ -1,0 +1,9 @@
+tool: worklog/gw_pass/gw8/bb_timing.py
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/bundle8 --data C:\GIT\FPL-data --hist C:\GIT\FPL\historical --ban C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_bb/ban_risk_w3.txt --csv C:/GIT/FPL/worklog/gw_pass/gw8/xp_v2_all.csv --out C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_bb/run1
+commit: d9071b83f5f43e4b50f548d18fdea546c628005c
+modified tracked files at the run: 0
+start_utc: 2026-10-21T16:39:50+00:00
+end_utc: 2026-10-21T16:46:34+00:00
+duration_s: 404
+outputs:
+  bb_timing.txt  sha256 c1b44fecbd2e9b165db958a0c24deabe2423563b132e6f430f7a00413a8757d5

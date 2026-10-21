@@ -27,6 +27,35 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - **check 31: LEAGUE SKIPPED, "entry 4866471 GW7 player 411:
       multiplier 3 but the rule says 2 (chip None)"**, a rival's Triple
       Captain not in the chips record. Open for W2 before Saturday.
+    - **Corrected and fixed: W2 amendment 3 DONE** (Boris's message
+      verbatim, `prereg/W2.md`, master `5d4ad2b`).
+      - The chip record was complete. The lookup read the chip from the
+        totals chain, which cannot settle the newest gameweek (GW7), so
+        every GW7 chip read None. Ours fails the same way; it was not
+        reached.
+      - The fix: the stored `entry_gw` chip, one line in `tools/league.py`
+        and one in `fpl_league.py` (`ba138c7`). The test: chips in two
+        consecutive gameweeks, both row orders. Mutations 3 of 3 red;
+        suite 752 OK bare and with the data.
+      - Fresh dry run `dry/W2` `ba138c7` → `data-dryrun-W2` `62ce283`:
+        29/30, check 31 OK (CHIPS 37 lines, LEAGUE 58 lines); the one WARN
+        is check 30, odds skipped by design.
+      - Verifier PASS (Fable 5.1, `worklog/verify_W2_a3.md`), write guard
+        clean. Report and CHANGELOG on `w2-wip` `23959bc`, pushed.
+      - The merge stays Sat 24 Oct.
+  - **Bench Boost timing (Boris, Wed, information; s8c-wip `d9071b8` stays
+    the bundle commit):** `worklog/gw_pass/gw8/bb_timing.py`, its output
+    `bb_timing.txt` and `bb_run.txt`.
+    - It runs on the planner's xp_v2 matrix from a clean `d9071b8`
+      worktree (`bundle8`) on data `7dbc319`, with W3's ban-risk line from
+      `w3-wip` `16e154d`.
+    - Plans: A = BB GW8, B = BB GW9, C = BB GW10 (beam widths 50 and 100
+      agree).
+    - **Re-run it on Friday's refresh** (Boris): first regenerate W3's
+      ban-risk line on the new data (`fpl_squad.ban_risk`, into the
+      scratchpad `gw8_bb/ban_risk_w3.txt` with its `#` source line); pass
+      `--csv` with the newest bundle's `xp_v2_all.csv`; commit as a newer
+      commit.
   - **The early GW8 look (Boris, Wed):** the bundle and `builder --freehit`
     from a clean `d9071b8` worktree on data `7dbc319`, committed to master
     `worklog/gw_pass/gw8/` (`f59c7ec`, 15:10 UTC; the CSV's blob
@@ -40,7 +69,11 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - W2 Sat 24 Oct after the GW8 deadline (Boris's click);
     - `s8c-wip` Sun 25 Oct, with the landing tests;
     - W3 Mon 26 Oct via `dry/W3`.
-  - **Step 16 parts 3–4:** the prereg next, then a branch off master.
+  - **Step 16 parts 3–4:** the prereg is done (`df287ca`). On `s16b-wip`
+    (the scratchpad `s16b`, off `df287ca`), `tools/cups/cups_2024-25.csv`
+    and `cups_2025-26.csv` are built from Wikipedia's permanent revisions
+    (the brackets are consistent) and are **not yet committed**. Next: the
+    2026/27 cup and European CSVs, then the Monte Carlo and the backtest.
   - **Thursday:** no runner pushes from 11:30 UTC; Boris pastes the
     bundle run about 16:00 UTC (from `s8c-wip` `d9071b8`).
 
