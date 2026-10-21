@@ -4140,3 +4140,21 @@ Report: `worklog/cc_2026-10-19_S2b.md`; after: `worklog/cc_2026-10-20_S2b_after.
   - the projection log is byte-identical under a frozen clock
     (verifier).
 - **Verifier:** PASS (`worklog/verify_W3_a2.md`, Fable 5.1).
+## 2026-10-20 — S2b after-measurement: corrections (amends the entry "S2b done" above; Ruling, Tue 20 Oct night, point 1)
+
+The verifier on the after-measurement (`worklog/verify_S2b_after.md`, Fable
+5.1) gave WARN for four slips. Every number in the entry above reproduces,
+except one:
+- **Corrected:** P(above) moves by **−0.069 to −0.018**, not −0.067 to
+  −0.018. The largest move is Revelstoke FC, 0.500 → 0.431.
+- **Not in the entry or the report, now added to the report:**
+  - expected_goals (8 / 8 / 7 cells) and expected_assists (5 / 4 / 2) also
+    moved, in GW4 / GW6 / GW7;
+  - `ruleset` NULL → '2026-27' on every re-fetched GW1–6 row;
+  - the fetch times run to 13:01:33.
+- **Also re-run (the verifier's runs):**
+  - S6d's GW8 forecast moves by at most 0.03 xP (Saka 6.02 → 6.04), and
+    two adjacent pairs swap rank; information only.
+  - S7 is identical, and so are the calibration lines.
+
+The report `worklog/cc_2026-10-20_S2b_after.md` is corrected in place.
