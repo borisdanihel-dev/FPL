@@ -7,7 +7,23 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (21 Oct, 10:00 UTC on): "Wednesday 21 Oct"** (verbatim in
+- **NOW (22 Oct, 18:00 UTC on): Thursday, the GW8 bundle plus Saka** (Boris).
+  - Data `fb40c00` (the 21 Oct 22:07 UTC nightly, STATUS OK 29/29); Saka is
+    status 'd', 50%.
+  - **The bundle:** from the clean `d9071b8` worktree, committed to master
+    `worklog/gw_pass/gw8/` as `c43c925`.
+    - Committed 18:04:39 UTC; run.txt end 18:04:27 UTC, both before the
+      Fri 17:30 UTC deadline.
+    - The CSV's blob SHA-256 = run.txt's. gw8_pass.txt is written with CRLF
+      and stored as LF, so only its blob hash differs (the same on
+      Wednesday).
+    - Its S9 section stops on the old chip lookup; the fix lands with W2.
+  - **Saka's cases:** `saka_cases.py`, `saka_cases.txt` and
+    `saka_run.txt`, committed as `9abc3aa`.
+  - **Friday:** re-run `bb_timing.py` (and the Saka cases if asked) on
+    Friday's refresh.
+
+- (Earlier) **NOW (21 Oct, 10:00 UTC on): "Wednesday 21 Oct"** (verbatim in
   `prereg/W1b.md`, `W2.md`, `W3.md`, `S16.md`, master `87485f3`; the
   scratchpad `ruling_21oct.txt`). Item count 0 of 6.
   - Last night's nightly (22:06 UTC): STATUS OK 29/29, check 22 equal for 49
