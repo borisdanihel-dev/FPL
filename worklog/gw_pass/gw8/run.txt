@@ -1,10 +1,10 @@
 tool: tools/gw_pass.py
-args: --data C:\GIT\FPL-data --hist C:\GIT\FPL\historical --out C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_wed/bundle
+args: --data C:\GIT\FPL-data --hist C:\GIT\FPL\historical --out C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_thu/bundle
 commit: d9071b83f5f43e4b50f548d18fdea546c628005c
 modified tracked files at the run: 0
-start_utc: 2026-10-21T15:08:53+00:00
-end_utc: 2026-10-21T15:09:30+00:00
-duration_s: 37
+start_utc: 2026-10-22T18:03:47+00:00
+end_utc: 2026-10-22T18:04:27+00:00
+duration_s: 40
 outputs:
-  gw8_pass.txt  sha256 8aff9af1794b332f581b7ef916fcb1002bbe8b406db84071ee9b8a1463a595bb
-  xp_v2_all.csv  sha256 224ff1edc4d49af46d2928d0dca39d03c38eab767dd460b848ca001798dba721
+  gw8_pass.txt  sha256 e82fbf90f8cecd1ebab168fb9685b8faa3b98c634ed6a6d270747f7d79a8eb85
+  xp_v2_all.csv  sha256 8717f8733e4c7752fb49b92afa921bba0b4fa906ee82610899bb7fb864b53023
