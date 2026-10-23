@@ -7,7 +7,25 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (22 Oct, 18:00 UTC on): Thursday, the GW8 bundle plus Saka** (Boris).
+- **NOW (23 Oct, 14:25 UTC on): Friday, the GW8 refresh** (Boris).
+  - Data `a88168a` (Boris's real run, 14:22 UTC, STATUS OK 29/29); Saka is
+    status 'i', 0%, "Unknown return date".
+  - **The bundle:** committed to master `worklog/gw_pass/gw8/` as `6034baa`.
+    - Committed 14:26:29 UTC; run.txt end 14:26:18 UTC, before the 17:30
+      UTC deadline.
+    - The CSV blob = run.txt's.
+  - W3's ban-risk line: Thiago P(ban) 0.444, unchanged.
+  - **Re-runs** (`e05636a`, then the saka commit):
+    - `bb_timing` (script unchanged);
+    - `saka_cases` (the label of its lift-only line fixed to print the
+      export's chance: "chance 50" was hard-coded on Thursday; the
+      numbers are unchanged);
+    - the named move Saka → Gibbs-White beside Saka → Rogers
+      (`gibbs_white.py`, `.txt`, `_run.txt`).
+  - **Next:** after the deadline, W2 on Sat 24 Oct (Boris's click); then
+    `s8c-wip` on Sun 25 Oct; then W3 on Mon 26 Oct.
+
+- (Earlier) **NOW (22 Oct, 18:00 UTC on): Thursday, the GW8 bundle plus Saka** (Boris).
   - Data `fb40c00` (the 21 Oct 22:07 UTC nightly, STATUS OK 29/29); Saka is
     status 'd', 50%.
   - **The bundle:** from the clean `d9071b8` worktree, committed to master

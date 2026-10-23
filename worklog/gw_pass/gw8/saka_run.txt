@@ -1,9 +1,9 @@
 tool: worklog/gw_pass/gw8/saka_cases.py
-args: --code C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/bundle8 --bb C:/GIT/FPL/worklog/gw_pass/gw8/bb_timing.py --data C:\GIT\FPL-data --hist C:\GIT\FPL\historical --ban C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_thu/saka/ban_risk_w3.txt --csv C:/GIT/FPL/worklog/gw_pass/gw8/xp_v2_all.csv --out C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_thu/saka/run1
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/bundle8 --bb C:/GIT/FPL/worklog/gw_pass/gw8/bb_timing.py --data C:\GIT\FPL-data --hist C:\GIT\FPL\historical --ban C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_fri/in/ban_risk_w3.txt --csv C:/GIT/FPL/worklog/gw_pass/gw8/xp_v2_all.csv --out C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw8_fri/saka2
 commit: d9071b83f5f43e4b50f548d18fdea546c628005c
 modified tracked files at the run: 0
-start_utc: 2026-10-22T18:09:15+00:00
-end_utc: 2026-10-22T18:22:07+00:00
-duration_s: 772
+start_utc: 2026-10-23T14:40:58+00:00
+end_utc: 2026-10-23T14:53:18+00:00
+duration_s: 740
 outputs:
-  saka_cases.txt  sha256 2ed8b23674b0a742d10131985f1dc57439fa6ab730a820c46d86b2721c11f4f2
+  saka_cases.txt  sha256 ec230755a3b7fe2bb272cd2f129a3f13210c0820388a8d01266cfb644a52c553

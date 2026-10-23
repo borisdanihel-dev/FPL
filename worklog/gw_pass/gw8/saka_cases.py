@@ -176,7 +176,7 @@ def main(argv=None):
         f"news \"{row.get('news', '')}\"; in the matrix as built: no value in any week (the gate)")
     out(f"  Saka as available (his row in memory: status 'a', chance 100; every other player unchanged in all six weeks): "
         + ", ".join(f"GW{u} {XP_av[t].get(sid, 0.0):.2f}" for t, u in enumerate(weeks)))
-    out(f"  information, only the gate lifted (chance 50 kept, as the bundle's 'if he plays'): "
+    out(f"  information, only the gate lifted (chance {row.get('chance_next_round')} kept, as the bundle's 'if he plays'): "
         + ", ".join(f"GW{u} {XP_lift[t].get(sid, 0.0):.2f}" for t, u in enumerate(weeks)))
     out(f"  (a) Saka 0 in every week; (b) Saka 0 in GW{weeks[0]}-{weeks[FROM_WEEK - 1]}, from GW{weeks[FROM_WEEK]} his values as available")
     out(f"  planner rows: planner_live's run on the case's matrix ({BB.K0} free transfer, no hits, decay {BB.DECAY}, Boris's "
