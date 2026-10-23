@@ -7,6 +7,27 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
+- **GW8 DECISIONS (Boris, before the deadline, Fri 23 Oct 17:30 UTC; for grading):**
+  - **Transfer:** Saka → Rogers (CHE, 8.0); 1 FT, no hit.
+  - **Chip:** none. The S7 calculator says HOLD for GW8, so Part C's chip
+    rule applies.
+  - **XI 3-4-3:** Kelleher; Calafiori, Muharemović, Thomas; Mbeumo,
+    Rogers, Rudoni, Groß; Haaland, Thiago, Barry.
+  - **Captain** Haaland, **vice** Calafiori.
+  - **Bench:** Verbruggen, then Tarkowski, Branthwaite, Slater.
+  - **Vetoes:** none (Saka out on his FPL status, i 0%).
+  - Checked against xp_v2 as tested on the squad after the transfer (the
+    CSV of `6034baa`, Rogers 5.29): the same XI, captain, vice and bench
+    order, so it is the xp_v2 default.
+  - **Bench Boost working plan:** GW10, the last week before the
+    international break, unless next week's S7 calculator clearly says
+    PLAY for GW9. GW9's free transfer goes towards the bench.
+  - **Tonight:** Step 16 on its branch only; no runner pushes until the
+    end of tonight's nightly.
+  - **Saturday, after tonight's nightly:** W2 (tag `pre-W2`, merge
+    `w2-wip` `23959bc`, push); then tell Boris when his real run on master
+    is needed.
+
 - **NOW (23 Oct, 14:25 UTC on): Friday, the GW8 refresh** (Boris).
   - Data `a88168a` (Boris's real run, 14:22 UTC, STATUS OK 29/29); Saka is
     status 'i', 0%, "Unknown return date".
