@@ -1,0 +1,130 @@
+# cups_2024-25.csv - every tie of the FA Cup from its third round and of the EFL Cup from its second round to the final,
+# typed by hand from the Wikipedia pages below (Ruling, Tue 20 Oct, point 4 (3); prereg/S16.md, parts 3-4).
+# Sources, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/):
+#   "2024–25 EFL Cup", Wikipedia, revision 1356072072, https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072 (read 2026-10-21T14:28:11Z)
+#   "2024–25 FA Cup", Wikipedia, revision 1356447004, https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004 (read 2026-10-21T14:28:12Z)
+# This file is derived from those pages and is licensed CC BY-SA 4.0, with that attribution.
+# home_tier, away_tier: the club's tier that season as the page gives it (1 Premier League ... 4 League Two, 5 National League, 6+ below).
+# draw_date: when the pairing became known (the round's draw; for a final, the last semi-final leg). tie_date: the date played;
+# two legs as first;second. result: the home club first; aet = extra time, p = penalties; two legs: each leg home-first, then
+# the aggregate from the first-named club's view. neutral: 1 at Wembley (FA Cup semi-finals and final, EFL Cup final).
+competition,round,draw_date,tie_date,home,away,home_tier,away_tier,neutral,legs,result,winner,source_url,read_at_utc
+EFL Cup,R2,2024-08-14,2024-08-27,Middlesbrough,Stoke City,2,2,0,1,0-5,Stoke City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Barnsley,Sheffield United,3,2,0,1,1-0,Barnsley,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Barrow,Derby County,4,2,0,1,0-0 (3-2 p),Barrow,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Blackburn Rovers,Blackpool,2,3,0,1,1-2,Blackpool,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Everton,Doncaster Rovers,1,4,0,1,3-0,Everton,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Fleetwood Town,Rotherham United,4,3,0,1,2-1,Fleetwood Town,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Grimsby Town,Sheffield Wednesday,4,2,0,1,1-5,Sheffield Wednesday,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Harrogate Town,Preston North End,4,2,0,1,0-5,Preston North End,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Leicester City,Tranmere Rovers,1,4,0,1,4-0,Leicester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Shrewsbury Town,Bolton Wanderers,3,3,0,1,0-2,Bolton Wanderers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Walsall,Huddersfield Town,4,3,0,1,3-2,Walsall,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-28,Wolverhampton Wanderers,Burnley,1,2,0,1,2-0,Wolverhampton Wanderers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-28,Nottingham Forest,Newcastle United,1,1,0,1,1-1 (3-4 p),Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Brighton & Hove Albion,Crawley Town,1,3,0,1,4-0,Brighton & Hove Albion,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Coventry City,Oxford United,2,2,0,1,1-0,Coventry City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Millwall,Leyton Orient,2,3,0,1,0-1,Leyton Orient,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Queens Park Rangers,Luton Town,2,2,0,1,1-1 (4-1 p),Queens Park Rangers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Watford,Plymouth Argyle,2,2,0,1,2-0,Watford,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Birmingham City,Fulham,3,1,0,1,0-2,Fulham,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-27,Crystal Palace,Norwich City,1,2,0,1,4-0,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-28,AFC Wimbledon,Ipswich Town,4,1,0,1,2-2 (4-2 p),AFC Wimbledon,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-28,Cardiff City,Southampton,2,1,0,1,3-5,Southampton,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-28,Colchester United,Brentford,4,1,0,1,0-1,Brentford,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-28,Swansea City,Wycombe Wanderers,2,3,0,1,0-1,Wycombe Wanderers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R2,2024-08-14,2024-08-28,West Ham United,Bournemouth,1,1,0,1,1-0,West Ham United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Second_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-17,Stoke City,Fleetwood Town,2,4,0,1,1-1 (2-1 p),Stoke City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-17,Blackpool,Sheffield Wednesday,3,2,0,1,0-1,Sheffield Wednesday,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-17,Brentford,Leyton Orient,1,3,0,1,3-1,Brentford,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-17,Everton,Southampton,1,1,0,1,1-1 (5-6 p),Southampton,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-17,Preston North End,Fulham,2,1,0,1,1-1 (16-15 p),Preston North End,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-17,Queens Park Rangers,Crystal Palace,2,1,0,1,1-2,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-17,Manchester United,Barnsley,1,3,0,1,7-0,Manchester United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-18,Brighton & Hove Albion,Wolverhampton Wanderers,1,1,0,1,3-2,Brighton & Hove Albion,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-18,Coventry City,Tottenham Hotspur,2,1,0,1,1-2,Tottenham Hotspur,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-24,Chelsea,Barrow,1,4,0,1,5-0,Chelsea,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-24,Manchester City,Watford,1,2,0,1,2-1,Manchester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-24,Walsall,Leicester City,4,1,0,1,0-0 (0-3 p),Leicester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-24,Wycombe Wanderers,Aston Villa,3,1,0,1,1-2,Aston Villa,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-25,Arsenal,Bolton Wanderers,1,3,0,1,5-1,Arsenal,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-09-25,Liverpool,West Ham United,1,1,0,1,5-1,Liverpool,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R3,2024-08-28,2024-10-01,Newcastle United,AFC Wimbledon,1,4,0,1,1-0,Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Third_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-29,Southampton,Stoke City,1,2,0,1,3-2,Southampton,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-29,Brentford,Sheffield Wednesday,1,2,0,1,1-1 (5-4 p),Brentford,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-30,Brighton & Hove Albion,Liverpool,1,1,0,1,2-3,Liverpool,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-30,Aston Villa,Crystal Palace,1,1,0,1,1-2,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-30,Manchester United,Leicester City,1,1,0,1,5-2,Manchester United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-30,Newcastle United,Chelsea,1,1,0,1,2-0,Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-30,Preston North End,Arsenal,2,1,0,1,0-3,Arsenal,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,R4,2024-09-25,2024-10-30,Tottenham Hotspur,Manchester City,1,1,0,1,2-1,Tottenham Hotspur,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Fourth_round,2026-10-21T14:28:11Z
+EFL Cup,QF,2024-10-30,2024-12-18,Arsenal,Crystal Palace,1,1,0,1,3-2,Arsenal,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Quarter-finals,2026-10-21T14:28:11Z
+EFL Cup,QF,2024-10-30,2024-12-18,Newcastle United,Brentford,1,1,0,1,3-1,Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Quarter-finals,2026-10-21T14:28:11Z
+EFL Cup,QF,2024-10-30,2024-12-18,Southampton,Liverpool,1,1,0,1,1-2,Liverpool,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Quarter-finals,2026-10-21T14:28:11Z
+EFL Cup,QF,2024-10-30,2024-12-19,Tottenham Hotspur,Manchester United,1,1,0,1,4-3,Tottenham Hotspur,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Quarter-finals,2026-10-21T14:28:11Z
+EFL Cup,SF,2024-12-19,2025-01-07;2025-02-05,Arsenal,Newcastle United,1,1,0,2,0-2;2-0 (agg 0-4),Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Semi-finals,2026-10-21T14:28:11Z
+EFL Cup,SF,2024-12-19,2025-01-08;2025-02-06,Tottenham Hotspur,Liverpool,1,1,0,2,1-0;4-0 (agg 1-4),Liverpool,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Semi-finals,2026-10-21T14:28:11Z
+EFL Cup,F,2025-02-06,2025-03-16,Liverpool,Newcastle United,1,1,1,1,1-2,Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_EFL_Cup&oldid=1356072072#Final,2026-10-21T14:28:11Z
+FA Cup,R3,2024-12-02,2025-01-09,Sheffield United,Cardiff City,2,2,0,1,0-1,Cardiff City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-09,Everton,Peterborough United,1,3,0,1,2-0,Everton,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-09,Fulham,Watford,1,2,0,1,4-1,Fulham,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-10,Wycombe Wanderers,Portsmouth,3,2,0,1,2-0,Wycombe Wanderers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-10,Aston Villa,West Ham United,1,1,0,1,2-1,Aston Villa,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Birmingham City,Lincoln City,3,3,0,1,2-1,Birmingham City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Bristol City,Wolverhampton Wanderers,2,1,0,1,1-2,Wolverhampton Wanderers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Middlesbrough,Blackburn Rovers,2,2,0,1,0-1,Blackburn Rovers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Liverpool,Accrington Stanley,1,4,0,1,4-0,Liverpool,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Leicester City,Queens Park Rangers,1,2,0,1,6-2,Leicester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Bournemouth,West Bromwich Albion,1,2,0,1,5-1,Bournemouth,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Brentford,Plymouth Argyle,1,2,0,1,0-1,Plymouth Argyle,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Chelsea,Morecambe,1,4,0,1,5-0,Chelsea,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Exeter City,Oxford United,3,2,0,1,3-1,Exeter City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Norwich City,Brighton & Hove Albion,2,1,0,1,0-4,Brighton & Hove Albion,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Nottingham Forest,Luton Town,1,2,0,1,2-0,Nottingham Forest,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Reading,Burnley,3,2,0,1,1-3 (aet),Burnley,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Sunderland,Stoke City,2,2,0,1,1-2 (aet),Stoke City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Leeds United,Harrogate Town,2,4,0,1,1-0,Leeds United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Manchester City,Salford City,1,4,0,1,8-0,Manchester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-11,Coventry City,Sheffield Wednesday,2,2,0,1,1-1 (aet; 4-3 p),Coventry City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-12,Hull City,Doncaster Rovers,2,4,0,1,1-1 (aet; 4-5 p),Doncaster Rovers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-12,Tamworth,Tottenham Hotspur,5,1,0,1,0-3 (aet),Tottenham Hotspur,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-12,Arsenal,Manchester United,1,1,0,1,1-1 (aet; 3-5 p),Manchester United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-12,Crystal Palace,Stockport County,1,3,0,1,1-0,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-12,Ipswich Town,Bristol Rovers,1,3,0,1,3-0,Ipswich Town,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-12,Newcastle United,Bromley,1,4,0,1,3-1,Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-12,Southampton,Swansea City,1,2,0,1,3-0,Southampton,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-13,Millwall,Dagenham & Redbridge,2,5,0,1,3-0,Millwall,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-14,Leyton Orient,Derby County,3,2,0,1,1-1 (aet; 6-5 p),Leyton Orient,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-14,Mansfield Town,Wigan Athletic,3,3,0,1,0-2,Wigan Athletic,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R3,2024-12-02,2025-01-14,Preston North End,Charlton Athletic,2,3,0,1,2-1,Preston North End,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Third_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-07,Manchester United,Leicester City,1,1,0,1,2-1,Manchester United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Leeds United,Millwall,2,2,0,1,0-2,Millwall,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Leyton Orient,Manchester City,3,1,0,1,1-2,Manchester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Coventry City,Ipswich Town,2,1,0,1,1-4,Ipswich Town,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Everton,Bournemouth,1,1,0,1,0-2,Bournemouth,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Preston North End,Wycombe Wanderers,2,3,0,1,0-0 (aet; 4-2 p),Preston North End,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Southampton,Burnley,1,2,0,1,0-1,Burnley,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Stoke City,Cardiff City,2,2,0,1,3-3 (aet; 2-4 p),Cardiff City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Wigan Athletic,Fulham,3,1,0,1,1-2,Fulham,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Birmingham City,Newcastle United,3,1,0,1,2-3,Newcastle United,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-08,Brighton & Hove Albion,Chelsea,1,1,0,1,2-1,Brighton & Hove Albion,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-09,Blackburn Rovers,Wolverhampton Wanderers,2,1,0,1,0-2,Wolverhampton Wanderers,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-09,Plymouth Argyle,Liverpool,2,1,0,1,1-0,Plymouth Argyle,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-09,Aston Villa,Tottenham Hotspur,1,1,0,1,2-1,Aston Villa,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-10,Doncaster Rovers,Crystal Palace,4,1,0,1,0-2,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R4,2025-01-12,2025-02-11,Exeter City,Nottingham Forest,3,1,0,1,2-2 (aet; 2-4 p),Nottingham Forest,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fourth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-02-28,Aston Villa,Cardiff City,1,2,0,1,2-0,Aston Villa,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-03-01,Crystal Palace,Millwall,1,2,0,1,3-1,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-03-01,Preston North End,Burnley,2,2,0,1,3-0,Preston North End,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-03-01,Bournemouth,Wolverhampton Wanderers,1,1,0,1,1-1 (aet; 5-4 p),Bournemouth,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-03-01,Manchester City,Plymouth Argyle,1,2,0,1,3-1,Manchester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-03-02,Newcastle United,Brighton & Hove Albion,1,1,0,1,1-2 (aet),Brighton & Hove Albion,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-03-02,Manchester United,Fulham,1,1,0,1,1-1 (aet; 3-4 p),Fulham,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,R5,2025-02-10,2025-03-03,Nottingham Forest,Ipswich Town,1,1,0,1,1-1 (aet; 5-4 p),Nottingham Forest,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Fifth_round,2026-10-21T14:28:12Z
+FA Cup,QF,2025-03-02,2025-03-29,Fulham,Crystal Palace,1,1,0,1,0-3,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Quarter-finals,2026-10-21T14:28:12Z
+FA Cup,QF,2025-03-02,2025-03-29,Brighton & Hove Albion,Nottingham Forest,1,1,0,1,0-0 (aet; 3-4 p),Nottingham Forest,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Quarter-finals,2026-10-21T14:28:12Z
+FA Cup,QF,2025-03-02,2025-03-30,Preston North End,Aston Villa,2,1,0,1,0-3,Aston Villa,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Quarter-finals,2026-10-21T14:28:12Z
+FA Cup,QF,2025-03-02,2025-03-30,Bournemouth,Manchester City,1,1,0,1,1-2,Manchester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Quarter-finals,2026-10-21T14:28:12Z
+FA Cup,SF,2025-03-30,2025-04-26,Crystal Palace,Aston Villa,1,1,1,1,3-0,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Semi-finals,2026-10-21T14:28:12Z
+FA Cup,SF,2025-03-30,2025-04-27,Nottingham Forest,Manchester City,1,1,1,1,0-2,Manchester City,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Semi-finals,2026-10-21T14:28:12Z
+FA Cup,F,2025-04-27,2025-05-17,Crystal Palace,Manchester City,1,1,1,1,1-0,Crystal Palace,https://en.wikipedia.org/w/index.php?title=2024%E2%80%9325_FA_Cup&oldid=1356447004#Final,2026-10-21T14:28:12Z
