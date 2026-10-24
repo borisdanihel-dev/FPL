@@ -7,7 +7,62 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (21 Oct, 10:00 UTC on): "Wednesday 21 Oct"** (verbatim in
+- **GW8 DECISIONS (Boris, before the deadline, Fri 23 Oct 17:30 UTC; for grading):**
+  - **Transfer:** Saka → Rogers (CHE, 8.0); 1 FT, no hit.
+  - **Chip:** none. The S7 calculator says HOLD for GW8, so Part C's chip
+    rule applies.
+  - **XI 3-4-3:** Kelleher; Calafiori, Muharemović, Thomas; Mbeumo,
+    Rogers, Rudoni, Groß; Haaland, Thiago, Barry.
+  - **Captain** Haaland, **vice** Calafiori.
+  - **Bench:** Verbruggen, then Tarkowski, Branthwaite, Slater.
+  - **Vetoes:** none (Saka out on his FPL status, i 0%).
+  - Checked against xp_v2 as tested on the squad after the transfer (the
+    CSV of `6034baa`, Rogers 5.29): the same XI, captain, vice and bench
+    order, so it is the xp_v2 default.
+  - **Bench Boost working plan:** GW10, the last week before the
+    international break, unless next week's S7 calculator clearly says
+    PLAY for GW9. GW9's free transfer goes towards the bench.
+  - **Tonight:** Step 16 on its branch only; no runner pushes until the
+    end of tonight's nightly.
+  - **Saturday, after tonight's nightly:** W2 (tag `pre-W2`, merge
+    `w2-wip` `23959bc`, push); then tell Boris when his real run on master
+    is needed.
+
+- **NOW (23 Oct, 14:25 UTC on): Friday, the GW8 refresh** (Boris).
+  - Data `a88168a` (Boris's real run, 14:22 UTC, STATUS OK 29/29); Saka is
+    status 'i', 0%, "Unknown return date".
+  - **The bundle:** committed to master `worklog/gw_pass/gw8/` as `6034baa`.
+    - Committed 14:26:29 UTC; run.txt end 14:26:18 UTC, before the 17:30
+      UTC deadline.
+    - The CSV blob = run.txt's.
+  - W3's ban-risk line: Thiago P(ban) 0.444, unchanged.
+  - **Re-runs** (`e05636a`, then the saka commit):
+    - `bb_timing` (script unchanged);
+    - `saka_cases` (the label of its lift-only line fixed to print the
+      export's chance: "chance 50" was hard-coded on Thursday; the
+      numbers are unchanged);
+    - the named move Saka → Gibbs-White beside Saka → Rogers
+      (`gibbs_white.py`, `.txt`, `_run.txt`).
+  - **Next:** after the deadline, W2 on Sat 24 Oct (Boris's click); then
+    `s8c-wip` on Sun 25 Oct; then W3 on Mon 26 Oct.
+
+- (Earlier) **NOW (22 Oct, 18:00 UTC on): Thursday, the GW8 bundle plus Saka** (Boris).
+  - Data `fb40c00` (the 21 Oct 22:07 UTC nightly, STATUS OK 29/29); Saka is
+    status 'd', 50%.
+  - **The bundle:** from the clean `d9071b8` worktree, committed to master
+    `worklog/gw_pass/gw8/` as `c43c925`.
+    - Committed 18:04:39 UTC; run.txt end 18:04:27 UTC, both before the
+      Fri 17:30 UTC deadline.
+    - The CSV's blob SHA-256 = run.txt's. gw8_pass.txt is written with CRLF
+      and stored as LF, so only its blob hash differs (the same on
+      Wednesday).
+    - Its S9 section stops on the old chip lookup; the fix lands with W2.
+  - **Saka's cases:** `saka_cases.py`, `saka_cases.txt` and
+    `saka_run.txt`, committed as `9abc3aa`.
+  - **Friday:** re-run `bb_timing.py` (and the Saka cases if asked) on
+    Friday's refresh.
+
+- (Earlier) **NOW (21 Oct, 10:00 UTC on): "Wednesday 21 Oct"** (verbatim in
   `prereg/W1b.md`, `W2.md`, `W3.md`, `S16.md`, master `87485f3`; the
   scratchpad `ruling_21oct.txt`). Item count 0 of 6.
   - Last night's nightly (22:06 UTC): STATUS OK 29/29, check 22 equal for 49
@@ -17,10 +72,50 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     `f367cbd`, the tree identical to the tested branch, pushed 10:21
     UTC. The untracked `verify_W1b_pre.md` (identical to the branch's) was
     moved to the scratchpad `aside/`.
-    - **Waiting on Boris:** the real run on master (`dry_run` unticked).
-      Then the final verifier. If it is red: revert master to
-      `pre-W1b` before 21:00 UTC (the OK is in the ruling), park, tell
-      Boris.
+    - **W1b DONE:** Boris's real run (14:18 UTC, data `7dbc319`) green:
+      STATUS OK 29/29, 739 tests. Final verifier PASS
+      (`worklog/verify_W1b_final.md`); CHANGELOG "W1b done" (`6220e85`).
+  - **dry/W2 pushed** (`f6fb2fa` = `w2-wip` with master and W1b; suite 751 OK,
+    bare and with the data). The automatic dry run worked (W1b's first live
+    exercise): `data-dryrun-W2` `1f66d69`, STATUS WARN 28/30.
+    - check 30: odds skipped (expected);
+    - **check 31: LEAGUE SKIPPED, "entry 4866471 GW7 player 411:
+      multiplier 3 but the rule says 2 (chip None)"**, a rival's Triple
+      Captain not in the chips record. Open for W2 before Saturday.
+    - **Corrected and fixed: W2 amendment 3 DONE** (Boris's message
+      verbatim, `prereg/W2.md`, master `5d4ad2b`).
+      - The chip record was complete. The lookup read the chip from the
+        totals chain, which cannot settle the newest gameweek (GW7), so
+        every GW7 chip read None. Ours fails the same way; it was not
+        reached.
+      - The fix: the stored `entry_gw` chip, one line in `tools/league.py`
+        and one in `fpl_league.py` (`ba138c7`). The test: chips in two
+        consecutive gameweeks, both row orders. Mutations 3 of 3 red;
+        suite 752 OK bare and with the data.
+      - Fresh dry run `dry/W2` `ba138c7` → `data-dryrun-W2` `62ce283`:
+        29/30, check 31 OK (CHIPS 37 lines, LEAGUE 58 lines); the one WARN
+        is check 30, odds skipped by design.
+      - Verifier PASS (Fable 5.1, `worklog/verify_W2_a3.md`), write guard
+        clean. Report and CHANGELOG on `w2-wip` `23959bc`, pushed.
+      - The merge stays Sat 24 Oct.
+  - **Bench Boost timing (Boris, Wed, information; s8c-wip `d9071b8` stays
+    the bundle commit):** `worklog/gw_pass/gw8/bb_timing.py`, its output
+    `bb_timing.txt` and `bb_run.txt`.
+    - It runs on the planner's xp_v2 matrix from a clean `d9071b8`
+      worktree (`bundle8`) on data `7dbc319`, with W3's ban-risk line from
+      `w3-wip` `16e154d`.
+    - Plans: A = BB GW8, B = BB GW9, C = BB GW10 (beam widths 50 and 100
+      agree).
+    - **Re-run it on Friday's refresh** (Boris): first regenerate W3's
+      ban-risk line on the new data (`fpl_squad.ban_risk`, into the
+      scratchpad `gw8_bb/ban_risk_w3.txt` with its `#` source line); pass
+      `--csv` with the newest bundle's `xp_v2_all.csv`; commit as a newer
+      commit.
+  - **The early GW8 look (Boris, Wed):** the bundle and `builder --freehit`
+    from a clean `d9071b8` worktree on data `7dbc319`, committed to master
+    `worklog/gw_pass/gw8/` (`f59c7ec`, 15:10 UTC; the CSV's blob
+    SHA-256 = `run.txt`'s). Haaland is status 'a' again, so no flagged
+    block.
   - **W2 prep:** `w2-wip` `84c9725` takes master (S2b; MIGRATIONS and
     CHANGELOG both kept), 492 sync tests OK, pushed. After the real W1b
     run: merge master (W1b) in, full suite, push `dry/W2`.
@@ -29,7 +124,11 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - W2 Sat 24 Oct after the GW8 deadline (Boris's click);
     - `s8c-wip` Sun 25 Oct, with the landing tests;
     - W3 Mon 26 Oct via `dry/W3`.
-  - **Step 16 parts 3–4:** the prereg next, then a branch off master.
+  - **Step 16 parts 3–4:** the prereg is done (`df287ca`). On `s16b-wip`
+    (the scratchpad `s16b`, off `df287ca`), `tools/cups/cups_2024-25.csv`
+    and `cups_2025-26.csv` are built from Wikipedia's permanent revisions
+    (the brackets are consistent) and are **not yet committed**. Next: the
+    2026/27 cup and European CSVs, then the Monte Carlo and the backtest.
   - **Thursday:** no runner pushes from 11:30 UTC; Boris pastes the
     bundle run about 16:00 UTC (from `s8c-wip` `d9071b8`).
 

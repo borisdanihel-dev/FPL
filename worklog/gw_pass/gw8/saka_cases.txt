@@ -1,0 +1,23 @@
+SAKA CASES  GW8, information for Friday's deadline pass (Boris, Thu 22 Oct); read-only, no tool change
+  data a88168a, export fpl_export_gw7_2026-10-23.json.gz; code d9071b8 (modified tracked files 0); script sha256 89fa77b335b844396e8f5b0eaff6b482cd294b875b4b547d802add11062120ed; bb_timing.py 471adfb sha256 5a8db16643ce242ff34815cf661ed90e55550f94fa1dc4871ea033d74f54587f; generated 2026-10-23 14:41 UTC
+  matrix: the planner's xp_v2 horizon matrix GW8-13 (builder.live_matrix; odds odds_2026-10-23T1422Z.json.gz where they price the fixture, else the fallback)
+  check: the GW8 column against the bundle's xp_v2_all.csv: 668 of 668 players equal
+  Saka (ARS MID, id 12) in the export: status i, chance_next_round 0, news "Thigh injury - Unknown return date"; in the matrix as built: no value in any week (the gate)
+  Saka as available (his row in memory: status 'a', chance 100; every other player unchanged in all six weeks): GW8 5.98, GW9 5.50, GW10 5.56, GW11 6.71, GW12 5.41, GW13 5.31
+  information, only the gate lifted (chance 0 kept, as the bundle's 'if he plays'): GW8 0.00, GW9 0.00, GW10 0.00, GW11 0.00, GW12 0.00, GW13 0.00
+  (a) Saka 0 in every week; (b) Saka 0 in GW8-9, from GW10 his values as available
+  planner rows: planner_live's run on the case's matrix (1 free transfer, no hits, decay 0.85, Boris's schedule; no ban adjustment); A and C: bb_timing.py's search, Thiago's GW9 x (1 - 0.444) from W3's line (fpl_squad.ban_risk from w3-wip 16e154d (modified tracked files 0) on data a88168a, 2026-10-23T14:26:45Z): Thiago            BRE FWD  cautions 4, club match 8 next  rate90 0.444  P(start) 1.00  P(ban) 0.444
+
+(a) SAKA 0 IN EVERY WEEK (the bundle's gate)
+  the planner: default Saka -> Rogers (CHE, 8.0) 6.11; best single transfer for GW8: Saka -> Rogers (CHE, 8.0) 6.11 (rank 1 of 331)
+  best with Saka out: Saka -> Rogers (CHE, 8.0) 6.11 (rank 1 of 331; weekly dxP +1.6 +0.9 +1.7 +1.0 +1.8 +4.6)
+  A  BB GW8   score  279.90  undiscounted xP  409.56   GW8 Saka -> Rogers (CHE, 8.0); GW9 Thomas -> De Cuyper (BHA, 5.3); GW10 Tarkowski -> Gabriel (ARS, 7.9); GW11 Branthwaite -> Silva (BOU, 5.0); GW12 Silva -> Mukiele (SUN, 5.4); GW13 Muharemović -> Egan (HUL, 4.1)
+  C  BB GW10  score  278.30  undiscounted xP  412.37   GW8 Saka -> Rogers (CHE, 8.0); GW9 Slater -> Tavernier (BOU, 6.2); GW10 Thomas -> De Cuyper (BHA, 5.3); GW11 Branthwaite -> Silva (BOU, 5.0); GW12 Tavernier -> Neto (CHE, 6.5); GW13 Muharemović -> Egan (HUL, 4.1)
+  A - C: score +1.60, undiscounted -2.82; C's beam, widths 50 and 100: the same moves yes
+
+(b) SAKA 0 IN GW8-9, AVAILABLE FROM GW10
+  the planner: default Branthwaite -> De Cuyper (BHA, 5.3) 4.45; best single transfer for GW8: Branthwaite -> De Cuyper (BHA, 5.3) 4.45 (rank 1 of 331)
+  best with Saka out: Saka -> Rogers (CHE, 8.0) 2.22 (rank 8 of 331; weekly dxP +1.6 +0.9 +0.4 -2.2 +0.6 +3.5)
+  A  BB GW8   score  279.90  undiscounted xP  409.56   GW8 Saka -> Rogers (CHE, 8.0); GW9 Thomas -> De Cuyper (BHA, 5.3); GW10 Tarkowski -> Gabriel (ARS, 7.9); GW11 Branthwaite -> Silva (BOU, 5.0); GW12 Silva -> Mukiele (SUN, 5.4); GW13 Muharemović -> Egan (HUL, 4.1)
+  C  BB GW10  score  278.20  undiscounted xP  413.27   GW8 Tarkowski -> Justin (LEE, 4.5); GW9 Slater -> Rogers (CHE, 8.0); GW10 Branthwaite -> De Cuyper (BHA, 5.3); GW11 roll; GW12 Rudoni -> Palmer (CHE, 9.8); Haaland -> João Pedro (CHE, 7.9); GW13 Muharemović -> Egan (HUL, 4.1)
+  A - C: score +1.70, undiscounted -3.72; C's beam, widths 50 and 100: the same moves yes
