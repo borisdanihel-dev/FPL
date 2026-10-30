@@ -1,0 +1,10 @@
+tool: tools/gw_pass.py
+args: --data C:\GIT\FPL-data --hist C:\GIT\FPL\historical --out C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw9/bundle
+commit: d9071b83f5f43e4b50f548d18fdea546c628005c
+modified tracked files at the run: 0
+start_utc: 2026-10-30T13:13:37+00:00
+end_utc: 2026-10-30T13:14:19+00:00
+duration_s: 42
+outputs:
+  gw9_pass.txt  sha256 d3335f57b62c9cde7391a58c7159f18bb5a5e89d63c732d1704159f07b22ce97
+  xp_v2_all.csv  sha256 54353ba2f2d0723c486ee23bcd9fd64a8ab0df218ba2d9fad0dc9cb3348cbb81
