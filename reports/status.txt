@@ -1,4 +1,4 @@
-STATUS WARN | generated 2026-10-29T22:17:59Z | next deadline GW9 2026-10-31 11:00 UTC / 2026-10-31 12:00 Prague | checks 29/30 | repo 9 MB
+STATUS WARN | generated 2026-10-30T22:14:04Z | next deadline GW9 2026-10-31 11:00 UTC / 2026-10-31 12:00 Prague | checks 29/30 | repo 9 MB
  1 OK   core endpoints: 3 core calls, all HTTP 200
  2 OK   element-summary failures: no element-summary calls tonight (the nightly sync makes none)
  3 OK   player count: 669 players (669 last night)
@@ -10,23 +10,23 @@ STATUS WARN | generated 2026-10-29T22:17:59Z | next deadline GW9 2026-10-31 11:0
  9 OK   element key set: 109 keys, unchanged
 10 OK   distinct prices: 47 distinct prices
 11 OK   price step: 669 players against their previous snapshot, every step within 0.1 a night
-12 OK   price changes: 2 price changes
+12 OK   price changes: 5 price changes
 13 OK   chance of playing 0: 173 of 669 (26%) at chance 0
 14 OK   position changes: no position changes
 15 OK   SQLite integrity: ok
-16 OK   price-history rows: 32567 -> 33236 rows (+669)
+16 OK   price-history rows: 33236 -> 33905 rows (+669)
 17 OK   price-date gaps: no gap outside the 4 known ones
-18 OK   projection-log growth: new rows bottomup +266, bottomup_lambda +266, fpl_ep +669, minutes +266, own +289, xg +266
+18 OK   projection-log growth: new rows bottomup +270, bottomup_lambda +270, fpl_ep +669, minutes +270, own +293, xg +270
 19 OK   projection-log duplicate keys: 0 duplicate keys
-20 OK   forecast rows after the deadline: 0 of 28110 rows at or after their deadline
+20 OK   forecast rows after the deadline: 0 of 30152 rows at or after their deadline
 21 OK   stuck gameweek: none
 22 OK   manager score reconciliation: 56 entry-gameweeks in GW1-GW8, every one equal
 23 OK   secret in the files to commit: 7 file(s) to commit, none holds a key pattern or the key value
 24 OK   repo size: 9 MB
-25 OK   run duration: 2.6 min
-26 OK   heartbeat: the last status.txt is 24.0 h old
+25 OK   run duration: 2.3 min
+26 OK   heartbeat: the last status.txt is 23.9 h old
 27 SKIP workflow state: manual: the Actions tab, Boris's weekly glance (a disabled workflow runs no check, and the token has no actions scope)
 28 OK   test gate: 752 tests green
-29 OK   record: own 289, xg 266, minutes 266, bottomup 266, fpl_ep 669, bottomup_lambda 266 (snapshot odds_2026-10-29T2217Z.json.gz, 266 of 266 players with odds-priced fixtures)
-30 OK   odds snapshot: 21 events (21 with totals), 3200 prices, odds/odds_2026-10-29T2217Z.json.gz 11986 bytes; credits used 68, remaining 432, this request 4
+29 OK   record: own 293, xg 270, minutes 270, bottomup 270, fpl_ep 669, bottomup_lambda 270 (snapshot odds_2026-10-30T2213Z.json.gz, 270 of 270 players with odds-priced fixtures)
+30 OK   odds snapshot: 21 events (21 with totals), 3208 prices, odds/odds_2026-10-30T2213Z.json.gz 11966 bytes; credits used 72, remaining 428, this request 4
 31 WARN report sections: LEAGUE SKIPPED: entry 18931 GW8 player 411: multiplier 2 but the rule says 1 (chip None)
