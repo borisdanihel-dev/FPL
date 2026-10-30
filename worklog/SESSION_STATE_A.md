@@ -7,6 +7,37 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
+- **NOW (30 Oct, 13:10 UTC on): the GW9 deadline pass** (Boris; deadline Sat
+  31 Oct 11:00 UTC; the GW9 freeze since 05:00 UTC: tools and worklog only,
+  no runner pushes).
+  - **W2 merged Sat 24 Oct.** `w2-wip` took master (`5c3e3bf`; the
+    CHANGELOG conflict kept both entries). Suite 752 OK, bare and with the
+    data. Master `979f307` was pushed at 19:57 UTC; tag `pre-W2` =
+    `5c3e3bf`.
+    - No manual real run was clicked. The nightlies from 24 Oct on ran W2:
+      752 tests green and check 31 present.
+    - **Still open:** the final verifier on a live run, CHANGELOG "W2 done",
+      and deleting `dry/W2` and `data-dryrun-W2`.
+  - **Lost time, 23–24 Oct:** a browser call (javascript_tool on BBC Sport)
+    hung about 27 hours. Step 16 is no further than `s16b-wip` `f23dc3f`
+    (the 2024/25 and 2025/26 cup CSVs); the FA and EFL round-dates pages
+    were read, and nothing is typed for 2026/27.
+  - **Temp cleanup:** the scratchpad sits under `%TEMP%`, and its old
+    worktrees lost about 200 tracked files each by 30 Oct. Every branch
+    head is on origin, so no commit was lost. The GW9 runs use fresh
+    worktrees (`gw9_code` = `d9071b8`, `gw9_w3` = `16e154d`). Check
+    `modified tracked files at the run: 0` in every run.txt.
+  - **GW9 bundle:** `worklog/gw_pass/gw9/` `e708c91`, data `e535487`.
+    Committed 13:14:32 UTC; run.txt end 13:14:19 UTC; the CSV blob =
+    run.txt's.
+  - **Check 31 (record now, no code; after the deadline):** the nightly
+    has warned since 26 Oct: "entry 18931 GW8 player 411: multiplier 2 but
+    the rule says 1 (chip None)". It looks like a vice-captain promoted
+    when the captain did not play, which W2's multiplier rule does not
+    handle. Fix it with a test after the GW9 deadline.
+  - **Rescheduled after the GW9 deadline (Boris):** the slipped `s8c-wip`
+    landing (with its landing tests) and the W3 merge (via `dry/W3`).
+
 - **GW8 DECISIONS (Boris, before the deadline, Fri 23 Oct 17:30 UTC; for grading):**
   - **Transfer:** Saka → Rogers (CHE, 8.0); 1 FT, no hit.
   - **Chip:** none. The S7 calculator says HOLD for GW8, so Part C's chip

@@ -1,0 +1,9 @@
+tool: worklog/gw_pass/gw9/named_moves.py
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw9_code --data C:\GIT\FPL-data --hist C:\GIT\FPL\historical --csv C:/GIT/FPL/worklog/gw_pass/gw9/xp_v2_all.csv --out C:/Users/Boris/AppData/Local/Temp/claude/C--GIT-FPL/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw9/named
+commit: d9071b83f5f43e4b50f548d18fdea546c628005c
+modified tracked files at the run: 0
+start_utc: 2026-10-30T13:15:48+00:00
+end_utc: 2026-10-30T13:15:53+00:00
+duration_s: 5
+outputs:
+  named_moves.txt  sha256 11e5a3b0736f5280688beba4f4d6b7c17a363f85a3645855e7b5babf279e082b
