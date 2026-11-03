@@ -7,7 +7,33 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (3 Nov, 16:00 UTC on): Tue 3 Nov** (Boris; the item count resets
+- **NOW (3 Nov, 21:40 UTC on): Boris's rulings of Tue 3 Nov night** (verbatim
+  in `prereg/W3.md` amendment 3 and `prereg/runcommit.md`). Items since the
+  reset: W2fix (1), W3 amendment 3 (2).
+  - **W3 amendment 3 DONE on the branch, not merged.** `w3-wip` takes master
+    `16aa4ed`; code `43a174f` and `aa07818`, report and CHANGELOG on top.
+    - The no-row captain test; the +02:00 test; the CHIPS line held by a test
+      (it already named the export's date, so no code); the `fetch-depth`
+      comment; `git_commit` with `commit.gpgsign=false`.
+    - Suite 784 → 787, OK bare and with the data; mutations 8 of 8 red;
+      verifier PASS twice (Fable 5.1), write guard clean.
+    - The +02:00 test and the comment were W3's two open items: nothing is
+      left before the merge but `dry/W3`.
+  - **`prereg/runcommit.md` committed; no code.** Real runs record their code
+    commit. Starts on Boris's word, Mon 9 Nov or later, after W3 and the S8c
+    landing, before the GW11 freeze (Thu 19 Nov 05:00 UTC). Dry runs record it
+    only in the commit message, so the log line and the status header are new
+    for both kinds of run.
+  - **Parked for Boris, exact wording:** "68 older tests (test_fpl.py 47,
+    test_W1b 13, test_W1 4, test_S3 4) stop under a global commit.gpgsign =
+    true, against the hermetic rule; nothing is red today because neither this
+    machine nor the runner sets it. Fix their git helpers in the international
+    break, with runcommit, or leave it?"
+  - **Next:** Wednesday, no runner change, Step 16 parts 3–4 on `s16b-wip`
+    (offline). Thursday, the GW10 bundle on Boris's paste. W3 Sat 7 Nov via
+    `dry/W3`; S8c Sun 8 Nov.
+
+- (Earlier) **NOW (3 Nov, 16:00 UTC on): Tue 3 Nov** (Boris; the item count resets
   to 0 of 6; GW10 deadline Fri 6 Nov 18:30 UTC; freeze from Thu 5 Nov 12:30
   UTC).
   - **1. W2fix DONE and merged.** Prereg `d2e1b43` (verbatim).
