@@ -1,0 +1,49 @@
+BENCH BOOST TIMING  A, B, C = a Bench Boost in GW9, GW10, GW11 (Boris's rule: before the international break); information for the GW9 deadline pass, read-only, no tool change
+  data e535487, export fpl_export_gw8_2026-10-29.json.gz; code d9071b8 (modified tracked files 0); script sha256 5900124a583f7c32b2a8f156eaa81618fbb591c16786898d2a5bbe7e3cf668c6; generated 2026-10-30 13:23 UTC
+  matrix: the planner's xp_v2 horizon matrix GW9-14 (planner_live.live_inputs; odds odds_2026-10-29T2217Z.json.gz where they price the fixture, else the fallback)
+  check: the GW9 column against the bundle's xp_v2_all.csv: 669 of 669 players equal
+  W3's ban-risk line (fpl_squad.ban_risk from w3-wip 16e154d (modified tracked files 0) on data e535487, 2026-10-30T13:14:47Z): Thiago            BRE FWD  cautions 4, club match 9 next  rate90 0.400  P(start) 1.00  P(ban) 0.400
+  Thiago's GW10 xp_v2 4.42 x (1 - 0.400) = 2.65 in every section below
+  free transfers: 1 now (planner_live's FREE_TRANSFERS, the ruling), +1 a week, up to 5; no hits; bank 3.4; decay 0.85; Boris's FT schedule (1.5, 1.0, 0.6, 0.3)
+
+1. BENCH BOOST VALUE ON XP_V2, our 15 held (the four outside xp_v2's best XI; S8's xi_value)
+  GW9     5.68   bench: Verbruggen 2.28, Slater 3.40, Calafiori 0.00, Thomas 0.00
+  GW10    5.20   bench: Kelleher 2.55, Thiago 2.65, Calafiori 0.00, Thomas 0.00   (Thiago x (1 - P(ban)))
+  GW11    7.27   bench: Kelleher 4.19, Slater 3.08, Calafiori 0.00, Thomas 0.00
+  GW12    6.79   bench: Kelleher 3.26, Slater 3.54, Calafiori 0.00, Thomas 0.00
+  GW13    6.43   bench: Kelleher 2.96, Slater 3.47, Calafiori 0.00, Thomas 0.00
+  GW14    5.91   bench: Kelleher 2.66, Slater 3.25, Calafiori 0.00, Thomas 0.00
+
+  check, the unadjusted matrix: the planner's default Calafiori -> Gabriel (ARS, 7.9) 11.21; its BB GW9 rescore, best transfer Calafiori -> Gabriel (ARS, 7.9) 14.35 (the bundle's planner section prints both); this script's held score for that step: Calafiori -> Gabriel (ARS, 7.9) 14.35
+2. THREE PLANS GW9-14, no hits; the planner's score = sum 0.85^t W_t - lost FT value (lost = V(5) - V(FTs into GW15)); W_t = XI + captain, all 15 + captain in the BB week; after the BB week the planner's default each week
+  search: A exhaustive over 343 single transfers (rolling instead: -14.94 on the held score); B exhaustive over 167242 GW9-10 move sequences; C a beam: after GW10 the best M per FT stock, M = 50 and 100 (2430127 and 4863139 GW9-11 sequences scored): the same best moves at both widths: yes
+  (our 15 held, no Bench Boost, for scale: 236.31)
+  plan            score  decayed xP  FTs GW15  lost FT  undecayed xP
+  A  BB GW9      268.47      268.77         3     0.30        390.13
+  B  BB GW10     269.80      270.10         3     0.30        393.25
+  C  BB GW11     271.60      271.90         3     0.30        397.61
+  differences on the score: A - B -1.32, A - C -3.13, B - C -1.81; undecayed xP, information: A - B -3.11, A - C -7.48, B - C -4.37
+  A, week by week (FTs before -> into the next week; W = the week's XI + captain xP, BB = all 15 + captain):
+    GW9   BB  FT 1 -> 1  W  65.35  Calafiori -> Gabriel (ARS, 7.9)
+    GW10      FT 1 -> 1  W  61.64  default: Thomas -> De Cuyper (BHA, 5.3)
+    GW11      FT 1 -> 1  W  63.47  default: Branthwaite -> Silva (BOU, 5.0)
+    GW12      FT 1 -> 1  W  68.07  default: Kelleher -> A.Becker (LIV, 5.5)
+    GW13      FT 1 -> 2  W  63.50  default: roll
+    GW14      FT 2 -> 3  W  68.09  default: roll
+    after GW14: bank 0.1
+  B, week by week (FTs before -> into the next week; W = the week's XI + captain xP, BB = all 15 + captain):
+    GW9       FT 1 -> 1  W  56.53  Calafiori -> Gabriel (ARS, 7.9)
+    GW10  BB  FT 1 -> 1  W  73.58  Thomas -> De Cuyper (BHA, 5.3)
+    GW11      FT 1 -> 1  W  63.47  default: Branthwaite -> Silva (BOU, 5.0)
+    GW12      FT 1 -> 1  W  68.07  default: Kelleher -> A.Becker (LIV, 5.5)
+    GW13      FT 1 -> 2  W  63.50  default: roll
+    GW14      FT 2 -> 3  W  68.09  default: roll
+    after GW14: bank 0.1
+  C, week by week (FTs before -> into the next week; W = the week's XI + captain xP, BB = all 15 + captain):
+    GW9       FT 1 -> 1  W  56.91  Calafiori -> Silva (BOU, 5.0)
+    GW10      FT 1 -> 1  W  62.19  Thomas -> Gabriel (ARS, 7.9)
+    GW11  BB  FT 1 -> 1  W  78.85  Branthwaite -> De Cuyper (BHA, 5.3)
+    GW12      FT 1 -> 1  W  68.07  default: Kelleher -> A.Becker (LIV, 5.5)
+    GW13      FT 1 -> 2  W  63.50  default: roll
+    GW14      FT 2 -> 3  W  68.09  default: roll
+    after GW14: bank 0.1

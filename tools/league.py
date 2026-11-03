@@ -145,6 +145,10 @@ def load(data_dir):
     for eid, ev, pid, pos, mult, cap in c.execute("select entry_id, event, player_id, position, multiplier, is_captain from picks"):
         if ev in settled:
             picks[eid][ev].append((pid, pos, mult, cap))
+    vice = {(eid, ev): pid for eid, ev, pid in c.execute("select entry_id, event, player_id from picks where is_vice = 1")}
+    minutes = defaultdict(int)                       # (player, event) -> minutes, a double's fixtures summed; no row = 0 (W2fix)
+    for pid, ev, m in c.execute("select player_id, event, minutes from player_gw"):
+        minutes[(pid, ev)] += m or 0
     players = {pid: (name, team, pos) for pid, name, team, pos in c.execute(
         "select p.id, p.web_name, t.short_name, p.position from players p join teams t on t.id = p.team_id")}
     deadlines = {ev: dl for ev, dl in c.execute("select id, deadline_time from events")}
@@ -155,7 +159,7 @@ def load(data_dir):
     for r in E.forecasts(log_rows, d_events):
         if r["source"] == "own":
             own[int(r["event"])][int(r["player_id"])] = float(r["predicted"])
-    check_multipliers(gw, picks)
+    check_multipliers(stored, picks, vice, minutes)   # the chip as entry_gw stores it, whatever the chain settles (W2 amendment 3)
     return {"entries": entries, "gw": gw, "picks": picks, "players": players, "own": own,
             "settled": sorted(settled), "deadlines": deadlines, "provisional": provisional, "excluded": excluded}
 
@@ -203,14 +207,17 @@ def expected_multiplier(position, is_captain, chip):
     return 1
 
 
-def check_multipliers(gw, picks):
+def check_multipliers(gw, picks, vice, minutes):
     """The picks' multiplier field must equal the rule on every settled
-    gameweek; a mismatch stops the run."""
+    gameweek; a mismatch stops the run. When the captain played 0 minutes,
+    the vice takes the captain's rule (W2fix)."""
     for eid, by_ev in picks.items():
         for ev, rows in by_ev.items():
             chip = gw.get(eid, {}).get(ev, {}).get("chip")
+            caps = [pid for pid, _, _, cap in rows if cap]
+            promoted = vice.get((eid, ev)) if caps and minutes.get((caps[0], ev), 0) == 0 else None
             for pid, pos, mult, cap in rows:
-                want = expected_multiplier(pos, cap, chip)
+                want = expected_multiplier(pos, cap or pid == promoted, chip)
                 if mult != want:
                     raise MissingInput(f"entry {eid} GW{ev} player {pid}: multiplier {mult} but the rule says {want} (chip {chip})")
 

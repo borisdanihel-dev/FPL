@@ -3534,6 +3534,17 @@ unused numbers.
 
 Report: `worklog/cc_2026-10-19_W2.md`.
 
+## 2026-10-19 — W2 amendment 2: any exception inside a section ends SKIPPED (`a78e2e7` prereg, `c21e0e0` code; on `w2-wip`)
+
+- RULING 19 Oct evening, point 3. `fpl_sections.py` catches any exception
+  per section: `<SECTION> SKIPPED: <type>: <message>`; the other section
+  still runs; the CLI exits 0; check 31 WARNs; never a red night. A missing
+  input's line is unchanged.
+- Flag rule unchanged (event 2 only); the stand-in time-zone variant is left
+  to the Linux dry run.
+- Measured: suite 625 → 626; the new test red on the old code; mutations
+  3 of 3; verifier PASS (Fable 5.1, `worklog/verify_W2a2.md`) with a
+  six-source record on real data identical apart from the clock.
 ## 2026-10-19 — S8: rolling-horizon transfer planner (`de7e1b3` prereg, `51520ef` / `7f8ba52` / `22a179c` code; lane B, overnight)
 
 RULING Step 8 (verbatim in `prereg/S8.md`): `tools/planner.py` (standard
@@ -4158,3 +4169,83 @@ except one:
   - S7 is identical, and so are the calibration lines.
 
 The report `worklog/cc_2026-10-20_S2b_after.md` is corrected in place.
+
+## 2026-10-21 — W1b done: automatic dry runs by push, merged, real run green, final verifier PASS (`f367cbd`; data `7dbc319`)
+
+**Merged** `f367cbd` (`w1b-wip` `dd10f24`, tree identical). Tag `pre-W1b` = `87485f3`.
+
+**Built:**
+- A push to `dry/<item>` runs the nightly as a dry run. Its result goes to
+  `data-dryrun-<item>`, and the Odds API key is not passed.
+- The `--due` gate (`fpl_dryrun.py`) skips a dry run, green, in the quiet
+  windows: 21:30 UTC until the night's commit (04:00 at the latest), and
+  within 1 hour of a deadline. It also skips once 12 dry runs, push and
+  manual together, have run that UTC day (RULINGS PART F, F-A; it was 6).
+- A real run never reaches the gate.
+
+**Measured:**
+- tests 708 → 739; Boris's dry run #40 green (`data-dryrun` `516326d`).
+- **The real run** (Boris's dispatch, 14:18 UTC, data `7dbc319`):
+  - STATUS OK 29/29; 739 tests;
+  - RECORD own 276, xg/minutes/bottomup 256, fpl_ep 668;
+  - odds 20 events, 472 credits left;
+  - 3 core calls: GW1–7 are all final now.
+- The projection log is last night's byte for byte, plus 1,712 GW8 rows,
+  all made before the deadline.
+
+**Verifiers** (Fable 5.1), all PASS:
+- the pre-check (`verify_W1b_pre.md`);
+- the delta (`verify_W1b.md`);
+- the fix of its two slips (`verify_W1b_fix.md`);
+- the final on the real run (`verify_W1b_final.md`).
+
+Report: `worklog/cc_2026-10-19_W1b.md`.
+
+## 2026-10-21 — W2 amendment 3: the multiplier check reads the chip as entry_gw stores it (`5d4ad2b` prereg on master, `ba138c7` code; on `w2-wip`)
+
+- Boris's message on dry/W2's check 31, verbatim in `prereg/W2.md`.
+- The cause: `check_multipliers` took the chip from the totals chain, which
+  cannot settle the newest gameweek (GW7, no GW8 row yet), so every GW7
+  chip read None. It was not one chip per entry: `entry_gw` holds both of
+  4866471's chips.
+- Our own GW7 Triple Captain fails the old lookup the same way; it was not
+  reached. The offline `tools/league.py` on master carries the same
+  lookup.
+- The fix: `load` passes the stored `entry_gw` rows to the check, one line
+  in `tools/league.py` and one in `fpl_league.py`. Nothing else changes.
+- Measured:
+  - suite 751 → 752, OK bare and with the data;
+  - the new test (chips in two consecutive gameweeks, both row orders,
+    both modules) red on the old lookup;
+  - mutations 3 of 3 red;
+  - real data `7dbc319`: CHIPS OK 37 lines, LEAGUE OK 58 lines;
+  - dry/W2 at `ba138c7` → data-dryrun-W2 `62ce283`: checks 29/30, check 31
+    OK; the one WARN is check 30, odds skipped by design in a push dry run.
+- Verifier: PASS (Fable 5.1, `worklog/verify_W2_a3.md`). The merge stays
+  Saturday 24 Oct after the GW8 deadline.
+
+Report: `worklog/cc_2026-10-21_W2a3.md`.
+
+## 2026-11-03 — W2fix: check 31 promotes the vice-captain when the captain played 0 minutes (`d2e1b43` prereg, `8c7a34a` code)
+
+- Boris's message of Tue 3 Nov, verbatim in `prereg/W2fix.md`.
+- The cause: the LEAGUE section had skipped since 26 Oct. In entry 18931's
+  GW8, the captain (João Pedro) played 0 minutes and the vice (Haaland) was
+  ×2, FPL's rule, which the multiplier check did not know. It is the only
+  captain on 0 minutes in 63 entry-gameweeks.
+- The fix, one change in `tools/league.py` and its runner copy
+  `fpl_league.py`: the vice takes the captain's rule (×2, ×3 under a
+  Triple Captain) when the captain's minutes in the gameweek are 0 (a
+  double summed).
+- Measured:
+  - suite 752 → 755, OK bare and with the data;
+  - the new tests red on the old code; mutations 4 of 4 red;
+  - real data `0c61ea1`: LEAGUE SKIPPED → LEAGUE OK 51 lines;
+  - `dry/W2fix` → `data-dryrun-W2fix` `13ed5ad`: 29/30, check 31 OK
+    (CHIPS 35, LEAGUE 58 lines); the one WARN is check 30, odds skipped
+    in a push dry run.
+- Verifier: PASS (Fable 5.1, `worklog/verify_W2fix.md`). The "no
+  player_gw row = 0 minutes" clause has no test (the verifier's own
+  mutation survives); a coverage note for a later item.
+
+Report: `worklog/cc_2026-11-03_W2fix.md`.
