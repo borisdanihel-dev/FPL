@@ -4149,3 +4149,27 @@ Report: `worklog/cc_2026-10-19_W1b.md`.
   Saturday 24 Oct after the GW8 deadline.
 
 Report: `worklog/cc_2026-10-21_W2a3.md`.
+
+## 2026-11-03 — W2fix: check 31 promotes the vice-captain when the captain played 0 minutes (`d2e1b43` prereg, `8c7a34a` code)
+
+- Boris's message of Tue 3 Nov, verbatim in `prereg/W2fix.md`.
+- The cause: the LEAGUE section had skipped since 26 Oct. In entry 18931's
+  GW8, the captain (João Pedro) played 0 minutes and the vice (Haaland) was
+  ×2, FPL's rule, which the multiplier check did not know. It is the only
+  captain on 0 minutes in 63 entry-gameweeks.
+- The fix, one change in `tools/league.py` and its runner copy
+  `fpl_league.py`: the vice takes the captain's rule (×2, ×3 under a
+  Triple Captain) when the captain's minutes in the gameweek are 0 (a
+  double summed).
+- Measured:
+  - suite 752 → 755, OK bare and with the data;
+  - the new tests red on the old code; mutations 4 of 4 red;
+  - real data `0c61ea1`: LEAGUE SKIPPED → LEAGUE OK 51 lines;
+  - `dry/W2fix` → `data-dryrun-W2fix` `13ed5ad`: 29/30, check 31 OK
+    (CHIPS 35, LEAGUE 58 lines); the one WARN is check 30, odds skipped
+    in a push dry run.
+- Verifier: PASS (Fable 5.1, `worklog/verify_W2fix.md`). The "no
+  player_gw row = 0 minutes" clause has no test (the verifier's own
+  mutation survives); a coverage note for a later item.
+
+Report: `worklog/cc_2026-11-03_W2fix.md`.
