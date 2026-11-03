@@ -1,0 +1,13 @@
+NAMED MOVES  GW9 (Boris, Fri 30 Oct); information, read-only, no tool change
+  data e535487, export fpl_export_gw8_2026-10-29.json.gz; code d9071b8 (modified tracked files 0); script sha256 d9295d20b8ff34605ff77703933756ea1685320594e38e4595df509641d58ce8; generated 2026-10-30 13:15 UTC
+  matrix: the planner's xp_v2 horizon matrix GW9-14 (builder.live_matrix; odds odds_2026-10-29T2217Z.json.gz where they price the fixture, else the fallback)
+  check: the GW9 column against the bundle's xp_v2_all.csv: 669 of 669 players equal
+  Thomas (COV DEF, selling 4.0): export status d, chance_next_round 50, news "Calf injury - 50% chance of playing"; in the matrix: no value in any week (the gate)
+  Calafiori (ARS DEF, selling 5.9): export status d, chance_next_round 75, news "Hip injury - 75% chance of playing"; in the matrix: no value in any week (the gate)
+  score: S8's rank_plans as planner_live runs it (1 free transfer, no hits, decay 0.85, Boris's schedule (1.5, 1.0, 0.6, 0.3)); bank 3.4
+
+  the planner's default: Calafiori -> Gabriel (ARS, 7.9) 11.21
+  Thomas -> De Cuyper (named): Thomas -> De Cuyper (BHA, 5.3)  score   8.06  gain   9.06  lostFT 1.00  weekly dxP +0.62 +1.24 +3.60 +3.57 +2.25 +3.20  rank 7 of the planner's 344 plans
+  best with Thomas out: Thomas -> Silva (BOU, 5.0)  score   8.18  gain   9.18  lostFT 1.00  weekly dxP +2.30 +1.78 +4.30 +2.14 +0.53 +1.52  rank 4 of the planner's 344 plans
+  best with Calafiori out: Calafiori -> Gabriel (ARS, 7.9)  score  11.21  gain  12.21  lostFT 1.00  weekly dxP +1.93 +4.53 +4.05 +2.12 +2.01 +2.62  rank 1 of the planner's 344 plans
+  roll: roll  score   0.00  gain   0.00  lostFT 0.00  weekly dxP +0.00 +0.00 +0.00 +0.00 +0.00 +0.00  rank 96 of the planner's 344 plans

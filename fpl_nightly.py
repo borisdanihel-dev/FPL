@@ -72,7 +72,7 @@ NIGHTLY_UTC = (21, 40)              # the scheduled nightly: cron "40 21 * * *"
 BACKUP_CRON = "17 3 * * *"          # the backup run: only when the nightly left no status
 STATUS_REL = os.path.join("reports", "status.txt")
 
-SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # fpl_ep: W1
+SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep", "bottomup_lambda")     # fpl_ep: W1; bottomup_lambda: W2
 EXPORTS, LOGS, REPORTS = "exports", "logs", "reports"
 DATED = re.compile(r"^fpl_export_gw(\d+)_(\d{4}-\d{2}-\d{2})\.json(\.gz)?$")
 DATA_ENV = "FPL_DATA_DIR"
@@ -270,6 +270,17 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
         if step("fpl_edge.py", "--diff", "--out", report_rel) != 0:
             failed.append("report")
             say("EDGE FAILED")
+
+        # the CHIPS and LEAGUE sections (W2): appended to the report; a missing
+        # input is one "<SECTION> SKIPPED:" line and a crash is logged - both a
+        # WARN in check 31, never a red night (RULING W2 build)
+        if os.path.exists(os.path.join(data, report_rel)):
+            say("adding the report sections ...")
+            code = step("fpl_sections.py", "--report", report_rel)
+            if code != 0:
+                say(f"SECTIONS FAILED  fpl_sections.py exited {code} - the report has no CHIPS or LEAGUE section tonight")
+        else:
+            say("SECTIONS FAILED  no report to add the sections to")
 
         # the GW stuck alarm: a gameweek not final 72 h after its last kickoff
         # turns the run red (BUILD_PLAN.md Step 2.1)

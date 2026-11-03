@@ -172,7 +172,7 @@ class FplEp(unittest.TestCase):
             self.assertGreater(len(a), 0, source)
 
     def test_the_nightly_and_the_checks_know_the_fifth_source(self):
-        self.assertEqual(N.SOURCES, ("own", "xg", "minutes", "bottomup", "fpl_ep"))
+        self.assertEqual(N.SOURCES, ("own", "xg", "minutes", "bottomup", "fpl_ep", "bottomup_lambda"))   # W2: the sixth
         self.assertEqual(C.SOURCES, N.SOURCES)
 
 
@@ -511,9 +511,9 @@ class OddsCheck(unittest.TestCase):
     def test_a_skipped_fpl_ep_is_a_warn_and_a_skipped_frozen_source_a_fail(self):
         base = ("record summary:\nRECORD OK own 5\nRECORD OK xg 5\nRECORD OK minutes 5\n"
                 "RECORD OK bottomup 5\n")
-        skip = base + "RECORD SKIP fpl_ep the export has no ep_next for any player\narchiving ...\n"
+        skip = base + "RECORD SKIP fpl_ep the export has no ep_next for any player\nRECORD OK bottomup_lambda 5\narchiving ...\n"
         self.assertEqual(C.c29(C.Ctx(run_log=skip)),
-                         (C.WARN, "fpl_ep skipped: the export has no ep_next for any player; the four recorded"))
+                         (C.WARN, "fpl_ep skipped: the export has no ep_next for any player; the other 5 recorded"))   # W2: six sources
         frozen = skip.replace("RECORD OK xg 5", "RECORD SKIP xg no reason")
         self.assertEqual(C.c29(C.Ctx(run_log=frozen))[0], C.FAIL)
 
@@ -538,7 +538,7 @@ class OddsCheck(unittest.TestCase):
 
     def test_a_missing_fpl_ep_record_fails_check_29(self):
         text = ("record summary:\nRECORD OK own 5\nRECORD OK xg 5\nRECORD OK minutes 5\n"
-                "RECORD OK bottomup 5\narchiving the export ...\n")
+                "RECORD OK bottomup 5\nRECORD OK bottomup_lambda 5\narchiving the export ...\n")
         self.assertEqual(C.c29(C.Ctx(run_log=text)), (C.FAIL, "fpl_ep missing"))
 
 
