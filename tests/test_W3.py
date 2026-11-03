@@ -649,7 +649,7 @@ def git_commit(repo, files, when):
         with open(full, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(text)
     env = dict(os.environ, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when)
-    base = ["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false"]
+    base = ["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false"]
     subprocess.run(base + ["add", "-A"], check=True, capture_output=True, env=env)
     subprocess.run(base + ["commit", "-q", "-m", "bundle"], check=True, capture_output=True, env=env)
     return subprocess.run(base + ["rev-parse", "HEAD"], check=True, capture_output=True, env=env, encoding="utf-8").stdout.strip()
