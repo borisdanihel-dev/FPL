@@ -4303,6 +4303,7 @@ class NightlyRunner(unittest.TestCase):
     def _real_world(self):
         here = os.path.dirname(os.path.abspath(__file__))
         tmp = self._world(export=False, edge=self._get(os.path.join(here, "fpl_edge.py")))
+        self._put(os.path.join(tmp, "fpl_lambda.py"), self._get(os.path.join(here, "fpl_lambda.py")))   # W2: the record imports it
         with open(os.path.join(tmp, "fpl_export_gw3.json"), "w", encoding="utf-8") as fh:
             json.dump(self.export, fh)
         with open(os.path.join(tmp, "fpl_export_gw2.json"), "w", encoding="utf-8") as fh:
@@ -4318,7 +4319,8 @@ class NightlyRunner(unittest.TestCase):
         for s, line in zip(self.FOUR, summary):
             self.assertRegex(line, rf"^RECORD OK {s} [1-9]\d*$")
         rows = E.read_log(os.path.join(tmp, "projection_log.csv"))
-        self.assertEqual({r["source"] for r in rows}, set(N.SOURCES))     # the four and fpl_ep (W1)
+        self.assertEqual({r["source"] for r in rows}, set(N.SOURCES) - {"bottomup_lambda"})   # the four and fpl_ep (W1);
+        self.assertIn("RECORD SKIP bottomup_lambda no odds snapshot", "\n".join(log))   # W2: no odds/ in this world: a SKIP
         self.assertGreater(os.path.getsize(os.path.join(tmp, "reports", f"fpl_{self.STAMP}.txt")), 1000)
         self.assertEqual([f for f in os.listdir(tmp) if "sqlite" in f], [],
                          "the record or the report touched a database")
@@ -4378,8 +4380,9 @@ class NightlyWorkflow(unittest.TestCase):
         self.assertLess(y.index("pip install -r requirements.txt"), y.index("run: python fpl_nightly.py\n"))
         code = "\n".join(l for l in y.splitlines() if not l.strip().startswith("#"))
         # S1 amendment 1, item 1 (W1): exactly the ODDS_API_KEY reference, and
-        # only in the nightly step and the commit step
-        key = "          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}\n"
+        # only in the nightly step and the commit step; never to a run pushed
+        # to dry/** (RULING W1b, point 2)
+        key = "          ODDS_API_KEY: ${{ github.event_name != 'push' && secrets.ODDS_API_KEY || '' }}\n"
         self.assertEqual(code.count(key), 2)
         for step in ("name: Nightly run", "name: Commit outputs to the data branch"):
             body = y[y.index(step):]
@@ -4420,7 +4423,8 @@ class NightlyWorkflow(unittest.TestCase):
 
     def test_push_safety_and_least_privilege(self):
         """D1 (Step 1.5, 1.6): one concurrency group, never cancelled; write
-        access for the pushing job only; triggers schedule and dispatch only."""
+        access for the pushing job only; triggers schedule and dispatch, and
+        (RULING W1b) a push to dry/** - tests/test_W1b.py pins that filter."""
         y = self._read(".github", "workflows", "nightly.yml")
         conc = y[y.index("\nconcurrency:\n"):y.index("\njobs:")]
         self.assertIn("|| 'nightly-data' }}\n  cancel-in-progress: false", conc)
@@ -4430,8 +4434,9 @@ class NightlyWorkflow(unittest.TestCase):
         self.assertEqual(y.count("contents: write"), 1)
         on = y[y.index("\non:\n") + 5:y.index("\npermissions:")]
         triggers = [l.strip().rstrip(":") for l in on.splitlines()
-                    if l.startswith("  ") and not l.startswith("   ") and l.strip()]
-        self.assertEqual(triggers, ["schedule", "workflow_dispatch"])
+                    if l.startswith("  ") and not l.startswith("   ") and l.strip()
+                    and not l.strip().startswith("#")]
+        self.assertEqual(triggers, ["push", "schedule", "workflow_dispatch"])
 
     def test_weekly_backup_on_sundays_keeps_the_last_eight(self):
         """D1 (Step 1.3): fpl.sqlite and fpl.sql as release assets, Sundays,
@@ -6469,7 +6474,8 @@ class StepTwoFiles(unittest.TestCase):
     ProjectionLogKey). p1_eval.py is frozen and not checked."""
 
     RUNNER = ("fpl_edge.py", "fpl_sync.py", "fpl_nightly.py", "fpl_gate.py", "fpl_publish.py",
-              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py", "checks.py", "fpl_alert.py")
+              "fpl_prepush.py", "fpl_hist.py", "fpl_ship.py", "checks.py", "fpl_alert.py", "fpl_lambda.py",
+              "fpl_sections.py", "fpl_chips.py", "fpl_league.py", "fpl_bt.py", "fpl_pit.py")
 
     def test_every_text_open_names_utf8_and_newline(self):
         import re

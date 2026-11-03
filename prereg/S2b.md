@@ -101,3 +101,28 @@ RULING 19 Oct afternoon:
 5. Dry-run cap: today's six are used. The landing-2026-10-19b and s2b-wip dry runs move to Tuesday after 00:00 UTC.
 6. Reconcile before relying on the GW5-7 retro: our actual GW6 (wildcard, captain Saka) scored 49 officially, while the retro scores our squad 59 (own's picks) and 61 (xp_v2's picks). Check that the retro used the actual GW6 15 (post-wildcard), the official points and FPL's actual autosubs, and explain the gap in the S6c/S6d report. Captain in reality was Saka (the vice was Haaland).
 END RULING
+
+## After the first real run: a verifier on the after-measurement (Ruling, Tue 20 Oct evening, point 2, verbatim)
+
+The after-measurement is `worklog/cc_2026-10-20_S2b_after.md` (data `63e6a44`). A Fable verifier checks it tonight; it blocks nothing.
+
+Ruling, Tue 20 Oct evening.
+
+1. No new test now: s8c-wip 71c9d17 stays the commit Thursday's bundle runs from, exactly as verified. Add the sorted-clubs flag test when s8c-wip lands on Sun 25 Oct.
+2. Yes: a Fable verifier on S2b's after-measurement (worklog/cc_2026-10-20_S2b_after.md) tonight; it blocks nothing.
+
+Then tonight, on branches only: W3 points 2, 3 and 5 on w3-wip (merge by Thu 29 Oct via dry/W3), then the F-I downloads and Step 16's prereg. Wednesday: W1b as planned; tell Boris when his dry-run click is needed. Same rules: no runner pushes 21:00 UTC to the end of the nightly; no merges without Boris; stop at 6 items.
+
+## The after-report corrected (Ruling, Tue 20 Oct night, point 1, verbatim)
+
+The four slips of `worklog/verify_S2b_after.md` are corrected in `worklog/cc_2026-10-20_S2b_after.md`; an amending CHANGELOG entry is added and the 20 Oct entry stays as written.
+
+Ruling, Tue 20 Oct night.
+
+1. S2b after-report: yes. Correct the four slips in the report; add an amending CHANGELOG entry; the original entry stays as written.
+2. Yes: appended last in the table is what was meant.
+3. Change the GW8 grading so it does not depend on Friday's timing. The export cannot see a pending transfer before the deadline, so a refresh after Boris's transfer would still print the old 15.
+   - s8c-wip: the bundle also writes worklog/gw_pass/gw8/xp_v2_all.csv from the same run: every player it forecasts, with id, name, team, position, xp_v2 for GW8, P(start) and the lambda source. Test that the printed output is byte-identical with and without the CSV. The verifier checks the diff. Done by Thu 22 Oct 14:00 UTC; the new head is the commit Thursday's bundle runs from.
+   - w3-wip: REALISED takes the actual GW8 15 from the post-deadline picks, own from the projection log, and xp_v2 from that CSV; each model picks its XI and captain from those 15. The condition "the bundle's 15 equals the GW8 squad" is replaced by "all 15 are in the CSV"; otherwise "not recorded".
+4. Committer time: OK, and the bundle's run.txt end time must also be before the deadline. Both are required.
+5. Yes: the item count resets to 0 of 6. Wednesday: point 3, then W1b as planned (tell Boris when his dry-run click is needed, before 21:00 UTC), then Step 16's prereg. Same rules: branches only; no merges without Boris; no runner pushes 21:00 UTC to the end of the nightly or from Thu 22 Oct 11:30 UTC to the GW8 deadline.

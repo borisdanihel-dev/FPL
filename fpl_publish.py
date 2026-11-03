@@ -43,6 +43,7 @@ import fpl_gate
 
 BRANCH = "data"
 DRY_BRANCH = "data-dryrun"           # a dry run's only push target (S2 amendment 2, point 5)
+DRY_PUSH = "refs/heads/dry/"         # a push here is a dry run, its result data-dryrun-<item> (W1b)
 MASTER = "refs/heads/master"
 RETRIES = 3
 
@@ -90,15 +91,37 @@ def run_mode(env):
     return "real", ("dry_run is not ticked" if ref else "local run")
 
 
-def push_dry(repo, say=print):
-    """Force-push HEAD to origin's data-dryrun: the dry run's only push.
-    Never to data."""
-    assert DRY_BRANCH != BRANCH
-    r = _git(repo, "push", "--force", "origin", f"HEAD:refs/heads/{DRY_BRANCH}")
+def result_branch(env):
+    """Where this dry run's result goes (RULING W1b, point 3): data-dryrun-<item>
+    for a push to dry/<item>, so the lanes never overwrite each other;
+    data-dryrun for everything else, a manual dispatch above all (point 6)."""
+    ref = env.get("GITHUB_REF") or ""
+    item = ref[len(DRY_PUSH):] if ref.startswith(DRY_PUSH) else ""
+    if env.get("GITHUB_EVENT_NAME") == "push" and item:
+        return f"{DRY_BRANCH}-{item}"
+    return DRY_BRANCH
+
+
+def dry_target(branch):
+    """True for data-dryrun and data-dryrun-<item> only: the one family of
+    branches a dry run may force-push (RULING W1b, point 3). Never data."""
+    return branch == DRY_BRANCH or (branch.startswith(DRY_BRANCH + "-") and
+                                    len(branch) > len(DRY_BRANCH) + 1)
+
+
+def push_dry(repo, say=print, branch=DRY_BRANCH):
+    """Force-push HEAD to origin's `branch`, data-dryrun or data-dryrun-<item>:
+    the dry run's only push. Anything else, data above all, is refused without
+    a git call."""
+    if branch == BRANCH or not dry_target(branch):
+        say(f"PUSH REFUSED {branch}: a dry run force-pushes to {DRY_BRANCH} or "
+            f"{DRY_BRANCH}-<item> only")
+        return False
+    r = _git(repo, "push", "--force", "origin", f"HEAD:refs/heads/{branch}")
     if r.returncode == 0:
-        say(f"PUSH OK      origin {DRY_BRANCH} (dry run, forced; {BRANCH} untouched)")
+        say(f"PUSH OK      origin {branch} (dry run, forced; {BRANCH} untouched)")
         return True
-    say(f"PUSH FAILED  origin {DRY_BRANCH}: {r.stdout.strip().splitlines()[-1:] or ''}")
+    say(f"PUSH FAILED  origin {branch}: {r.stdout.strip().splitlines()[-1:] or ''}")
     return False
 
 
@@ -127,8 +150,9 @@ def main(argv=None, sleep=None, say=print, env=None):
     env = os.environ if env is None else env
     data = argv[0] if argv else "."
     mode, why = run_mode(env)
+    target = result_branch(env)
     if mode == "dry":
-        say(f"DRY RUN      {why}: the result goes to {DRY_BRANCH} only, never to {BRANCH}")
+        say(f"DRY RUN      {why}: the result goes to {target} only, never to {BRANCH}")
     failed = checks_failed(data, mode)
     for line in failed:
         say(f"CHECKS FAIL  {line}")
@@ -137,7 +161,7 @@ def main(argv=None, sleep=None, say=print, env=None):
         return 1
     if failed:
         say("CHECKS FAIL  a real run would commit nothing; the dry run still reports "
-            f"to {DRY_BRANCH}")
+            f"to {target}")
     if fpl_gate.main([data]) != 0:
         return 1
     _git(data, "add", "-A")
@@ -158,7 +182,7 @@ def main(argv=None, sleep=None, say=print, env=None):
             say(f"COMMIT FAILED {r.stdout.strip()}")
             return 1
     if mode == "dry":
-        return 0 if push_dry(data, say=say) else 1
+        return 0 if push_dry(data, say=say, branch=target) else 1
     return 0 if push(data, sleep=sleep, say=say) else 1
 
 

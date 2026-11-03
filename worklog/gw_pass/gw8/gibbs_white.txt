@@ -1,0 +1,18 @@
+NAMED MOVE  Saka -> Gibbs-White beside Saka -> Rogers, GW8 (Boris, Fri 23 Oct); information, read-only, no tool change
+  data a88168a, export fpl_export_gw7_2026-10-23.json.gz; code d9071b8 (modified tracked files 0); script sha256 2333555299b5c1c20fee85b913748b946776065b43c34b025deb702737a0db4b; generated 2026-10-23 14:28 UTC
+  matrix: the planner's xp_v2 horizon matrix GW8-13 (builder.live_matrix; odds odds_2026-10-23T1422Z.json.gz where they price the fixture, else the fallback); Saka 0 in every week (the gate; export status i)
+  check: the GW8 column against the bundle's xp_v2_all.csv: 668 of 668 players equal
+  Gibbs-White (NFO MID, id 480, 7.9): export status a, chance_next_round 100, starts_last4 3, mins_last4 270; the matrix's P(start) 0.75
+  score: S8's evaluate as planner_live runs it (1 free transfer, no hits, decay 0.85, Boris's schedule (1.5, 1.0, 0.6, 0.3)); Saka's selling price 9.5, bank 1.9
+
+1. as the matrix has him
+  Gibbs-White xp_v2: GW8 3.76, GW9 3.50, GW10 3.11, GW11 3.20, GW12 3.30, GW13 3.18
+  the planner's default on this matrix: Saka -> Rogers (CHE, 8.0) 6.11
+  Saka -> Gibbs-White (NFO, 7.9): score  -0.98  gain   0.02  lostFT 1.00  weekly dxP +0.02 +0.00 +0.00 +0.00 +0.00 +0.00  not among the planner's 331 plans (outside its pool, the top 25 per position by decayed xP)
+  Saka -> Rogers (CHE, 8.0): score   6.11  gain   7.11  lostFT 1.00  weekly dxP +1.56 +0.93 +1.66 +0.98 +1.78 +4.57  rank 1 of the planner's 331 plans
+
+2. Gibbs-White's P(start) 1.0 from GW8 (in memory; every other player unchanged)
+  Gibbs-White xp_v2: GW8 5.01, GW9 4.66, GW10 4.14, GW11 4.26, GW12 4.41, GW13 4.24
+  the planner's default on this matrix: Saka -> Rogers (CHE, 8.0) 6.11
+  Saka -> Gibbs-White (NFO, 7.9): score   0.76  gain   1.76  lostFT 1.00  weekly dxP +1.28 +0.45 +0.00 +0.05 +0.14 +0.00  rank 26 of the planner's 329 plans
+  Saka -> Rogers (CHE, 8.0): score   6.11  gain   7.11  lostFT 1.00  weekly dxP +1.56 +0.93 +1.66 +0.98 +1.78 +4.57  rank 1 of the planner's 329 plans

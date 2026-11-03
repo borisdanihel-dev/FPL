@@ -71,14 +71,15 @@ NAMES = {
     20: "forecast rows after the deadline", 21: "stuck gameweek",
     22: "manager score reconciliation", 23: "secret in the files to commit",
     24: "repo size", 25: "run duration", 26: "heartbeat", 27: "workflow state",
-    28: "test gate", 29: "record", 30: "odds snapshot"}
+    28: "test gate", 29: "record", 30: "odds snapshot", 31: "report sections"}
 
 # what a breach is, check by check: the table's own word where it gives one
 SEVERITY = {1: FAIL, 2: FAIL, 3: FAIL, 4: FAIL, 5: FAIL, 6: WARN, 7: WARN, 8: FAIL, 9: WARN,
             10: FAIL, 11: FAIL, 12: WARN, 13: FAIL, 14: WARN, 15: FAIL, 16: FAIL, 17: WARN,
             18: FAIL, 19: WARN, 20: FAIL, 21: WARN, 22: WARN, 23: FAIL, 24: FAIL, 25: WARN,
-            26: WARN, 27: SKIP, 28: FAIL, 29: FAIL, 30: WARN}
-SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep")     # as fpl_nightly.SOURCES
+            26: WARN, 27: SKIP, 28: FAIL, 29: FAIL, 30: WARN, 31: WARN}
+SOURCES = ("own", "xg", "minutes", "bottomup", "fpl_ep", "bottomup_lambda")     # as fpl_nightly.SOURCES
+SKIPPABLE = ("fpl_ep", "bottomup_lambda")      # a RECORD SKIP is a WARN (W1: no ep_next; W2: no odds snapshot)
 CREDITS_WARN = 60           # Odds API credits left below this: check 30 WARNs (W1 decisions)
 CREDIT_HEADERS = ("x-requests-used", "x-requests-remaining", "x-requests-last")   # in the ODDS OK line's order
 
@@ -542,7 +543,8 @@ def c29(x):
     """Every source recorded: the record summary of the run log has RECORD OK
     for each of SOURCES; a RECORD FAIL - a failure, or a source skipped because
     the suite was red - or a missing source fails. fpl_ep's RECORD SKIP (no
-    ep_next in the export) is a WARN only (RULING W1 decisions, point 3)."""
+    ep_next in the export) is a WARN only (RULING W1 decisions, point 3), and so
+    is bottomup_lambda's (no odds snapshot before the deadline; W2)."""
     text = x.run_log or ""
     i = text.rfind("record summary:")
     if i < 0:
@@ -554,12 +556,14 @@ def c29(x):
             break
         got[m.group(2)] = (m.group(1), m.group(3))
     bad = [f"{s} {why}" for s, (st, why) in got.items()
-           if st == "FAIL" or (st == "SKIP" and s != "fpl_ep")]
+           if st == "FAIL" or (st == "SKIP" and s not in SKIPPABLE)]
     bad += [f"{s} missing" for s in SOURCES if s not in got]
     if bad:
         return FAIL, _short(bad)
-    if got["fpl_ep"][0] == "SKIP":
-        return WARN, f"fpl_ep skipped: {got['fpl_ep'][1]}; the four recorded"
+    skipped = [s for s in SKIPPABLE if got[s][0] == "SKIP"]
+    if skipped:
+        return WARN, "; ".join(f"{s} skipped: {got[s][1]}" for s in skipped) + \
+            f"; the other {len(SOURCES) - len(skipped)} recorded"
     return OK, ", ".join(f"{s} {got[s][1]}" for s in SOURCES)
 
 
@@ -586,7 +590,30 @@ def c30(x):
     return WARN, line
 
 
-CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 31)]
+SECTION_TITLES = ("CHIPS", "LEAGUE")             # as fpl_sections.TITLES (W2)
+
+
+def c31(x):
+    """The report sections (W2): fpl_sections.py's lines in the run log, one
+    per section, "<TITLE> OK <n> lines" or "<TITLE> SKIPPED: <why>". A skip,
+    a missing line or a failed step is a WARN, never a FAIL."""
+    text = x.run_log or ""
+    failed = [l.strip() for l in text.splitlines() if l.startswith("SECTIONS FAILED")]
+    got = {}
+    for line in text.splitlines():
+        m = re.match(r"(CHIPS|LEAGUE) (OK \d+ lines|SKIPPED: .*)$", line.strip())
+        if m:
+            got[m.group(1)] = m.group(2)
+    if failed:
+        return WARN, failed[-1]
+    bad = [f"{t} {got[t]}" for t in SECTION_TITLES if t in got and got[t].startswith("SKIPPED")]
+    bad += [f"{t} missing" for t in SECTION_TITLES if t not in got]
+    if bad:
+        return WARN, _short(bad)
+    return OK, ", ".join(f"{t} {got[t][3:]}" for t in SECTION_TITLES)
+
+
+CHECKS = [globals()[f"c{n:02d}"] for n in range(1, 32)]
 
 
 def run_all(x):

@@ -6,7 +6,12 @@
 # A dry run (S2 amendment 2, point 5) runs the same pipeline on its branch's
 # code and force-pushes the result to data-dryrun only: never to data, no
 # release, no issue, its own concurrency group. Any branch but master is
-# always dry; a scheduled run never is. At most 6 dry runs a day (point 9).
+# always dry; a scheduled run never is. At most 12 dry runs a day (F-A; 6 under point 9).
+# A push to dry/<item> is a dry run too (RULING W1b): its result goes to
+# data-dryrun-<item>, the Odds API key is not passed, and the --due gate
+# (fpl_dryrun.py) skips it, green, in the quiet windows (21:30 UTC until the
+# nightly has committed, at the latest 04:00; within 1 hour of a deadline) or
+# when 12 dry runs, pushed and manual together, already ran that UTC day.
 # The checks (checks.py, Step 3) write reports/status.txt; a FAIL commits
 # nothing. A red run opens or updates the issue "Nightly run failed", a green
 # one closes it (fpl_alert.py). A second cron at 03:17 UTC is the backup run:
@@ -20,8 +25,14 @@
 # To start a run by hand: Actions tab -> nightly -> Run workflow. Branch
 # master with dry_run unticked is a real run; anything else is dry.
 name: nightly
+# dry runs are named so the cap can count them (fpl_dryrun.py, RULING W1b point 4)
+run-name: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (github.ref != 'refs/heads/master' || inputs.dry_run))) && format('dry run {0}', github.ref_name) || 'nightly' }}
 
 on:
+  # a lane asks for a dry run by pushing to dry/<item> (RULING W1b, point 1)
+  push:
+    branches:
+      - "dry/**"
   schedule:
     # 21:40 UTC = 23:40 Prague in summer time (CEST), 22:40 in winter (CET).
     # Actions cron can start late; this keeps a margin before the Friday-night
@@ -61,6 +72,7 @@ jobs:
     permissions:
       contents: write        # the pushing job: commits to data, Sunday releases
       issues: write          # the one issue "Nightly run failed" (ruling S3, point 3)
+      actions: read          # the dry-run gate counts today's dry runs (RULING W1b, point 4)
     env:
       # dry: any ref but master, or a dispatch with dry_run ticked; a scheduled
       # run never (S2 amendment 2, point 5). fpl_publish.py decides again from
@@ -87,6 +99,7 @@ jobs:
         env:
           FPL_DATA_DIR: data
           FPL_SCHEDULE: ${{ github.event.schedule }}
+          GH_TOKEN: ${{ github.token }}
         run: python fpl_nightly.py --due
 
       - name: Install requirements
@@ -102,7 +115,7 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
           GH_TOKEN: ${{ github.token }}
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          ODDS_API_KEY: ${{ github.event_name != 'push' && secrets.ODDS_API_KEY || '' }}
           FPL_ODDS_LIVE: ${{ inputs.odds_live }}
           FPL_DATA_DIR: data
         run: python fpl_nightly.py
@@ -115,7 +128,7 @@ jobs:
         if: always() && steps.due.outputs.run == 'true'
         env:
           PYTHONIOENCODING: utf-8
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          ODDS_API_KEY: ${{ github.event_name != 'push' && secrets.ODDS_API_KEY || '' }}
         run: |
           git -C data config user.name "github-actions[bot]"
           git -C data config user.email "41898282+github-actions[bot]@users.noreply.github.com"

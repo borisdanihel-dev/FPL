@@ -118,6 +118,33 @@ RULING FAST-TRACK amendment 1:
 Append verbatim to prereg/FAST.md and BUILD_PLAN.md Part E. On this account Fable has its own weekly limit, separate from the main allowance. Replace item 9: the verifier runs on Fable for every item; it falls back to Opus at xhigh only if the Fable weekly bar is above 80% before its reset. Lane B's main session runs on Fable (Boris selects it); lane A's stays on Opus 5.5. Each report names the models used.
 END RULING
 
+**Dry runs by push** (RULING W1b, 19 Oct, verbatim in `prereg/W1b.md`; the
+procedure both lanes use from its landing). Boris clicks only real runs.
+
+1. To ask for a dry run, push the work to `dry/<item>` (a normal push). A
+   second run after a rebase goes to `dry/<item>-2`, never a force-push. Every
+   push there runs, so push there only to dry-run.
+2. The push starts the nightly workflow as a dry run in group
+   `nightly-dryrun`: dry forced, never data, no release, no issue, no Odds API
+   key. It never queues against or cancels the scheduled run or a real
+   dispatch (`nightly-data`).
+3. The result is force-pushed to `data-dryrun-<item>`, so the lanes never
+   overwrite each other. Read it back there. Only the dry-run job force-pushes,
+   and only to `data-dryrun` and `data-dryrun-*`.
+4. The run skips, green, with a `DRY RUN SKIPPED:` line saying why. The same
+   gate applies to a manual dry run. It skips:
+   - from 21:30 UTC until that night's nightly has committed, 04:00 UTC at the
+     latest (RULING morning 19 Oct, point 4);
+   - within 1 hour either side of a deadline;
+   - once 12 dry runs, pushed and manual together, have run that UTC day (`12
+     of 12 today`; F-A, was 6);
+   - when the count cannot be made. The count uses the Actions API, with
+     `actions: read` granted to the one job.
+5. After the item lands, its lane deletes its own `dry/<item>` and
+   `data-dryrun-<item>` with `git push origin --delete dry/<item>
+   data-dryrun-<item>`. That is a deletion, never a force-push.
+6. Manual dispatch is unchanged (`dry_run`, `odds_live`, `force_backup`), writes
+   `data-dryrun`, and is the only way to run `odds_live`.
 
 ## Part F - queued rulings
 
@@ -150,6 +177,8 @@ F-J. GW10 checkpoint (Step 20), after GW10 locks down (about Mon 9 Nov): (1) the
 F-K. Parked: Step 19 (needs a planner that passes); the MILP solver (optional, after Step 15, only with Boris's OK to install).
 
 F-L. Recorded by the night ruling of Mon 19 Oct, point 4 (record only, no code), verbatim: "S6f: recorded as FAIL. GW8 stays on xp_v2 for XI and captain, own shown beside it; the GW10 revert rule is unchanged. Record in BUILD_PLAN Part F as F-L (record only, no code): the same revert rule is applied again at GW15 over GW8–15, same metric, same bar."
+
+F-M. Recorded by the Ruling of Tue 20 Oct, 21:00 Prague, point 3 (record only, no code), verbatim: "Record in BUILD_PLAN Part F as F-M (no code): the status gate drops 'd' players entirely whatever their chance. Each week, record what our flagged players actually score; revisit at GW15 with a prereg if the gate is costing points."
 END RULINGS
 
 ---

@@ -3508,6 +3508,43 @@ unused numbers.
 - verifier PASS (Fable 5.1, high);
 - landing dry run `7171924` green.
 
+## 2026-10-19 — W2 built: sync columns, bottomup_lambda as the sixth source, the CHIPS and LEAGUE report sections (`4d48697`, `aa5352a`, `451ade6`, `109e58a` on `w2-wip`; not merged)
+
+- **Sync:** `fetched_at_utc` on `transfers`, `chips`, `standings` and
+  `player_history`; `players.code`; named-column inserts.
+- **Standings label note (RULING W2 standings):** the seven `standings`
+  rows labelled event 2 hold GW3 snapshots (S9 verifier). They are kept
+  byte for byte and flagged `label_error = 1` when the column is added:
+  entries 18931, 881799, 2322726, 3073318, 4866471, 5826302, 8690100, each
+  total off its GW2 `entry_gw` total. Every reader (the export) skips them;
+  GW2's league rank stays "not recorded".
+- **Sixth source:** `fpl_lambda.py` (S5's live functions verbatim, the
+  fallback on the export's results); `bottomup_lambda` recorded nightly,
+  RECORD SKIP (a WARN) without an odds snapshot before the deadline.
+- **Report sections:** `fpl_sections.py` with verbatim copies of the chips
+  and league tools appends CHIPS and LEAGUE to the report; check 31 "report
+  sections" WARNs on a skip or a crash, never FAILs.
+- **Measured on real data:** 7 flags, 42 rows kept, the export identical;
+  264 bottomup_lambda rows equal to the tool; five sources identical;
+  CHIPS and LEAGUE identical to the tools.
+- **Checks:** suite 614 → 625 (`tests/test_W2.py` 11); mutations 17 of 17
+  red; verifier PASS (`worklog/verify_W2.md`).
+- **Next:** merge Saturday 24 Oct after the GW8 deadline, outside 9d, after
+  a dry run and with tag `pre-W2`.
+
+Report: `worklog/cc_2026-10-19_W2.md`.
+
+## 2026-10-19 — W2 amendment 2: any exception inside a section ends SKIPPED (`a78e2e7` prereg, `c21e0e0` code; on `w2-wip`)
+
+- RULING 19 Oct evening, point 3. `fpl_sections.py` catches any exception
+  per section: `<SECTION> SKIPPED: <type>: <message>`; the other section
+  still runs; the CLI exits 0; check 31 WARNs; never a red night. A missing
+  input's line is unchanged.
+- Flag rule unchanged (event 2 only); the stand-in time-zone variant is left
+  to the Linux dry run.
+- Measured: suite 625 → 626; the new test red on the old code; mutations
+  3 of 3; verifier PASS (Fable 5.1, `worklog/verify_W2a2.md`) with a
+  six-source record on real data identical apart from the clock.
 ## 2026-10-19 — S8: rolling-horizon transfer planner (`de7e1b3` prereg, `51520ef` / `7f8ba52` / `22a179c` code; lane B, overnight)
 
 RULING Step 8 (verbatim in `prereg/S8.md`): `tools/planner.py` (standard
@@ -3993,7 +4030,6 @@ W1b's cap moves to 12 when W1b is worked.
   the harness (shared with the parked F-D).
 - **Checks:** suite 692; mutations 6 of 6 after the test-gap fix; verifier
   PASS (`worklog/verify_S6e.md`).
-
 ## 2026-10-20 — S15 (F-G): the unified squad builder passes its A/B and is accepted (`ae1d368`, `3b31599` prereg; `6f362a8`, `91f401d` code; on `s15-wip`)
 
 - **A/B:** 68 hypothetical wildcards (2025/26 and 2024/25 GW5–38), the
@@ -4101,3 +4137,158 @@ W1b's cap moves to 12 when W1b is worked.
 - **Checks:** suite 768 → 773; mutations 8 of 9; verifier PASS
   (`worklog/verify_S8c_a4.md`, Fable 5.1; its independent `core` recompute
   differs by 0). This commit is Thursday's bundle commit.
+
+## 2026-10-20 — S8b (F-F): the no-hit planner on xp_v2 passes on 2024/25 and is accepted (`bd4d044` prereg; `401fb20` code, `7580cf2` tests; on `s8b-wip`)
+
+- **Test:** S8's replay loop unchanged, hits forbidden, decay 0.85,
+  Boris's schedule; 2024/25 GW2–38, S7's 50 squads, 1 FT, no chips;
+  xp_v2 as tested over six weeks (week t S5's odds lambdas, else the
+  fallback; weeks t+1..t+5 the origin's fallback); outcomes S10b's
+  re-score under the 2026/27 table (no DEFCON in 2024/25).
+- **Measured:** planner 2074.9 v baseline 2055.3 points per squad-season;
+  paired gain **+19.58, 90% CI [+1.28, +38.70]** → **PASS** (bar: mean
+  ≥ +5 and lower bound > 0). Transfers 37 on both sides, hits 0.
+  - Decay 0.80 or 0.90 chose a different plan in 7, 3, 5, 8, 6 of 37
+    weeks (first 5 squads).
+- **Checks:** suite 709 → 715; mutations 13 of 14 (one equivalent);
+  verifier PASS (`worklog/verify_S8b.md`, Fable 5.1), its 5-squad rerun
+  reproducing the run.
+- **Accepted** (Ruling, Tue 20 Oct, point 1): from GW8 the no-hit planner
+  on xp_v2 is the default transfer suggestion, the simple rule printed
+  beside it; hits stay a manual call. The live tool is S8c.
+
+## 2026-10-20 — S2b done: the final re-fetch until data_checked, merged, real dispatch green (`ce357fb`; data `63e6a44`)
+
+**Merged** `ce357fb` (`s2b-wip` `434df0b`); tag `pre-S2b` = `5c90e08`.
+
+**Built:**
+- `events.data_checked_seen_utc` is set the first time the sync sees
+  data_checked = 1, and never changed after.
+- A stored `player_gw`, `entry_gw` or `picks` row is final only if it was
+  fetched after that time; otherwise the sync re-fetches it.
+- `picks.fetched_at_utc` was added.
+- Check 22 now reconciles every locked-down gameweek.
+
+**Measured:**
+- tests 687 → 708;
+- the dry run (`data-dryrun` `4b199eb`) and the verifier PASS
+  (`worklog/verify_S2b.md`, Fable 5.1).
+- **The real dispatch,** `63e6a44` (13:01 UTC):
+  - STATUS OK 29/29; 73 calls, all HTTP 200 (25 + 48).
+  - GW1–6 first sight 13:00:50, every row fetched after it; GW7 still
+    open.
+- **Stored v final, entry_gw points:**
+  - GW3: 7 of 7 managers moved, +6 to +21;
+  - GW4: 6 of 7, +2 to +11;
+  - GW6: 5 of 7, +1 to +6;
+  - GW1, 2, 5: none.
+  - Our GW3 is 53 → 59, GW4 58 → 64, and GW6 bench 11 → 22.
+- player_gw total_points unchanged GW1–7; `automatic_subs` 0 → 18 rows.
+- **Earlier results re-run** on the before and after databases (same
+  exports and log):
+  - S4's 2026/27 backtest, S5's 2026/27 condition, S6's xp_v2
+    development and validation, and the S6c GW5–7 print are identical.
+  - S9's league report loses its 18 provisional warnings. Its sigma_d
+    18.03, our sigma 13.76 and line 102.0 stand. Three rivals' GW6 XIs now
+    count FPL's autosubs, and P(above) moves by −0.067 to −0.018.
+
+Report: `worklog/cc_2026-10-19_S2b.md`; after: `worklog/cc_2026-10-20_S2b_after.md`.
+
+## 2026-10-20 — S2b after-measurement: corrections (amends the entry "S2b done" above; Ruling, Tue 20 Oct night, point 1)
+
+The verifier on the after-measurement (`worklog/verify_S2b_after.md`, Fable
+5.1) gave WARN for four slips. Every number in the entry above reproduces,
+except one:
+- **Corrected:** P(above) moves by **−0.069 to −0.018**, not −0.067 to
+  −0.018. The largest move is Revelstoke FC, 0.500 → 0.431.
+- **Not in the entry or the report, now added to the report:**
+  - expected_goals (8 / 8 / 7 cells) and expected_assists (5 / 4 / 2) also
+    moved, in GW4 / GW6 / GW7;
+  - `ruleset` NULL → '2026-27' on every re-fetched GW1–6 row;
+  - the fetch times run to 13:01:33.
+- **Also re-run (the verifier's runs):**
+  - S6d's GW8 forecast moves by at most 0.03 xP (Saka 6.02 → 6.04), and
+    two adjacent pairs swap rank; information only.
+  - S7 is identical, and so are the calibration lines.
+
+The report `worklog/cc_2026-10-20_S2b_after.md` is corrected in place.
+
+## 2026-10-21 — W1b done: automatic dry runs by push, merged, real run green, final verifier PASS (`f367cbd`; data `7dbc319`)
+
+**Merged** `f367cbd` (`w1b-wip` `dd10f24`, tree identical). Tag `pre-W1b` = `87485f3`.
+
+**Built:**
+- A push to `dry/<item>` runs the nightly as a dry run. Its result goes to
+  `data-dryrun-<item>`, and the Odds API key is not passed.
+- The `--due` gate (`fpl_dryrun.py`) skips a dry run, green, in the quiet
+  windows: 21:30 UTC until the night's commit (04:00 at the latest), and
+  within 1 hour of a deadline. It also skips once 12 dry runs, push and
+  manual together, have run that UTC day (RULINGS PART F, F-A; it was 6).
+- A real run never reaches the gate.
+
+**Measured:**
+- tests 708 → 739; Boris's dry run #40 green (`data-dryrun` `516326d`).
+- **The real run** (Boris's dispatch, 14:18 UTC, data `7dbc319`):
+  - STATUS OK 29/29; 739 tests;
+  - RECORD own 276, xg/minutes/bottomup 256, fpl_ep 668;
+  - odds 20 events, 472 credits left;
+  - 3 core calls: GW1–7 are all final now.
+- The projection log is last night's byte for byte, plus 1,712 GW8 rows,
+  all made before the deadline.
+
+**Verifiers** (Fable 5.1), all PASS:
+- the pre-check (`verify_W1b_pre.md`);
+- the delta (`verify_W1b.md`);
+- the fix of its two slips (`verify_W1b_fix.md`);
+- the final on the real run (`verify_W1b_final.md`).
+
+Report: `worklog/cc_2026-10-19_W1b.md`.
+
+## 2026-10-21 — W2 amendment 3: the multiplier check reads the chip as entry_gw stores it (`5d4ad2b` prereg on master, `ba138c7` code; on `w2-wip`)
+
+- Boris's message on dry/W2's check 31, verbatim in `prereg/W2.md`.
+- The cause: `check_multipliers` took the chip from the totals chain, which
+  cannot settle the newest gameweek (GW7, no GW8 row yet), so every GW7
+  chip read None. It was not one chip per entry: `entry_gw` holds both of
+  4866471's chips.
+- Our own GW7 Triple Captain fails the old lookup the same way; it was not
+  reached. The offline `tools/league.py` on master carries the same
+  lookup.
+- The fix: `load` passes the stored `entry_gw` rows to the check, one line
+  in `tools/league.py` and one in `fpl_league.py`. Nothing else changes.
+- Measured:
+  - suite 751 → 752, OK bare and with the data;
+  - the new test (chips in two consecutive gameweeks, both row orders,
+    both modules) red on the old lookup;
+  - mutations 3 of 3 red;
+  - real data `7dbc319`: CHIPS OK 37 lines, LEAGUE OK 58 lines;
+  - dry/W2 at `ba138c7` → data-dryrun-W2 `62ce283`: checks 29/30, check 31
+    OK; the one WARN is check 30, odds skipped by design in a push dry run.
+- Verifier: PASS (Fable 5.1, `worklog/verify_W2_a3.md`). The merge stays
+  Saturday 24 Oct after the GW8 deadline.
+
+Report: `worklog/cc_2026-10-21_W2a3.md`.
+
+## 2026-11-03 — W2fix: check 31 promotes the vice-captain when the captain played 0 minutes (`d2e1b43` prereg, `8c7a34a` code)
+
+- Boris's message of Tue 3 Nov, verbatim in `prereg/W2fix.md`.
+- The cause: the LEAGUE section had skipped since 26 Oct. In entry 18931's
+  GW8, the captain (João Pedro) played 0 minutes and the vice (Haaland) was
+  ×2, FPL's rule, which the multiplier check did not know. It is the only
+  captain on 0 minutes in 63 entry-gameweeks.
+- The fix, one change in `tools/league.py` and its runner copy
+  `fpl_league.py`: the vice takes the captain's rule (×2, ×3 under a
+  Triple Captain) when the captain's minutes in the gameweek are 0 (a
+  double summed).
+- Measured:
+  - suite 752 → 755, OK bare and with the data;
+  - the new tests red on the old code; mutations 4 of 4 red;
+  - real data `0c61ea1`: LEAGUE SKIPPED → LEAGUE OK 51 lines;
+  - `dry/W2fix` → `data-dryrun-W2fix` `13ed5ad`: 29/30, check 31 OK
+    (CHIPS 35, LEAGUE 58 lines); the one WARN is check 30, odds skipped
+    in a push dry run.
+- Verifier: PASS (Fable 5.1, `worklog/verify_W2fix.md`). The "no
+  player_gw row = 0 minutes" clause has no test (the verifier's own
+  mutation survives); a coverage note for a later item.
+
+Report: `worklog/cc_2026-11-03_W2fix.md`.

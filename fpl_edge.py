@@ -2935,6 +2935,17 @@ def record_status(d, horizon, source="own", proj_path=None, path=None):
             proj = project_reliability(p["id"], inp, fx)   # None on a blank
             if proj:
                 rows.append((p["id"], p["web_name"], round(proj, 3)))
+    elif source == "bottomup_lambda":
+        # S5's bottomup_lambda, adopted (W2): the newest odds snapshot taken
+        # before the deadline in the data folder (the log's own folder), the
+        # fallback fitted on the export's results. No snapshot is a SKIP, a
+        # WARN, never a FAIL (as fpl_ep); the record never opens the database.
+        import fpl_lambda
+        data_dir = os.path.dirname(os.path.abspath(path))
+        rows, note, skipped = fpl_lambda.bottomup_lambda(d, target, dl, data_dir)
+        if skipped:
+            print(f"  {note} - bottomup_lambda skipped tonight")
+            return RECORD_SKIP, 0, note
     elif source == "xg":
         tick, _ = build_ticker(d, horizon)
         cs_table, cs_default = cs_rate_by_fdr(d)
