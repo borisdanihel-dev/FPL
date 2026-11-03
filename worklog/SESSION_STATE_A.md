@@ -18,14 +18,16 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - `dry/W2fix` → `data-dryrun-W2fix` `13ed5ad`: check 31 OK.
     - Master fast-forwarded to `271eecc` at 16:16:38 UTC; tag `pre-W2fix` =
       `d2e1b43`.
-    - **Boris's real run is needed:** before about 21:15 UTC, or tonight's
-      21:40 nightly is the first live run.
+    - **Boris's real run: green.** 20:14–20:17 UTC, data `39578fe`, STATUS
+      OK 30/30, 755 tests, check 31 OK (CHIPS 35, LEAGUE 58 lines).
     - Coverage note: "no player_gw row = 0 minutes" has no test (the
       verifier's own mutation survives); for a later item.
-  - **2. W2 loose ends:** `dry/W2` and `data-dryrun-W2` deleted.
-    - Open: the final verifier on the first live run with W2fix (it covers
-      W2 and W2fix), then CHANGELOG "W2 done".
-    - Then delete `dry/W2fix` and `data-dryrun-W2fix`.
+  - **2. W2 DONE.** Final verifier PASS on that live run (Fable 5.1,
+    `worklog/verify_W2_final.md`), write guard clean, CHANGELOG "W2 done".
+    `dry/W2`, `data-dryrun-W2`, `dry/W2fix` and `data-dryrun-W2fix` deleted.
+    - Its two notes: a real run does not record its code commit in the log,
+      status or commit message; CHIPS reads the previous night's archived
+      export by design.
   - **3. Prep, no merge:** master `271eecc` merged into `w3-wip` and
     `s8c-wip` in fresh worktrees (`prep_w3`, `prep_s8c`; CHANGELOG
     conflicts kept both sides, 0 lines removed).
