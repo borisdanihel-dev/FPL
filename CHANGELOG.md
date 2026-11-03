@@ -4249,3 +4249,41 @@ Report: `worklog/cc_2026-10-21_W2a3.md`.
   mutation survives); a coverage note for a later item.
 
 Report: `worklog/cc_2026-11-03_W2fix.md`.
+
+## 2026-11-03 — W2 done: live, final verifier PASS on Boris's real run (`979f307` W2, `271eecc` W2fix; data `39578fe`)
+
+**The live run:** Boris's real run on master, 20:14–20:17 UTC, data `39578fe`:
+STATUS OK, checks 30/30, 755 tests green. Check 31: "report sections: CHIPS 35
+lines, LEAGUE 58 lines".
+
+Measured by the final verifier (Fable 5.1, `worklog/verify_W2_final.md`):
+
+- **Check 31 over the live nights:** OK on 24 and 25 Oct; WARN on the 8 nights
+  26 Oct–2 Nov with the entry 18931 message; OK from this run on.
+- **The sections:** recomputed on a copy of the data and of master's code,
+  byte-identical with the live report (101 lines).
+- **The multiplier check:** 63 entry-gameweeks and 945 picks pass; the vice is
+  promoted once, entry 18931 in GW8.
+- **`bottomup_lambda`, the sixth source:**
+  - 2,979 rows over 11 nights (24 Oct–3 Nov);
+  - 0 rows at or after their deadline, 0 duplicate keys;
+  - truncation checks on 24 Oct, 29 Oct and 3 Nov reproduce every row (largest
+    difference 0.0).
+- **The log:** nothing recorded was disturbed. The projection log before the
+  merge is a byte prefix of the log after it, and the five older sources'
+  nightly pattern is unchanged.
+- **The sync columns:** present and filled as `prereg/W2.md` says. Stored rows
+  stay NULL, including all 1,927 `player_history` rows, since the nightly
+  makes no element-summary calls.
+- **The suite:** 739 before W2 and W2fix (`5c3e3bf`), 755 after (`ea0957c`),
+  by discovery on clean archives.
+
+Two notes, neither a defect:
+
+- A real run does not record its code commit in the log, the status or the
+  commit message (`GITHUB_SHA` appears only in dry-run messages). The commit
+  was established from the push history and the test count.
+- CHIPS reads the previous night's archived export by design, so it is one
+  night stale within a gameweek.
+
+`dry/W2`, `data-dryrun-W2`, `dry/W2fix` and `data-dryrun-W2fix` are deleted.
