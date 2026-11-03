@@ -7,7 +7,40 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (30 Oct, 13:10 UTC on): the GW9 deadline pass** (Boris; deadline Sat
+- **NOW (3 Nov, 16:00 UTC on): Tue 3 Nov** (Boris; the item count resets
+  to 0 of 6; GW10 deadline Fri 6 Nov 18:30 UTC; freeze from Thu 5 Nov 12:30
+  UTC).
+  - **1. W2fix DONE and merged.** Prereg `d2e1b43` (verbatim).
+    - Code `8c7a34a` on `w2fix-wip`: the vice takes the captain's rule when
+      the captain played 0 minutes, in both modules.
+    - Suite 752 → 755, OK bare and with the data; mutations 4 of 4 red;
+      verifier PASS (Fable 5.1); write guard clean.
+    - `dry/W2fix` → `data-dryrun-W2fix` `13ed5ad`: check 31 OK.
+    - Master fast-forwarded to `271eecc` at 16:16:38 UTC; tag `pre-W2fix` =
+      `d2e1b43`.
+    - **Boris's real run is needed:** before about 21:15 UTC, or tonight's
+      21:40 nightly is the first live run.
+    - Coverage note: "no player_gw row = 0 minutes" has no test (the
+      verifier's own mutation survives); for a later item.
+  - **2. W2 loose ends:** `dry/W2` and `data-dryrun-W2` deleted.
+    - Open: the final verifier on the first live run with W2fix (it covers
+      W2 and W2fix), then CHANGELOG "W2 done".
+    - Then delete `dry/W2fix` and `data-dryrun-W2fix`.
+  - **3. Prep, no merge:** master `271eecc` merged into `w3-wip` and
+    `s8c-wip` in fresh worktrees (`prep_w3`, `prep_s8c`; CHANGELOG
+    conflicts kept both sides, 0 lines removed).
+    - `w3-wip` `5a6b0ec`: 784 OK bare (11 skipped), 784 OK with the data
+      (4 skipped).
+    - `s8c-wip` `3a72ddb`: 820 OK bare (10 skipped), 820 OK with the data
+      (3 skipped).
+    - Both pushed as fast-forwards.
+    - Still to do before W3's merge: the +02:00 committer test and the
+      nightly.yml fetch-depth comment. At the S8c landing: its landing
+      tests.
+  - Merges planned: W3 Sat 7 Nov after the GW10 deadline (via `dry/W3`);
+    the S8c landing Sun 8 Nov.
+
+- (Earlier) **NOW (30 Oct, 13:10 UTC on): the GW9 deadline pass** (Boris; deadline Sat
   31 Oct 11:00 UTC; the GW9 freeze since 05:00 UTC: tools and worklog only,
   no runner pushes).
   - **W2 merged Sat 24 Oct.** `w2-wip` took master (`5c3e3bf`; the
