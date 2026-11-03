@@ -1,4 +1,4 @@
-STATUS OK | generated 2026-11-03T20:17:17Z | next deadline GW10 2026-11-06 18:30 UTC / 2026-11-06 19:30 Prague | checks 30/30 | repo 11 MB
+STATUS OK | generated 2026-11-03T22:21:32Z | next deadline GW10 2026-11-06 18:30 UTC / 2026-11-06 19:30 Prague | checks 30/30 | repo 11 MB
 
 ==============================================================================
 DIFF  GW8 -> GW9
@@ -26,8 +26,8 @@ DIFF  GW8 -> GW9
     Kamara         AVL  £  5.0 L4  15 (+15)  own   0.4%
     McBurnie       HUL  £  5.5 L4  23 (+11)  own   1.7%
     Van den Berg   BRE  £  4.9 L4  13 (+10)  own   0.1%
-    Van Hecke      TOT  £  5.0 L4  29 (+9)  own  11.2%
-    Konsa          ARS  £  4.7 L4  37 (+9)  own  23.0%
+    Van Hecke      TOT  £  5.0 L4  29 (+9)  own  11.3%
+    Konsa          ARS  £  4.7 L4  37 (+9)  own  23.1%
     Dasilva        COV  £  4.0 L4   9 (+9)  own   1.5%
     Acheampong     CHE  £  4.5 L4  19 (+9)  own   0.5%
     Fofana         CHE  £  5.0 L4  11 (+9)  own   0.2%
@@ -274,8 +274,8 @@ FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
 
   DEF
     player         team     £   L4  pts/£m   fdr  score   own%
-    Konsa          ARS    4.7   37    7.87  3.17   7.22   23.0
-    Van Hecke      TOT    5.0   29    5.80  2.67   6.77   11.2
+    Konsa          ARS    4.7   37    7.87  3.17   7.22   23.1
+    Van Hecke      TOT    5.0   29    5.80  2.67   6.77   11.3
     De Cuyper      BHA    5.4   31    5.74  2.83   6.22   45.0
     Vuskovic       BHA    5.2   26    5.00  2.83   5.42    7.3
     Robertson      TOT    4.3   19    4.42  2.67   5.16    2.4
@@ -290,7 +290,7 @@ FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
   MID
     player         team     £   L4  pts/£m   fdr  score   own%
     Rudoni         COV    4.9   24    4.90  2.67   5.71    0.9
-    Ayari          BHA    5.4   28    5.19  2.83   5.62    1.4
+    Ayari          BHA    5.4   28    5.19  2.83   5.62    1.5
     Manzambi       AVL    6.1   24    3.93  2.33   5.25    7.1
     Enciso         IPS    5.5   22    4.00  2.83   4.33    1.0
     McGinn         AVL    5.4   17    3.15  2.33   4.20    3.3
@@ -304,8 +304,8 @@ FORM x FIXTURES  (last-4 pts per £m, weighted by next-6 difficulty)
 
   FWD
     player         team     £   L4  pts/£m   fdr  score   own%
-    N.Jackson      AVL    7.0   33    4.71  2.33   6.29   26.0
-    Evanilson      BOU    6.4   34    5.31  3.17   4.87   18.0
+    N.Jackson      AVL    7.0   33    4.71  2.33   6.29   26.1
+    Evanilson      BOU    6.4   34    5.31  3.17   4.87   18.1
     Cherif         COV    5.0   16    3.20  2.67   3.73    0.5
     Kostoulas      BHA    5.8   17    2.93  2.83   3.18   10.2
     McBurnie       HUL    5.5   23    4.18  3.50   3.14    1.7
@@ -418,12 +418,12 @@ POSITION ARBITRAGE  (the scoring system is wrong about these players)
     player         team     £  xG+xA/90  DEFCON/90   own%   fdr
     O'Reilly       MCI    6.2      0.52        3.6    8.3  3.33
     De Cuyper      BHA    5.4      0.39        4.2   45.0  2.83
-    Calafiori      ARS    5.9      0.29        5.7   47.9  3.17
+    Calafiori      ARS    5.9      0.29        5.7   48.0  3.17
     Pedro Porro    TOT    5.3      0.29        1.3    4.9  2.67
     Bogle          LEE    4.8      0.28        3.3   11.3  3.33
     Muñoz          NFO    5.3      0.28        7.1    4.5  3.50
     Costinha       BHA    4.5      0.27        8.3    0.0  2.83
-    Van Hecke      TOT    5.0      0.26        8.0   11.2  2.67
+    Van Hecke      TOT    5.0      0.26        8.0   11.3  2.67
 
   MIDFIELDERS carrying defensive load (DEFCON + goals)
     player         team     £  xG+xA/90  DEFCON/90   own%   fdr
@@ -447,7 +447,7 @@ POSITION ARBITRAGE  (the scoring system is wrong about these players)
     Gallagher      TOT    5.3       39.9     1    1.57    0.2
     Manzambi       AVL    6.1       39.4     5    2.18    7.1
     Cherki         MCI    7.9       37.4     6    3.57   35.4
-    N.Jackson      AVL    7.0       34.5     5    3.04   26.0
+    N.Jackson      AVL    7.0       34.5     5    3.04   26.1
     Neto           CHE    6.6       34.3     4    2.77    5.0
     Yalcouyé       BHA    4.5       32.8     2    2.08    2.9
 
@@ -504,41 +504,41 @@ CONSISTENCY  (delivery pattern, not total)
 ==============================================================================
 CHIPS (W2: S7 chip calculator)
 ==============================================================================
-CHIP CALCULATOR  export fpl_export_gw9_2026-11-02.json.gz (GW9 played), next GW10, chips left: BB, FH; budget £99.8m = bank + selling prices
+CHIP CALCULATOR  export fpl_export_gw9_2026-11-03.json.gz (GW9 played), next GW10, chips left: BB, FH; budget £99.8m = bank + selling prices
   xP source: own - the recorded row for GW10 where the log holds one, else the own
   formula on each week's real fixtures from the fixtures table, GW10-GW19 (no proxy weeks).
   Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).
 
     GW     metric    V_BB    V_FH  ours XI   FH XI   V(none)  V(BB)  V(FH)  V(BB+FH)   action with all chips
-    10        own    3.22    7.73    24.39   32.12        0.00       3.61       8.19      11.80   HOLD
-    11  own-model    3.20    8.19    23.76   31.95        0.00       3.61       8.19      11.80   PLAY FH
-    12  own-model    3.41    6.45    22.59   29.04        0.00       3.61       7.61      11.22   HOLD
-    13  own-model    3.24    5.93    22.63   28.56        0.00       3.61       7.61      11.22   HOLD
-    14  own-model    3.23    7.35    24.04   31.39        0.00       3.61       7.61      11.22   HOLD
-    15  own-model    3.32    7.61    22.28   29.88        0.00       3.61       7.61      11.22   PLAY FH
-    16  own-model    3.29    7.22    24.31   31.52        0.00       3.61       7.22      10.83   PLAY FH
-    17  own-model    3.60    6.60    24.56   31.16        0.00       3.61       6.60      10.21   PLAY FH
-    18  own-model    3.50    6.24    24.16   30.40        0.00       3.61       6.24       9.85   PLAY FH
-    19  own-model    3.61    6.91    23.60   30.51        0.00       3.61       0.00       3.61   PLAY BB
+    10        own    3.22    7.73    24.39   32.12        0.00       3.71       8.18      11.89   HOLD
+    11  own-model    3.29    8.18    23.77   31.95        0.00       3.71       8.18      11.89   PLAY FH
+    12  own-model    3.52    6.44    22.60   29.04        0.00       3.71       7.60      11.31   HOLD
+    13  own-model    3.34    5.91    22.65   28.56        0.00       3.71       7.60      11.31   HOLD
+    14  own-model    3.34    7.40    24.05   31.45        0.00       3.71       7.60      11.31   HOLD
+    15  own-model    3.41    7.60    22.29   29.88        0.00       3.71       7.60      11.31   PLAY FH
+    16  own-model    3.40    7.24    24.32   31.56        0.00       3.71       7.24      10.95   PLAY FH
+    17  own-model    3.71    6.65    24.57   31.22        0.00       3.71       6.65      10.35   PLAY FH
+    18  own-model    3.59    6.23    24.17   30.40        0.00       3.71       6.23       9.94   PLAY FH
+    19  own-model    3.71    6.89    23.61   30.51        0.00       3.71       0.00       3.71   PLAY BB
 
-  NEXT GAMEWEEK GW10: HOLD   (margin over the best other action +0.39 xP)
+  NEXT GAMEWEEK GW10: HOLD   (margin over the best other action +0.45 xP)
   residuals by position (2026/27 own, graded gameweeks): GK n=123, DEF n=605, MID n=766, FWD n=169
-  uncertainty: 1000 residual resamples by position (XIs held fixed): margin of HOLD over the best other action 90% [-9.98, +18.09], same action in 79%
+  uncertainty: 1000 residual resamples by position (XIs held fixed): margin of HOLD over the best other action 90% [-9.62, +17.97], same action in 79%
 
   BENCH PREP for GW19: one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)
-    Branthwaite       1.26 -> Gabriel           3.76 (£8.0m, ARS)  gain +2.50
+    Branthwaite       1.40 -> Gabriel           3.76 (£8.0m, ARS)  gain +2.36
     Slater            1.12 -> Rice              2.97 (£7.4m, ARS)  gain +1.84
     Thomas            0.00 -> Konsa             3.04 (£4.7m, ARS)  gain +3.04
     Kelleher          1.77 -> Raya              2.58 (£6.2m, ARS)  gain +0.81
 
   FREE HIT SCREEN (item N: own where recorded, else bottomup; budget = bank + selling prices)
   GW   metric      FH XI   ours    gap  not a   shape FH / ours   flag
-  GW10 own          32.1   24.4   +7.7      1   4-3-3 / 4-3-3
-  GW11 bottomup     55.6   49.1   +6.5      0   5-3-2 / 3-4-3
-  GW12 bottomup     55.6   48.9   +6.8      0   5-3-2 / 3-4-3
-  GW13 bottomup     52.9   47.8   +5.2      0   5-3-2 / 3-4-3
-  GW14 bottomup     54.7   48.3   +6.4      0   5-3-2 / 3-4-3
-  GW15 bottomup     53.8   47.9   +6.0      0   5-3-2 / 3-4-3
+  GW10 own          32.2   24.5   +7.7      1   4-3-3 / 4-3-3
+  GW11 bottomup     56.2   49.3   +6.8      0   5-3-2 / 3-4-3
+  GW12 bottomup     55.6   49.2   +6.4      0   5-3-2 / 3-4-3
+  GW13 bottomup     53.7   48.1   +5.6      0   5-3-2 / 3-4-3
+  GW14 bottomup     54.8   48.6   +6.2      0   5-3-2 / 3-4-3
+  GW15 bottomup     54.4   48.1   +6.3      0   5-3-2 / 3-4-3
 
 ==============================================================================
 LEAGUE (W2: S9 league)
