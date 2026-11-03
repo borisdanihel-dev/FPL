@@ -255,6 +255,23 @@ class ReportSections(unittest.TestCase):
         import league as LGt
         return CHt, LGt
 
+    def test_the_chips_section_names_the_export_and_its_date(self):
+        """Ruling, Tue 3 Nov night, point 3: CHIPS reads the previous night's archive, and says which."""
+        import re, shutil, tempfile
+        import fpl_chips
+        CHt, _ = self.tools()
+        from tests.test_S4 import toy_data
+        from tests.test_S7 import toy_export
+        a = tempfile.mkdtemp()
+        try:
+            toy_data(a); toy_export(a)
+            for live in (CHt.live, fpl_chips.live):
+                lines = []
+                live(a, out=lines.append)
+                self.assertRegex(lines[0], r"^CHIP CALCULATOR  export fpl_export_gw\d+_\d{4}-\d{2}-\d{2}\.json\.gz ")
+        finally:
+            shutil.rmtree(a, ignore_errors=True)
+
     def test_byte_identical_to_the_tools(self):
         import shutil, tempfile
         from datetime import datetime, timezone

@@ -729,6 +729,18 @@ class BundleGrading(unittest.TestCase):
         g8, line = self.run_()
         self.assertNotIn("xp_v2", g8); self.assertIn("xp_v2: not recorded before the deadline", line)
 
+    def test_a_committer_date_at_plus_02_00_is_read_as_its_instant(self):
+        """Amendment 3: GW8's deadline, 17:30 UTC, is 19:30 at +02:00; a second before is graded, the deadline is not."""
+        h = git_commit(self.repo, bundle_files(self.values, "2026-10-22T15:59:00+00:00"), "2026-10-23T19:29:59+02:00")
+        g8, line = self.run_()
+        self.assertEqual(g8["xp_v2"], self.want(range(1, 16), self.values)[0])
+        self.assertIn(f"source: GW8 bundle {h[:7]}", line)
+        at = {i: float(i) for i in self.values}
+        git_commit(self.repo, bundle_files(at, "2026-10-22T15:59:00+00:00"), "2026-10-23T19:30:00+02:00")
+        g8, line = self.run_()
+        self.assertEqual(g8["xp_v2"], self.want(range(1, 16), self.values)[0])                # still the earlier commit
+        self.assertIn(f"source: GW8 bundle {h[:7]}", line)
+
     def test_a_csv_not_as_run_txt_records_it_is_skipped(self):
         git_commit(self.repo, bundle_files(self.values, "2026-10-22T15:59:00+00:00", sha="ab" * 32), "2026-10-22T16:00:00+00:00")
         g8, line = self.run_()
