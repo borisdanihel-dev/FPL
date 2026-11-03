@@ -4287,3 +4287,40 @@ Two notes, neither a defect:
   night stale within a gameweek.
 
 `dry/W2`, `data-dryrun-W2`, `dry/W2fix` and `data-dryrun-W2fix` are deleted.
+
+---
+
+## 2026-11-03 — W3 amendment 3: tests and a comment before W3's merge (`0be8309`, `16aa4ed` prereg on master; `43a174f`, `aa07818` on `w3-wip`, not merged)
+
+**Why:** Boris's rulings of Tue 3 Nov night, verbatim in `prereg/W3.md`; and the
+two items open since amendment 2, due before the merge.
+
+**Changed, no executable line:**
+
+- `tests/test_W2fix.py`: a captain with no `player_gw` row counts as 0 minutes.
+- `tests/test_W2.py`: the CHIPS section's first line names the dated export.
+  It already did (`CHIP CALCULATOR  export fpl_export_gw9_2026-11-02.json.gz`,
+  report of 3 Nov, data `39578fe`), so no code; no test held it.
+- `tests/test_W3.py`: a +02:00 committer date is read as its instant; and
+  `git_commit` passes `commit.gpgsign=false`.
+- `nightly.yml`: the `fetch-depth` comment cites amendment 2.
+
+**Measured:**
+
+- Suite 784 → 787, OK bare (11 skipped) and with the data (4 skipped).
+- Mutations 8 of 8 red; the verifier's own 11 + 5: one survivor on its first
+  pass, a well-formed wrong export name, now red.
+- Under a global `commit.gpgsign = true`, `BundleGrading` errored 8 of 9 before
+  and passes 9 of 9 now.
+- **Outside this delta:** under the same config, 68 older tests do not pass
+  (`test_fpl.py` 47, `test_W1b` 13, `test_W1` 4, `test_S3` 4), against the
+  hermetic rule. Nothing is red today: neither this machine nor the runner sets
+  it. Parked for Boris.
+
+**Verifier:** PASS twice (Fable 5.1, `worklog/verify_W3_a3.md`), write guard
+clean. Report `worklog/cc_2026-11-03_W3_a3.md`.
+
+**Also from the rulings:** real runs recording their code commit is its own
+item, `prereg/runcommit.md`, Mon 9 Nov or later, before the GW11 freeze (Thu 19
+Nov 05:00 UTC). Dry runs record it only in the commit message, so its log line
+and status header are new for both kinds of run.
