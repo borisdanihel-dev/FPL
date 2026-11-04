@@ -1,4 +1,4 @@
-STATUS OK | generated 2026-11-03T22:21:32Z | next deadline GW10 2026-11-06 18:30 UTC / 2026-11-06 19:30 Prague | checks 30/30 | repo 11 MB
+STATUS OK | generated 2026-11-04T22:24:18Z | next deadline GW10 2026-11-06 18:30 UTC / 2026-11-06 19:30 Prague | checks 30/30 | repo 11 MB
  1 OK   core endpoints: 3 core calls, all HTTP 200
  2 OK   element-summary failures: no element-summary calls tonight (the nightly sync makes none)
  3 OK   player count: 670 players (670 last night)
@@ -10,23 +10,23 @@ STATUS OK | generated 2026-11-03T22:21:32Z | next deadline GW10 2026-11-06 18:30
  9 OK   element key set: 109 keys, unchanged
 10 OK   distinct prices: 48 distinct prices
 11 OK   price step: 670 players against their previous snapshot, every step within 0.1 a night
-12 OK   price changes: 3 price changes
+12 OK   price changes: 12 price changes
 13 OK   chance of playing 0: 175 of 670 (26%) at chance 0
 14 OK   position changes: no position changes
 15 OK   SQLite integrity: ok
-16 OK   price-history rows: 36584 -> 36584 rows (+0)
+16 OK   price-history rows: 36584 -> 37254 rows (+670)
 17 OK   price-date gaps: no gap outside the 4 known ones
 18 OK   projection-log growth: new rows bottomup +282, bottomup_lambda +282, fpl_ep +670, minutes +282, own +305, xg +282
 19 OK   projection-log duplicate keys: 0 duplicate keys
-20 OK   forecast rows after the deadline: 0 of 38505 rows at or after their deadline
+20 OK   forecast rows after the deadline: 0 of 40608 rows at or after their deadline
 21 OK   stuck gameweek: none
 22 OK   manager score reconciliation: 63 entry-gameweeks in GW1-GW9, every one equal
 23 OK   secret in the files to commit: 7 file(s) to commit, none holds a key pattern or the key value
 24 OK   repo size: 11 MB
-25 OK   run duration: 2.6 min
-26 OK   heartbeat: the last status.txt is 2.1 h old
+25 OK   run duration: 1.6 min
+26 OK   heartbeat: the last status.txt is 24.0 h old
 27 SKIP workflow state: manual: the Actions tab, Boris's weekly glance (a disabled workflow runs no check, and the token has no actions scope)
 28 OK   test gate: 755 tests green
-29 OK   record: own 305, xg 282, minutes 282, bottomup 282, fpl_ep 670, bottomup_lambda 282 (snapshot odds_2026-11-03T2221Z.json.gz, 282 of 282 players with odds-priced fixtures)
-30 OK   odds snapshot: 20 events (20 with totals), 2673 prices, odds/odds_2026-11-03T2221Z.json.gz 10657 bytes; credits used 16, remaining 484, this request 4
+29 OK   record: own 305, xg 282, minutes 282, bottomup 282, fpl_ep 670, bottomup_lambda 282 (snapshot odds_2026-11-04T2224Z.json.gz, 282 of 282 players with odds-priced fixtures)
+30 OK   odds snapshot: 20 events (20 with totals), 2756 prices, odds/odds_2026-11-04T2224Z.json.gz 10957 bytes; credits used 20, remaining 480, this request 4
 31 OK   report sections: CHIPS 35 lines, LEAGUE 58 lines
