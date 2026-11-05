@@ -1,0 +1,92 @@
+# names.csv - each cup CSV club's name in football-data's league files and in FPL's teams.csv (prereg/S16.md, parts 3-4).
+# Typed by hand. An empty football_data is a club below the five tiers (rated 1000); an empty fpl_name is a club not in the Premier League in 2024/25 or 2025/26.
+cup_name,football_data,fpl_name
+AFC Wimbledon,AFC Wimbledon,
+Accrington Stanley,Accrington,
+Arsenal,Arsenal,Arsenal
+Aston Villa,Aston Villa,Aston Villa
+Barnsley,Barnsley,
+Barrow,Barrow,
+Birmingham City,Birmingham,
+Blackburn Rovers,Blackburn,
+Blackpool,Blackpool,
+Bolton Wanderers,Bolton,
+Boreham Wood,Boreham Wood,
+Bournemouth,Bournemouth,Bournemouth
+Bradford City,Bradford,
+Brentford,Brentford,Brentford
+Brighton & Hove Albion,Brighton,Brighton
+Bristol City,Bristol City,
+Bristol Rovers,Bristol Rvs,
+Bromley,Bromley,
+Burnley,Burnley,Burnley
+Burton Albion,Burton,
+Cambridge United,Cambridge,
+Cardiff City,Cardiff,
+Charlton Athletic,Charlton,
+Chelsea,Chelsea,Chelsea
+Cheltenham Town,Cheltenham,
+Colchester United,Colchester,
+Coventry City,Coventry,
+Crawley Town,Crawley Town,
+Crystal Palace,Crystal Palace,Crystal Palace
+Dagenham & Redbridge,Dag and Red,
+Derby County,Derby,
+Doncaster Rovers,Doncaster,
+Everton,Everton,Everton
+Exeter City,Exeter,
+Fleetwood Town,Fleetwood Town,
+Fulham,Fulham,Fulham
+Grimsby Town,Grimsby,
+Harrogate Town,Harrogate,
+Huddersfield Town,Huddersfield,
+Hull City,Hull,
+Ipswich Town,Ipswich,Ipswich
+Leeds United,Leeds,Leeds
+Leicester City,Leicester,Leicester
+Leyton Orient,Leyton Orient,
+Lincoln City,Lincoln,
+Liverpool,Liverpool,Liverpool
+Luton Town,Luton,
+Macclesfield,,
+Manchester City,Man City,Man City
+Manchester United,Man United,Man Utd
+Mansfield Town,Mansfield,
+Middlesbrough,Middlesbrough,
+Millwall,Millwall,
+Milton Keynes Dons,Milton Keynes Dons,
+Morecambe,Morecambe,
+Newcastle United,Newcastle,Newcastle
+Norwich City,Norwich,
+Nottingham Forest,Nott'm Forest,Nott'm Forest
+Oxford United,Oxford,
+Peterborough United,Peterboro,
+Plymouth Argyle,Plymouth,
+Port Vale,Port Vale,
+Portsmouth,Portsmouth,
+Preston North End,Preston,
+Queens Park Rangers,QPR,
+Reading,Reading,
+Rotherham United,Rotherham,
+Salford City,Salford,
+Sheffield United,Sheffield United,
+Sheffield Wednesday,Sheffield Weds,
+Shrewsbury Town,Shrewsbury,
+Southampton,Southampton,Southampton
+Stockport County,Stockport,
+Stoke City,Stoke,
+Sunderland,Sunderland,Sunderland
+Swansea City,Swansea,
+Swindon Town,Swindon,
+Tamworth,Tamworth,
+Tottenham Hotspur,Tottenham,Spurs
+Tranmere Rovers,Tranmere,
+Walsall,Walsall,
+Watford,Watford,
+West Bromwich Albion,West Brom,
+West Ham United,West Ham,West Ham
+Weston-super-Mare,,
+Wigan Athletic,Wigan,
+Wolverhampton Wanderers,Wolves,Wolves
+Wrexham,Wrexham,
+Wycombe Wanderers,Wycombe,
