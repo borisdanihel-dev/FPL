@@ -7,7 +7,29 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (3 Nov, 21:40 UTC on): Boris's rulings of Tue 3 Nov night** (verbatim
+- **NOW (Thu 5 Nov, 02:10 UTC on): Step 16 parts 3–4, code only; GW10 next.**
+  - **Lost time, 3–5 Nov:** a `browser_batch` call ending on BBC Sport's
+    league-cup page hung 100000 s (about 28 hours, to 02:08 UTC Thu). Wednesday's
+    Step 16 work did not happen. Nothing was lost; the nightlies of 3 and 4 Nov
+    are OK.
+    - **No browser in this session until the GW10 deadline has passed**; BBC
+      Sport never in the pane, WebFetch instead.
+  - **On `s16b-wip`, not merged:** amendment `f3b6b54` and `53ba782`
+    (`prereg/S16.md`), code `faf0d73` (`tools/cup_mc.py`, `tools/cup_backtest.py`,
+    `tools/cups/names.csv`, `round_dates.csv`, `tests/test_S16_part3.py`).
+    - The order changed, flagged in the prereg: the code before the 2026/27 CSVs,
+      which need the browser.
+    - **The real backtest has NOT run.** It gets one run, and waits for Boris's
+      rulings on four questions, in `prereg/S16.md`: the 2024/25–2025/26 European
+      calendars; Elo or Dixon–Coles; European elimination 0.5; the FA Cup third
+      round before its draw. `--run-once` is required.
+    - A verifier pass on the code before the run is under way.
+  - **Still to do:** the rulings, then the one run; `cups_2026-27.csv` and
+    `europe_2026-27.csv` after the GW10 deadline; the final verifier, including
+    every CSV row against its source; report and CHANGELOG; then Step 18.
+  - **Thursday:** the GW10 bundle on Boris's paste, which takes priority.
+
+- (Earlier) **NOW (3 Nov, 21:40 UTC on): Boris's rulings of Tue 3 Nov night** (verbatim
   in `prereg/W3.md` amendment 3 and `prereg/runcommit.md`). Items since the
   reset: W2fix (1), W3 amendment 3 (2).
   - **W3 amendment 3 DONE on the branch, not merged.** `w3-wip` takes master
