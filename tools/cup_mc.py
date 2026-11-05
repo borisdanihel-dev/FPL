@@ -336,7 +336,8 @@ def simulate(season, ties, rating, field, round_dates, origin_gw, n=N, seed=SEED
     later = {k: [m for m in season.midweeks if m[1] > k] for _, k in rounds_on.values()}
     earlier = {k: [m for m in reversed(season.midweeks) if m[1] < k and m[0] > origin] for _, k in rounds_on.values()}
     blank, double = defaultdict(int), defaultdict(int)
-    for key, b in season.base.items():
+    for key in ((c, g) for c in season.clubs for g in season.gws):
+        b = season.base[key]                               # a club with no fixture in a block blanks
         blank[key] += n if b == 0 else 0
         double[key] += n if b >= 2 else 0
     for _ in range(n):

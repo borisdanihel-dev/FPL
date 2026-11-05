@@ -205,6 +205,16 @@ class WhatIsKnown(unittest.TestCase):
         state = dict((r, d) for r, d, _ in M.cup_state(rows, "EFL Cup", SAT))
         self.assertEqual((state["R2"], state["R3"]), (True, False))
 
+    def test_a_two_legged_tie_is_played_only_after_its_second_leg(self):
+        import random
+        rating = {"A": 3000.0, "B": 1000.0, "C": 3000.0, "D": 1000.0}
+        legs = (SAT - timedelta(days=7), SAT + timedelta(days=7))
+        rows = [tie("EFL Cup", "SF", "A", "B", day=legs, winner="B", legs=2), tie("EFL Cup", "SF", "C", "D", day=legs, winner="D", legs=2)]
+        state = [("SF", True, rows), ("F", False, [])]
+        self.assertEqual(M.simulate_cup(state, "EFL Cup", rating, (), SAT, random.Random(1))["F"], {"A", "C"})        # between the legs: Elo
+        later = SAT + timedelta(days=8)
+        self.assertEqual(M.simulate_cup(state, "EFL Cup", rating, (), later, random.Random(1))["F"], {"B", "D"})      # after them: the winners
+
     def test_a_tie_on_the_origins_day_is_not_played(self):
         import random
         rating = {"A": 3000.0, "B": 1000.0, "C": 3000.0, "D": 1000.0}
@@ -242,6 +252,19 @@ class TheBlankRule(unittest.TestCase):
         self.assertAlmostEqual(p_blank[("C", 3)], either, delta=0.01)                       # A v C: postponed if either is in the round
         self.assertEqual((p_blank[("B", 3)], p_blank[("D", 3)]), (0.0, 0.0))
         self.assertEqual(p_blank[("A", 4)], 0.0)
+
+    def test_a_club_with_no_fixture_in_a_block_blanks(self):
+        season = toy_season(rows={3: [("A", "C"), ("B", "D")]})                              # E and F have none in GW3
+        rows, _ = final_ab(3)
+        p_blank, _ = M.simulate(season, rows, RATING, {}, dates(), 1, n=20)
+        self.assertEqual((p_blank[("E", 3)], p_blank[("F", 3)], p_blank[("A", 3)]), (1.0, 1.0, 0.0))
+
+    def test_the_targets_are_every_club_and_only_gameweeks_after_the_origin(self):
+        rows, rd = final_ab(3)
+        season = toy_season()
+        p_blank, p_double = M.simulate(season, rows, RATING, {}, rd, 2, n=10)
+        want = {(c, g) for c in CLUBS for g in range(3, 8)}
+        self.assertEqual((set(p_blank), set(p_double)), (want, want))
 
     def test_a_round_on_no_league_day_causes_no_blank(self):
         rows, _ = final_ab(3)
@@ -284,6 +307,13 @@ class TheDoubleRule(unittest.TestCase):
         _, p_double = self.run_(season=season)
         self.assertEqual(p_double[("A", 5)], 0.0)                                           # that midweek is busy for everyone
         self.assertEqual(p_double[("A", 6)], 1.0)                                           # the next is in GW6's window
+
+    def test_a_thursday_league_fixture_is_busy_too(self):
+        thu = sat(4) + timedelta(days=5)
+        season = toy_season(day_of={5: thu, 6: sat(5), 7: sat(6)})
+        _, p_double = self.run_(season=season)
+        self.assertEqual(p_double[("A", 4)], 0.0)                                            # that midweek's window is still GW4's
+        self.assertEqual(p_double[("A", 6)], 1.0)
 
     def test_with_no_later_midweek_the_last_before_it_after_the_origin(self):
         season = toy_season(gws=7)
@@ -391,6 +421,17 @@ class TheFACupField(unittest.TestCase):
         self.names = {c: {"football_data": c + " FD", "fpl": ""} for c in self.tier1 + self.tier2}
         self.names.update({c: {"football_data": c, "fpl": ""} for c in "ABCDEF"})
 
+    def test_the_field_reads_only_this_seasons_results_before_the_origin(self):
+        rows = [(date(2026, 6, 30), 1, "Old", "Older", "H"), (date(2026, 7, 1), 1, "P", "Q", "H"),
+                (date(2026, 8, 14), 2, "R", "S", "H"), (date(2026, 8, 15), 2, "T", "U", "H")]
+        self.assertEqual(M.clubs_by_tier(rows, date(2026, 7, 1), date(2026, 8, 15)), {1: ["P", "Q"], 2: ["R", "S"]})
+
+    def test_a_club_from_last_season_is_not_in_the_field(self):
+        self.names["Old"] = {"football_data": "Old FD", "fpl": ""}
+        _, _, _, field, _, _ = self.forecast(sat(1), extra=[(date(2026, 5, 1), 1, "Old FD", self.tier1[0] + " FD", "D")])
+        self.assertEqual(len(field["FA Cup"]), 64)
+        self.assertNotIn("Old", field["FA Cup"])
+
     def test_44_exempt_clubs_and_20_placeholders(self):
         by_tier = {1: [c + " FD" for c in self.tier1], 2: [c + " FD" for c in self.tier2], 3: ["Lower FD"]}
         clubs, placeholders = M.fa_field(by_tier, self.names)
@@ -402,10 +443,11 @@ class TheFACupField(unittest.TestCase):
         with self.assertRaisesRegex(M.MissingInput, "Lost FD"):
             M.fa_field({1: ["Lost FD"], 2: []}, self.names)
 
-    def forecast(self, r3_draw):
+    def forecast(self, r3_draw, extra=()):
         k = sat(1)
         results = [(k - timedelta(days=7), 1, a + " FD", b + " FD", "D") for a, b in zip(self.tier1[0::2], self.tier1[1::2])]
         results += [(k - timedelta(days=7), 2, a + " FD", b + " FD", "D") for a, b in zip(self.tier2[0::2], self.tier2[1::2])]
+        results = list(extra) + results
         season = toy_season()
         fa = [tie("FA Cup", "R3", "A", "B", draw=r3_draw, day=sat(6) + timedelta(days=30))]
         with mock.patch.object(M, "simulate", return_value=({}, {})) as sim:
@@ -467,6 +509,25 @@ class TheScore(unittest.TestCase):
         two = [self.rec("2024-25", 11, "blank", 0.0, 0.2, 0), self.rec("2025-26", 11, "blank", 1.0, 0.2, 0)]
         low, high = C.bootstrap(two, b=200)
         self.assertLess(low, high)                                                           # the same gameweek of two seasons: two blocks
+
+    def test_the_interval_is_the_sorted_draws_at_the_two_floors(self):
+        import random
+        recs = [self.rec("2024-25", 11 + i, "blank", 0.1 * (i % 3), 0.2, i % 2) for i in range(12)]
+        blocks = {}
+        for r in recs:
+            blocks[(r[0], r[2])] = ((r[5] - r[7]) ** 2, (r[6] - r[7]) ** 2)
+        values, rng, draws = list(blocks.values()), random.Random(M.SEED), []
+        for _ in range(400):
+            picks = rng.choices(values, k=len(values))
+            draws.append(1 - sum(p[0] for p in picks) / sum(p[1] for p in picks))
+        draws.sort()
+        self.assertEqual(C.bootstrap(recs, b=400), (draws[20], draws[380]))
+
+    def test_the_prereg_s_constants(self):
+        self.assertEqual((M.K, M.HOME, M.N, M.SEED, M.ORIGIN_GWS), (20.0, 60.0, 20000, 20261021, (10, 15, 20, 25, 30)))
+        self.assertEqual((C.BOOTSTRAP, C.BINS, C.PASS_BSS), (10000, 10, 0.10))
+        self.assertEqual(M.BLANK_ROUNDS, (("FA Cup", "QF"), ("FA Cup", "SF"), ("EFL Cup", "F")))
+        self.assertEqual((M.FA_EXEMPT_TIERS, M.FA_R3_CLUBS), ((1, 2), 64))
 
     def test_the_reliability_bins(self):
         recs = [self.rec("2024-25", 11, "blank", p, 0.1, y) for p, y in ((0.05, 0), (0.05, 1), (1.0, 1))]
