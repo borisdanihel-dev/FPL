@@ -152,3 +152,58 @@ No defect in the code against the prereg and its amendment was found.
 ## VERDICT: PASS
 
 The prereg's design and both amendments were committed before the single code commit; the code implements every pinned constant and rule (Elo, the tie and draw rules, when a draw and a tie count as known, the FA Cup field, the blank rounds and their gameweeks, the candidate midweeks, replay placement and the counts, the base rate, the Brier skill score, the bootstrap blocks and the bar) as the text states, with the few open details decided deterministically and listed above; the point-in-time rule holds bit-exactly under truncation at all ten origins and the only later information read is the fixture list's final schedule, which the prereg declares (the declaration should also name `event`); the suite goes 755 -> 811 green bare and with the data, hermetically under five time zones with no global git config and `LC_ALL=C`, skipping cleanly without the historical files; the recording path is byte-identical before and after under a frozen clock and the runner imports nothing new; the real run refuses without its flag and writes nothing; the files hold no secret; the implementer's 54 mutations are all red and the dropped one is output-equivalent as claimed. The 14 of my 28 mutations that survive are either output-equivalent or correct lines without a test; the sample filter, the two-legged tie rule and the bootstrap interval should get their toy tests, and the stated limit its extra line, before `--run-once`. None of that changes a model definition, and the backtest has not been run.
+
+---
+
+# Follow-up: the delta `cbde15d..7d600de` (the verifier's gaps closed; still before the one real run)
+
+- Verifier: `backtest-verifier`, model Fable 5.1 (`claude-fable-5-1`), `.claude/agents/backtest-verifier.md` re-read from disk first. Thu 5 Nov 2026, after the pushed `s16b-wip` head `7d600de`. The first verdict above stands as written.
+- The hard limit was kept again: no `--run-once`, no score, nothing compared with an outcome. On real inputs I called only `cup_backtest.forecast` at n = 400 and compared forecasts with forecasts.
+
+## Order of commits: PASS
+
+`cbde15d` (03:58:15 +0100) adds the prereg section "After the verifier's pass on the code, before the follow-up" and the first report; the code commit `810aae7` is 03:58:32 +0100 and `7d600de` (one more test) 04:02:29 +0100. The note precedes the code.
+
+## 1. The code change, and the forecasts: PASS
+
+`git diff cbde15d 7d600de` touches `tools/cup_mc.py` (+2/-1) and `tests/test_S16_part3.py` (+68) only. The one code change is the note's: `simulate` now initialises the blank and double counters over every `(club, gameweek)` (`for key in ((c, g) for c in season.clubs for g in season.gws)`, `b = season.base[key]`) instead of over `season.base.items()`, so a club with no fixture in a block starts with P(blank) = 1. Nothing else in the module moved.
+
+Forecasts: `verify_pit.py` with `faf0d73`'s `cup_mc` as the reference and `7d600de`'s as the candidate, the ten origins (GW10/15/20/25/30 of 2024/25 and 2025/26), n = 400, seed 20261021: all ten pairs identical as dicts of floats (exact equality). Expected, since every club has one fixture in every block of both seasons. The truncation test of the first pass also re-ran identical on all ten origins.
+
+## 2. My earlier findings under my own mutations: PASS
+
+`mut_verifier.py` (the same 28 single-line replacements) on a fresh `git archive` of `7d600de`: **22 red, 6 green** (14 red, 14 green on `faf0d73`).
+
+| finding | mutation | on `faf0d73` | on `7d600de` | killed by |
+|---|---|---|---|---|
+| 1 sample filter | V10 `g > origin_gw` -> `>=` | green | **red** | `test_the_targets_are_every_club_and_only_gameweeks_after_the_origin` |
+| 2 two-legged ties | V11 `dates[-1]` -> `[0]` in `simulate_cup` | green | **red** | `test_a_two_legged_tie_is_played_only_after_its_second_leg` |
+| 2 two-legged ties | V12 the same in `cup_state` | green | **red** | the same test (added in `7d600de`) |
+| 4 Thursday busy | V03 `range(3)` -> `range(2)` | green | **red** | `test_a_thursday_league_fixture_is_busy_too` |
+| 4 bootstrap | V06 quantiles 0.025/0.975 | green | **red** | `test_the_interval_is_the_sorted_draws_at_the_two_floors` |
+| 4 bootstrap | V07 resample half the blocks | green | **red** | the same |
+| 4 season start | V09 `forecast` start 1 Jan | green | **red** | `test_a_club_from_last_season_is_not_in_the_field` |
+| 4 origin bound | V26 `clubs_by_tier` without `d < before` | green | **red** | `test_the_field_reads_only_this_seasons_results_before_the_origin` |
+| 5 published blank | the one code change reverted to `season.base.items()` in a fresh copy | (was the code) | **red** | `test_a_club_with_no_fixture_in_a_block_blanks` |
+
+All eight "correct lines with no test" now go red, and the code change has a test that fails on the old loop. The six that remain green are exactly the ones I classified as output-equivalent: V01 (fallback Tuesday on the origin's date; any extra placement lands in the origin gameweek's own window, never a target; identical on the real data), V02 (origin as the UTC date; no deadline at 23:00-24:00 UTC in BST), V04/V05 (a gameweek with fixtures on a Monday only or a Friday only does not occur), V21 (Tuesday noon for the midweek's gameweek; a deadline between Tuesday and Wednesday noon means a league midweek, busy for all), V23 (the blank round's date from the last leg; blank rounds are single-leg). None is a line a toy can distinguish without inventing a calendar no season has; none needs a test.
+
+## 3. The note's account of the `event` limit: ACCURATE
+
+The note says the calendar also reads `event` to keep the fixtures left in their id block, that this encodes which fixtures later left it, that a later postponement therefore drops a fixture from its gameweek's days, its deadline and that midweek's busy clubs, and quotes my measurement (GW15 2024/25: Sat 7 Dec 13:30 UTC against FPL's 11:00; the same UK date; no forecast effect in these seasons). That matches the code: `Season.__init__` feeds `kick` (the deadline), `days` (`blank_gw`) and `league_day` (the midweek busy sets) only from fixtures with `event == block`. The one thing the sentence does not spell out is that `league_day` also decides which midweeks are candidates (the Friday-to-Monday check); a postponement could only matter there if a weekend lost every fixture, which is the void-round case and not in these seasons. The four pinned choices (Elo within a date by tier then row order; equal-width bins; floor-index quantiles; the earlier gameweek of a shared day) are what the code does. The claim "this cannot happen in 2024/25 or 2025/26" for the published blank holds: the real-file test asserts 10 fixtures in every block, and each club appears once in each.
+
+## 4. The implementer's mutations: PASS
+
+`mut_s16.py` now lists 66; on a fresh `git archive` of `7d600de`: **66 red, 0 green**.
+
+## 5. Suite at `7d600de`: PASS
+
+Clean `git archive` copy, discovery (`test_fpl.py` plus `tests/`), `ODDS_API_KEY` unset, `FPL_HISTORICAL` set: bare **Ran 819, OK (skipped=10)**; with `FPL_DATA_DIR=C:\GIT\FPL-data` **Ran 819, OK (skipped=3)**; exit 0 both. 811 -> 819: the eight new tests (`tests.test_S16_part3` alone: 56 -> 64). Hermetic: `tests.test_S16_part3` with `HOME` an empty folder, `GIT_CONFIG_GLOBAL=/dev/null`, `LC_ALL=C`: 64 OK under `TZ=America/Anchorage` and `Pacific/Kiritimati` with the historical files, 64 OK (skipped=3) under `Asia/Tokyo` without them; a before/after file listing shows nothing written outside `__pycache__`. Secrets: the delta holds none (the same search as check 7). The delta touches no runner file.
+
+## 6. In the way of the one real run
+
+Nothing in the code or its tables, as far as this pass can see, given the defaults the prereg states. What remains is Boris's four rulings, with one dependency to name: if the ruling on question 1 is to add the 2024/25 and 2025/26 European calendars (rather than the default of no European matches), the backtest needs CSVs that do not exist, a reader that does not exist (`simulate` takes `europe` as a list of dicts; no file reader is written), and a prereg amendment pinning both, before the run; likewise a non-default ruling on question 2 (Dixon-Coles instead of Elo) or 3 (another elimination rule) is new code and a new amendment first. Under the defaults, `python -I tools/cup_backtest.py --run-once` is ready: it reads only the committed tables and the local `historical/` files, writes `tools/out/s16_backtest/backtest.txt` and `run.txt` through `provenance.Run`, and refuses without the flag.
+
+## VERDICT (follow-up): PASS
+
+The prereg note was committed before the follow-up code; the only code change is the one it describes (a published blank now has P(blank) = 1), it leaves every real-input forecast bit-identical to `faf0d73` at all ten origins, and its own test fails on the old loop; the eight tests added close every gap I listed (all eight of my surviving "correct line, no test" mutations now go red, and the six that stay green are the output-equivalent ones); the note's account of the `event` limit and the pinned choices is accurate; the implementer's 66 mutations are all red; the suite is 819 green bare and with the data, hermetically, with no secret and no runner file touched. Given the prereg's defaults, only Boris's rulings on the four questions stand between this code and its one run; a non-default ruling on question 1, 2 or 3 would need code and an amendment first.
