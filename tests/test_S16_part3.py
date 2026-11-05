@@ -214,6 +214,11 @@ class WhatIsKnown(unittest.TestCase):
         self.assertEqual(M.simulate_cup(state, "EFL Cup", rating, (), SAT, random.Random(1))["F"], {"A", "C"})        # between the legs: Elo
         later = SAT + timedelta(days=8)
         self.assertEqual(M.simulate_cup(state, "EFL Cup", rating, (), later, random.Random(1))["F"], {"B", "D"})      # after them: the winners
+        final = tie("EFL Cup", "F", "B", "D", draw=SAT - timedelta(days=1), day=SAT + timedelta(days=30), neutral=True)
+        known = dict((r, d) for r, d, _ in M.cup_state(played("EFL Cup", "SF") + rows + [final], "EFL Cup", SAT))
+        self.assertEqual((known["SF"], known["F"]), (True, False))                           # a final's row waits for the second leg
+        known = dict((r, d) for r, d, _ in M.cup_state(played("EFL Cup", "SF") + rows + [final], "EFL Cup", later))
+        self.assertTrue(known["F"])
 
     def test_a_tie_on_the_origins_day_is_not_played(self):
         import random
