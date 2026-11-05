@@ -14,16 +14,22 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     are OK.
     - **No browser in this session until the GW10 deadline has passed**; BBC
       Sport never in the pane, WebFetch instead.
-  - **On `s16b-wip`, not merged:** amendment `f3b6b54` and `53ba782`
-    (`prereg/S16.md`), code `faf0d73` (`tools/cup_mc.py`, `tools/cup_backtest.py`,
-    `tools/cups/names.csv`, `round_dates.csv`, `tests/test_S16_part3.py`).
+  - **On `s16b-wip`, not merged:** amendments `f3b6b54`, `53ba782` and `cbde15d`
+    (`prereg/S16.md`), code `faf0d73` and `7d600de` (`tools/cup_mc.py`,
+    `tools/cup_backtest.py`, `tools/cups/names.csv`, `round_dates.csv`,
+    `tests/test_S16_part3.py`).
+    - Suite 755 → 819, OK bare and with the data; mutations 66 of 66 red.
+    - Verifier on the code, before the run: PASS twice (Fable 5.1,
+      `worklog/verify_S16_part34_code.md`), write guard clean. Truncation
+      bit-identical at all 10 origins; the log byte-identical; no score computed.
     - The order changed, flagged in the prereg: the code before the 2026/27 CSVs,
       which need the browser.
     - **The real backtest has NOT run.** It gets one run, and waits for Boris's
       rulings on four questions, in `prereg/S16.md`: the 2024/25–2025/26 European
       calendars; Elo or Dixon–Coles; European elimination 0.5; the FA Cup third
       round before its draw. `--run-once` is required.
-    - A verifier pass on the code before the run is under way.
+    - A non-default ruling on any question needs an amendment and new work
+      before the run (question 1: the typed calendars and a reader).
   - **Still to do:** the rulings, then the one run; `cups_2026-27.csv` and
     `europe_2026-27.csv` after the GW10 deadline; the final verifier, including
     every CSV row against its source; report and CHANGELOG; then Step 18.
