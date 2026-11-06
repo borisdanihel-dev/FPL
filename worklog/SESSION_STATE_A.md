@@ -7,7 +7,24 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Thu 5 Nov, 02:10 UTC on): Step 16 parts 3–4, code only; GW10 next.**
+- **NOW (Fri 6 Nov, 09:20 UTC on): the GW10 deadline pass** (Boris; deadline
+  18:30 UTC; freeze: tools and worklog only).
+  - **Bundle** `c0c6c3f` (committed 09:23:26 UTC): `worklog/gw_pass/gw10/`,
+    from a fresh clean worktree of `d9071b8` on data `fa31a48`, export
+    `fpl_export_gw9_2026-11-06`. `run.txt` ends 09:23:17 UTC with 0 modified
+    files.
+  - **Step 4** `8022fb4`: `bb_moves.py/.txt/bb_run.txt` (Bench Boost pairs,
+    2 FTs, gated and with Branthwaite lifted) and `ban_risk_w3.txt` (w3-wip
+    `62bda73`: Groß 0.377, Thiago 0.365).
+  - **Rulings of Fri 6 Nov morning, recorded verbatim:**
+    - `prereg/S16.md` on `s16b-wip` `fa451fa`: points 1–4. Europe typed from
+      Wikipedia after the deadline; Elo, 0.5 and the FA Cup rule kept.
+    - `prereg/S8c.md` (point 5: the 68 tests, with the S8c landing).
+    - `prereg/runcommit.md` (point 6), master `d2f6822`.
+  - **Next:** after 18:30 UTC, Step 16 resumes. The European calendars, the
+    2026/27 CSVs, then the one run. W3 Sat 7 Nov; S8c, with point 5, Sun 8 Nov.
+
+- (Earlier) **NOW (Thu 5 Nov, 02:10 UTC on): Step 16 parts 3–4, code only; GW10 next.**
   - **Lost time, 3–5 Nov:** a `browser_batch` call ending on BBC Sport's
     league-cup page hung 100000 s (about 28 hours, to 02:08 UTC Thu). Wednesday's
     Step 16 work did not happen. Nothing was lost; the nightlies of 3 and 4 Nov
