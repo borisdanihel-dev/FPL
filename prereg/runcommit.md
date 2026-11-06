@@ -75,3 +75,16 @@ Wednesday: no runner change. Resume Step 16 parts 3-4 on s16b-wip (offline). Thu
     05:00 UTC. The push must land before that.
   - Never between 21:00 UTC and the end of that night's nightly.
 - It starts only on Boris's word (Session operating mode a).
+
+## Rulings, Fri 6 Nov morning (Boris's message verbatim)
+
+Rulings, Fri 6 Nov morning. GW10 first: run the GW10 deadline pass (Boris's paste) before anything else. Step 16 resumes after the GW10 deadline (18:30 UTC).
+Step 16:
+1. Yes: type the 2024/25 and 2025/26 European calendars from the Wikipedia season pages under CC BY-SA (F-I (3)), with the revision id and attribution in each CSV header; the verifier checks every row against its source. After the GW10 deadline.
+2. Keep the Elo as built (K 20, home 60, tier starts 1500/1400/1300/1200/1100, non-league 1000).
+3. Keep 0.5 per European knockout round for English clubs.
+4. Keep the FA Cup third-round rule (the 44 tier-1/2 clubs plus 20 placeholders rated 1250).
+Record all four in the prereg verbatim before the single backtest run.
+Tuesday's two:
+5. The 68 tests that fail with commit signing on: make the tests' temporary repos disable signing locally (git -c commit.gpgsign=false or per-repo config). Tests only, no behaviour change; land with the S8c landing on Sun 8 Nov.
+6. runcommit: yes, the log line and the status header on both dry and real runs, plus the commit message on real runs. In the international break after W3 and S8c, prereg first.

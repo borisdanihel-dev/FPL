@@ -300,3 +300,16 @@ Ruling, Tue 20 Oct, 21:00 Prague.
 1. W1b: not tonight; S2b was today's runner change (one per night). Merge Wednesday before 21:00 UTC as planned.
 2. Haaland: the live gate (status 'a') sets him to 0 in xp_v2 because FPL flags him 'd', 75%. The gate stays as it is for the picks, the CSV and the grading. Add to the bundle on s8c-wip an information block for every player in our 15 whose status is not 'a': status, chance_next_round, news, and xp_v2 recomputed as if available (the same inputs with only the status gate lifted for that player, P(sub) scaled by chance as now; own too if its gate is the same one-line check), labelled "if he plays; the picks treat him as 0", plus his place in the captain table on that number. The picks, the CSV values and the picker test do not change; test that the rest of the print is byte-identical. The verifier checks the diff. Done by Thu 22 Oct 14:00 UTC; the new head becomes the bundle commit.
 3. Record in BUILD_PLAN Part F as F-M (no code): the status gate drops 'd' players entirely whatever their chance. Each week, record what our flagged players actually score; revisit at GW15 with a prereg if the gate is costing points.
+
+## Rulings, Fri 6 Nov morning (Boris's message verbatim)
+
+Rulings, Fri 6 Nov morning. GW10 first: run the GW10 deadline pass (Boris's paste) before anything else. Step 16 resumes after the GW10 deadline (18:30 UTC).
+Step 16:
+1. Yes: type the 2024/25 and 2025/26 European calendars from the Wikipedia season pages under CC BY-SA (F-I (3)), with the revision id and attribution in each CSV header; the verifier checks every row against its source. After the GW10 deadline.
+2. Keep the Elo as built (K 20, home 60, tier starts 1500/1400/1300/1200/1100, non-league 1000).
+3. Keep 0.5 per European knockout round for English clubs.
+4. Keep the FA Cup third-round rule (the 44 tier-1/2 clubs plus 20 placeholders rated 1250).
+Record all four in the prereg verbatim before the single backtest run.
+Tuesday's two:
+5. The 68 tests that fail with commit signing on: make the tests' temporary repos disable signing locally (git -c commit.gpgsign=false or per-repo config). Tests only, no behaviour change; land with the S8c landing on Sun 8 Nov.
+6. runcommit: yes, the log line and the status header on both dry and real runs, plus the commit message on real runs. In the international break after W3 and S8c, prereg first.
