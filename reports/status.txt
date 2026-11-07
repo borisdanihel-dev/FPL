@@ -1,5 +1,5 @@
-STATUS WARN | generated 2026-11-06T01:48:25Z | next deadline GW10 2026-11-06 18:30 UTC / 2026-11-06 19:30 Prague | checks 29/30 | repo 12 MB
- 1 OK   core endpoints: 3 core calls, all HTTP 200
+STATUS WARN | generated 2026-11-07T01:11:10Z | next deadline GW11 2026-11-21 11:00 UTC / 2026-11-21 12:00 Prague | checks 29/30 | repo 12 MB
+ 1 OK   core endpoints: 4 core calls, all HTTP 200
  2 OK   element-summary failures: no element-summary calls tonight (the nightly sync makes none)
  3 OK   player count: 670 players (670 last night)
  4 OK   teams: 20 teams
@@ -8,25 +8,25 @@ STATUS WARN | generated 2026-11-06T01:48:25Z | next deadline GW10 2026-11-06 18:
  7 OK   team appearances per gameweek: every team once in every 10-fixture gameweek
  8 OK   required fields: every required element and event field present and typed
  9 OK   element key set: 109 keys, unchanged
-10 OK   distinct prices: 48 distinct prices
+10 OK   distinct prices: 47 distinct prices
 11 OK   price step: 670 players against their previous snapshot, every step within 0.1 a night
-12 OK   price changes: 7 price changes
-13 OK   chance of playing 0: 176 of 670 (26%) at chance 0
+12 OK   price changes: 22 price changes
+13 OK   chance of playing 0: 174 of 670 (26%) at chance 0
 14 OK   position changes: no position changes
 15 OK   SQLite integrity: ok
-16 OK   price-history rows: 37254 -> 37924 rows (+670)
+16 OK   price-history rows: 37924 -> 38594 rows (+670)
 17 WARN price-date gaps: 1 day(s) without a snapshot: 2026-11-05
-18 OK   projection-log growth: new rows bottomup +279, bottomup_lambda +279, fpl_ep +670, minutes +279, own +300, xg +279
+18 OK   projection-log growth: new rows bottomup +264, bottomup_lambda +264, fpl_ep +670, minutes +264, own +280, xg +264
 19 OK   projection-log duplicate keys: 0 duplicate keys
-20 OK   forecast rows after the deadline: 0 of 42694 rows at or after their deadline
+20 OK   forecast rows after the deadline: 0 of 44700 rows at or after their deadline
 21 OK   stuck gameweek: none
-22 OK   manager score reconciliation: 63 entry-gameweeks in GW1-GW9, every one equal
+22 OK   manager score reconciliation: 63 entry-gameweeks in GW1-GW9, every one equal; GW10 not locked down: silent mid-gameweek (ruling S3, point 6)
 23 OK   secret in the files to commit: 7 file(s) to commit, none holds a key pattern or the key value
 24 OK   repo size: 12 MB
-25 OK   run duration: 2.1 min
-26 OK   heartbeat: the last status.txt is 27.4 h old
+25 OK   run duration: 2.4 min
+26 OK   heartbeat: the last status.txt is 23.4 h old
 27 SKIP workflow state: manual: the Actions tab, Boris's weekly glance (a disabled workflow runs no check, and the token has no actions scope)
 28 OK   test gate: 755 tests green
-29 OK   record: own 300, xg 279, minutes 279, bottomup 279, fpl_ep 670, bottomup_lambda 279 (snapshot odds_2026-11-06T0148Z.json.gz, 279 of 279 players with odds-priced fixtures)
-30 OK   odds snapshot: 20 events (20 with totals), 2750 prices, odds/odds_2026-11-06T0148Z.json.gz 10872 bytes; credits used 24, remaining 476, this request 4
-31 OK   report sections: CHIPS 35 lines, LEAGUE 58 lines
+29 OK   record: own 280, xg 264, minutes 264, bottomup 264, fpl_ep 670, bottomup_lambda 264 (snapshot odds_2026-11-07T0111Z.json.gz, 264 of 264 players with odds-priced fixtures)
+30 OK   odds snapshot: 19 events (19 with totals), 2608 prices, odds/odds_2026-11-07T0111Z.json.gz 10446 bytes; credits used 28, remaining 472, this request 4
+31 OK   report sections: CHIPS 35 lines, LEAGUE 51 lines

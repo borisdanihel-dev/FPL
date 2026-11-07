@@ -1,0 +1,81 @@
+WATCH  GW11  export 2026-11-07T01:11  forecasts recorded 2026-11-07T01:11  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
+  id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
+  109   Verbruggen     BHA  GK    4.6 a    -   1.6   3.3   3.3  0.75  HUL (A) 2
+  82    Kelleher       BRE  GK    5.0 a    -   1.1   2.9   2.6  0.75  EVE (H) 3
+  334   Muharemović    LEE  DEF   5.1 a    -   1.2   4.0   3.9  0.75  CHE (A) 4
+  8     Calafiori      ARS  DEF   5.9 a  100   1.3   2.6   3.0  0.50  NEW (A) 3
+  230   Branthwaite    EVE  DEF   5.5 a  100   1.1   3.6   3.5  0.75  BRE (A) 4
+  229   Tarkowski      EVE  DEF   6.2 a    -   1.2   4.6   4.4  1.00  BRE (A) 4
+  173   Thomas         COV  DEF   4.0 d   50     -     -     -     -  CRY (H) 2              Calf injury - 50% chance of playing
+  12    Saka           ARS  MID   9.5 i    0     -     -     -     -  NEW (A) 3              Thigh injury - Unknown return date
+  427   Mbeumo         MUN  MID   7.9 a    -   1.2   4.3   3.4  0.75  LIV (A) 4
+  165   João Pedro     CHE  FWD   7.7 i    0     -     -     -     -  LEE (H) 3              Thigh injury - Unknown return date
+  183   Rudoni         COV  MID   4.9 a  100   1.8   5.4   4.3  1.00  CRY (H) 2
+  290   Slater         HUL  MID   4.5 a    -   0.6   2.4   2.3  0.75  BHA (H) 4
+  411   Haaland        MCI  FWD  15.8 a  100   2.5   4.5   3.5  0.75  FUL (H) 2
+  249   Barry          EVE  FWD   5.7 a    -   2.0   5.7   4.7  1.00  BRE (A) 4
+  106   Thiago         BRE  FWD   7.8 a    -   1.6   3.8   3.0  0.75  EVE (H) 3
+  124   Groß           BHA  MID   6.3 a    -   1.1   3.6   3.2  0.75  HUL (A) 2
+  4     Gabriel        ARS  DEF   8.1 a    -   2.5   4.4   4.6  0.75  NEW (A) 3
+  379   Isak           LIV  FWD   9.2 a  100   1.7   4.0   3.1  0.75  MUN (H) 3
+  115   De Cuyper      BHA  DEF   5.4 a    -   1.7   4.7   4.5  0.75  HUL (A) 2
+
+FREE HIT SCREEN  budget £99.9m; FH candidate: gap > 8 or 3+ of our XI not 'a' (item N)
+  GW   metric      FH XI   ours    gap  not a   shape FH / ours   flag
+  GW11 own          22.0   18.2   +3.8      0   5-2-3 / 4-3-3
+  GW12 bottomup     45.1   41.2   +3.9      0   5-4-1 / 3-4-3
+  GW13 bottomup     45.0   40.6   +4.4      0   5-3-2 / 3-4-3
+  GW14 bottomup     44.4   40.9   +3.5      0   5-4-1 / 3-4-3
+  GW15 bottomup     44.0   40.3   +3.8      0   5-4-1 / 3-4-3
+  GW16 bottomup     44.3   40.6   +3.6      0   5-4-1 / 3-4-3
+
+TOP 12 PER POSITION BY OWN, GW11
+  id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
+  1     Raya           ARS  GK    6.2 a    -   1.7   2.8   3.4  0.75  NEW (A) 3
+  109   Verbruggen     BHA  GK    4.6 a    -   1.6   3.3   3.3  0.75  HUL (A) 2
+  57    Petrović       BOU  GK    4.5 a    -   1.4   2.8   2.1  0.75  NFO (H) 3
+  496   Kinsky         TOT  GK    4.4 a    -   1.4   3.2   2.6  0.75  IPS (H) 2
+  597   Suzuki         AVL  GK    5.0 a    -   1.3   3.2   2.2  0.75  SUN (H) 2
+  110   Rushworth      COV  GK    4.5 a    -   1.2   4.2   2.9  1.00  CRY (H) 2
+  226   Pickford       EVE  GK    5.5 a    -   1.2   3.3   3.4  1.00  BRE (A) 4
+  529   Roefs          SUN  GK    4.9 a    -   1.2   2.8   2.1  0.75  AVL (A) 3
+  82    Kelleher       BRE  GK    5.0 a    -   1.1   2.9   2.6  0.75  EVE (H) 3
+  567   Horníček       NEW  GK    5.0 a    -   1.0   2.5   2.0  0.75  ARS (H) 4
+  350   A.Becker       LIV  GK    5.5 a    -   1.0   2.8   2.5  0.75  MUN (H) 3
+  384   Donnarumma     MCI  GK    5.5 a    -   1.0   3.2   2.4  0.75  FUL (H) 2
+  4     Gabriel        ARS  DEF   8.1 a    -   2.5   4.4   4.6  0.75  NEW (A) 3
+  112   Van Hecke      TOT  DEF   5.0 a  100   2.0   4.7   3.8  0.75  IPS (H) 2
+  31    Konsa          ARS  DEF   4.8 a  100   1.9   3.9   4.1  0.75  NEW (A) 3
+  60    Hill           BOU  DEF   5.6 a    -   1.8   4.0   3.3  0.75  NFO (H) 3
+  115   De Cuyper      BHA  DEF   5.4 a    -   1.7   4.7   4.5  0.75  HUL (A) 2
+  61    Truffert       BOU  DEF   5.4 a    -   1.7   3.4   2.9  0.75  NFO (H) 3
+  566   Silva          BOU  DEF   5.1 a    -   1.7   4.7   3.4  0.75  NFO (H) 3
+  151   Acheampong     CHE  DEF   4.5 a    -   1.6   3.4   2.7  0.75  LEE (H) 3
+  64    Smith          BOU  DEF   4.5 a    -   1.6   3.2   2.6  0.75  NFO (H) 3
+  504   Vuskovic       BHA  DEF   5.2 a    -   1.6   4.6   4.4  0.75  HUL (A) 2
+  502   Robertson      TOT  DEF   4.3 a  100   1.5   4.2   3.5  0.75  IPS (H) 2
+  176   Dasilva        COV  DEF   4.0 a    -   1.5   5.0   3.7  1.00  CRY (H) 2
+  129   Ayari          BHA  MID   5.5 a  100   2.0   3.3   2.9  0.75  HUL (A) 2
+  183   Rudoni         COV  MID   4.9 a  100   1.8   5.4   4.3  1.00  CRY (H) 2
+  13    Rice           ARS  MID   7.5 a  100   1.7   3.2   3.1  0.75  NEW (A) 3
+  68    Tavernier      BOU  MID   6.6 a    -   1.7   4.3   3.5  0.75  NFO (H) 3
+  236   Dewsbury-Hall  EVE  MID   6.6 a    -   1.6   4.3   3.9  1.00  BRE (A) 4
+  156   Neto           CHE  MID   6.6 a    -   1.6   3.7   2.9  0.75  LEE (H) 3
+  67    Rayan          BOU  MID   6.3 a    -   1.6   3.7   2.8  0.75  NFO (H) 3
+  400   Doku           MCI  MID   7.5 a  100   1.6   4.0   3.7  0.75  FUL (H) 2
+  512   Kudus          TOT  MID   6.6 a  100   1.6   3.5   3.1  0.75  IPS (H) 2
+  591   Enciso         IPS  MID   5.5 a  100   1.6   3.7   3.1  0.75  TOT (A) 3
+  86    Lewis-Potter   BRE  MID   5.5 a    -   1.4   3.2   2.8  0.75  EVE (H) 3
+  127   Gomez          BHA  MID   5.0 a    -   1.4   3.6   3.0  0.75  HUL (A) 2
+  411   Haaland        MCI  FWD  15.8 a  100   2.5   4.5   3.5  0.75  FUL (H) 2
+  166   N.Jackson      AVL  FWD   7.0 a    -   2.1   3.4   2.7  0.75  SUN (H) 2
+  249   Barry          EVE  FWD   5.7 a    -   2.0   5.7   4.7  1.00  BRE (A) 4
+  492   Awoniyi        COV  FWD   5.4 a  100   1.9   2.1   1.8  0.50  CRY (H) 2
+  401   Marmoush       TOT  FWD   7.0 a  100   1.8   2.8   2.2  0.75  IPS (H) 2
+  138   Kostoulas      BHA  FWD   5.8 a    -   1.8   3.1   2.5  0.75  HUL (A) 2
+  79    Evanilson      BOU  FWD   6.5 a    -   1.7   3.6   2.9  0.75  NFO (H) 3
+  379   Isak           LIV  FWD   9.2 a  100   1.7   4.0   3.1  0.75  MUN (H) 3
+  106   Thiago         BRE  FWD   7.8 a    -   1.6   3.8   3.0  0.75  EVE (H) 3
+  295   McBurnie       HUL  FWD   5.5 a    -   1.5   3.0   2.4  0.75  BHA (H) 4
+  465   Osula          NEW  FWD   5.8 a  100   1.4   1.9   1.6  0.50  ARS (H) 4
+  194   Thomas-Asante  COV  FWD   5.0 a    -   1.2   1.6   1.4  0.50  CRY (H) 2
