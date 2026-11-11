@@ -7,7 +7,78 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (3 Nov, 16:00 UTC on): Tue 3 Nov** (Boris; the item count resets
+- **NOW (Fri 6 Nov, 09:20 UTC on): the GW10 deadline pass** (Boris; deadline
+  18:30 UTC; freeze: tools and worklog only).
+  - **Bundle** `c0c6c3f` (committed 09:23:26 UTC): `worklog/gw_pass/gw10/`,
+    from a fresh clean worktree of `d9071b8` on data `fa31a48`, export
+    `fpl_export_gw9_2026-11-06`. `run.txt` ends 09:23:17 UTC with 0 modified
+    files.
+  - **Step 4** `8022fb4`: `bb_moves.py/.txt/bb_run.txt` (Bench Boost pairs,
+    2 FTs, gated and with Branthwaite lifted) and `ban_risk_w3.txt` (w3-wip
+    `62bda73`: Groß 0.377, Thiago 0.365).
+  - **Rulings of Fri 6 Nov morning, recorded verbatim:**
+    - `prereg/S16.md` on `s16b-wip` `fa451fa`: points 1–4. Europe typed from
+      Wikipedia after the deadline; Elo, 0.5 and the FA Cup rule kept.
+    - `prereg/S8c.md` (point 5: the 68 tests, with the S8c landing).
+    - `prereg/runcommit.md` (point 6), master `d2f6822`.
+  - **Next:** after 18:30 UTC, Step 16 resumes. The European calendars, the
+    2026/27 CSVs, then the one run. W3 Sat 7 Nov; S8c, with point 5, Sun 8 Nov.
+
+- (Earlier) **NOW (Thu 5 Nov, 02:10 UTC on): Step 16 parts 3–4, code only; GW10 next.**
+  - **Lost time, 3–5 Nov:** a `browser_batch` call ending on BBC Sport's
+    league-cup page hung 100000 s (about 28 hours, to 02:08 UTC Thu). Wednesday's
+    Step 16 work did not happen. Nothing was lost; the nightlies of 3 and 4 Nov
+    are OK.
+    - **No browser in this session until the GW10 deadline has passed**; BBC
+      Sport never in the pane, WebFetch instead.
+  - **On `s16b-wip`, not merged:** amendments `f3b6b54`, `53ba782` and `cbde15d`
+    (`prereg/S16.md`), code `faf0d73` and `7d600de` (`tools/cup_mc.py`,
+    `tools/cup_backtest.py`, `tools/cups/names.csv`, `round_dates.csv`,
+    `tests/test_S16_part3.py`).
+    - Suite 755 → 819, OK bare and with the data; mutations 66 of 66 red.
+    - Verifier on the code, before the run: PASS twice (Fable 5.1,
+      `worklog/verify_S16_part34_code.md`), write guard clean. Truncation
+      bit-identical at all 10 origins; the log byte-identical; no score computed.
+    - The order changed, flagged in the prereg: the code before the 2026/27 CSVs,
+      which need the browser.
+    - **The real backtest has NOT run.** It gets one run, and waits for Boris's
+      rulings on four questions, in `prereg/S16.md`: the 2024/25–2025/26 European
+      calendars; Elo or Dixon–Coles; European elimination 0.5; the FA Cup third
+      round before its draw. `--run-once` is required.
+    - A non-default ruling on any question needs an amendment and new work
+      before the run (question 1: the typed calendars and a reader).
+  - **Still to do:** the rulings, then the one run; `cups_2026-27.csv` and
+    `europe_2026-27.csv` after the GW10 deadline; the final verifier, including
+    every CSV row against its source; report and CHANGELOG; then Step 18.
+  - **Thursday:** the GW10 bundle on Boris's paste, which takes priority.
+
+- (Earlier) **NOW (3 Nov, 21:40 UTC on): Boris's rulings of Tue 3 Nov night** (verbatim
+  in `prereg/W3.md` amendment 3 and `prereg/runcommit.md`). Items since the
+  reset: W2fix (1), W3 amendment 3 (2).
+  - **W3 amendment 3 DONE on the branch, not merged.** `w3-wip` takes master
+    `16aa4ed`; code `43a174f` and `aa07818`, report and CHANGELOG on top.
+    - The no-row captain test; the +02:00 test; the CHIPS line held by a test
+      (it already named the export's date, so no code); the `fetch-depth`
+      comment; `git_commit` with `commit.gpgsign=false`.
+    - Suite 784 → 787, OK bare and with the data; mutations 8 of 8 red;
+      verifier PASS twice (Fable 5.1), write guard clean.
+    - The +02:00 test and the comment were W3's two open items: nothing is
+      left before the merge but `dry/W3`.
+  - **`prereg/runcommit.md` committed; no code.** Real runs record their code
+    commit. Starts on Boris's word, Mon 9 Nov or later, after W3 and the S8c
+    landing, before the GW11 freeze (Thu 19 Nov 05:00 UTC). Dry runs record it
+    only in the commit message, so the log line and the status header are new
+    for both kinds of run.
+  - **Parked for Boris, exact wording:** "68 older tests (test_fpl.py 47,
+    test_W1b 13, test_W1 4, test_S3 4) stop under a global commit.gpgsign =
+    true, against the hermetic rule; nothing is red today because neither this
+    machine nor the runner sets it. Fix their git helpers in the international
+    break, with runcommit, or leave it?"
+  - **Next:** Wednesday, no runner change, Step 16 parts 3–4 on `s16b-wip`
+    (offline). Thursday, the GW10 bundle on Boris's paste. W3 Sat 7 Nov via
+    `dry/W3`; S8c Sun 8 Nov.
+
+- (Earlier) **NOW (3 Nov, 16:00 UTC on): Tue 3 Nov** (Boris; the item count resets
   to 0 of 6; GW10 deadline Fri 6 Nov 18:30 UTC; freeze from Thu 5 Nov 12:30
   UTC).
   - **1. W2fix DONE and merged.** Prereg `d2e1b43` (verbatim).
