@@ -686,6 +686,21 @@ Item C1.
 
 *Optional:* a realised chip-return dataset (top-10k vs random managers) to fill the evidence gap on actual chip gains.
 
+### Revisit list (GW15, with F-L)
+
+Created Thu 12 Nov by Boris's rulings of Thu 12 Nov night (verbatim in
+`prereg/FJ.md`), FJ points 3 and 4; there was no list before.
+
+- **own's bias drift** (FJ point 4): about -1.4 points a player since GW8
+  (GW4-10: +0.07, -0.27, -0.55, -0.96, -1.36, -1.30, -1.53; GW10 checkpoint,
+  `worklog/cc_2026-11-12_FJ.md`, `worklog/verify_FJ.md`).
+- **fpl_ep's calibration** (FJ point 4): re-run on the common player set
+  before reading anything into its numbers (its 3 gameweeks were scored on a
+  different population).
+- **The parked F-J items** (FJ point 3): the 50 squads, S6's rerun, F-E and
+  the DEF re-check, with F-L's rerun of the revert rule over GW8-15 (the tie
+  rule pinned in `prereg/FJ.md` for that run).
+
 ---
 
 ## Not worth doing (all four reports agree)

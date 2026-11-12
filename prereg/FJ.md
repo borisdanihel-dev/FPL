@@ -85,3 +85,55 @@ Stop at 6 items; park questions with the exact wording. Also post the status of 
   `worklog/checkpoint_gw10/`, with a `run.txt` written by
   `tools/provenance.py`; only a run on a clean commit with 0 modified files
   is cited.
+
+## Rulings, Thu 12 Nov night (Boris's message verbatim; for this item: its part "FJ, the GW10 checkpoint" and the Schedule)
+
+Rulings, Thu 12 Nov night (chat review: the item count resets to 0 of 6).
+
+FJ, the GW10 checkpoint:
+1. xp_v2 stays (revert rule: upper bound +8.00). Fix the report's sentence: own's GW9 tie was settled by the squad's slot order (our actual GW9 line-up), not by id. Add the verifier's figures for a lowest-id tie rule (d = +0, -1, +12, mean +3.67, 90% [-0.67, +8.00]; same verdict). The pinned result stays primary.
+2. Add tests/test_FJ.py (the sign of d; the revert verdict on a toy; the tie order), since F-L re-runs this script at GW15. In prereg/FJ.md, pin an explicit, model-neutral tie rule (lowest player id) for the GW15 run, before that run.
+3. Parked F-J items: the chip plan for GW11-19 (first-half Bench Boost and Free Hit) comes before the GW11 deadline. Prereg it, run it by Wed 18 Nov, and use S7 on the candidate post-transfer squads plus bb_timing with status gate v2 as information. The 50 squads, S6's rerun, F-E and the DEF re-check go with F-L at GW15.
+4. Calibration: before reading anything into fpl_ep's numbers, re-run the calibration on the common player set at GW15 (its 3 gameweeks were scored on a different population). Note own's bias drift (about -1.4 since GW8) in BUILD_PLAN's revisit list.
+
+FM, status gate v2 (Boris's answers to the five questions):
+1. 'i' with an unknown return: 0 in weeks t and t+1, then a fixed 50% from t+2.
+2. 'i' with a return date in the news: like 's': 0 until that date, then as normal.
+3. 's' with no end date: 0 for one gameweek, then as normal.
+4. Yes: record the rule under a new source name, xp_v2_g2, with the retrospective check (GW4-10 from our archived nightly exports) as its test and the bar as drafted (90% lower bound of the paired |error| difference above 0). xp_v2 keeps the v1 gate; xp_v2_g2 replaces nothing until it passes and Boris accepts it.
+5. Suspended matches count as neither started nor missed in the last-four window.
+Timing: code, the check and the verifier on a branch by Tue 17 Nov. The runner records xp_v2_g2 as a new source on Tue 17 Nov (one runner change). Its numbers go into the GW11 bundle as information whatever the check says.
+
+S8c landing (answers to the verifier's decisions):
+1. Yes: bring origin/s6f-wip 0b16969, origin/s6e2-wip d87f8aa and origin/s8b-wip cfa7a36 into s8c-wip; the full suite; a short re-check of the new head before the dry run.
+2. Boris's OK for f1f5df2 (fpl_xpv2.forecast takes tools/xp_v2_live.forecast's text again, lift=()). Record this ruling verbatim in prereg/S8c.md before the merge.
+3. Yes, with the landing: a W3 test on the toy with a status 'd' player, asserting the runner records no xp_v2 for him (tests only).
+4. Make ChecksMain.setUp check its commit's exit code so the guard covers the twelfth line.
+5. Mode (d): the 21:00 UTC-to-end-of-nightly window applies to master and to dry/* (anything that starts a workflow). Other work branches may be pushed at any time.
+6. Add the CHANGELOG entry and report for point 5 and the copy fix to the landing (docs only, inside the re-check). Leave the duplicate W2 amendment 2 entry as recorded (append-only); note it in the S8c report.
+
+Schedule (one runner change per night; Boris clicks each real run; all before the GW11 freeze, Fri 20 Nov 05:00 UTC): Fri 13 S8c (dry run after the re-check, then the merge on Boris's click); Sat 14 runcommit plus the price-moves name fix; Sun 15 W3fix (CAPTAIN/BAN RISK on the current export, CHIPS on one scale); Tue 17 xp_v2_g2 recorded; Wed 18 the chip plan posted; Thu 19 the GW11 bundle on Boris's paste.
+Record each part of these rulings verbatim in its prereg before acting on it.
+
+## Pinned after the rulings of Thu 12 Nov night, before any code (FJ points 1 and 2)
+
+- **The GW10 result stays as pinned and run** (primary): own's XI ties were
+  settled by `fpl_edge._best_xi`'s stable sort over our picks in slot order
+  (our actual line-up), as `fpl_realised.realised_on` received them. The
+  report says so, and adds the verifier's lowest-id figures (d = +0, −1, +12,
+  mean +3.67, 90% [−0.67, +8.00]; same verdict) as secondary information.
+- **The tie rule for the GW15 run (F-L), model-neutral:** when players tie on
+  a model's xP, the lower player id comes first, in the XI, the bench order
+  and the captain. In code: the 15 are passed to `realised_on` sorted by
+  player id (the captain and bench orders already break ties by the lower
+  id). The script takes `--tie id` for it; `--tie slot` (the default) is the
+  GW10 run as pinned. The GW15 run uses `--tie id`.
+- **`tests/test_FJ.py`:** (1) the sign of d: xp_v2's realised points minus
+  own's, on a toy where xp_v2 picks the higher scorer; (2) the revert verdict
+  on toys: own returns only when the 90% upper bound is below 0; (3) the tie
+  order: on a toy where own's forecasts tie, `--tie slot` follows the given
+  order and `--tie id` the lower id.
+- The script becomes importable without `--code` (the repository's own
+  modules by default), so the tests run in the suite; its GW10 output is
+  regenerated on the new commit and must equal the cited one in every
+  number, with the lowest-id variant printed beside it.
