@@ -334,6 +334,44 @@ class Forecast(unittest.TestCase):
         self.assertEqual(C.c29(C.Ctx(run_log=base)), (C.FAIL, "xp_v2 missing"))
 
 
+class StatusGateInTheRecord(unittest.TestCase):
+    """The S8c landing (Boris's rulings of Thu 12 Nov night, S8c point 3): on the W3 toy, one of our players at
+    status 'd' (chance 50) gets no xp_v2 row from the runner's record; at status 'a' he has one, and no other
+    player's row moves."""
+
+    def setUp(self):
+        toy_world(self)
+        gw9_snapshot(self.tmp, "odds_2098-12-31T10-00-00Z.json.gz", "2098-12-31T10:00:00Z")
+
+    def tearDown(self):
+        drop_world(self)
+
+    def _record(self, d):
+        data = tempfile.mkdtemp()
+        try:
+            shutil.copytree(os.path.join(self.tmp, "odds"), os.path.join(data, "odds"))
+            log = os.path.join(data, "projection_log.csv")
+            with mock.patch.object(fpl_xpv2, "PRIOR_FILE", self.prior):
+                ok, n, why = E.record_status(d, 6, source="xp_v2", path=log)
+            self.assertTrue(ok, why)
+            return {int(r["player_id"]): r["predicted"] for r in E.read_log(log) if r["source"] == "xp_v2"}
+        finally:
+            shutil.rmtree(data, ignore_errors=True)
+
+    def test_a_d_player_gets_no_xp_v2_row(self):
+        rows = self._record(self.d)
+        ours = [r["id"] for r in fpl_chips.my_squad(self.d) if r["id"] in rows]
+        self.assertTrue(ours)
+        pid = ours[0]
+        d = json.loads(json.dumps(self.d))
+        p = next(q for q in d["all_players"] if q["id"] == pid)
+        self.assertEqual(p["status"], "a")
+        p["status"], p["chance_next_round"] = "d", 50
+        flagged = self._record(d)
+        self.assertNotIn(pid, flagged)
+        self.assertEqual(flagged, {k: v for k, v in rows.items() if k != pid})
+
+
 class Captain(unittest.TestCase):
     """(2) CAPTAIN: the lines of tools/gw_pass.py's section 7 on the same inputs."""
 

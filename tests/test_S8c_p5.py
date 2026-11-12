@@ -24,14 +24,14 @@ SITES = (
     ("test_fpl.py, PrePush.setUp", "test_fpl.PrePush.test_a_code_push_and_the_migration_delete_pass"),
     ("tests/test_S3.py, PublishOnAFail.setUp (seed and run clone)",
      "tests.test_S3.PublishOnAFail.test_a_dry_run_with_a_fail_still_reports_to_data_dryrun"),
+    ("tests/test_S3.py, ChecksMain.setUp", "tests.test_S3.ChecksMain.test_a_real_run_writes_status_txt_and_heads_the_report"),
     ("tests/test_W1.py, OddsAppendOnly.setUp", "tests.test_W1.OddsAppendOnly.test_a_deleted_odds_file_fails_the_gate"),
     ("tests/test_W1.py, OddsNeverCostsTheNight (seed and data clone)",
      "tests.test_W1.OddsNeverCostsTheNight.test_a_crashing_collector_and_the_night_still_commits"),
     ("tests/test_W1b.py, DueGate.setUp", "tests.test_W1b.DueGate.test_a_manual_dry_run_is_gated_too"),
     ("tests/test_W1b.py, Hook.setUp", "tests.test_W1b.Hook.test_dry_pushes_and_dryrun_deletions_pass"),
 )
-# tests/test_S3.py ChecksMain.setUp also sets it, but its helper does not check the commit's exit code, so no
-# ChecksMain test fails without it: it is not one of the guarded sites (prereg/S8c.md point 5; the report).
+# ChecksMain.setUp checks its commit's exit code (ruling of Thu 12 Nov night, S8c point 4), so its line is guarded too.
 
 
 class SigningOffInEveryTestRepo(unittest.TestCase):

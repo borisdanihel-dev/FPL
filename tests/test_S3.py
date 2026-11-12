@@ -575,7 +575,8 @@ class ChecksMain(unittest.TestCase):
         self._put("reports/status.txt", f"STATUS OK | generated {iso(NOW - timedelta(hours=24))} | x\n")
         self._put("logs/run_2026-10-17.log", "==== run x ====\n" + C.STATS_PREFIX + json.dumps({"element_keys": KEYS}) + "\n")
         _git(d, "add", "-A")
-        _git(d, "commit", "-q", "-m", "last night")
+        r = _git(d, "commit", "-q", "-m", "last night")
+        self.assertEqual(r.returncode, 0, r.stdout)   # S8c landing, ruling of Thu 12 Nov night point 4: a failed commit stops the test
         os.remove(os.path.join(d, "fpl.sqlite"))
         self._db(os.path.join(d, "fpl.sqlite"), ["2026-10-16", "2026-10-17", "2026-10-18"],
                  "2026-10-18T21:40:00+00:00")
