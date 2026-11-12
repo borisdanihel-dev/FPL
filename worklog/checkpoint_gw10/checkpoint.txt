@@ -1,6 +1,6 @@
 GW10 CHECKPOINT: THE PAIRED own v xp_v2 DECISION METRIC OVER GW8-10 (prereg/FJ.md; rulings of Thu 12 Nov, B)
-  code a4cb2df (modified tracked files 0); script sha256 864ac389e9634c8be83734d81b8ed852efabe5b4231f111dd78cb54016ffc4d2
-  data: fpl.sqlite sha256 23e7eb739e14c8e3..., projection_log.csv sha256 7125dbf0e47be0b3... (55421 rows); generated 2026-11-12 21:03 UTC
+  code b7e4716 (modified tracked files 0); script sha256 330fcb7776442707c7b4e396075aff2335df466374023e148872fd09ab5e8869
+  data: fpl.sqlite sha256 23e7eb739e14c8e3..., projection_log.csv sha256 7125dbf0e47be0b3... (55421 rows); generated 2026-11-12 22:53 UTC
   our actual 15 each gameweek (entry 3073318's picks); each model's XI by its xP, bench in forecast order, the
   captain = highest xP in its XI (doubled), rule_autosubs on realised minutes: fpl_realised.realised_on, unchanged;
   no vice promotion, no chips. d = realised(xp_v2) - realised(own).
@@ -78,3 +78,4 @@ SUMMARY
   total 175 v 183; mean d = +2.67 a gameweek, 90% [-2.67, +8.00] (bootstrap over 3 gameweeks, B 10000, seed 20261018); two-sided bootstrap p 0.577
   revert rule (S6b acceptance, point 3): own returns if the 90% upper bound is below 0. Upper bound +8.00: xp_v2 stays. Reported only; Boris decides.
   with three gameweeks the percentile interval can only take values from the 10 resample multisets; it is coarse.
+  tie order: this run 'slot' (our picks in slot order); information, the other order 'id': own 41, 69, 62, xp_v2 41, 68, 74, d +0, -1, +12; mean +3.67, 90% [-0.67, +8.00]: xp_v2 stays
