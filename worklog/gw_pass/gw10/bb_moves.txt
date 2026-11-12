@@ -1,0 +1,39 @@
+BENCH BOOST TRANSFERS  GW10 (Boris, Fri 6 Nov, step 4); information, read-only, no tool change
+  data fa31a48, export fpl_export_gw9_2026-11-06.json.gz; code d9071b8 (modified tracked files 0); script sha256 920a1edf54b40cb5b8c7ea112be921d819bf3307a96da6d2508c0c73fa77dfb0; generated 2026-11-06 09:26 UTC
+  matrix: the planner's xp_v2 horizon matrix GW10-15 (builder.live_matrix; odds odds_2026-11-06T0148Z.json.gz where they price the fixture, else the fallback)
+  check: the GW10 column against the bundle's xp_v2_all.csv: 670 of 670 players equal
+  check: this script's copy of the matrix, no gate lifted, equals the planner's: True
+  check: lifting Branthwaite's gate moves no other player's value: True
+  Thomas (COV, selling 4.0): status d, chance_next_round 50, news "Calf injury - 50% chance of playing"; gate: no value in any week
+  Branthwaite (EVE, selling 5.5): status d, chance_next_round 75, news "Unspecified injury - 75% chance of playing"; gate: no value in any week
+  Slater (HUL, selling 4.5): status a, chance_next_round None, news ""; gate: GW10 2.99, GW11 3.12, GW12 3.57, GW13 3.47, GW14 3.18, GW15 3.36
+  Branthwaite lifted: GW10 3.70 at P(start) 0.75 (the model's 0.56, scaled by chance, gives 2.77; P(sub) 0.00); later weeks his own model numbers: GW11 2.21, GW12 2.90, GW13 2.65, GW14 3.29, GW15 2.03
+  score: S8's rank_plans and evaluate (2 free transfers, no hits, decay 0.85, Boris's schedule (1.5, 1.0, 0.6, 0.3)); bank 3.4; Bench Boost = planner_live.bb_rescore (GW10's gain: all 15 by xP + the captain)
+
+  UNDER THE GATE (Thomas, Branthwaite 0): 49704 plans
+                                             BB score GW10 gain  rank    no-BB  rank   plan
+    best with a Bench Boost                     22.88    +10.01     1    14.07     8   Branthwaite -> De Cuyper (BHA, 5.4); Thomas -> Van Hecke (TOT, 5.0)
+    best pair with a Bench Boost                22.88    +10.01     1    14.07     8   Branthwaite -> De Cuyper (BHA, 5.4); Thomas -> Van Hecke (TOT, 5.0)
+    best without a Bench Boost                  21.21     +8.20     4    16.84     1   Branthwaite -> Gabriel (ARS, 8.0); Calafiori -> De Cuyper (BHA, 5.4)
+    best pair without a Bench Boost             21.21     +8.20     4    16.84     1   Branthwaite -> Gabriel (ARS, 8.0); Calafiori -> De Cuyper (BHA, 5.4)
+    Thomas + Slater out, best under BB          15.45     +6.19    95     9.83    99   Slater -> Enciso (IPS, 5.5); Thomas -> De Cuyper (BHA, 5.4)
+    Thomas + Slater out, best without BB        15.45     +6.19    95     9.83    99   Slater -> Enciso (IPS, 5.5); Thomas -> De Cuyper (BHA, 5.4)
+    Thomas + Branthwaite out, best under BB     22.88    +10.01     1    14.07     8   Branthwaite -> De Cuyper (BHA, 5.4); Thomas -> Van Hecke (TOT, 5.0)
+    Thomas + Branthwaite out, best without BB    22.88    +10.01     1    14.07     8   Branthwaite -> De Cuyper (BHA, 5.4); Thomas -> Van Hecke (TOT, 5.0)
+    Thomas out only (roll one), best under BB    13.92     +4.94   198     9.54   108   Thomas -> De Cuyper (BHA, 5.4)
+    Thomas out only (roll one), best without BB    13.92     +4.94   198     9.54   108   Thomas -> De Cuyper (BHA, 5.4)
+    roll both                                    0.00     +0.00 13228     0.00  7465   roll
+
+  WITH BRANTHWAITE LIFTED (GW10 P(start) 0.75): 49704 plans
+                                             BB score GW10 gain  rank    no-BB  rank   plan
+    best with a Bench Boost                     19.88     +8.23     1    15.50     3   Tarkowski -> Gabriel (ARS, 8.0); Thomas -> De Cuyper (BHA, 5.4)
+    best pair with a Bench Boost                19.88     +8.23     1    15.50     3   Tarkowski -> Gabriel (ARS, 8.0); Thomas -> De Cuyper (BHA, 5.4)
+    best without a Bench Boost                  17.52     +4.51     8    16.84     1   Branthwaite -> Gabriel (ARS, 8.0); Calafiori -> De Cuyper (BHA, 5.4)
+    best pair without a Bench Boost             17.52     +4.51     8    16.84     1   Branthwaite -> Gabriel (ARS, 8.0); Calafiori -> De Cuyper (BHA, 5.4)
+    Thomas + Slater out, best under BB          15.45     +6.19    30     9.83    99   Slater -> Enciso (IPS, 5.5); Thomas -> De Cuyper (BHA, 5.4)
+    Thomas + Slater out, best without BB        15.45     +6.19    30     9.83    99   Slater -> Enciso (IPS, 5.5); Thomas -> De Cuyper (BHA, 5.4)
+    Thomas + Branthwaite out, best under BB     19.19     +6.31     3    14.07     8   Branthwaite -> De Cuyper (BHA, 5.4); Thomas -> Van Hecke (TOT, 5.0)
+    Thomas + Branthwaite out, best without BB    19.19     +6.31     3    14.07     8   Branthwaite -> De Cuyper (BHA, 5.4); Thomas -> Van Hecke (TOT, 5.0)
+    Thomas out only (roll one), best under BB    13.92     +4.94    86     9.54   108   Thomas -> De Cuyper (BHA, 5.4)
+    Thomas out only (roll one), best without BB    13.92     +4.94    86     9.54   108   Thomas -> De Cuyper (BHA, 5.4)
+    roll both                                    0.00     +0.00 10725     0.00  7563   roll

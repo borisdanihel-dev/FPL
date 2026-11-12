@@ -1,5 +1,6 @@
-"""fpl_sections.py - the CHIPS and LEAGUE sections of the nightly report
-(W2 piece c; prereg/W2.md acceptance 1, RULING W2 build point 1).
+"""fpl_sections.py - the added sections of the nightly report: CHIPS and
+LEAGUE (W2 piece c; prereg/W2.md acceptance 1, RULING W2 build point 1),
+CAPTAIN, BAN RISK and REALISED (W3; prereg/W3.md, F-B parts 2 and 3).
 
     CHIPS   S7's chip calculator: the V table, continuation values,
             PLAY/HOLD for the next gameweek, bench prep and the Free Hit
@@ -7,6 +8,12 @@
     LEAGUE  S9: league odds, the variance line, threat-set EO and the captain
             table (fpl_league.report, tools/league.py's report() copied
             verbatim)
+    CAPTAIN   Step 14's captain table under xp_v2 as tested and the options
+              within 0.3 xP of its captain (fpl_squad.captain)
+    BAN RISK  our players one booking from a ban, S12's rule
+              (fpl_squad.ban_risk)
+    REALISED  from GW8, own v xp_v2 on our squad from the recorded rows
+              (fpl_squad.realised)
 
 Run by the nightly after the report is built, in the data folder; the
 sections are appended to the report. They read fpl.sqlite read-only, the
@@ -25,21 +32,32 @@ from datetime import datetime, timezone
 
 import fpl_bt
 import fpl_chips
+import fpl_lambda
 import fpl_league
+import fpl_mv2
+import fpl_shares
+import fpl_squad
+import fpl_xpr
 
-TITLES = ("CHIPS", "LEAGUE")
-MISSING = (fpl_bt.MissingInput, fpl_chips.MissingInput, fpl_league.MissingInput)
+TITLES = ("CHIPS", "LEAGUE", "CAPTAIN", "BAN RISK", "REALISED")
+LABELS = {"CHIPS": "W2: S7 chip calculator", "LEAGUE": "W2: S9 league", "CAPTAIN": "W3: Step 14 captain table",
+          "BAN RISK": "W3: S12 suspensions", "REALISED": "W3: own v xp_v2 on our squad"}
+MISSING = (fpl_bt.MissingInput, fpl_chips.MissingInput, fpl_league.MissingInput, fpl_squad.MissingInput, fpl_xpr.MissingInput,
+           fpl_mv2.MissingInput, fpl_lambda.MissingInput, fpl_shares.MissingInput)
 RULE = "=" * 78
 
 
 def sections(data_dir, now=None):
-    """[(title, lines, status line)] for the two sections; a missing input
+    """[(title, lines, status line)] for the sections; a missing input
     is the one line `<TITLE> SKIPPED: <why>` (never a substitute), and any
     other exception the line `<TITLE> SKIPPED: <type>: <message>` (W2
     amendment 2: never a red night)."""
     now = now or datetime.now(timezone.utc)
     run = {"CHIPS": lambda out: fpl_chips.live(data_dir, out),
-           "LEAGUE": lambda out: fpl_league.report(data_dir, out, now)}
+           "LEAGUE": lambda out: fpl_league.report(data_dir, out, now),
+           "CAPTAIN": lambda out: fpl_squad.captain(data_dir, out),
+           "BAN RISK": lambda out: fpl_squad.ban_risk(data_dir, out),
+           "REALISED": lambda out: fpl_squad.realised(data_dir, out, now)}
     result = []
     for title in TITLES:
         lines = []
@@ -58,7 +76,7 @@ def render(result):
     """The text appended to the report: per section a ruled title and its lines."""
     out = []
     for title, lines, _ in result:
-        out += ["", RULE, f"{title} (W2: {'S7 chip calculator' if title == 'CHIPS' else 'S9 league'})", RULE] + lines
+        out += ["", RULE, f"{title} ({LABELS[title]})", RULE] + lines
     return "\n".join(out) + "\n"
 
 

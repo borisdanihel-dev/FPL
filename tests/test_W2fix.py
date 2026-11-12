@@ -85,6 +85,22 @@ class VicePromotion(unittest.TestCase):
         for name, err in self.run_case(chip="3xc", cap_minutes=(1,), vice_mult=1):
             self.assertIsNone(err, name)
 
+    def test_captain_with_no_player_gw_row_counts_as_0_minutes(self):
+        """Ruling, Tue 3 Nov night, point 1: no row is 0 minutes, so the vice is promoted."""
+        tmp = tempfile.mkdtemp()
+        try:
+            vice_case(tmp, cap_minutes=())
+            c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
+            rows = c.execute("select count(*) from player_gw where player_id = ? and event = ?", (CAP, EV)).fetchone()[0]
+            c.close()
+            self.assertEqual(rows, 0)                                     # the case itself: no row, not a row of 0
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        for name, err in self.run_case(cap_minutes=(), vice_mult=2):
+            self.assertIsNone(err, name)
+        for name, err in self.run_case(cap_minutes=(), vice_mult=1):
+            self.assertIn(f"entry {RIVAL_B} GW{EV} player {VICE}: multiplier 1 but the rule says 2", err, name)
+
 
 if __name__ == "__main__":
     unittest.main()

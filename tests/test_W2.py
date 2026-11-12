@@ -220,15 +220,16 @@ class SixthSource(unittest.TestCase):
 
     def test_check_29_learns_the_sixth_source(self):
         import checks as C
-        self.assertEqual(C.SOURCES[-1], "bottomup_lambda")
+        self.assertEqual(C.SOURCES[5], "bottomup_lambda")                                # W3 adds xp_v2 after it
         nl = chr(10)
-        base = "".join(f"RECORD OK {s} 5" + nl for s in C.SOURCES[:-1])
+        base = "".join(f"RECORD OK {s} 5" + nl for s in C.SOURCES if s != "bottomup_lambda")
         head, tail = "record summary:" + nl, "archiving ..." + nl
         ok = head + base + "RECORD OK bottomup_lambda 5" + nl + tail
         self.assertEqual(C.c29(C.Ctx(run_log=ok))[0], C.OK)
         skip = head + base + "RECORD SKIP bottomup_lambda no odds snapshot before the GW9 deadline" + nl + tail
         self.assertEqual(C.c29(C.Ctx(run_log=skip)),
-                         (C.WARN, "bottomup_lambda skipped: no odds snapshot before the GW9 deadline; the other 5 recorded"))
+                         (C.WARN, "bottomup_lambda skipped: no odds snapshot before the GW9 deadline; "
+                                  f"the other {len(C.SOURCES) - 1} recorded"))
         fail = head + base + "RECORD FAIL bottomup_lambda boom" + nl + tail
         self.assertEqual(C.c29(C.Ctx(run_log=fail))[0], C.FAIL)
         missing = head + base + tail
@@ -253,6 +254,23 @@ class ReportSections(unittest.TestCase):
         import chips as CHt
         import league as LGt
         return CHt, LGt
+
+    def test_the_chips_section_names_the_export_and_its_date(self):
+        """Ruling, Tue 3 Nov night, point 3: CHIPS reads the previous night's archive, and says which."""
+        import shutil, tempfile
+        import fpl_chips
+        CHt, _ = self.tools()
+        from tests.test_S4 import toy_data
+        from tests.test_S7 import toy_export
+        a = tempfile.mkdtemp()
+        try:
+            toy_data(a); toy_export(a)
+            for live in (CHt.live, fpl_chips.live):
+                lines = []
+                live(a, out=lines.append)
+                self.assertTrue(lines[0].startswith("CHIP CALCULATOR  export fpl_export_gw7_2026-10-18.json.gz "), lines[0])   # toy_export's file
+        finally:
+            shutil.rmtree(a, ignore_errors=True)
 
     def test_byte_identical_to_the_tools(self):
         import shutil, tempfile
@@ -295,12 +313,12 @@ class ReportSections(unittest.TestCase):
                 rc = FS.main(["--report", report, "--data", tmp])
             self.assertEqual(rc, 0)
             printed = buf.getvalue().splitlines()
-            self.assertEqual([l.split(":")[0] for l in printed], ["CHIPS SKIPPED", "LEAGUE SKIPPED"])
+            self.assertEqual([l.split(":")[0] for l in printed], [t + " SKIPPED" for t in FS.TITLES])   # W3: five sections
             with open(report, encoding="utf-8", newline="") as fh:
                 text = fh.read()
             self.assertTrue(text.startswith("THE REPORT\n"))
             self.assertIn("CHIPS (W2: S7 chip calculator)", text); self.assertIn("LEAGUE (W2: S9 league)", text)
-            self.assertEqual(sum(1 for l in text.splitlines() if " SKIPPED: " in l), 2)
+            self.assertEqual(sum(1 for l in text.splitlines() if " SKIPPED: " in l), len(FS.TITLES))
             self.assertNotIn(chr(13), text)
             self.assertFalse([f for f in os.listdir(tmp) if "sqlite" in f])               # read-only: no database created
         finally:
@@ -334,8 +352,10 @@ class ReportSections(unittest.TestCase):
                 rc = FS.main(["--report", report, "--data", tmp])
             self.assertEqual(rc, 0)
             printed = buf.getvalue().splitlines()
-            self.assertEqual(printed, ["CHIPS SKIPPED: KeyError: 7", "LEAGUE SKIPPED: TypeError: bad operand"])
-            log = "adding the report sections ..." + chr(10) + chr(10).join(printed) + chr(10)
+            self.assertEqual(printed[:2], ["CHIPS SKIPPED: KeyError: 7", "LEAGUE SKIPPED: TypeError: bad operand"])
+            self.assertEqual(len(printed), len(FS.TITLES))                                  # W3's sections follow
+            log = "adding the report sections ..." + chr(10) + chr(10).join(printed[:2]) + chr(10) + \
+                "CAPTAIN OK 20 lines" + chr(10) + "BAN RISK OK 2 lines" + chr(10) + "REALISED OK 2 lines" + chr(10)
             self.assertEqual(C.c31(C.Ctx(run_log=log)), (C.WARN, "CHIPS SKIPPED: KeyError: 7, LEAGUE SKIPPED: TypeError: bad operand"))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -343,8 +363,10 @@ class ReportSections(unittest.TestCase):
     def test_check_31_warns_and_never_fails(self):
         import checks as C
         nl = chr(10)
-        ok = "adding the report sections ..." + nl + "CHIPS OK 37 lines" + nl + "LEAGUE OK 69 lines" + nl
-        self.assertEqual(C.c31(C.Ctx(run_log=ok)), (C.OK, "CHIPS 37 lines, LEAGUE 69 lines"))
+        ok = ("adding the report sections ..." + nl + "CHIPS OK 37 lines" + nl + "LEAGUE OK 69 lines" + nl
+              + "CAPTAIN OK 20 lines" + nl + "BAN RISK OK 2 lines" + nl + "REALISED OK 2 lines" + nl)       # W3: five sections
+        self.assertEqual(C.c31(C.Ctx(run_log=ok)),
+                         (C.OK, "CHIPS 37 lines, LEAGUE 69 lines, CAPTAIN 20 lines, BAN RISK 2 lines, REALISED 2 lines"))
         skip = ok.replace("LEAGUE OK 69 lines", "LEAGUE SKIPPED: no fpl.sqlite")
         self.assertEqual(C.c31(C.Ctx(run_log=skip)), (C.WARN, "LEAGUE SKIPPED: no fpl.sqlite"))
         self.assertEqual(C.c31(C.Ctx(run_log="nothing" + nl))[0], C.WARN)                  # no lines: a WARN

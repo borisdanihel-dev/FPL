@@ -1,0 +1,80 @@
+GW10 CHECKPOINT: THE PAIRED own v xp_v2 DECISION METRIC OVER GW8-10 (prereg/FJ.md; rulings of Thu 12 Nov, B)
+  code a4cb2df (modified tracked files 0); script sha256 864ac389e9634c8be83734d81b8ed852efabe5b4231f111dd78cb54016ffc4d2
+  data: fpl.sqlite sha256 23e7eb739e14c8e3..., projection_log.csv sha256 7125dbf0e47be0b3... (55421 rows); generated 2026-11-12 21:03 UTC
+  our actual 15 each gameweek (entry 3073318's picks); each model's XI by its xP, bench in forecast order, the
+  captain = highest xP in its XI (doubled), rule_autosubs on realised minutes: fpl_realised.realised_on, unchanged;
+  no vice promotion, no chips. d = realised(xp_v2) - realised(own).
+
+GW8  deadline 2026-10-23 17:30 UTC; locked down (data_checked 1, 10/10 finished)
+  own: snapshot made 2026-10-23T14:22:52+00:00; 15 of our 15 with a row
+  xp_v2: bundle 6034baa (tools d9071b8), fpl_squad.bundle_csv's checks passed
+  player           pos     own  xp_v2  pts  min   own role   xp_v2 role
+  Kelleher         GK     2.28   3.55    2   90   bench 1    XI
+  Verbruggen       GK     2.68   2.67    2   90   XI         bench 1
+  Calafiori        DEF    3.18   5.73    1   22   XI         XI
+  Muharemović      DEF    2.56   5.04    9   90   XI         XI
+  Thomas           DEF    2.54   4.86    1   59   XI         XI
+  Tarkowski        DEF    2.35   3.73    2   90   XI         bench 2
+  Branthwaite      DEF    1.90   3.69    0    0   bench 2    bench 3
+  Mbeumo           MID    2.89   5.48    2   90   XI         XI
+  Rogers           MID    3.13   5.29    1   90   XI         XI
+  Rudoni           MID    2.69   4.67    2   90   XI         XI
+  Groß             MID    3.61   4.48    0   90   XI         XI
+  Slater           MID    1.54   3.23    2   90   bench 4    bench 4
+  Haaland          FWD    4.44   5.74    8   90   XI (C)     XI (C)
+  Thiago           FWD    2.71   4.85    5   90   XI         XI
+  Barry            FWD    1.83   4.20    2   90   bench 3    XI
+  realised: own 41 (captain Haaland), xp_v2 41 (captain Haaland); d = +0
+
+GW9  deadline 2026-10-31 11:00 UTC; locked down (data_checked 1, 10/10 finished)
+  own: snapshot made 2026-10-30T22:13:59+00:00; 12 of our 15 with a row (no row, counted 0: Branthwaite, Calafiori, Thomas)
+  xp_v2: bundle e708c91 (tools d9071b8), fpl_squad.bundle_csv's checks passed
+  player           pos     own  xp_v2  pts  min   own role   xp_v2 role
+  Kelleher         GK     1.72   3.21    7   90   bench 1    XI
+  Verbruggen       GK     1.74   2.28   11   90   XI         bench 1
+  Muharemović      DEF    2.27   4.61    3   90   XI         XI
+  Tarkowski        DEF    2.34   4.31    6   90   XI         XI
+  Branthwaite      DEF       -   3.14    9   81   XI         XI
+  Calafiori        DEF       -   0.00    6   90   bench 3    bench 3
+  Thomas           DEF       -   0.00    0    0   bench 4    bench 4
+  Rogers           MID    1.77   4.96    9   90   XI         XI
+  Mbeumo           MID    2.22   4.89    1   90   XI         XI
+  Rudoni           MID    2.13   4.57    9   90   XI         XI
+  Groß             MID    1.95   4.21    2   90   XI         XI
+  Slater           MID    1.47   3.40    2   89   bench 2    bench 2
+  Haaland          FWD    3.82   5.66    2   90   XI (C)     XI (C)
+  Thiago           FWD    2.37   4.70    9   90   XI         XI
+  Barry            FWD    2.11   4.68    9   79   XI         XI
+  realised: own 72 (captain Haaland), xp_v2 68 (captain Haaland); d = -4
+
+GW10  deadline 2026-11-06 18:30 UTC; locked down (data_checked 1, 10/10 finished)
+  own: snapshot made 2026-11-06T01:48:17+00:00; 14 of our 15 with a row (no row, counted 0: Thomas)
+  xp_v2: bundle c0c6c3f (tools d9071b8), fpl_squad.bundle_csv's checks passed
+  player           pos     own  xp_v2  pts  min   own role   xp_v2 role
+  Verbruggen       GK     2.32   3.26    6   90   XI         XI
+  Kelleher         GK     1.39   2.54    2   90   bench 1    bench 1
+  Gabriel          DEF    3.76   6.81    8   90   XI (C)     XI (C)
+  Calafiori        DEF    2.47   5.00    6   68   XI         XI
+  Tarkowski        DEF    1.83   4.98    2   90   XI         XI
+  Muharemović      DEF    1.83   4.86   10   90   XI         XI
+  Thomas           DEF       -   0.00    0    0   bench 4    bench 4
+  Mbeumo           MID    2.19   5.27    2   82   XI         XI
+  Rogers           MID    2.18   4.89    2   90   XI         XI
+  Groß             MID    1.63   4.59   10   90   bench 2    XI
+  Rudoni           MID    2.09   4.44    2   85   XI         XI
+  Slater           MID    0.85   2.99    2   90   bench 3    bench 3
+  Haaland          FWD    3.56   5.34    2   90   XI         XI
+  Barry            FWD    2.25   5.29   16   90   XI         XI
+  Thiago           FWD    2.05   4.38   -2   22   XI         bench 2
+  realised: own 62 (captain Gabriel), xp_v2 74 (captain Gabriel); d = +12
+
+====================================================================================================
+SUMMARY
+====================================================================================================
+  GW     own  xp_v2     d   captains (own / xp_v2)
+  8       41     41    +0   Haaland / Haaland
+  9       72     68    -4   Haaland / Haaland
+  10      62     74   +12   Gabriel / Gabriel
+  total 175 v 183; mean d = +2.67 a gameweek, 90% [-2.67, +8.00] (bootstrap over 3 gameweeks, B 10000, seed 20261018); two-sided bootstrap p 0.577
+  revert rule (S6b acceptance, point 3): own returns if the 90% upper bound is below 0. Upper bound +8.00: xp_v2 stays. Reported only; Boris decides.
+  with three gameweeks the percentile interval can only take values from the 10 resample multisets; it is coarse.

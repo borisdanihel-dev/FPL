@@ -3998,6 +3998,50 @@ RULINGS PART F are verbatim in BUILD_PLAN.md "Part F - queued rulings",
 queued after the GW8 queue. F-A (12 dry runs per UTC day) applies now, and
 W1b's cap moves to 12 when W1b is worked.
 
+## 2026-10-19 — W2 amendment 2: any exception inside a section ends SKIPPED (`a78e2e7` prereg, `c21e0e0` code; on `w2-wip`)
+
+- RULING 19 Oct evening, point 3. `fpl_sections.py` catches any exception
+  per section: `<SECTION> SKIPPED: <type>: <message>`; the other section
+  still runs; the CLI exits 0; check 31 WARNs; never a red night. A missing
+  input's line is unchanged.
+- Flag rule unchanged (event 2 only); the stand-in time-zone variant is left
+  to the Linux dry run.
+- Measured: suite 625 → 626; the new test red on the old code; mutations
+  3 of 3; verifier PASS (Fable 5.1, `worklog/verify_W2a2.md`) with a
+  six-source record on real data identical apart from the clock.
+
+## 2026-10-19 — W3 (F-B): xp_v2 recorded nightly; CAPTAIN, BAN RISK and REALISED sections (`ccb5882` prereg; `66ae89a`, `09b3a50` code; on `w3-wip`, not merged)
+
+- **Source `xp_v2`** (the seventh): xp_v2 as tested for the next gameweek.
+  - It comes from runner copies by syntax tree of `tools/xp_v2_live.py`'s
+    closure (`fpl_xpv2`, `fpl_xpr`, `fpl_shares`, `fpl_xpv`; odds from W2's
+    `fpl_lambda`).
+  - The record never opens the database.
+  - Last season's S11 prior is the committed `priors/s11_prior_2025-26.json`
+    (`tools/make_prior.py`, input SHA-256s recorded).
+  - The export's `all_players` gains `code`, `first_name` and
+    `second_name`.
+  - A missing prior file or key is a RECORD SKIP (WARN).
+- **Sections** (`fpl_squad.py`, after CHIPS and LEAGUE):
+  - CAPTAIN: Step 14's table and the options within 0.3 xP.
+  - BAN RISK: S12's rule, one booking from a ban; the position mean is the
+    pooled rate.
+  - REALISED: from GW8, own v xp_v2 on our squad from the recorded rows.
+- **Measured:**
+  - Real GW8: identical to the tool (285 players, max |diff| 0.0).
+  - The six existing sources are unchanged on real data and at simulated
+    GW10, 20 and 38.
+  - CAPTAIN equals gw_pass section 7.
+  - Suite 699 → 716; mutations 19 of 19, plus the verifier's survivor
+    closed.
+  - Verifier PASS (Fable 5.1, `worklog/verify_W3.md`).
+- **Open for Boris before the merge (by Thu 29 Oct):**
+  - the prior file on master and the export keys;
+  - GW8's xp_v2 in REALISED;
+  - the ban line's finished-fixture rule.
+
+---
+
 ## 2026-10-19 — S10b (F-C): 2023/24 and 2024/25 re-scored under the 2026/27 rules (`c0116fe` prereg, `5918f02` downloads, `a2902f9` code; on `s10b-wip`)
 
 - **Downloads (approved in F-C):** 11 files, recorded in
@@ -4194,6 +4238,41 @@ W1b's cap moves to 12 when W1b is worked.
 
 Report: `worklog/cc_2026-10-19_S2b.md`; after: `worklog/cc_2026-10-20_S2b_after.md`.
 
+## 2026-10-20 — W3 amendment 1: fixtures.finished_provisional, ban risk on provisional results, GW8 graded from the bundle (`0596125` prereg; `aea1f42` code; on `w3-wip`, not merged)
+
+- **Built:**
+  - `fixtures.finished_provisional` is appended last (1/0/NULL from the
+    API).
+  - BAN RISK counts results FPL has ended but not yet marked finished,
+    labelled "provisional"; matches in progress do not count.
+  - REALISED grades GW8's xp_v2 from `worklog/gw_pass/gw8/` at its newest
+    commit before the deadline, labelled "source: GW8 bundle <commit>".
+    It grades only when the bundle's 15 is our GW8 15.
+  - The nightly's master checkout fetches the full history.
+- **Measured:**
+  - suite 737 → 748; mutations 14 of 15 (one equivalent);
+  - the projection log is byte-identical under a frozen clock (verifier).
+  - On the real data, BAN RISK lists Thiago: 4 cautions, P(ban) 0.444
+    for a GW9 ban.
+- **Verifier:** PASS (`worklog/verify_W3_a1.md`, Fable 5.1). Merge by Thu
+  29 Oct via `dry/W3`.
+
+## 2026-10-20 — W3 amendment 2: GW8 graded from the bundle's xp_v2_all.csv (Ruling, Tue 20 Oct night; `6e7c918` prereg; `bbe770a` code; on `w3-wip`, not merged)
+
+- **Built:** REALISED reads `worklog/gw_pass/gw8/xp_v2_all.csv` at the
+  newest commit where both the committer time and `run.txt`'s end are
+  before the deadline, and `run.txt` records the CSV's SHA-256.
+  - Our actual GW8 15; own from the log, xp_v2 from the CSV;
+    `realised_on` for both.
+  - Any of the 15 missing from the CSV gives "not recorded".
+  - Amendment 1's text parser is removed.
+- **Measured:**
+  - suite 748 → 749; mutations 8 of 8;
+  - the real GW8 CSV (668 players, from `s8c-wip` `ea95cf6`) reads end to
+    end;
+  - the projection log is byte-identical under a frozen clock
+    (verifier).
+- **Verifier:** PASS (`worklog/verify_W3_a2.md`, Fable 5.1).
 ## 2026-10-20 — S2b after-measurement: corrections (amends the entry "S2b done" above; Ruling, Tue 20 Oct night, point 1)
 
 The verifier on the after-measurement (`worklog/verify_S2b_after.md`, Fable
@@ -4292,3 +4371,119 @@ Report: `worklog/cc_2026-10-21_W2a3.md`.
   mutation survives); a coverage note for a later item.
 
 Report: `worklog/cc_2026-11-03_W2fix.md`.
+
+## 2026-11-03 — W2 done: live, final verifier PASS on Boris's real run (`979f307` W2, `271eecc` W2fix; data `39578fe`)
+
+**The live run:** Boris's real run on master, 20:14–20:17 UTC, data `39578fe`:
+STATUS OK, checks 30/30, 755 tests green. Check 31: "report sections: CHIPS 35
+lines, LEAGUE 58 lines".
+
+Measured by the final verifier (Fable 5.1, `worklog/verify_W2_final.md`):
+
+- **Check 31 over the live nights:** OK on 24 and 25 Oct; WARN on the 8 nights
+  26 Oct–2 Nov with the entry 18931 message; OK from this run on.
+- **The sections:** recomputed on a copy of the data and of master's code,
+  byte-identical with the live report (101 lines).
+- **The multiplier check:** 63 entry-gameweeks and 945 picks pass; the vice is
+  promoted once, entry 18931 in GW8.
+- **`bottomup_lambda`, the sixth source:**
+  - 2,979 rows over 11 nights (24 Oct–3 Nov);
+  - 0 rows at or after their deadline, 0 duplicate keys;
+  - truncation checks on 24 Oct, 29 Oct and 3 Nov reproduce every row (largest
+    difference 0.0).
+- **The log:** nothing recorded was disturbed. The projection log before the
+  merge is a byte prefix of the log after it, and the five older sources'
+  nightly pattern is unchanged.
+- **The sync columns:** present and filled as `prereg/W2.md` says. Stored rows
+  stay NULL, including all 1,927 `player_history` rows, since the nightly
+  makes no element-summary calls.
+- **The suite:** 739 before W2 and W2fix (`5c3e3bf`), 755 after (`ea0957c`),
+  by discovery on clean archives.
+
+Two notes, neither a defect:
+
+- A real run does not record its code commit in the log, the status or the
+  commit message (`GITHUB_SHA` appears only in dry-run messages). The commit
+  was established from the push history and the test count.
+- CHIPS reads the previous night's archived export by design, so it is one
+  night stale within a gameweek.
+
+`dry/W2`, `data-dryrun-W2`, `dry/W2fix` and `data-dryrun-W2fix` are deleted.
+
+---
+
+## 2026-11-03 — W3 amendment 3: tests and a comment before W3's merge (`0be8309`, `16aa4ed` prereg on master; `43a174f`, `aa07818` on `w3-wip`, not merged)
+
+**Why:** Boris's rulings of Tue 3 Nov night, verbatim in `prereg/W3.md`; and the
+two items open since amendment 2, due before the merge.
+
+**Changed, no executable line:**
+
+- `tests/test_W2fix.py`: a captain with no `player_gw` row counts as 0 minutes.
+- `tests/test_W2.py`: the CHIPS section's first line names the dated export.
+  It already did (`CHIP CALCULATOR  export fpl_export_gw9_2026-11-02.json.gz`,
+  report of 3 Nov, data `39578fe`), so no code; no test held it.
+- `tests/test_W3.py`: a +02:00 committer date is read as its instant; and
+  `git_commit` passes `commit.gpgsign=false`.
+- `nightly.yml`: the `fetch-depth` comment cites amendment 2.
+
+**Measured:**
+
+- Suite 784 → 787, OK bare (11 skipped) and with the data (4 skipped).
+- Mutations 8 of 8 red; the verifier's own 11 + 5: one survivor on its first
+  pass, a well-formed wrong export name, now red.
+- Under a global `commit.gpgsign = true`, `BundleGrading` errored 8 of 9 before
+  and passes 9 of 9 now.
+- **Outside this delta:** under the same config, 68 older tests do not pass
+  (`test_fpl.py` 47, `test_W1b` 13, `test_W1` 4, `test_S3` 4), against the
+  hermetic rule. Nothing is red today: neither this machine nor the runner sets
+  it. Parked for Boris.
+
+**Verifier:** PASS twice (Fable 5.1, `worklog/verify_W3_a3.md`), write guard
+clean. Report `worklog/cc_2026-11-03_W3_a3.md`.
+
+**Also from the rulings:** real runs recording their code commit is its own
+item, `prereg/runcommit.md`, Mon 9 Nov or later, before the GW11 freeze (Thu 19
+Nov 05:00 UTC). Dry runs record it only in the commit message, so its log line
+and status header are new for both kinds of run.
+
+---
+
+## 2026-11-12 — W3 done: live on master, final verifier PASS after the record fix (`47ac1ea` merge, `a4cb2df` record; data `2e0b948`, `6f9ecb8`)
+
+**The landing:** master `47ac1ea`, the merge of master `b44e796` into `w3-wip`
+`62bda73` (W3 amendment 3, verifier PASS); `git diff 62bda73 47ac1ea` outside
+`prereg/`, `worklog/` and `CHANGELOG.md` is empty. Tag `pre-W3` → `b44e796`.
+Pushed Wed 11 Nov 11:41:58 UTC. Suite 755 → 787, OK bare (11 skipped) and
+with the data (4 skipped), on `git archive` copies.
+
+**Measured on the real runs** (both on `47ac1ea`):
+
+- The scheduled nightly (02:29–02:32 UTC Thu 12 Nov, data `2e0b948`): STATUS
+  WARN 28/30, check 17 (the 2026-11-05 price-date gap, every night since) and
+  check 31 "CAPTAIN SKIPPED: the export's all_players has no code".
+- Boris's dispatch (17:42:58 UTC, data `6f9ecb8`): STATUS WARN 29/30, check 17
+  only; check 31 "CHIPS 34 lines, LEAGUE 58 lines, CAPTAIN 20 lines, BAN RISK 3
+  lines, REALISED 5 lines". xp_v2 299 rows for GW11, 482 prior players keyed
+  by code.
+- Check 31's first-night skip: the report sections read the previous night's
+  archive; `code` is in 0 of 672 players in the 11-11 archive (pre-W3 code)
+  and 672 of 672 in the 11-12 archives.
+- GW11 information: CAPTAIN Gabriel xp_v2 5.62, Haaland 5.59; BAN RISK Groß
+  P(ban) 0.350, Thiago 0.000 (status `s`); REALISED GW8 own 41 v xp_v2 41.
+
+**Final verifier** (Fable 5.2, launched at high, not confirmable;
+`worklog/verify_W3_final.md`): first run FAIL on check 4 only (the plan of
+Sun 8 Nov that moved the landing was in no prereg); every code and data check
+passed, including the xp_v2 rows and the six older sources rebuilt row for
+row, and 10 of 10 mutations red. After Ruling 1 of Thu 12 Nov (`a4cb2df`,
+`prereg/W3.md` amendment 4, recorded after the fact), the rerun of check 4
+PASSes. Write guard clean after both runs. Report
+`worklog/cc_2026-11-12_W3_landing.md`.
+
+**Rulings of Thu 12 Nov on the verifier's notes:** the export lag in CAPTAIN
+and BAN RISK and the false Free Hit flag in CHIPS go to W3fix (Sun 15 Nov);
+two runs in one day keep the S2 rule: the scheduled run's xp_v2 rows survive
+at data `2e0b948`.
+
+`dry/W3` and `data-dryrun-W3` are deleted.

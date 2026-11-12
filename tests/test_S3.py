@@ -168,8 +168,9 @@ GOOD_RUN = ("running tests ...\nRan 454 tests in 9.1s\n\nOK (skipped=11)\nTESTS 
             "1200 prices fetched 2026-10-18T21:41:00+00:00; credits used 4, remaining 496, this "
             "request 4\nrecord summary:\nRECORD OK own 275\nRECORD OK xg 260\n"
             "RECORD OK minutes 260\nRECORD OK bottomup 260\nRECORD OK fpl_ep 600\n"
-            "RECORD OK bottomup_lambda 260\n"
+            "RECORD OK bottomup_lambda 260\nRECORD OK xp_v2 260\n"
             "adding the report sections ...\nCHIPS OK 37 lines\nLEAGUE OK 69 lines\n"
+            "CAPTAIN OK 20 lines\nBAN RISK OK 2 lines\nREALISED OK 2 lines\n"
             "archiving the export ...\n")
 RED_RUN = ("running tests ...\nRan 454 tests in 9.5s\n\nFAILED (failures=3, skipped=11)\n"
            "TESTS FAILED - see logs/run_2026-10-18.log\nsyncing FPL API ...\n"

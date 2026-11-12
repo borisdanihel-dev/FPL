@@ -1,0 +1,45 @@
+# gate2_matrix.py output, Thu 12 Nov 21:12 UTC: --code a clean worktree of s8c-wip 3a72ddb (git status clean), --data a copy of C:\GIT\FPL-data at 6f9ecb8 (with its odds/), --hist C:\GIT\FPL\historical; script sha256 561b736d23aebf01d11be29586c8c1b0283d0abbe7921989b70b6525dedaffd1. Information for prereg/FM.md's draft only; no provenance run.txt (a scratch run): the item regenerates these numbers under tools/provenance.py if Boris rules it.
+check: clearing the three flags moves no other player: True
+V2 TABLE  player          GW11   GW12   GW13   GW14   GW15   GW16   sum
+  v1  Thiago         0.00   0.00   0.00   0.00   0.00   0.00   0.00
+  v2  Thiago         0.00   0.00   0.00   4.71   4.26   5.26  14.22
+      as normal: P(start) 1.000, P(sub) 0.000
+  v1  Thomas         0.00   0.00   0.00   0.00   0.00   0.00   0.00
+  v2  Thomas         1.26   2.15   2.32   2.08   2.14   1.90  11.84
+      as normal: P(start) 0.500, P(sub) 0.000
+  v1  Calafiori      4.03   3.61   4.18   4.83   4.68   5.03  26.36
+  v2  Calafiori      4.03   3.61   4.18   4.83   4.68   5.03  26.36
+      as normal: P(start) 0.750, P(sub) 0.250
+export fpl_export_gw10_2026-11-12.json.gz; odds odds_2026-11-12T1745Z.json.gz; target GW11; weeks GW11-GW16
+check: this copy with nothing lifted equals builder.live_matrix in every week: True
+check: lifting the three moves no other player: True
+Thiago (BRE): status s, chance 0.0, news 'Suspended until 5 Dec', mins_last4 292
+   v1 (live)        -      -      -      -      -      -  
+   normal          0.00   0.00   0.00   0.00   0.00   0.00
+   GW11 detail (gate lifted, chance 1): P(start) 0.000, e_xg 5.015, e_bl 0.000, P(sub) 0.000, e_sub 1.323
+     GW11: P(start) 0.000 fixtures 1 opp ['EVE']
+     GW12: P(start) 0.000 fixtures 1 opp ['MUN']
+     GW13: P(start) 0.000 fixtures 1 opp ['ARS']
+     GW14: P(start) 0.000 fixtures 1 opp ['MCI']
+     GW15: P(start) 0.000 fixtures 1 opp ['FUL']
+     GW16: P(start) 0.000 fixtures 1 opp ['NEW']
+Thomas (COV): status d, chance 50.0, news 'Calf injury - 50% chance of playing', mins_last4 149
+   v1 (live)        -      -      -      -      -      -  
+   normal          1.26   1.08   1.16   1.04   1.07   0.95
+   GW11 detail (gate lifted, chance 1): P(start) 0.250, e_xg 5.756, e_bl 4.287, P(sub) 0.000, e_sub 1.079
+     GW11: P(start) 0.250 fixtures 1 opp ['CRY']
+     GW12: P(start) 0.250 fixtures 1 opp ['LEE']
+     GW13: P(start) 0.250 fixtures 1 opp ['IPS']
+     GW14: P(start) 0.250 fixtures 1 opp ['MUN']
+     GW15: P(start) 0.250 fixtures 1 opp ['AVL']
+     GW16: P(start) 0.250 fixtures 1 opp ['BOU']
+Calafiori (ARS): status a, chance 100.0, news '', mins_last4 270
+   v1 (live)       4.03   3.61   4.18   4.83   4.68   5.03
+   normal          4.03   3.61   4.18   4.83   4.68   5.03
+   GW11 detail (gate lifted, chance 1): P(start) 0.750, e_xg 5.416, e_bl 4.624, P(sub) 0.250, e_sub 1.079
+     GW11: P(start) 0.750 fixtures 1 opp ['NEW']
+     GW12: P(start) 0.750 fixtures 1 opp ['MCI']
+     GW13: P(start) 0.750 fixtures 1 opp ['BRE']
+     GW14: P(start) 0.750 fixtures 1 opp ['TOT']
+     GW15: P(start) 0.750 fixtures 1 opp ['BOU']
+     GW16: P(start) 0.750 fixtures 1 opp ['MUN']
