@@ -77,7 +77,15 @@ def runner_export(tmp, hist):
     d["events"], d["fixtures_played"] = events, played
     with gzip.open(path, "wt", encoding="utf-8") as fh:
         json.dump(d, fh)
+    write_working(tmp, d)
     return d
+
+
+def write_working(tmp, d):
+    """Tonight's working export, fpl_export_gw<N>.json beside the archive, as the nightly has it after its sync
+    (or --restore): CAPTAIN and BAN RISK read it (W3fix, Ruling 2 of Thu 12 Nov)."""
+    with open(os.path.join(tmp, f"fpl_export_gw{d['gameweek']}.json"), "w", encoding="utf-8") as fh:
+        json.dump(d, fh)
 
 
 def prior_file(hist, folder):
@@ -355,7 +363,7 @@ class Captain(unittest.TestCase):
         got = []
         out = SQ.captain(self.tmp, got.append, prior_path=self.prior)
         self.assertEqual(got[1:], want)
-        self.assertTrue(got[0].startswith("  GW9 from fpl_export_gw8_2026-10-17.json.gz: the points distribution of xp_v2"))
+        self.assertTrue(got[0].startswith("  GW9 from fpl_export_gw8.json: the points distribution of xp_v2"))   # tonight's (W3fix)
         self.assertIn("odds_2098-12-31T10-00-00Z.json.gz", got[0])
         self.assertEqual((out["captain"], out["options"]), (cap, options))
         xi = [b["id"] for _, _, b in G.side_by_side(squad, {}, res["xp"])["rows"][:11]]
@@ -404,6 +412,7 @@ class BanRisk(unittest.TestCase):
                     r["starts"] = 0                                                       # on the bench twice: P(start) < 1
             with gzip.open(path, "wt", encoding="utf-8") as fh:
                 json.dump(d, fh)
+            write_working(tmp, d)                                                         # BAN RISK reads tonight's (W3fix)
             c = sqlite3.connect(os.path.join(tmp, "fpl.sqlite"))
             for pid in (ours, other):
                 if pid is None:

@@ -21,6 +21,7 @@ fpl_xpr). Standard library only; nothing under tools/.
 import csv
 import hashlib
 import io
+import json
 import os
 import re
 import sqlite3
@@ -34,6 +35,7 @@ import fpl_edge as E
 import fpl_mv2 as MV
 import fpl_pmf as PM
 import fpl_realised as RL
+import fpl_ship
 import fpl_xpv2 as XL
 
 ENTRY = 3073318                     # 1. FC Kiripolcz
@@ -45,6 +47,18 @@ REPO = os.path.dirname(os.path.abspath(__file__))
 
 class MissingInput(Exception):
     """A required input is missing: reported, never substituted."""
+
+
+def current_export(data_dir):
+    """W3fix, Ruling 2 of Thu 12 Nov (prereg/W3fix.md): tonight's export - the
+    working fpl_export_gw<N>.json the night's sync writes (fpl_ship.newest_export,
+    the file the archive step copies after the sections) - never the dated
+    archive, which is last night's: (d, path)."""
+    path = fpl_ship.newest_export(data_dir)
+    if not path:
+        raise MissingInput(f"no working export fpl_export_gw*.json in {data_dir} (tonight's sync writes it)")
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh), path
 
 
 def next_target(d):
@@ -71,8 +85,8 @@ def xp_v2_captain(squad, xp):
 def captain(data_dir, out, prior_path=None):
     """The captain table for our 15 and the options within 0.3 xP of xp_v2's
     captain (the highest xp_v2 in xp_v2's XI, ties to the lower id), as
-    tools/gw_pass.py's section 7."""
-    d, path = CH.newest_export(data_dir)
+    tools/gw_pass.py's section 7. Tonight's export (W3fix, Ruling 2)."""
+    d, path = current_export(data_dir)
     target, dl = next_target(d)
     res = XL.live_forecast(d, target, dl, data_dir, XL.load_prior_file(prior_path or XL.PRIOR_FILE))
     sums = PM.live_pmfs(res)
@@ -168,13 +182,14 @@ def provisional_note(prov, club, cut):
 def ban_risk(data_dir, out):
     """Our 15 one booking from a ban: cautions, rate90 (S12's booking_rate90
     against the position mean), P(start) as xp_v2 as tested uses it, and
-    P(ban for the following gameweek) = min(1, rate90 x P(start))."""
-    d, _ = CH.newest_export(data_dir)
+    P(ban for the following gameweek) = min(1, rate90 x P(start)). Tonight's
+    export (W3fix, Ruling 2)."""
+    d, path = current_export(data_dir)
     target, dl = next_target(d)
     rows, prov = ban_rows(data_dir, d)
     inp = E.reliability_inputs(E.canonical_through(E.canonical_from_export(d), d["gameweek"]), gws_played=d["gameweek"])
     rates = position_rates(rows, dl)
-    out(f"  GW{target} (S12's rule): cautions = yellow cards in league matches before the deadline; one booking from a ban = 4 "
+    out(f"  GW{target} from {os.path.basename(path)} (S12's rule): cautions = yellow cards in league matches before the deadline; one booking from a ban = 4 "
         f"with the club's next league match its 18th or earlier, or 9 with it its 31st or earlier; rate90 = cautions per 90 "
         f"shrunk m/(m+{MV.CRED_K:g}) to the position's pooled rate; P(ban for the following gameweek) = min(1, rate90 x P(start)), "
         f"P(start) as xp_v2 as tested; a result FPL has ended but not yet marked finished counts, labelled provisional")
