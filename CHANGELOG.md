@@ -4324,3 +4324,44 @@ clean. Report `worklog/cc_2026-11-03_W3_a3.md`.
 item, `prereg/runcommit.md`, Mon 9 Nov or later, before the GW11 freeze (Thu 19
 Nov 05:00 UTC). Dry runs record it only in the commit message, so its log line
 and status header are new for both kinds of run.
+
+---
+
+## 2026-11-12 — W3 done: live on master, final verifier PASS after the record fix (`47ac1ea` merge, `a4cb2df` record; data `2e0b948`, `6f9ecb8`)
+
+**The landing:** master `47ac1ea`, the merge of master `b44e796` into `w3-wip`
+`62bda73` (W3 amendment 3, verifier PASS); `git diff 62bda73 47ac1ea` outside
+`prereg/`, `worklog/` and `CHANGELOG.md` is empty. Tag `pre-W3` → `b44e796`.
+Pushed Wed 11 Nov 11:41:58 UTC. Suite 755 → 787, OK bare (11 skipped) and
+with the data (4 skipped), on `git archive` copies.
+
+**Measured on the real runs** (both on `47ac1ea`):
+
+- The scheduled nightly (02:29–02:32 UTC Thu 12 Nov, data `2e0b948`): STATUS
+  WARN 28/30, check 17 (the 2026-11-05 price-date gap, every night since) and
+  check 31 "CAPTAIN SKIPPED: the export's all_players has no code".
+- Boris's dispatch (17:42:58 UTC, data `6f9ecb8`): STATUS WARN 29/30, check 17
+  only; check 31 "CHIPS 34 lines, LEAGUE 58 lines, CAPTAIN 20 lines, BAN RISK 3
+  lines, REALISED 5 lines". xp_v2 299 rows for GW11, 482 prior players keyed
+  by code.
+- Check 31's first-night skip: the report sections read the previous night's
+  archive; `code` is in 0 of 672 players in the 11-11 archive (pre-W3 code)
+  and 672 of 672 in the 11-12 archives.
+- GW11 information: CAPTAIN Gabriel xp_v2 5.62, Haaland 5.59; BAN RISK Groß
+  P(ban) 0.350, Thiago 0.000 (status `s`); REALISED GW8 own 41 v xp_v2 41.
+
+**Final verifier** (Fable 5.2, launched at high, not confirmable;
+`worklog/verify_W3_final.md`): first run FAIL on check 4 only (the plan of
+Sun 8 Nov that moved the landing was in no prereg); every code and data check
+passed, including the xp_v2 rows and the six older sources rebuilt row for
+row, and 10 of 10 mutations red. After Ruling 1 of Thu 12 Nov (`a4cb2df`,
+`prereg/W3.md` amendment 4, recorded after the fact), the rerun of check 4
+PASSes. Write guard clean after both runs. Report
+`worklog/cc_2026-11-12_W3_landing.md`.
+
+**Rulings of Thu 12 Nov on the verifier's notes:** the export lag in CAPTAIN
+and BAN RISK and the false Free Hit flag in CHIPS go to W3fix (Sun 15 Nov);
+two runs in one day keep the S2 rule: the scheduled run's xp_v2 rows survive
+at data `2e0b948`.
+
+`dry/W3` and `data-dryrun-W3` are deleted.

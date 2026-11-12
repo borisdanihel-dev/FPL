@@ -7,7 +7,25 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 6 Nov, 09:20 UTC on): the GW10 deadline pass** (Boris; deadline
+- **NOW (Thu 12 Nov, 21:00 UTC on): Boris's rulings and plan of Thu 12 Nov**
+  (verbatim in `prereg/W3.md` amendment 4, `S8c.md` amendment 5,
+  `runcommit.md` amendment 1, `FJ.md`, `FM.md`, `W3fix.md`; master `a4cb2df`).
+  Break-plan items since the reset (0 of 6 on Sun 8 Nov): W3 (1).
+  - **W3 DONE:** live on master `47ac1ea`; final verifier PASS after the
+    record fix (first run FAIL on the record only); report
+    `worklog/cc_2026-11-12_W3_landing.md`; `dry/W3`, `data-dryrun-W3` deleted.
+  - **Tonight, in order:** A W3 record fix (done); B the GW10 checkpoint
+    (`prereg/FJ.md`; metric computed: mean d +2.67, 90% [-2.67, +8.00], xp_v2
+    stays; posted); C status gate v2 draft (`prereg/FM.md`) for Boris's
+    ruling; D(a) `s8c-wip` ready, `dry/S8c` after tonight's nightly; D(b) the
+    W3fix branch (Rulings 2-3) with tests and the verifier; E Step 16.
+  - **Schedule (runner, one a night, Boris clicks each real run):** S8c Fri 13
+    Nov; runcommit plus the price-moves name fix Sat 14 Nov; W3fix Sun 15 Nov.
+    GW11 freeze Fri 20 Nov 05:00 UTC (deadline Sat 21 Nov 11:00 UTC).
+  - **Rule kept:** each plan item's text goes into its prereg before acting.
+    The verifier never reads transcripts (S0c).
+
+- (Earlier) **NOW (Fri 6 Nov, 09:20 UTC on): the GW10 deadline pass** (Boris; deadline
   18:30 UTC; freeze: tools and worklog only).
   - **Bundle** `c0c6c3f` (committed 09:23:26 UTC): `worklog/gw_pass/gw10/`,
     from a fresh clean worktree of `d9071b8` on data `fa31a48`, export

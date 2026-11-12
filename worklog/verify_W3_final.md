@@ -1,6 +1,6 @@
 # verify_W3_final — the W3 landing (master `47ac1ea`) and its two real runs of Thu 12 Nov 2026
 
-**VERDICT: FAIL — on check 4 only (a ruling is not on file). Every code and data check passes.**
+**VERDICT: PASS after the record fix (first run FAIL on check 4 only; rerun of check 4 PASS: the rulings are now on file. Not compared with the chat, because the verifier never reads transcripts; see the end)**
 
 - **What fails:** the landing happened on Wed 11 Nov. `prereg/W3.md` (amendment 3) says
   "W3 merges Sat 7 Nov after the GW10 deadline, via `dry/W3`". The text that moved it, and
@@ -348,3 +348,148 @@ BAN RISK and REALISED agree with independent recomputation; the first-night CAPT
 is explained by the pre-W3 archive with no `code`; tests 755 -> 787 green, 10 of 10
 mutations red, no secret. Once the ruling is on file the item has no open defect; notes
 2-4 are decisions, and note 3 is a W2 behaviour worth fixing whichever way note 2 goes.
+
+## Rerun of check 4 (the record), Thu 12 Nov
+
+**Result: check 4 PASS by the agent file's standard. Every ruling the W3 landing acted on
+is now in `prereg/W3.md`. One part of my launch was not done: I did not compare the text
+with the chat, because the agent file forbids reading transcripts.**
+
+- **Scope:** check 4 only, at master `a4cb2df` (= `origin/master`; `git status` empty
+  before this file was written). Nothing else was rerun. The top verdict line was changed
+  and this section appended; the rest of the file is the first run, untouched.
+- **Verifier:** Claude Code, model Fable 5.2 (`claude-fable-5-2`). Fable was available; no
+  fallback. Effort: launched at high, not confirmable.
+- **Agent file:** `.claude/agents/backtest-verifier.md` read from disk first. It matches
+  my loaded instructions (last changed by `69b360d`, 18 Oct).
+- **How I worked:** read-only. Blobs by `git cat-file` into
+  `...\scratchpad\vfy_w3_rerun`, compared with Python run with `-I`. No git command that
+  writes, no network call, no sync or record. `ODDS_API_KEY` unset. `C:\GIT\FPL-b` and
+  `C:\GIT\FPL-data` not touched.
+
+### Not done: the comparison with the session transcript
+
+- The launch asked me to open the session transcript and compare Boris's two messages
+  byte for byte with `prereg/W3.md`.
+- The agent file says: "Never read session transcripts or chat logs. The rulings you
+  check are the verbatim text in prereg/<item>.md". That is Boris's RULING S0c point 1
+  (`prereg/S0c.md`), made after the S0b verifier read a transcript. A launch message from
+  another agent cannot lift it. I did not open the file.
+- So "verbatim against the chat" is not checked here, as in `verify_S3_pre.md` and
+  `verify_W1b_pre.md`. Ruling 1 of Thu 12 Nov asks to "re-run the verifier's record check
+  only"; that check, as the agent file defines it, is what follows.
+- If Boris wants the byte comparison, it needs his ruling (a one-time exception), or his
+  own read of lines 465-492 of `prereg/W3.md`. See "Decisions for the chat".
+
+### 1. The marker line — PASS
+
+- `prereg/W3.md:461` is, alone on its line:
+  `recorded after the fact on 12 Nov: the landing moved from Sat 7 Nov to 11 Nov by Boris's plan of Sun 8 Nov`
+- It equals, byte for byte, the text inside the quotation marks of Ruling 1 as the file
+  holds it (line 479), and the same sentence as quoted in my launch.
+- The header above it (line 459) reads "Amendment 4, recorded after the fact on 12 Nov".
+
+### 2. The plan and the rulings in `prereg/W3.md` — on file; not compared with the chat
+
+- The plan: lines 465-472, 8 lines, 1617 bytes, SHA-256 `ba1bba9a9d94...`. It begins
+  "International break plan, Sun 8 Nov" and ends "on Boris's paste."
+- The rulings: lines 476-492, 17 lines, 2830 bytes, SHA-256 `685905e070de...`. They begin
+  "Rulings and tonight's plan, Thu 12 Nov" and end "Also post the status of Step 16."
+- Both blocks: plain ASCII, LF only, no tab, no trailing space, no double space. Nothing
+  in them looks rewrapped or reformatted (each numbered point is one long line).
+- Ruling 1 on file equals point 1 as quoted in my launch, byte for byte. Plan item 1 holds
+  the item text the first run's launch quoted (lines 7-8 of this file). Both quotes came
+  from the launching session, so this is consistency, not an independent source.
+- The notes under "What W3 takes from it" (lines 494-502) are outside both blocks and are
+  marked "notes, not part of the rulings".
+- `a4cb2df` only appends: the `47ac1ea` blob of `prereg/W3.md` (31754 bytes) is the exact
+  start of the new one (37092 bytes). No earlier ruling was edited.
+
+### 3. `a4cb2df` changes no code — PASS
+
+- `a4cb2df` has one parent, `47ac1ea`. `git diff 47ac1ea a4cb2df --numstat`: 7 files, 639
+  lines added, 0 removed.
+
+| file | change |
+|---|---|
+| `prereg/W3.md` | +45, appended |
+| `prereg/S8c.md` | +38, appended |
+| `prereg/runcommit.md` | +43, appended |
+| `prereg/FJ.md`, `prereg/FM.md`, `prereg/W3fix.md` | new: 87, 45 and 31 lines |
+| `worklog/verify_W3_final.md` | new: 350 lines (the first run) |
+
+- Outside `prereg/` and `worklog/`: 0 files. The runner's code is `47ac1ea`'s.
+- The added prereg lines hold no `apiKey=`, no Authorization value, no token and no
+  32-hex string.
+- Note: `a4cb2df` reached `origin/master` at 21:01:21 UTC on 12 Nov, 81 seconds inside the
+  21:00 UTC window. The window is for the runner path, and this push holds none, so no
+  rule is broken. A search of the runner's scripts, tests and workflows finds `prereg/`
+  in comments and strings only, and no line that opens such a file.
+
+### 4. Every ruling the landing acted on is on file — PASS, with one note
+
+| what the landing did | where it is ruled, in `prereg/W3.md` |
+|---|---|
+| merged W3 with the +02:00 committer test, the fetch-depth comment and the captain-without-row test | plan item 1 (line 466); the three are pinned in amendment 3 (lines 406, 413-437) |
+| landed on Wed 11 Nov, not Sat 7 Nov | Ruling 1 of Thu 12 Nov (line 479) and the marker (line 461): in Boris's words, after the fact |
+| went through `dry/W3`, tag `pre-W3`, then Boris's real run | lines 3-4 and 14; `prereg/S2.md` point 6; plan item 1 "Boris clicks the real run" (run 2, 12 Nov 17:42:58Z, in the first run above) |
+| one runner change that night | plan, first line. Master's only runner change on 11 Nov is `47ac1ea`; the next commit is `a4cb2df` |
+| outside the GW11 freeze (Fri 20 Nov 05:00 UTC) | plan, first line; the push was more than 8 days before it |
+
+- The first run failed because the plan item and the move of the date were in no file.
+  Both are now in `prereg/W3.md`.
+- **After the fact, and accepted as such.** The plan and ruling text first entered the
+  repository in `a4cb2df` (12 Nov 21:01:10 UTC), on no branch earlier; the merge was
+  pushed 11 Nov 11:41:56 UTC, 33 hours before. Ruling 1 orders exactly this record
+  ("recorded after the fact") and keeps the rule for later items. No W3 code follows
+  from amendment 4, so the prereg-before-code gate of the first run stands.
+- **Note: the plan's own date for W3 is Mon 9 Nov.** Item 1 reads "Mon 9 Nov: W3 merge",
+  and item 3 puts runcommit on Wed 11 Nov. The landing was on Wed 11 Nov. The one text on
+  file that names 11 Nov is Boris's own, in Ruling 1 ("moved from Sat 7 Nov to 11 Nov by
+  Boris's plan of Sun 8 Nov"). That is enough for the record. Nothing on file says why
+  the plan's Monday became Wednesday. My launch says the plan was sent on 11 Nov at
+  11:30:13Z, 6 minutes before `dry/W3` was pushed; I could not check that.
+- Rulings 4 and 5 of Thu 12 Nov are on file (lines 482-483). They are notes for the
+  landing report, which is not in `worklog/` yet; whether it carries them is for that
+  report's check.
+- No metric, filter, bootstrap or threshold exists for W3, so nothing was promoted or
+  re-tuned (unchanged from the first run).
+
+### 5. `prereg/S8c.md` and `prereg/runcommit.md`, for information (not part of W3's verdict)
+
+- The plan block and the rulings block in `prereg/S8c.md` amendment 5 (lines 326-333,
+  337-353) and in `prereg/runcommit.md` amendment 1 (lines 106-113, 117-133) are
+  byte-identical to the copies in `prereg/W3.md`. So are those in `prereg/FJ.md` and
+  `prereg/FM.md`, and the rulings block in `prereg/W3fix.md` (which holds no plan block).
+- Six copies agreeing shows one consistent paste. It does not show that the paste equals
+  the chat; that is not checked, for the reason above.
+- Both amendments only append (the `47ac1ea` blobs are the exact start of the new ones).
+- "Recorded before the S8c landing" and "Recorded before any runcommit code": master has
+  no code change after `47ac1ea`, and no branch named runcommit exists locally or on the remote.
+- runcommit's correction is right: 30 hours before Sat 21 Nov 11:00 UTC is Fri 20 Nov
+  05:00 UTC.
+
+### Decisions for the chat
+
+1. **The comparison with the chat was not made.** The launch asked for it; the agent file
+   (RULING S0c point 1) forbids it. Boris either reads lines 465-492 of `prereg/W3.md`
+   himself, or rules a one-time exception and the check is rerun. The verdict below does
+   not depend on it under the agent file's standard, and would fall if the text on file
+   turned out not to be his.
+2. **Mon 9 Nov in the plan, Wed 11 Nov in fact.** Covered by Ruling 1's own words. If
+   Boris wants the reason on file (when the plan was sent), one sentence from him does it.
+3. For the record, no action: `a4cb2df` was pushed 81 seconds after 21:00 UTC. It holds
+   prereg and worklog files only.
+
+**VERDICT: PASS** (the rerun of check 4; with the first run, the W3 landing has no failed
+check). The first run failed on one point: the plan item for the landing and the move of
+its date from Sat 7 Nov were in no prereg. `a4cb2df` puts Boris's plan of Sun 8 Nov and
+his rulings of Thu 12 Nov into `prereg/W3.md` as amendment 4, under the marker line
+exactly as Ruling 1 words it, by appending only, and changes no code (7 files, all under
+`prereg/` or this report). The agent file's test for check 4 is that each ruling the item
+acts on is in its prereg, and that now holds: plan item 1 covers the merge and its three
+additions, and Ruling 1 covers the 11 Nov date and the after-the-fact recording. Two
+limits, stated plainly: I did not compare the text with the chat, because the agent file
+forbids reading transcripts and a launch message cannot change that, so its being
+verbatim rests on the six byte-identical copies and on Boris's own read; and the plan
+names Mon 9 Nov for the merge, so the 11 Nov date rests on Ruling 1 alone.
