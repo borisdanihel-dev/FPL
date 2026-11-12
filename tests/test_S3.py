@@ -567,6 +567,7 @@ class ChecksMain(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, True)
         d = self.tmp
         subprocess.run(["git", "init", "-q", d], check=True)
+        _git(d, "config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         for sub in ("reports", "logs"):
             os.makedirs(os.path.join(d, sub))
         self._db(os.path.join(d, "fpl.sqlite"), ["2026-10-16", "2026-10-17"], "2026-10-17T21:40:00+00:00")
@@ -641,6 +642,7 @@ class PublishOnAFail(unittest.TestCase):
         subprocess.run(["git", "init", "-q", "--bare", self.remote], check=True)
         seed = os.path.join(self.tmp, "seed")
         subprocess.run(["git", "init", "-q", seed], check=True)
+        _git(seed, "config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         con = sqlite3.connect(os.path.join(seed, "fpl.sqlite"))
         con.executescript("CREATE TABLE price_history (player_id INTEGER, date TEXT, price REAL);"
                           "CREATE TABLE events (id INTEGER PRIMARY KEY, deadline_time TEXT);")
@@ -658,6 +660,7 @@ class PublishOnAFail(unittest.TestCase):
         self.run_dir = os.path.join(self.tmp, "run")
         subprocess.run(["git", "clone", "-q", "--branch", "data", "file://" + self.remote.replace("\\", "/"),
                         self.run_dir], check=True)
+        _git(self.run_dir, "config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
 
     def _status(self, name, text):
         with open(os.path.join(self.run_dir, "reports", name), "w", encoding="utf-8", newline="") as fh:

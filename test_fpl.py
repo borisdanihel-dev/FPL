@@ -4188,6 +4188,7 @@ class NightlyRunner(unittest.TestCase):
                                          "-c", "core.autocrlf=false", *a], check=True,
                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
         git("init", "-q")
+        git("config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         self._put(os.path.join(data, ".gitignore"), "/fpl_export_gw*.json\n")
         os.makedirs(os.path.join(data, "exports"))
         self._put(os.path.join(data, "exports", "fpl_export_gw5_2026-10-01.json"), "old five")
@@ -5030,6 +5031,7 @@ class DataGate(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.db = os.path.join(self.tmp, "fpl.sqlite")
         self._git("init", "-q")
+        self._git("config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         con = sqlite3.connect(self.db)
         con.executescript(
             "CREATE TABLE price_history (player_id INTEGER, date TEXT, price REAL);"
@@ -5607,6 +5609,7 @@ class Publish(unittest.TestCase):
     def _ident(self, repo):
         self._git(repo, "config", "user.name", "t")
         self._git(repo, "config", "user.email", "t@t")
+        self._git(repo, "config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
 
     def _clone_new(self, name):
         path = os.path.join(self.tmp, name)
@@ -5799,6 +5802,7 @@ class PrePush(unittest.TestCase):
         self.repo = os.path.join(self.tmp, "clone")
         subprocess.run(["git", "init", "-q", "--bare", self.remote], check=True)
         subprocess.run(["git", "init", "-q", self.repo], check=True)
+        self._git("config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         self._git("checkout", "-q", "-b", "master")
         self._git("remote", "add", "origin", self.remote)
         self._write("fpl_edge.py", "code\n")         # no fpl_prepush.py: the hook runs the installer's copy

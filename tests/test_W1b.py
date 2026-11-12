@@ -318,7 +318,7 @@ class DueGate(unittest.TestCase):
         env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
                    GIT_COMMITTER_EMAIL="t@t", GIT_COMMITTER_DATE="2026-10-18T21:58:09Z",
                    GIT_AUTHOR_DATE="2026-10-18T21:58:09Z")
-        for args in (["init", "-q"], ["add", "-A"], ["-c", "core.autocrlf=false", "commit", "-q", "-m", "nightly"]):
+        for args in (["init", "-q"], ["config", "commit.gpgsign", "false"], ["add", "-A"], ["-c", "core.autocrlf=false", "commit", "-q", "-m", "nightly"]):
             subprocess.run(["git", "-C", self.data, *args], env=env, check=True, capture_output=True)
         self.out = os.path.join(self.tmp, "github_output")
 
@@ -424,6 +424,7 @@ class Hook(unittest.TestCase):
         run = lambda *a: subprocess.run(["git", "-C", self.tmp, *a], env=env, check=True,
                                         capture_output=True, text=True).stdout.strip()
         run("init", "-q")
+        run("config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         with open(os.path.join(self.tmp, "tool.py"), "w", encoding="utf-8") as fh:
             fh.write("x = 1\n")
         run("add", "-A")

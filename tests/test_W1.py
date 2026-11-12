@@ -425,6 +425,7 @@ class OddsAppendOnly(unittest.TestCase):
         self.git = lambda *a: subprocess.run(["git", "-C", self.repo, "-c", "user.name=t", "-c", "user.email=t@t",
                                               "-c", "core.autocrlf=false", *a], capture_output=True, text=True)
         subprocess.run(["git", "init", "-q", self.repo], check=True)
+        self.git("config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         con = sqlite3.connect(os.path.join(self.repo, "fpl.sqlite"))
         con.executescript("CREATE TABLE price_history (player_id INTEGER, date TEXT, now_cost INTEGER);"
                           "CREATE TABLE events (id INTEGER PRIMARY KEY, deadline_time TEXT);")
@@ -567,6 +568,7 @@ class OddsNeverCostsTheNight(unittest.TestCase):
         remote, seed, data, code = (os.path.join(tmp, n) for n in ("remote.git", "seed", "data", "code"))
         subprocess.run(["git", "init", "-q", "--bare", remote], check=True)
         subprocess.run(["git", "init", "-q", seed], check=True)
+        git(seed, "config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         con = sqlite3.connect(os.path.join(seed, "fpl.sqlite"))
         con.executescript("CREATE TABLE price_history (player_id INTEGER, date TEXT, now_cost INTEGER);"
                           "CREATE TABLE events (id INTEGER PRIMARY KEY, deadline_time TEXT);"
@@ -582,6 +584,7 @@ class OddsNeverCostsTheNight(unittest.TestCase):
         git(seed, "push", "-q", remote, "HEAD:refs/heads/data")
         subprocess.run(["git", "clone", "-q", "--branch", "data", "file://" + remote.replace("\\", "/"), data],
                        check=True)
+        git(data, "config", "commit.gpgsign", "false")  # S8c point 5: signing off in the test's own repo
         before = git(remote, "rev-parse", "data").stdout.strip()
         os.makedirs(code)
         stubs = {"test_fpl.py": "import unittest\n\n\nclass T(unittest.TestCase):\n    def test(self):\n        pass\n",
