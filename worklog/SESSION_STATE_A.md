@@ -7,7 +7,43 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Thu 12 Nov, 21:00 UTC on): Boris's rulings and plan of Thu 12 Nov**
+- **NOW (Thu 12 Nov, 23:40 UTC): after Boris's rulings of Thu 12 Nov night**
+  (chat review: the item count reset to 0 of 6; verbatim in `prereg/FJ.md`,
+  `FM.md`, `S8c.md`, `runcommit.md`, `W3fix.md`, new `FJ6.md`; master
+  `88c77df`). Items since the reset: S8c landing prep (1), FJ fixes (2).
+  - **S8c:** `s8c-wip` `4bbb43c` (local branch `s8c-land` in the scratch
+    worktree `s8c_wt`; local `s8c-wip` is held by an old worktree). Pre-check
+    FAIL then re-check of `4bbb43c` PASS (`worklog/verify_S8c_landing.md`),
+    write guard clean. 855 OK plain, signing on, with the data. A background
+    waiter pushes `4bbb43c` to `dry/S8c` once tonight's nightly commits to
+    `data` (it had not by 23:40 UTC), then waits for `data-dryrun-S8c`.
+    - **Fri 13 Nov:** read back `data-dryrun-S8c` against the night's real
+      data commit; tag `pre-S8c`; merge before 21:00 UTC on Boris's click;
+      his real run; final verifier; the "S8c done" entry records the
+      re-check PASS; delete `dry/S8c` and `data-dryrun-S8c`.
+  - **FJ (GW10 checkpoint):** xp_v2 stays (Boris). Report fixed, run
+    regenerated on `b7e4716`; `tests/test_FJ.py` on `fj-wip` `44dcaeb` (not
+    on master: `tests/` is the nightly's gate). Rerun of the two failed
+    checks: **WARN** (`worklog/verify_FJ.md`) - open for Boris: the night
+    the test lands; a `main()` test before GW15; the cross-position tie rule
+    for GW15; the script hash form; a drift sentence ("every week" is five
+    of six).
+  - **W3fix:** Ruling 2 built on `w3fix-wip` `14523e2` (790 OK plain and
+    with the data). Ruling 3 waits for Boris's answer to the Free Hit
+    question (a)/(b) in `prereg/W3fix.md`. Sun 15 Nov.
+  - **FM (xp_v2_g2):** Boris's five answers on file; code, check and
+    verifier on a branch by Tue 17 Nov; recorded from Tue 17 Nov.
+  - **FJ6 (chip plan GW11-19):** prereg design and run by Wed 18 Nov.
+  - **runcommit plus the price-moves name fix:** Sat 14 Nov.
+  - **Step 16:** code verified (5 Nov), rulings recorded (6 Nov); the
+    European and 2026/27 CSVs, row checks, the one run and the report remain.
+  - **Schedule:** Fri 13 S8c; Sat 14 runcommit; Sun 15 W3fix; Tue 17
+    xp_v2_g2; Wed 18 chip plan; Thu 19 GW11 bundle on Boris's paste. GW11
+    freeze Fri 20 Nov 05:00 UTC.
+  - **Mode (d), Boris:** the 21:00 window covers master and `dry/*`; other
+    work branches may be pushed any time.
+
+- (Earlier) **NOW (Thu 12 Nov, 21:00 UTC on): Boris's rulings and plan of Thu 12 Nov**
   (verbatim in `prereg/W3.md` amendment 4, `S8c.md` amendment 5,
   `runcommit.md` amendment 1, `FJ.md`, `FM.md`, `W3fix.md`; master `a4cb2df`).
   Break-plan items since the reset (0 of 6 on Sun 8 Nov): W3 (1).
