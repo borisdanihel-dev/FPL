@@ -4525,3 +4525,39 @@ at data `2e0b948`.
   byte-identical; re-verification PASS (Fable 5.1).
 - **Not adopted.** The keeper-saves line closes (no S6e3); keepers stay on
   xp_v2, with bottomup_lambda as the tie-break.
+
+---
+
+## 2026-11-12 — S8c landing, ready on `s8c-wip`: point 5 (the tests' repos disable signing), the copy fix, the three items' final commits, the status-gate test (`97ded86`, `88c77df` prereg; `f5cc8b3`, `f1f5df2`, `4245b80` on `s8c-wip`; the merge Fri 13 Nov)
+
+**Why:** Boris's rulings of Fri 6 Nov (point 5), Thu 12 Nov (the date) and
+Thu 12 Nov night (S8c points 1–6), verbatim in `prereg/S8c.md`.
+
+**Changed:**
+
+- Tests only: twelve per-repo `commit.gpgsign false` lines where the suite
+  creates its repositories; the guard `tests/test_S8c_p5.py`;
+  `ChecksMain.setUp` checks its commit; `tests/test_W3.py`
+  `StatusGateInTheRecord` (a status `d` player gets no xp_v2 row).
+- `fpl_xpv2.forecast` takes `tools/xp_v2_live.forecast`'s text again (the
+  merge with S8c amendment 4's `lift=()` broke `test_W3.Copies`); the runner
+  never passes `lift`.
+- Merged: master, and the final commits of S6f, S6e2 and S8b (their reports
+  and verifier files, two CHANGELOG entries, two S6f test lines).
+
+**Measured:**
+
+- With `commit.gpgsign = true` globally: 852 run, 69 not passing before
+  (68 signing, 1 the merge break); after, 855 OK (11 skipped).
+- Each of the twelve lines left out turns the guard red (11 of 12 on
+  `f5cc8b3`; the twelfth once ChecksMain checks its commit).
+- The copy fix: xp_v2 recorded with master's code and the branch's on the
+  same data gives the same 299 GW11 rows.
+- The status-gate test is red with the gate lifted.
+- Suite: master 787 OK; the branch 855 OK (11 skipped) bare, 855 OK (4 skipped) with the
+  data.
+
+**Verifier:** pre-check FAIL on two items (the missing final commits; no
+ruling for the copy fix), every claim reproducing; re-check to follow.
+Report `worklog/cc_2026-11-13_S8c_landing.md`. The duplicate "W2 amendment 2"
+entry is left as recorded (S8c point 6).
