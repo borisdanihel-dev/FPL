@@ -351,3 +351,33 @@ C. Status gate v2 prereg draft (break plan item 5). The rule as proposed: 'd' = 
 D. Branch prep for the coming nights: (a) s8c-wip ready to land; push dry/S8c for its automatic dry run once tonight's nightly has finished. (b) A branch with Rulings 2 and 3, their tests and the verifier, ready for Sunday.
 E. If there's time: Step 16 (the 2026/27 CSVs, the row checks).
 Stop at 6 items; park questions with the exact wording. Also post the status of Step 16.
+
+## Point 5, pinned before its code (Thu 12 Nov; the S8c landing, Fri 13 Nov)
+
+Point 5 of the rulings of Fri 6 Nov (verbatim above): the tests' temporary
+repos disable signing locally. Tests only; no runner file changes.
+
+- **Where:** every place the suite creates a non-bare repository that is
+  committed to, by the test or by the code under test: `test_fpl.py`
+  (NightlyRunner's restore test, `DataGate.setUp`, `Publish._ident` for the
+  seed and runner clones, `PrePush.setUp`), `tests/test_S3.py`
+  (`ChecksMain.setUp`, `PublishOnAFail.setUp` seed and run clone),
+  `tests/test_W1.py` (`OddsAppendOnly.setUp`, `OddsNeverCostsTheNight`'s seed
+  and data clone), `tests/test_W1b.py` (`DueGate.setUp`, `Hook.setUp`):
+  twelve lines, each `git config commit.gpgsign false` in that repository's
+  own config right after its init or clone (the per-repo form the ruling
+  allows; it also covers the commits `fpl_publish.py` makes there).
+  `tests/test_W3.py`'s `git_commit` already passes `-c commit.gpgsign=false`
+  (W3 amendment 3). Bare remotes are not committed to and are left alone.
+- **The guard:** `tests/test_S8c_p5.py`: (1) a global config with
+  `commit.gpgsign = true` and a signing program that does not exist makes an
+  unprotected commit fail, and the per-repo setting makes it pass; (2) one
+  test per site, run in a child process under that global config, passes.
+- **Measured before and after:** the whole suite under that global config;
+  each of the twelve lines left out in turn must turn the guard red (or be
+  shown covered by another line, said in the report); the suite bare and
+  with the data, by discovery, on `git archive` copies.
+- **The landing:** master merged into `s8c-wip` (one CHANGELOG conflict,
+  both sides kept); the verifier's pre-check; `dry/S8c` after tonight's
+  nightly has committed; the merge Fri 13 Nov before 21:00 UTC with tag
+  `pre-S8c`, then Boris's real run.
