@@ -1,7 +1,14 @@
 # verify_FJ — the GW10 checkpoint, report only (master `99c9161`), Thu 12 Nov 2026
 
-**VERDICT: FAIL — on the report's text and on test cover only. Every number, the interval
-and the revert rule's verdict (xp_v2 stays) reproduce exactly; nothing needs recomputing.**
+**VERDICT after the rerun of the two failed checks (Thu 12 Nov night): WARN.** Both checks are
+cleared as ruled: the report's text is true, and the three ruled tests exist and work on
+branch `fj-wip`. Open for Boris: the test is not on master yet, no test runs the script's
+`main()`, and the GW15 tie rule has a gap across positions. See the last section. The GW10
+result is unchanged (xp_v2 stays).
+
+First run, kept below as written: **FAIL — on the report's text and on test cover only. Every
+number, the interval and the revert rule's verdict (xp_v2 stays) reproduce exactly; nothing
+needs recomputing.**
 
 Verifier: Fable 5.2 (`claude-fable-5-2`); effort: launched at high, not confirmable.
 `.claude/agents/backtest-verifier.md` read from disk first; it is the same text as my loaded
@@ -278,3 +285,251 @@ pick order, and by id own would have scored 69 and d would be −1), and the ite
 code has no test, so two one-line mutants of it produce a wrong verdict or a reversed sign
 with the suite green. Neither changes the decision. Correct the sentence, settle the test
 question with Boris, and rerun those two checks.
+
+## Rerun of the two failed checks, Thu 12 Nov night
+
+**VERDICT: WARN.** Both failed checks are cleared as ruled. Three things stay open for
+Boris: the test is not on master yet, no test runs the script's `main()`, and the GW15 tie
+rule has a gap across positions. Nothing here changes the GW10 result.
+
+Verifier: Fable 5.2 (`claude-fable-5-2`); effort: launched at high, not confirmable.
+`.claude/agents/backtest-verifier.md` read from disk first; it is the same text as my loaded
+instructions. No transcript or chat log was read. Read-only: the only file written in the
+repository is this one. Scope: the two failed checks only, as launched. The rest of the first
+run stands, except one sentence of mine, corrected below.
+
+State checked: master `3d6ab3d` (the FJ files last changed in `66db35e`);
+`origin/fj-wip` `44dcaeb` (the local ref and `git ls-remote` agree); data `6f9ecb8`.
+`checkpoint.py` is the same blob at `b7e4716`, `3d6ab3d` and `44dcaeb`.
+
+| Launch check | Result | Evidence in one line |
+|---|---|---|
+| 1 the report's text | PASS | the GW9 sentence is true; my own code gives the lowest-id figures; the slot-order result stays primary |
+| 2 the regenerated run | PASS, one note | commit `b7e4716`, modified 0, output hash matches, all 326 numbers equal the first run's; the printed script hash is of a CRLF checkout |
+| 3 test cover (check 6) | PASS on `fj-wip` for the three ruled tests; **WARN** | 8 of 8 mutants of the helpers red; 0 of 8 mutants of `main()` red; my own "d reversed" line is not caught by a test; the test is not on master |
+| 4 the GW15 tie rule | PASS on the order and inside a position; **WARN** | across positions a tie goes to the formation order, not to the lower id |
+| 5 the suite on `fj-wip` | PASS | 792 OK, 11 skipped (master `3d6ab3d`: 787 OK, 11 skipped) |
+
+### 1. The report's text
+
+- The facts, from `fpl.sqlite` (GW9 picks of entry 3073318): Branthwaite slot 3, id 230,
+  9 points; Calafiori slot 14, id 8, 6 points; Thomas slot 15, id 173, 0 points, 0 minutes.
+  All three are defenders, and own had no row for any of them.
+- My own code (no import from the repository; all legal elevens of the 15 enumerated):
+  own has three tied optimal elevens in GW9, all 3-4-3, differing only in the third defender.
+  - Slot order: Branthwaite starts, own 72.
+  - Lowest id: Calafiori starts, own 69.
+  - xp_v2 scores 68 either way.
+- Both rules, three weeks:
+
+  | tie rule | own | xp_v2 | d | mean | 90% interval | verdict |
+  |---|---|---|---|---|---|---|
+  | slot order (pinned, primary) | 41, 72, 62 | 41, 68, 74 | +0, −4, +12 | +2.67 | [−2.67, +8.00] | xp_v2 stays |
+  | lowest id (information) | 41, 69, 62 | 41, 68, 74 | +0, −1, +12 | +3.67 | [−0.67, +8.00] | xp_v2 stays |
+
+  The exact quantiles over the 27 resamples are the same as the bootstrap's.
+- GW9's own tie is the only tie in the three weeks that changes an eleven. (xp_v2 has
+  Calafiori and Thomas both at 0.00 in GW9; both are on its bench, in the same order under
+  either rule.)
+- So the corrected sentence is true in every part: slot 3 before slots 14 and 15; not by
+  id; the lowest id is Calafiori, 6 points, own 69. "The first two wordings said the lower
+  id won" is also true (`5d45151`, `99c9161`).
+- Primary and secondary: the report's table, mean, interval and verdict are the slot-order
+  ones. The lowest-id figures are marked "secondary, information". `checkpoint.txt` does the
+  same: its summary is the slot-order run and its last line gives the other order.
+- One sentence in the report's "Verifier" part repeats an error of mine. See "A correction
+  to my first report".
+
+### 2. The regenerated run
+
+- `run.txt`: commit `b7e4716` (the full hash matches), modified tracked files 0,
+  22:53:30–22:53:31 UTC. `b7e4716` was committed at 22:53:12 and pushed at 22:53:30 UTC.
+- It records `checkpoint.txt` SHA-256 `18a0...`; the committed `checkpoint.txt` hashes to
+  the same (working file and blob).
+- Against the first run's `checkpoint.txt` (`99c9161`): three lines differ. They are the
+  code and script-hash line, the "generated" minute, and the new last line (the tie order).
+  All 326 numeric tokens from line 4 on are equal.
+- My rerun (my own clone at `b7e4716`, modified 0; my own copy of the data, the same two
+  hashes `23e7...` and `7125...`): `checkpoint.txt` is identical to the committed one except
+  the "generated" minute.
+- Final code: after `b7e4716` only files under `worklog/` changed on master, and `fj-wip`
+  adds only `tests/test_FJ.py`. Between `a4cb2df` and `b7e4716` the only Python files
+  changed are `checkpoint.py` and `worklog/fm_draft/gate2_matrix.py`; no imported module
+  changed.
+- **Note, the script hash.** `checkpoint.txt` prints script SHA-256 `330f...`. The committed
+  `checkpoint.py` hashes to `5e34...` (the blob, and the working file in `C:\GIT\FPL`).
+  - `330f...` is the same text with CRLF line endings. The run's worktree was checked out
+    with `core.autocrlf = true`, and the script hashes its own file as it lies on disk.
+  - I rebuilt `330f...` from the blob by adding a CR to each line; my own clone prints it too.
+  - So the run is on the committed text. But nobody can match the printed hash to the
+    committed file without knowing this. The first run's `864a...` matched because that
+    script ran from a scratch copy with LF endings.
+  - Not a failure: the commit, modified 0 and equal content tie the run to the code.
+
+### 3. Test cover (check 6)
+
+`tests/test_FJ.py` at `44dcaeb`: 5 tests in 3 classes, standard library only, no data, no
+network. It loads `checkpoint.py` from the repository by path.
+
+- **The sign of d:** `paired([41, 72, 62], [41, 68, 74])` is `[0, −4, 12]`; on a toy where
+  xp_v2 starts a 12-point forward and own benches him, d is above 0.
+- **The revert verdict:** `verdict` at upper bounds −0.01, 0.0 and 8.0 with a negative
+  lower bound; then through `fpl_bt.bootstrap_mean`: d = −5, −3, −4 gives "own returns",
+  d = 0, −4, 12 gives lo −8/3, hi 8.0, "xp_v2 stays".
+- **The tie order:** a toy 15 built like GW9 (ids 230 in slot 3, 8 in slot 14, 173 in slot
+  15, none with an own forecast). Slot order starts 230, id order starts 8, the scores
+  differ by 3; the default is slot; any other word raises.
+
+That is what the ruling and the pin ask for. The mutants follow. Each is one line of
+`checkpoint.py` changed in a scratch copy of the `fj-wip` archive (4 is two lines).
+"Test" is `unittest discover -p test_FJ.py` in that copy. "Script" is that copy run on the
+real data against my clone.
+
+| # | Mutant | Test | Script on the real data |
+|---|---|---|---|
+| 0 | none | 5 OK | exit 0, the cited output |
+| 1 | `verdict`: `boot["hi"]` → `boot["lo"]` (my first mutant) | red, 2 tests | exit 0: "Upper bound +8.00: own returns" |
+| 2 | `main`: `d.append(pts_v2 - pts_own)` reversed (my second mutant, the same line as in the first run) | **green** | stops on its own `assert`, exit 1, no output written |
+| 3 | `paired` reversed (the implementer's "d reversed") | red, 1 | stops on the `assert`, exit 1 |
+| 4 | 2 and 3 together | red, 1 | exit 0: d +0, +4, −12 |
+| 5 | `ordered`: slot and id swapped | red, 1 | exit 0: own 69 printed as the slot run |
+| 6 | `ordered`: highest id first | red, 1 | exit 0: the id line shows own 72 |
+| 7 | `score`: default order `id` | red, 1 | unchanged (`main` passes the order) |
+| 8 | `score` ignores the order | red, 1 | exit 0: the id line shows own 72 |
+| 9 | `score`: xp_v2 scored on own's forecasts | red, 1 | exit 0: d +0, +0, +0 |
+| 10 | `main`: own and xp_v2 swapped in the call to `score` | **green** | exit 0: own 41, 68, 74; xp_v2 41, 72, 62; d +0, +4, −12; mean −2.67, 90% [−8.00, +2.67] |
+| 11 | `main`: picks read `ORDER BY p.player_id` | **green** | exit 0: own 69, d −1, labelled "slot" |
+| 12 | `main`: the run scored in the other order | **green** | exit 0: the same as 11 |
+| 13 | `main`: `--tie` default `id` | **green** | exit 0: the id run without being asked |
+| 14 | `main`: the verdict line reads another interval | **green** | exit 0: "Upper bound +8.00: own returns" |
+| 15 | `main`: lockdown guard off | **green** | unchanged (the data is locked) |
+| 16 | `main`: bundle-commit check off | **green** | unchanged (the reader picks the ruling's commits) |
+
+- The four helpers (`ordered`, `score`, `paired`, `verdict`): 8 of 8 mutants red
+  (1, 3, 4, 5, 6, 7, 8, 9).
+- `main()`: 0 of 8 red (2, 10, 11, 12, 13, 14, 15, 16). No test runs `main()`. The tests
+  reach the helpers. The lines that feed them the real data have no test: the slot order
+  of the SQL, which model is which, which order the run uses, which interval the verdict
+  line reads, the two guards.
+- Five of those eight print a wrong result with exit 0 on the real data (10 to 14). Two of
+  them are the wrong outputs of my first run's mutants again: 10 is the reversed sign, 14
+  is "own returns".
+- My second mutant (2) is stopped by the script's own `assert d == paired(...)`, not by a
+  test. Under `python -O` the assert is gone: exit 0, d +0, +4, −12, mean −2.67.
+- The launch's "3 of 3 red" is true for the implementer's three mutants. I read them from
+  their scratch copies: the verdict on `lo`, `paired` reversed, `ordered` swapped. Their
+  "d reversed" is line 99 (`paired`); mine is line 176 (`main`).
+- **On master the cover is unchanged.** `tests/test_FJ.py` is only on `fj-wip`; master's
+  suite (787) still has nothing that imports `checkpoint.py`. The reason given is sound:
+  the nightly's gate runs `tests/` by discovery (`fpl_nightly.py`, `TEST_ARGS`), so the
+  file is runner work by FAST-TRACK item 1. But the rulings' schedule names no night for it.
+- For the GW10 result none of this matters: my own code gave the same numbers in both
+  runs. It matters for the GW15 rerun (F-L), which is why the ruling asked for the test.
+- `tests/test_W3.py` already builds a toy database, log and bundle repository
+  (`toy_realised`). A test that runs `main()` on such a toy looks feasible. I did not try
+  it; that is the implementer's work.
+
+### 4. The GW15 tie rule
+
+- **Pinned before the code.**
+
+  | what | commit | committed (UTC) | pushed (UTC) |
+  |---|---|---|---|
+  | the rulings and the pin, `prereg/FJ.md` | `88c77df` | 22:49:09 | 22:49:15 |
+  | `checkpoint.py` (`--tie`, the helpers) | `b7e4716` | 22:53:12 | 22:53:30 |
+  | the report and the regenerated run | `66db35e` | 22:54:18 | 22:54:38 |
+  | `tests/test_FJ.py` (branch `fj-wip`) | `44dcaeb` | 22:56:07 | 22:56:25 |
+
+  The implementer's scratch files hold no copy of the new code older than the pin (the
+  working file was last written at 22:52:46 UTC, the two smoke runs at 22:52:59). That
+  cannot prove nothing was drafted earlier.
+- **Pinned before any GW15 run.** GW15's deadline is 12 Dec 13:30 UTC; it is not finished,
+  `data_checked = 0`; GW11 has not started. No GW15 checkpoint folder exists in any branch.
+- **The ruling text.** The block "Rulings, Thu 12 Nov night" (3,608 characters) is identical
+  in `prereg/FJ.md`, `FM.md`, `S8c.md`, `runcommit.md`, `W3fix.md` and `FJ6.md`. The same
+  limit as in the first run: one commit filed all six, and I do not check it against the chat.
+- **What `--tie id` does on the real data.** Equal to my own code in every eleven, bench
+  order, captain and total, three weeks, both models. In GW9 own starts Calafiori and its
+  bench is Kelleher, Slater, Thomas, Branthwaite.
+- **Inside a position it does what it says.** The 15 go to `realised_on` sorted by id, and
+  `_best_xi` sorts each position stably, so the lower id comes first. The bench and the
+  captain already break ties by the lower id.
+- **Gap: a tie across positions.** `_best_xi` tries the formations in a fixed order (3-4-3,
+  3-5-2, 4-3-3, 4-4-2, 4-5-1, 5-2-3, 5-3-2, 5-4-1) and keeps the first of equal totals.
+  - Toy, run through the script's own `ordered`, `choice` and `score` at `b7e4716`: a
+    defender with id 5 and a forward with id 300, equal xP, the last place between them.
+    `--tie id` starts the forward (id 300) and scores 24. With the defender it would be 32.
+  - The pin's rule says "the lower player id comes first, in the XI". Its next sentence,
+    "In code: the 15 are passed to `realised_on` sorted by player id", is what was built.
+    The two disagree in this one case.
+  - It did not happen in GW8–10: the only tied optimum (own, GW9) is inside one position.
+  - It is model-neutral and independent of our line-up either way.
+  - It becomes likelier with F-J's 50 sampled squads at GW15: a sampled squad can hold
+    several players of different positions with no own row, all counted 0.
+
+### 5. The suite on `fj-wip`
+
+- `git archive` of `origin/fj-wip` (`44dcaeb`), no `.git`, no `FPL_DATA_DIR`,
+  `ODDS_API_KEY` unset, `python -E -s -m unittest discover -v -p "test*.py"`:
+  **Ran 792 tests, OK (skipped 11)**, 320.6 s. The five `tests.test_FJ` tests are in it,
+  all ok.
+- Master `3d6ab3d` the same way: Ran 787 tests, OK (skipped 11). The difference is the five.
+- Note: importing `checkpoint.py` puts the repository root and `tools/` at the front of
+  `sys.path` for the rest of the discovery run. No module name exists in both folders, and
+  the suite is green, so nothing is shadowed today.
+
+### A correction to my first report
+
+- My section 7 said of own's bias: "It has fallen every week since GW5." That is wrong for
+  GW9. The series is +0.07, −0.27, −0.55, −0.96, −1.36, −1.30, −1.53: GW9 rose by 0.06.
+- Right: it fell in five of the six steps and is lowest at GW10; there is no step at GW8.
+- The report's "Verifier" part repeats my words ("has slid every week since GW5"). The
+  figures printed beside them are right. The error is mine, not the implementer's.
+
+### Secrets
+
+No key, no `apiKey=` URL and no Authorization value in `tests/test_FJ.py`, `checkpoint.py`,
+`checkpoint.txt`, `run.txt`, the report or `prereg/FJ.md`.
+
+### Decisions for the chat
+
+1. **When does `tests/test_FJ.py` land on master?** Until it does, master has no test for
+   `checkpoint.py`. The schedule names no night for it. Mon 16, Wed 18 and Thu 19 Nov have
+   no runner change before the freeze (Fri 20 Nov 05:00 UTC). Riding with another night's
+   change would need Boris's word ("one runner change per night").
+2. **`main()` has no test.** Five one-line changes print a wrong result with exit 0 and a
+   green suite. Add a test that runs `main()` on a toy before the GW15 run, or accept the
+   helper tests plus the verifier's own recompute at GW15?
+3. **The tie rule across positions.** Either pin what the code does (equal totals go to
+   the first formation in `_best_xi`'s order) or make the code follow the lower id there
+   too. Before the GW15 run, and before the 50 squads.
+4. **The script hash.** It depends on the checkout's line endings (`330f...` printed,
+   `5e34...` committed). For the GW15 run: hash the text with LF endings, print the git
+   blob id, or leave it and note it?
+5. **One wording fix in the report** (my error): "has slid every week since GW5" → "fell
+   in five of the six weeks since GW4 (GW9 rose by 0.06)". Docs only.
+
+### How this was run
+
+- Scratch folder `vfy_fj2`: `git archive` copies of `44dcaeb` and `3d6ab3d`; my own clone
+  of master at `b7e4716` (the script needs the bundle commits and a clean tree); file
+  copies of `fpl.sqlite` and `projection_log.csv` from `C:\GIT\FPL-data` (at `6f9ecb8`,
+  not pulled, not changed). No git write in `C:\GIT\FPL`; `C:\GIT\FPL-b` untouched.
+- Data files opened only by Python with `-I`; the repository's modules with `-E -s`.
+- My scripts and outputs: `vfy_fj2\scripts` (`lowid.py`, `mutate.py`, `crosspos.py`) and
+  `vfy_fj2\out` (`lowid.txt`, `mutants.txt`, `crosspos.txt`, `suite_fj.txt`,
+  `suite_master.txt`, `slot\`, `id\`). In `mutants.txt` the mutants carry other labels
+  (M1, M2a, M2b, M2c, M3a–M3d, M4–M11); the table above renumbers them 1 to 16.
+- Run from about 23:20 to 23:45 UTC, Thu 12 Nov.
+
+**VERDICT: WARN.** The two failed checks are cleared as Boris ruled. The report's GW9
+sentence is now true, the lowest-id figures (d = +0, −1, +12, mean +3.67, 90% [−0.67,
++8.00]) match my own code, and the pinned slot-order result stays primary. The regenerated
+run is on `b7e4716` with 0 modified files and equals the first run in every number. The
+three ruled tests exist on `fj-wip`, the suite there is green (792 OK), and every mutant of
+the four helpers turns them red. It is not a clean PASS for three reasons. The test is on a
+branch, so master's suite still does not guard the script, and no night is scheduled for
+it. No test runs `main()`: my own "d reversed" line is caught only by the script's assert,
+and five other one-line changes print a wrong result with exit 0. And the GW15 tie rule as
+built follows the lower id inside a position but not across positions. None of this touches
+the GW10 result (xp_v2 stays); all of it should be settled before the GW15 rerun.
