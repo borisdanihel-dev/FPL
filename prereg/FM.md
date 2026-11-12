@@ -43,3 +43,109 @@ Stop at 6 items; park questions with the exact wording. Also post the status of 
 ## The draft
 
 To follow in this file, before Boris's ruling.
+
+### The draft (Thu 12 Nov, for Boris's ruling; no code before it)
+
+#### What the model does now (measured, `s8c-wip` `3a72ddb`, the GW11 matrix)
+
+- The gate: a player whose status is not `a` has no value in any of the six
+  weeks (`builder.live_matrix`, `tools/xp_v2_live.py` and the runner's
+  `fpl_xpv2.py`: `gate = status == 'a'`). The status is today's, applied to
+  every week.
+- The chance is already inside the model: `fpl_edge.start_probability` gives
+  P(start) = starts in the last four ÷ 4 × chance/100, and
+  `xp_v2_live.core` scales P(sub) by the same chance. So lifting the gate for
+  a `d` player gives exactly "P(start) × chance" for the next gameweek.
+- One P(start) serves all six weeks, so lifting the gate alone leaves a `s`
+  player at 0 in every week (chance 0). "As normal" must therefore mean the
+  player taken as status `a` with no flag.
+
+#### The rule as proposed, written against the code
+
+| status | week t (the next gameweek) | later weeks |
+|---|---|---|
+| `a` | unchanged | unchanged |
+| `d`, chance c | the gate lifted: P(start) × c, P(sub) × c (as the model already scales) | as normal: status `a`, no flag |
+| `s`, ban end known | 0 for every club fixture before the ban ends | as normal from the first fixture on or after it |
+| `i`, return unknown | 0 | 0 in week t+1; from t+2, as normal × the last known chance |
+| `u`, `n` | 0 | 0 (unchanged) |
+
+- The ban's end comes from the news text "Suspended until <date>"; the first
+  club fixture kicking off on or after that date is the first one available.
+- One function would serve the matrix (planner, bundle), the live week-t
+  forecast and the runner's record. Week t changes for `d` players, so by
+  the model-change protocol the new rule is recorded under a new source name
+  (proposed `xp_v2_g2`; equal to `xp_v2` for every unflagged player) and
+  replaces nothing until its test passes and Boris accepts it.
+
+#### What it changes for our three players in the GW11 matrix
+
+Export `fpl_export_gw10_2026-11-12`, odds `odds_2026-11-12T1745Z`, data
+`6f9ecb8`; a copy of `builder.live_matrix` that equals it in every week with
+nothing changed, and moves no other player (scratch, information only).
+
+| player | status now | | GW11 | GW12 | GW13 | GW14 | GW15 | GW16 | sum |
+|---|---|---|---|---|---|---|---|---|---|
+| Thiago (BRE) | `s`, "Suspended until 5 Dec" | v1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| | | v2 | 0 | 0 | 0 | 4.71 | 4.26 | 5.26 | 14.22 |
+| Thomas (COV) | `d`, 50%, calf | v1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| | | v2 | 1.26 | 2.15 | 2.32 | 2.08 | 2.14 | 1.90 | 11.84 |
+| Calafiori (ARS) | `a` | v1 = v2 | 4.03 | 3.61 | 4.18 | 4.83 | 4.68 | 5.03 | 26.36 |
+
+- Thiago: BRE's GW14 match is on 5 Dec, so he is out GW11–13 and back GW14,
+  as the plan says. "As normal" uses P(start) 1.00 (four starts in the last
+  four, GW10's red card included). By GW14 his real window will hold three
+  missed matches, so the model will then read about 0.25: the matrix made
+  today overstates his return weeks by the model's own later reading.
+- Thomas: as normal, P(start) 0.50 (two starts in four); GW11 is half of it.
+  At 1.26 he would still be our fifth defender in GW11 (Gabriel 5.62,
+  Muharemović 4.42, Calafiori 4.03, Tarkowski 3.94), so the XI does not move.
+- Calafiori is `a` now, so nothing changes. Before GW9 he was flagged, v1
+  gave him 0 in the GW9 bundle, and he played 90 minutes for 6 points.
+- Where it matters: the planner. Thiago's six-week value goes from 0 to 14.2
+  and Thomas's from 0 to 11.8, so the planner would no longer see either as
+  worth nothing beyond the next gameweek.
+
+#### How it can be checked without archived historical flags
+
+- The historical files (2025/26 and earlier) carry no status, chance or news
+  by gameweek, so no historical backtest of the gate is possible (S6's
+  replays took every player as available).
+- Our own nightly exports do carry them: 53 dated exports on the data branch,
+  from 11 Sep 2026 (before GW4) to now. The last export before each deadline
+  gives the flags as they stood, point-in-time.
+- **Retrospective check, 2026/27 GW4–10:** at each deadline, rebuild the v1
+  and v2 matrices from the last export before it (and the odds snapshot
+  before it where one exists, else the fallback, as the live matrix does).
+  The W3 verifier has already rebuilt archived xp_v2 rows this way, exactly.
+  Score every flagged player-week (status `d`, `s` or `i` at the deadline
+  with 45+ minutes in the last four) in the horizon weeks already played
+  (through GW10) against realised points.
+- **Proposed primary metric:** the paired difference |v1 − realised| −
+  |v2 − realised| per flagged player-week; bootstrap with unit = deadline
+  gameweek, B 10,000, seed 20261018, 90%. **Proposed bar:** the 90% lower
+  bound above 0 (v2 closer to what flagged players actually score).
+- **Secondary, information:** F-M's own record: what our flagged players
+  actually scored against v1 and v2, week by week.
+- **Prospective:** from GW11 every nightly export is archived, so the same
+  check grows weekly and is re-run at GW15 (F-M's revisit point).
+- The sample is small (flagged players with 45+ recent minutes, seven
+  deadlines), so the interval will be wide; the bar is stated before any
+  number is seen.
+
+#### Questions for Boris (exact wording)
+
+1. "'i' with an unknown return: 'scaled by the last known chance' - FPL
+   usually shows 0 for 'i', which would keep him at 0 for good. Use (a) the
+   last non-zero chance in our archived nightly exports, (b) a fixed 50%, or
+   (c) the chance shown now, even if 0?"
+2. "'i' with a return date in the news (for example 'Expected back 28 Nov'):
+   treat it like 's', 0 until that date then as normal?"
+3. "'s' with no end date in the news: 0 for one gameweek, then as normal, or
+   treat as 'i' with an unknown return?"
+4. "Record the new rule under a new source name, xp_v2_g2, with the check
+   above as its test and the bar as stated?"
+5. "After a ban, P(start) falls because the banned matches count as missed
+   starts in the last-four window (Thiago would read about 0.25 at GW14).
+   Leave it (the model's own reading), or count suspended matches as neither
+   started nor missed?"
