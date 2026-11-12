@@ -1,4 +1,4 @@
-WATCH  GW11  export 2026-11-12T02:31  forecasts recorded 2026-11-12T02:31  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
+WATCH  GW11  export 2026-11-12T17:45  forecasts recorded 2026-11-12T17:45  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
   id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
   109   Verbruggen     BHA  GK    4.7 a    -   2.2   4.3   4.6  1.00  HUL (A) 2
   82    Kelleher       BRE  GK    5.0 a    -   1.4   3.8   3.4  1.00  EVE (H) 3
