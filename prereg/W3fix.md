@@ -29,3 +29,43 @@ Stop at 6 items; park questions with the exact wording. Also post the status of 
 
 The W3 final verifier's report, `worklog/verify_W3_final.md`, "Decisions for
 the chat" items 2 and 3 (data `6f9ecb8`).
+
+## Ruling 2, pinned before its code (Thu 12 Nov)
+
+- **Tonight's export:** `fpl_squad.current_export(data_dir)` reads the
+  working export, the newest `fpl_export_gw<N>.json` in the data folder
+  (`fpl_ship.newest_export`: the file tonight's sync writes and the archive
+  step copies after the sections). None there: a `MissingInput`, so the
+  section prints its one SKIPPED line (W2's rule), never a stale substitute.
+- **CAPTAIN and BAN RISK** read it in place of `fpl_chips.newest_export`
+  (the newest dated archive, i.e. last night's export). CAPTAIN's header
+  already names its export; BAN RISK's header gains "from <export>".
+- **Unchanged:** REALISED (it reads the database and the log); CHIPS's
+  calculator stays on the dated archive (amendment 3, point 3). CHIPS's Free
+  Hit screen is Ruling 3's, pinned separately after Boris's answer to the
+  question below.
+- **The test** (`tests/test_W3fix.py`, red on the current code): a data
+  folder whose newest dated archive has one of our players at status `a`
+  and whose working export has him flagged with chance 0. CAPTAIN names the
+  working export and gives him no xp_v2 forecast; BAN RISK names the working
+  export and gives him P(start) 0. The W3 test worlds gain the working
+  export the nightly always has after its sync (or `--restore`).
+- **Measured:** suite before and after, bare and with the data; the test red
+  on the current code; mutations (each section back on the archive) red;
+  CAPTAIN and BAN RISK on tonight's real data, before and after.
+
+## Question parked for Boris (exact wording), before Ruling 3's code
+
+"Ruling 3: the base report's Free Hit screen (item N's frozen metric) values
+a player with no own row by bottomup, and CHIPS uses the same function. Own
+records exactly the Free Hit gate, so on the same export the two screens
+differ only through our own flagged players (no own row), whom the base
+screen values by bottomup. To make the flag agree in every case: (a) count 0
+in both, by an amendment to item N's frozen metric (the base report's screen
+moves too), or (b) CHIPS counts 0 and reads tonight's export, and the flag
+agrees except when one of our flagged players would make our XI on
+bottomup?"
+
+Measured for it: on the 8 exports of 29 Oct–6 Nov, own's recorded players
+equal the Free Hit gate (status `a`, 45+ minutes in the last four) exactly,
+0 differences either way.
