@@ -1,4 +1,4 @@
-STATUS WARN | generated 2026-11-13T02:07:39Z | next deadline GW11 2026-11-21 11:00 UTC / 2026-11-21 12:00 Prague | checks 29/30 | repo 14 MB
+STATUS WARN | generated 2026-11-13T02:13:09Z | next deadline GW11 2026-11-21 11:00 UTC / 2026-11-21 12:00 Prague | checks 28/30 | repo 14 MB
 
 ==============================================================================
 DIFF  GW9 -> GW10
@@ -508,7 +508,7 @@ CONSISTENCY  (delivery pattern, not total)
 ==============================================================================
 CHIPS (W2: S7 chip calculator)
 ==============================================================================
-CHIP CALCULATOR  export fpl_export_gw10_2026-11-12.json.gz (GW10 played), next GW11, chips left: BB, FH; budget £100.0m = bank + selling prices
+CHIP CALCULATOR  export fpl_export_gw10_2026-11-13.json.gz (GW10 played), next GW11, chips left: BB, FH; budget £100.0m = bank + selling prices
   xP source: own - the recorded row for GW11 where the log holds one, else the own
   formula on each week's real fixtures from the fixtures table, GW11-GW19 (no proxy weeks).
   Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).
@@ -608,7 +608,7 @@ LEAGUE  2026-11-13: settled through GW9, 29 gameweeks left; coming deadline GW11
 ==============================================================================
 CAPTAIN (W3: Step 14 captain table)
 ==============================================================================
-  GW11 from fpl_export_gw10_2026-11-12.json.gz: the points distribution of xp_v2 as tested (Step 14, option (a): its mean is xp_v2; no saves term); odds odds_2026-11-13T0207Z.json.gz; information: the captain rule is unchanged (the highest xp_v2 in the XI) and there is no tie-break
+  GW11 from fpl_export_gw10_2026-11-13.json.gz: the points distribution of xp_v2 as tested (Step 14, option (a): its mean is xp_v2; no saves term); odds odds_2026-11-13T0207Z.json.gz; information: the captain rule is unchanged (the highest xp_v2 in the XI) and there is no tie-break
   player           pos   mean   P>=10   P>=15  p90
   Gabriel          DEF   5.62   0.140   0.027   11
   Haaland          FWD   5.58   0.165   0.034   12
