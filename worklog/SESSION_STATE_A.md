@@ -14,11 +14,21 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
   - **S8c:** `s8c-wip` `4bbb43c` (local branch `s8c-land` in the scratch
     worktree `s8c_wt`; local `s8c-wip` is held by an old worktree). Pre-check
     FAIL then re-check of `4bbb43c` PASS (`worklog/verify_S8c_landing.md`),
-    write guard clean. 855 OK plain, signing on, with the data. A background
-    waiter pushes `4bbb43c` to `dry/S8c` once tonight's nightly commits to
-    `data` (it had not by 23:40 UTC), then waits for `data-dryrun-S8c`.
-    - **Fri 13 Nov:** read back `data-dryrun-S8c` against the night's real
-      data commit; tag `pre-S8c`; merge before 21:00 UTC on Boris's click;
+    write guard clean. 855 OK plain, signing on, with the data.
+    - **Dry run read back (Fri 13 Nov, 02:20 UTC): green.** The scheduled
+      nightly (run 43349602604, master `702b834`) started 02:05 UTC and
+      committed data `5de86ab` at 02:07 (late starts are routine: 00:52 to
+      03:46 UTC over the six nights before). `dry/S8c` `4bbb43c` pushed
+      02:10; dry run 43350236630 success; `data-dryrun-S8c` `a3d4363` on
+      `5de86ab`. Test gate on Linux: 855 tests green (the real run: 787).
+      All seven sources' GW11 rows equal the real run's, key and value
+      (bottomup, bottomup_lambda, minutes, xg 277; own, xp_v2 299; fpl_ep
+      672); the 55,421 earlier rows identical. Report and watch file differ
+      only in the timestamps and the export's date (`gw10_2026-11-13`, the
+      second run of the day). Checks 28/30 against 29/30: the odds snapshot
+      WARN (dry run, no Odds API call); check 17 (price-date gap 5 Nov) WARN
+      in both.
+    - **Fri 13 Nov:** tag `pre-S8c`; merge before 21:00 UTC on Boris's click;
       his real run; final verifier; the "S8c done" entry records the
       re-check PASS; delete `dry/S8c` and `data-dryrun-S8c`.
   - **FJ (GW10 checkpoint):** xp_v2 stays (Boris). Report fixed, run
