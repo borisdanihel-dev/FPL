@@ -272,3 +272,20 @@ following year, a double gameweek split by the date, no date in the news);
 GW1-3 case printed, not guessed); the check's metric sign, its bootstrap
 unit and its bar on toy numbers; nothing after a deadline read (a planted
 later export changes nothing). Each test red on a planted bug.
+
+## Questions parked for Boris (exact wording), Mon 16 Nov 19:20 UTC, before the check is run on the data
+
+1. **Point 5's window.** "Answer 5 ('neither started nor missed in the
+   last-four window') is built as: the window is the last four gameweeks in
+   which the player was not suspended (counting back), for both the starts
+   and the 45-minute gate (A). The other reading keeps the same four
+   gameweeks and drops the suspended ones from both sides of the fraction,
+   e.g. 1 start in 1 after a three-match ban (B). Keep (A), or (B)?"
+2. **GW1-3.** "No archived export exists before the GW1-3 deadlines (the
+   archive starts 11 Sep), so point 5 cannot see suspensions in GW1-3; those
+   windows use the plain four gameweeks and the count of affected players is
+   printed. That touches the check's origins GW4-7. Score all seven origins
+   GW4-10 (A), or judge the bar on the GW8-10 origins only (B)?"
+
+The check (`tools/gate_v2_check.py` on `fm-wip`) is not run on the data
+until these are answered, so no number is seen before the method is fixed.

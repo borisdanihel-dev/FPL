@@ -196,3 +196,10 @@ Record each part verbatim in its prereg before acting. If a question blocks you 
   `assert`. It must go red for a reversed d in `main()` and for a wrong
   revert verdict; the verifier's eight `main()` mutants (2 and 10-16 in
   `worklog/verify_FJ.md`) are rerun against it.
+
+## Question parked for Boris (exact wording), Mon 16 Nov 19:20 UTC (the W3fix pre-check's decision 6)
+
+"`worklog/checkpoint_gw10/checkpoint.txt` and `run.txt` come from the GW10
+run on `b7e4716`; the script changed in `4455cbd` (the GW15 rule), and a
+rerun gives the same numbers. Regenerate the committed output now, with the
+landing (yes), or leave the GW10 run as cited and regenerate at GW15 (no)?"

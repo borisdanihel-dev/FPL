@@ -170,3 +170,40 @@ amendment entry lands with the item, before the GW11 deadline).
   byte-identity made Ruling 3 reach tools/chips.py, so the GW pass and the
   planner take the zero too. Keep that (a), or (b) amend W2's identity test
   to allow exactly Ruling 3's lines and leave tools/chips.py as it was?"
+
+## Questions parked for Boris (exact wording), Mon 16 Nov 19:20 UTC, after the verifier's pre-check WARN (`worklog/verify_W3fix.md`)
+
+Recorded late: the Ruling 3 pin said the CHIPS-export question was "parked
+below, with a measurement" and it was not written here; the verifier found
+the gap (its decision 1). The dry run waits for the answers.
+
+1. **CHIPS's export.** "Under (a), CHIPS's Free Hit screen still reads last
+   night's export, and its flag disagrees with the base screen's in 15 of 186
+   week-rows since 19 Oct (the implementer's count; the verifier's over all 35
+   data commits: 16 of 207), one of them an own week (1 Nov GW10: base +8.31
+   flagged, CHIPS +7.95 not), the rest bottomup weeks around match days
+   (before the change: 24 of 186). Make CHIPS's Free Hit screen read tonight's
+   export, the base screen's own table, so the flag agrees by construction
+   (i), or keep it on last night's export (ii)?"
+2. **The not-'a' trigger** (the verifier's decision 2). "Under (a) a flagged
+   player of ours without an own row counts 0 in the own week, so he drops
+   out of our best XI: the gap rises (flags added on 2 of 35 past commits,
+   none removed) and the trigger '3+ of our XI not a' can no longer fire in an
+   own week (it reached 3 twice under the old metric, at most 1 under the
+   new). Is that the intended reading of (a) (yes), or should the not-'a'
+   count read our best XI before the zero (no)?"
+3. **`tools/chips.py`** (in the addendum above, unchanged): "Keep the mirror
+   (a), or (b) amend W2's identity test?"
+4. **Surviving mutants** (the verifier's decision 4): five of its 35 survive -
+   CHIPS's header note dropped; the note's gate count from every status-'a'
+   player; float sums in `xi_lex`; a missing forecast counted 1 in `xi_lex`;
+   own-model back in `tools/chips.py` alone. "Add small tests for them before
+   the merge (yes), or accept them (no)?"
+5. **The headers' export** (the verifier's decision 5): "CAPTAIN and BAN RISK
+   now name the working export, `fpl_export_gw10.json`, which on a night the
+   sync fails is the restored copy of last night's. Print the export's own
+   `generated` time beside its name (yes), or leave it (no)?"
+
+Measured besides (the verifier): 31 Oct GW10 also changes reason under the
+new metric ("3 of our XI not 'a'" at +5.6 becomes "gap > 8" at +8.8), a
+rollover night the implementer's script skipped.
