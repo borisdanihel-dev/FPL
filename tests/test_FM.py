@@ -108,5 +108,34 @@ class PointFive(unittest.TestCase):
         self.assertEqual(unknown, {1, 2})
 
 
+class CheckStatistic(unittest.TestCase):
+    """The check's metric, its bootstrap unit (the origin) and its bar, on toy numbers."""
+
+    def test_the_pooled_mean_and_the_unit(self):
+        import gate_v2_check as GC
+        boot = GC.cluster_bootstrap([(6.0, 3), (0.0, 1), (-2.0, 2)])
+        self.assertAlmostEqual(boot["mean"], 4.0 / 6)                     # pooled over player-weeks, not per origin
+        self.assertEqual((boot["n_clusters"], boot["n"]), (3, 6))
+        lo_cluster = min(s / n for s, n in [(6.0, 3), (0.0, 1), (-2.0, 2)])
+        self.assertGreaterEqual(boot["lo"], lo_cluster - 1e-12)            # resampling origins can't go below the worst one
+        same = GC.cluster_bootstrap([(6.0, 3), (0.0, 1), (-2.0, 2)])
+        self.assertEqual(boot, same)                                       # the seed is fixed
+
+    def test_the_bar_reads_the_lower_bound(self):
+        import gate_v2_check as GC
+        self.assertTrue(GC.passes({"lo": 0.01}))
+        self.assertFalse(GC.passes({"lo": 0.0}))
+        self.assertFalse(GC.passes({"lo": -0.5, "hi": 3.0}))
+        self.assertFalse(GC.passes({"lo": None}))
+        better = GC.cluster_bootstrap([(3.0, 2), (2.0, 2), (4.0, 1), (1.0, 1)])
+        self.assertTrue(GC.passes(better))
+        worse = GC.cluster_bootstrap([(-3.0, 2), (-2.0, 2), (-4.0, 1), (1.0, 1)])
+        self.assertFalse(GC.passes(worse))
+
+    def test_the_sign_of_e(self):
+        r, v1, v2 = 6.0, 0.0, 4.5                                          # a flagged player who played: v2 is closer
+        self.assertGreater(abs(v1 - r) - abs(v2 - r), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
