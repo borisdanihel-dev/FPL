@@ -4561,3 +4561,34 @@ Thu 12 Nov night (S8c points 1–6), verbatim in `prereg/S8c.md`.
 ruling for the copy fix), every claim reproducing; re-check to follow.
 Report `worklog/cc_2026-11-13_S8c_landing.md`. The duplicate "W2 amendment 2"
 entry is left as recorded (S8c point 6).
+
+---
+
+## 2026-11-16 — S8c done: merged, Boris's real run, final verifier PASS (`3d5975c` merge, tag `pre-S8c` = `dbc6ad0`; run 43926712904, data `352228e`)
+
+Boris's answers of Mon 16 Nov, point 1, verbatim in `prereg/S8c.md`.
+
+**Changed:** master `3d5975c` merges `s8c-wip` `4bbb43c` (the head the
+verifier's re-check passed): S10b, S6e, S6f, S6e2, S8b, S15 and S8c with its
+amendments and point 5, the copy fix in `fpl_xpv2.py`, the status-gate record
+test, `ChecksMain`'s commit check. The runner path changes only in
+`fpl_xpv2.py` (the copy fix) and the tests.
+
+**Measured:**
+
+- Dry run 43350236630 (13 Nov) on `4bbb43c`: 855 tests green on Linux; all
+  seven sources' GW11 rows equal the night's real run, key and value.
+- Master gained only `13b07b2` and `dbc6ad0` (docs) between the dry run and
+  the merge.
+- Suites: master before 787 OK; the merge 855 OK bare, with the data and
+  with signing on.
+- Boris's real run 43926712904 (master `fc36850`, docs only after the
+  merge): success, 855 green, status 29/30 (the 5 Nov price gap, as before).
+  Its 2,360 GW11 rows reproduce on copies of its inputs; all seven sources,
+  the watch file and the report equal what pre-S8c code gives on the same
+  inputs (the verifier).
+
+**Verifier:** re-check of `4bbb43c` PASS; final check on the real run PASS
+(`worklog/verify_S8c_final.md`, Fable 5.2, launched at high, not
+confirmable); write guard clean. `dry/S8c` and `data-dryrun-S8c` deleted.
+Report `worklog/cc_2026-11-13_S8c_landing.md`.

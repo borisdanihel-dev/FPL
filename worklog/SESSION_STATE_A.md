@@ -7,20 +7,17 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Mon 16 Nov, 18:15 UTC): Boris's answers of Mon 16 Nov** (verbatim in
+- **NOW (Mon 16 Nov, 18:45 UTC): Boris's answers of Mon 16 Nov** (verbatim in
   `prereg/S8c.md`, `W3fix.md`, `FJ.md`, `FM.md`, `FJ6.md`, `runcommit.md`,
   `dbc6ad0`; the item count stays). Pins before code: `4274955` (W3fix
   Ruling 3, FJ tie rule and main() test, FM design), `2af773c` (W3fix
   addendum: `tools/chips.py` mirrors `fpl_chips` for W2's byte-identity).
-  - **S8c MERGED:** master `3d5975c` (merge of `4bbb43c`), tag `pre-S8c` =
-    `dbc6ad0`, pushed 17:44 UTC. Since the dry run master had gained only
-    `13b07b2` (state) and `dbc6ad0` (the answers' prereg records); since the
-    branch point `99c9161` only docs and worklog, none touched by the
-    branch. Suites: master before 787 OK; the merge 855 OK bare, with the
-    data and with signing on. **Waiting for Boris's real run** (push
-    notification sent 17:45 UTC; a background waiter watches for it). Then:
-    the final verifier, the "S8c done" entry, delete `dry/S8c` and
-    `data-dryrun-S8c`.
+  - **S8c DONE:** master `3d5975c` (merge of `4bbb43c`), tag `pre-S8c` =
+    `dbc6ad0`, pushed 17:44 UTC. Boris's real run 43926712904 (18:14 UTC,
+    master `fc36850`, "Dispatched now" in the chat): success, 855 green,
+    data `352228e`. Final verifier PASS (`worklog/verify_S8c_final.md`),
+    write guard clean; "S8c done" entry in CHANGELOG; `dry/S8c` and
+    `data-dryrun-S8c` deleted.
   - **W3fix (Tue 17):** `w3fix-wip` = Ruling 2 (`14523e2`) + Ruling 3
     option (a) (`96a7c5f`) + the `tools/chips.py` mirror (`3e4bbd5`) +
     `fj-wip` merged (`7c40c6a`). Ruling 3: 4 tests red 4 of 4 on the old
