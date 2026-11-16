@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Mon 16 Nov, 18:45 UTC): Boris's answers of Mon 16 Nov** (verbatim in
+- **NOW (Mon 16 Nov, 19:25 UTC): Boris's answers of Mon 16 Nov** (verbatim in
   `prereg/S8c.md`, `W3fix.md`, `FJ.md`, `FM.md`, `FJ6.md`, `runcommit.md`,
   `dbc6ad0`; the item count stays). Pins before code: `4274955` (W3fix
   Ruling 3, FJ tie rule and main() test, FM design), `2af773c` (W3fix
@@ -24,7 +24,12 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     code, 3 of 3 mutations red; 862 OK bare and with the data (858 before).
     The 12 Nov case: CHIPS's screen 30.8 +8.5 flagged before, 28.7 +6.5
     after = the base screen; tonight's numbers unchanged. Two parked
-    questions (CHIPS's export; `tools/chips.py`). Next: the combined suite,
+    questions (CHIPS's export; `tools/chips.py`). **Pre-check of `7c40c6a`:
+    WARN** (`worklog/verify_W3fix.md`; every claim reproduces, 876 OK three
+    ways; Ruling 3's last clause met for the scale cause only; 5 of 35
+    mutants survive). Stopped there (mode e): the dry-run waiter cancelled;
+    five questions on file in `prereg/W3fix.md` (`85f3a69`). After the
+    answers: any change, a re-check, `dry/W3fix`, the merge. Was: the combined suite,
     the verifier pre-check (after S8c's final verifier), `dry/W3fix` after
     tonight's nightly, the merge on Boris's click.
   - **FJ (lands with W3fix):** `fj-wip` `4455cbd`: `--tie id` = the complete
