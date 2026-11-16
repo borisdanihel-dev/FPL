@@ -86,5 +86,104 @@ class TonightsExport(unittest.TestCase):
                 section()
 
 
+class OneScale(unittest.TestCase):
+    """Ruling 3, option (a) (Boris, Mon 16 Nov; prereg/W3fix.md, amending item N): in a week with own rows a player
+    with no own forecast counts 0, with a note, in the base report's Free Hit screen and in CHIPS. The 12 Nov case:
+    a player at 'a' in last night's export (CHIPS's) and 'd' tonight has no own row; bottomup valued him far above
+    own's scale, he entered CHIPS's Free Hit XI and flagged a Free Hit the base screen did not."""
+
+    @classmethod
+    def setUpClass(cls):
+        import copy
+        import io
+        import shutil
+        import tempfile
+        from contextlib import redirect_stdout
+        from test_fpl import _recordable_export
+        import fpl_edge as E
+        cls.E, cls.shutil = E, shutil
+        cls.tmp = tempfile.mkdtemp()
+        tonight = _recordable_export(blank_team="HUL")
+        nxt = tonight["gameweek"] + 1
+        playing = {t for f in tonight["fixtures_next6"] if f["event"] == nxt for t in (f["home"], f["away"])}
+        ours = set(E.my_squad_ids(tonight))
+        gate = [p for p in tonight["all_players"] if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45
+                and p["team"] in playing and p["id"] not in ours]
+        cls.stale = max(gate, key=lambda p: (p["price"], -p["id"]))       # dear: never the cheapest bench pick
+        cls.archive = copy.deepcopy(tonight)                               # last night's export: still 'a'
+        hurt = next(p for p in tonight["all_players"] if p["id"] == cls.stale["id"])
+        hurt["status"], hurt["chance_next_round"] = "d", 50               # tonight: 'd', so own records no row
+        cls.mine = next(p for p in tonight["all_players"] if p["id"] in ours and p["status"] == "a"
+                        and p["team"] in playing and p["pos"] != 1)
+        cls.mine_name = cls.mine["web_name"]
+        cls.mine["status"], cls.mine["chance_next_round"] = "d", 75      # one of ours flagged tonight: no own row
+        for p in cls.archive["all_players"]:
+            if p["id"] == cls.mine["id"]:
+                p["status"], p["chance_next_round"] = "d", 75
+        cls.tonight, cls.next = tonight, nxt
+        path = os.path.join(cls.tmp, "projection_log.csv")
+        with redirect_stdout(io.StringIO()):
+            for src in ("own", "bottomup"):
+                E.record_projections(tonight, 6, src, None, path)
+        cls.log = E.read_log(path)
+        own = {int(r["player_id"]) for r in cls.log if r["source"] == "own" and int(r["event"]) == nxt}
+        assert own and cls.stale["id"] not in own and cls.mine["id"] not in own
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def _planted(self):
+        """bottomup far above own's scale for the stale player, as on 12 Nov (4.21 among own values of 2-3)."""
+        from unittest import mock
+        real = self.E.project_week
+        stale = self.stale["id"]
+        return mock.patch.object(self.E, "project_week",
+                                 side_effect=lambda pid, *a, **k: 40.0 if pid == stale else real(pid, *a, **k))
+
+    def test_the_flag_agrees_with_the_base_screen(self):
+        with self._planted():
+            base = self.E.free_hit_table(self.tonight, self.log)["weeks"][0]
+            chips = self.E.free_hit_table(self.archive, self.log)["weeks"][0]      # CHIPS's screen, last night's export
+        self.assertEqual(base["metric"], "own")
+        self.assertNotIn(self.stale["id"], {p["id"] for p in chips["fh"]["xi"]})
+        self.assertAlmostEqual(chips["fh"]["pts"], base["fh"]["pts"], 9)
+        self.assertAlmostEqual(chips["gap"], base["gap"], 9)
+        self.assertEqual(chips["flag"], base["flag"])
+        self.assertEqual(chips["no_own_gate"], 1)                               # the stale player, through its gate
+        self.assertEqual(base["no_own_gate"], 0)                                # own records exactly tonight's gate
+
+    def test_no_own_row_counts_zero_in_the_own_week_only(self):
+        with self._planted():
+            weeks, pts, src = self.E.one_week_points(self.archive, self.log)
+        for pid in (self.stale["id"], self.mine["id"]):
+            self.assertEqual((pts[self.next][pid], src[self.next][pid]), (0.0, "no own"))
+            self.assertEqual(src[weeks[1]][pid], "bottomup")                    # no own rows that week: one scale
+        self.assertEqual(pts[weeks[1]][self.stale["id"]], 40.0)
+
+    def test_chips_counts_zero_in_its_own_week(self):
+        weeks, pts, src = fpl_chips.own_week_points(self.archive, self.log)
+        self.assertEqual((pts[self.next][self.stale["id"]], src[self.next][self.stale["id"]]), (0.0, "no own"))
+        self.assertEqual(src[weeks[1]][self.stale["id"]], "own-model")         # later weeks: the formula, as before
+        self.assertGreater(pts[weeks[1]][self.stale["id"]], 0)
+        self.assertEqual(src[self.next][self.mine["id"]], "gate")               # 'd': outside the gate, 0, as before
+
+    def test_the_note(self):
+        t = self.E.free_hit_table(self.tonight, self.log)
+        own = {int(r["player_id"]) for r in self.log if r["source"] == "own" and int(r["event"]) == self.next}
+        playing = {x for f in self.tonight["fixtures_next6"] if f["event"] == self.next for x in (f["home"], f["away"])}
+        by_id = {p["id"]: p for p in self.tonight["all_players"]}
+        want = [by_id[i]["web_name"] for i in self.E.my_squad_ids(self.tonight)
+                if i not in own and by_id[i]["team"] in playing]
+        self.assertIn(self.mine_name, want)
+        self.assertEqual(t["weeks"][0]["no_own_ours"], want)
+        notes = [s for s in self.E.free_hit_lines(t) if s.startswith("    GW")]
+        self.assertEqual(notes, [f"    GW{self.next}: a player with no own forecast counts 0 (W3fix Ruling 3, amending "
+                                 f"item N): {len(want)} of our 15 ({', '.join(want)}), 0 in the Free Hit gate"])
+        self.assertNotIn(self.mine["id"], {p["id"] for p in t["weeks"][0]["ours_xi"]}, "counted 0, he is benched")
+        self.assertEqual(t["weeks"][1]["no_own_ours"], [])                     # a bottomup week has no note
+        self.assertEqual(len(notes), sum(1 for w in t["weeks"] if w["metric"] == "own"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -4754,9 +4754,12 @@ class FreeHit(unittest.TestCase):
         fx = E.week_fixtures(self.d)
         hurt = next(p for p in self.d["all_players"] if p["status"] == "d" and p["team"] != "HUL")
         self.assertNotIn(hurt["id"], own)
-        self.assertEqual(src[self.next][hurt["id"]], "bottomup")
-        self.assertAlmostEqual(pts[self.next][hurt["id"]],
-                               E.project_week(hurt["id"], hurt, inp, fx, self.next, E.ALL_TERMS), 9)
+        # W3fix Ruling 3 amends item N: in the week with own rows, no own row counts 0, never bottomup
+        self.assertEqual((pts[self.next][hurt["id"]], src[self.next][hurt["id"]]), (0.0, "no own"))
+        self.assertGreater(E.project_week(hurt["id"], hurt, inp, fx, self.next, E.ALL_TERMS), 0)
+        self.assertEqual(src[weeks[1]][hurt["id"]], "bottomup")          # a week without own rows: bottomup for all
+        self.assertAlmostEqual(pts[weeks[1]][hurt["id"]],
+                               E.project_week(hurt["id"], hurt, inp, fx, weeks[1], E.ALL_TERMS), 9)
         for pid, v in bu.items():                    # bottomup is the recorded definition
             p = next(p for p in self.d["all_players"] if p["id"] == pid)
             self.assertAlmostEqual(E.project_week(pid, p, inp, fx, self.next, E.ALL_TERMS), v, delta=6e-4)
