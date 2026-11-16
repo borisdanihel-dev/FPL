@@ -137,3 +137,62 @@ Record each part of these rulings verbatim in its prereg before acting on it.
   modules by default), so the tests run in the suite; its GW10 output is
   regenerated on the new commit and must equal the cited one in every
   number, with the lowest-id variant printed beside it.
+
+## Answers, Mon 16 Nov (Boris's message verbatim; for this item: point 3 (the end-to-end test of main() and the GW15 tie rule across positions, both on fj-wip, landing with W3fix on Tue 17))
+
+Answers, Mon 16 Nov (resume; the item count stays as it is).
+1. S8c: yes, tonight. Confirm master has only gained state-file docs since dry/S8c's green run (13b07b2), then tag pre-S8c, merge s8c-wip 4bbb43c and push before 21:00 UTC, and tell Boris when his real run is needed. Final verifier on the real run; delete dry/S8c and data-dryrun-S8c after.
+2. W3fix Ruling 3: option (a). Both the main report's Free Hit screen and CHIPS count a player with no own forecast as 0, with a note. Record it as an amendment to item N's frozen metric in prereg/W3fix.md before the code.
+3. FJ WARN: (i) add an end-to-end test of checkpoint.py's main() on a toy (it must catch a reversed d and a wrong revert verdict); (ii) pin the GW15 tie rule across positions in prereg/FJ.md: when two formation-legal XIs have equal sums, choose the one whose sorted player-id list is lexicographically smallest. Both on fj-wip, landing with W3fix.
+Revised schedule (one runner change per night; Boris clicks each real run; GW11 freeze Fri 20 Nov 05:00 UTC):
+- Mon 16: S8c. Offline: start status gate v2 (xp_v2_g2) code and its retrospective check (GW4-10) on a branch.
+- Tue 17: W3fix (Rulings 2 and 3) plus fj-wip's tests. Offline: finish xp_v2_g2's check and its verifier.
+- Wed 18: runcommit plus the price-moves name fix. Offline: the GW11-19 chip plan (first-half Bench Boost and Free Hit; S7 on candidate post-transfer squads with Thiago (banned GW11-13) and Thomas out; bb_timing with xp_v2 and xp_v2_g2), posted for the chat.
+- Thu 19: no runner change. The GW11 bundle on Boris's paste, with xp_v2_g2 numbers as information.
+- After the GW11 deadline: xp_v2_g2 recorded by the runner if its check passed and Boris accepts.
+Record each part verbatim in its prereg before acting. If a question blocks you while Boris is away, park it, carry on with the next item, and post all parked questions together.
+
+## Pinned after the answers of Mon 16 Nov, point 3, before the code (on `fj-wip`, landing with W3fix)
+
+- **The GW15 tie rule, complete (`--tie id`; model-neutral):**
+  - **XI:** of every formation-legal XI from our 15 (1 GK, DEF 3-5, MID 2-5,
+    FWD 1-3), the one with the highest sum of the model's forecasts; when
+    two or more have equal sums, the one whose sorted player-id list is
+    lexicographically smallest (Boris, Mon 16 Nov, point 3 (ii)). Sums are
+    compared exactly: each forecast is read as the decimal it is written as
+    and summed as a fraction, so float rounding can neither make nor break
+    a tie. A missing forecast counts 0, as before.
+  - **Bench:** the sub keeper first, then the outfield three in forecast
+    order, equal forecasts by the lower id (`fpl_chips.xi_and_bench`'s
+    order, unchanged).
+  - **Captain:** the highest forecast in the XI, equal forecasts by the
+    lower id (`realised_on`'s rule, unchanged).
+  - **Realised points:** `rule_autosubs` on the realised minutes and the
+    captain doubled, as in `realised_on`. `realised_on` picks its XI with
+    `_best_xi`, which keeps the first of equal totals across formations
+    (3-4-3 first), so the id run computes the same points from the XI
+    chosen above, in `checkpoint.py`; a test shows the two agree whenever
+    their XIs agree.
+  - The slot run (`--tie slot`, the GW10 result as pinned) is unchanged and
+    still calls `realised_on`.
+  - On GW8-10 the id run must reproduce the recorded lowest-id figures
+    (d +0, -1, +12); a difference is reported, never hidden.
+- **The end-to-end test of `main()`** (point 3 (i), `tests/test_FJ.py`): a
+  toy built in the test's temporary folder - `fpl.sqlite` (events,
+  fixtures, players, picks in slot order, player_gw), `projection_log.csv`
+  with own rows before each deadline, and a git repository holding each
+  week's bundle `xp_v2_all.csv` and `run.txt` committed before the deadline
+  - with the module's `CODE`, `GWS` and `BUNDLE` pointed at it. It runs
+  `main()` and reads `checkpoint.txt`:
+  - a toy where xp_v2 does worse every week: per-week own, xp_v2 and
+    d = xp_v2 - own, all d negative, and "own returns";
+  - a toy where it does better: d positive and "xp_v2 stays";
+  - which model is which, the slot order of the picks, the run's order
+    (slot by default, id when asked) and the interval the verdict reads,
+    each pinned by a number in the output;
+  - a week not locked down, and a bundle commit other than the ruled one,
+    each stop with `MissingInput` and write no `checkpoint.txt`.
+  It reads the printed numbers, so it does not rely on the script's own
+  `assert`. It must go red for a reversed d in `main()` and for a wrong
+  revert verdict; the verifier's eight `main()` mutants (2 and 10-16 in
+  `worklog/verify_FJ.md`) are rerun against it.

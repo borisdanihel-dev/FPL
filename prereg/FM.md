@@ -178,3 +178,97 @@ S8c landing (answers to the verifier's decisions):
 
 Schedule (one runner change per night; Boris clicks each real run; all before the GW11 freeze, Fri 20 Nov 05:00 UTC): Fri 13 S8c (dry run after the re-check, then the merge on Boris's click); Sat 14 runcommit plus the price-moves name fix; Sun 15 W3fix (CAPTAIN/BAN RISK on the current export, CHIPS on one scale); Tue 17 xp_v2_g2 recorded; Wed 18 the chip plan posted; Thu 19 the GW11 bundle on Boris's paste.
 Record each part of these rulings verbatim in its prereg before acting on it.
+
+## Answers, Mon 16 Nov (Boris's message verbatim; for this item: the Revised schedule's Mon 16 and Tue 17 (code, the GW4-10 check and the verifier on a branch), Thu 19 (xp_v2_g2's numbers in the GW11 bundle as information) and After the GW11 deadline (the runner records xp_v2_g2 only if its check passed and Boris accepts; this replaces the Tue 17 recording of the Thu 12 Nov night rulings))
+
+Answers, Mon 16 Nov (resume; the item count stays as it is).
+1. S8c: yes, tonight. Confirm master has only gained state-file docs since dry/S8c's green run (13b07b2), then tag pre-S8c, merge s8c-wip 4bbb43c and push before 21:00 UTC, and tell Boris when his real run is needed. Final verifier on the real run; delete dry/S8c and data-dryrun-S8c after.
+2. W3fix Ruling 3: option (a). Both the main report's Free Hit screen and CHIPS count a player with no own forecast as 0, with a note. Record it as an amendment to item N's frozen metric in prereg/W3fix.md before the code.
+3. FJ WARN: (i) add an end-to-end test of checkpoint.py's main() on a toy (it must catch a reversed d and a wrong revert verdict); (ii) pin the GW15 tie rule across positions in prereg/FJ.md: when two formation-legal XIs have equal sums, choose the one whose sorted player-id list is lexicographically smallest. Both on fj-wip, landing with W3fix.
+Revised schedule (one runner change per night; Boris clicks each real run; GW11 freeze Fri 20 Nov 05:00 UTC):
+- Mon 16: S8c. Offline: start status gate v2 (xp_v2_g2) code and its retrospective check (GW4-10) on a branch.
+- Tue 17: W3fix (Rulings 2 and 3) plus fj-wip's tests. Offline: finish xp_v2_g2's check and its verifier.
+- Wed 18: runcommit plus the price-moves name fix. Offline: the GW11-19 chip plan (first-half Bench Boost and Free Hit; S7 on candidate post-transfer squads with Thiago (banned GW11-13) and Thomas out; bb_timing with xp_v2 and xp_v2_g2), posted for the chat.
+- Thu 19: no runner change. The GW11 bundle on Boris's paste, with xp_v2_g2 numbers as information.
+- After the GW11 deadline: xp_v2_g2 recorded by the runner if its check passed and Boris accepts.
+Record each part verbatim in its prereg before acting. If a question blocks you while Boris is away, park it, carry on with the next item, and post all parked questions together.
+
+## The design, pinned before the code (Mon 16 Nov; after Boris's five answers of Thu 12 Nov night and his answers of Mon 16 Nov)
+
+Offline work (FAST-TRACK item 1): new modules under `tools/`, which the
+nightly never imports. `xp_v2` and `tools/xp_v2_live.core` are not edited;
+the runner records nothing new until after the GW11 deadline, and then only
+if the check passes and Boris accepts (Mon 16 Nov, Revised schedule).
+
+### The rule (`tools/gate_v2.py`), per player, per week u of the horizon (t = the next gameweek)
+
+| status at the export | week u |
+|---|---|
+| `a` | as v1 |
+| `d`, chance c | u = t: the gate lifted, P(start) x c and P(sub) x c (the model's own scaling); u > t: as normal |
+| `s`, "Suspended until <date>" | 0 for every club fixture kicking off before the date; as normal from the first on or after it (answer 3 of the draft's rule) |
+| `s`, no date in the news | u = t: 0; u > t: as normal (answer 3) |
+| `i`, "Expected back <date>" | like `s` with a date: 0 before the date, then as normal (answer 2) |
+| `i`, return unknown | u = t and t+1: 0; from t+2: P(start) x 0.5 and P(sub) x 0.5, a fixed 50% (answer 1) |
+| `u`, `n` | 0 (unchanged) |
+
+- **As normal:** the player taken as status `a` with no flag: chance 100,
+  so P(start) = starts in the window / the window, P(sub) unscaled.
+- **The date:** the day and month in the news ("Suspended until 5 Dec",
+  "Expected back 28 Nov", the only two dated forms in the 12 newest
+  exports), in the first year that puts it on or after the export's
+  `generated` date. News that names a date in neither form counts as no date.
+- **A double gameweek split by the date:** that week's value is computed on
+  the fixtures on or after the date only (core run on that player with the
+  club's later fixtures; `core` itself unchanged).
+- **The 45-minute gate and everything else in `core` are unchanged:** a
+  player under 45 minutes in his window stays 0 in every week, as in v1.
+- **Point 5, suspended matches** (answer 5: "neither started nor missed in
+  the last-four window"): the window is the last four gameweeks in which the
+  player was not suspended, counting back from the export's gameweek; both
+  the starts and the minutes (the 45-minute gate) are read over it. A player
+  is suspended in gameweek e when the newest archived export generated
+  before e's deadline has him at status `s`. Where a gameweek in the window
+  has no archived export (GW1-3: the archive starts 11 Sep, before GW4), the
+  plain window is used and the count of such players is printed, never a
+  guess. (Reading parked below as a question.)
+- **One P(start) per week** from the rule above; the lambdas, shares, prior,
+  ICT, DEFCON and sub inputs exactly as `builder.live_matrix` builds them.
+
+### The retrospective check (`tools/gate_v2_check.py`), its test (answer 4)
+
+- **Origins:** the deadlines of GW4-GW10. At each, the newest dated export
+  generated before the deadline (`OL.pre_deadline_export`), and per fixture
+  the newest Odds API snapshot before the deadline where it prices the
+  fixture, else the fallback fitted on results before the deadline (as
+  `builder.live_matrix`). v1 = `builder.live_matrix`'s computation at that
+  origin; v2 = the same with the rule above. Nothing generated after a
+  deadline is read for that origin.
+- **Weeks scored:** u = g .. g+5 with u <= 10, each locked down
+  (`data_checked` = 1 and every fixture finished) and with a fixture for the
+  player's club.
+- **Population (primary, as drafted):** every flagged player-week - status
+  `d`, `s` or `i` in the origin's export, 45+ minutes in the export's last
+  four.
+- **Realised:** `player_gw.total_points` summed over the week (no row: 0,
+  counted and printed).
+- **Metric:** e = |v1 - r| - |v2 - r| per player-week; the mean over all
+  player-weeks; bootstrap with the deadline gameweek as the unit (the seven
+  origins resampled with replacement, the pooled mean recomputed), B 10,000,
+  seed 20261018, 90% percentile interval (`fpl_bt`'s constants).
+- **Bar (stated before any number is seen):** the 90% lower bound above 0.
+- **Printed besides, information:** per origin and per status, n and mean e;
+  the players whose v2 differs only through point 5 (status `a`, a suspended
+  gameweek in the window), their own n and mean e; F-M's record: our
+  flagged players' realised points against v1 and v2, week by week.
+- **Provenance:** `tools/out/gate_v2_check/run.txt` (`tools/provenance.py`);
+  only a run on the item's final code with 0 modified files is cited.
+
+### Tests (`tests/test_FM.py`, toys only)
+
+The table above row by row on a toy export (including the date in the
+following year, a double gameweek split by the date, no date in the news);
+`a` players equal to v1 exactly; point 5's window on a toy archive (and the
+GW1-3 case printed, not guessed); the check's metric sign, its bootstrap
+unit and its bar on toy numbers; nothing after a deadline read (a planted
+later export changes nothing). Each test red on a planted bug.

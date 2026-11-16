@@ -98,3 +98,58 @@ S8c landing (answers to the verifier's decisions):
 
 Schedule (one runner change per night; Boris clicks each real run; all before the GW11 freeze, Fri 20 Nov 05:00 UTC): Fri 13 S8c (dry run after the re-check, then the merge on Boris's click); Sat 14 runcommit plus the price-moves name fix; Sun 15 W3fix (CAPTAIN/BAN RISK on the current export, CHIPS on one scale); Tue 17 xp_v2_g2 recorded; Wed 18 the chip plan posted; Thu 19 the GW11 bundle on Boris's paste.
 Record each part of these rulings verbatim in its prereg before acting on it.
+
+## Answers, Mon 16 Nov (Boris's message verbatim; for this item: point 2 (Ruling 3: option (a), an amendment to item N's frozen metric, recorded here before the code) and the Revised schedule's Tue 17 (W3fix, Rulings 2 and 3, lands with fj-wip's tests))
+
+Answers, Mon 16 Nov (resume; the item count stays as it is).
+1. S8c: yes, tonight. Confirm master has only gained state-file docs since dry/S8c's green run (13b07b2), then tag pre-S8c, merge s8c-wip 4bbb43c and push before 21:00 UTC, and tell Boris when his real run is needed. Final verifier on the real run; delete dry/S8c and data-dryrun-S8c after.
+2. W3fix Ruling 3: option (a). Both the main report's Free Hit screen and CHIPS count a player with no own forecast as 0, with a note. Record it as an amendment to item N's frozen metric in prereg/W3fix.md before the code.
+3. FJ WARN: (i) add an end-to-end test of checkpoint.py's main() on a toy (it must catch a reversed d and a wrong revert verdict); (ii) pin the GW15 tie rule across positions in prereg/FJ.md: when two formation-legal XIs have equal sums, choose the one whose sorted player-id list is lexicographically smallest. Both on fj-wip, landing with W3fix.
+Revised schedule (one runner change per night; Boris clicks each real run; GW11 freeze Fri 20 Nov 05:00 UTC):
+- Mon 16: S8c. Offline: start status gate v2 (xp_v2_g2) code and its retrospective check (GW4-10) on a branch.
+- Tue 17: W3fix (Rulings 2 and 3) plus fj-wip's tests. Offline: finish xp_v2_g2's check and its verifier.
+- Wed 18: runcommit plus the price-moves name fix. Offline: the GW11-19 chip plan (first-half Bench Boost and Free Hit; S7 on candidate post-transfer squads with Thiago (banned GW11-13) and Thomas out; bb_timing with xp_v2 and xp_v2_g2), posted for the chat.
+- Thu 19: no runner change. The GW11 bundle on Boris's paste, with xp_v2_g2 numbers as information.
+- After the GW11 deadline: xp_v2_g2 recorded by the runner if its check passed and Boris accepts.
+Record each part verbatim in its prereg before acting. If a question blocks you while Boris is away, park it, carry on with the next item, and post all parked questions together.
+
+## Ruling 3, option (a), pinned before its code (Mon 16 Nov): an amendment to item N's frozen metric
+
+Item N's frozen definition is the CHANGELOG entry "2026-10-15 — item N: the
+Free Hit screen"; that entry stays as written and this amends it (a CHANGELOG
+amendment entry lands with the item, before the GW11 deadline).
+
+- **The metric, amended** (`fpl_edge.one_week_points`): in a gameweek for
+  which `projection_log.csv` holds own rows (in practice the first upcoming
+  week; the log records one week ahead), a player with no own row counts 0
+  (source `no own`), never bottomup. A gameweek with no own rows at all is
+  bottomup for every player, as before (one scale within each week). A
+  blank still scores 0. Unchanged: the gate, the bench, the budget, the
+  solver, FH_GAP 8.0, FH_NOT_A 3, the "not a" count.
+- **The note:** below the table, for each own week, one line: "GW<w>: a
+  player with no own forecast counts 0 (W3fix Ruling 3, amending item N):
+  <k> of our 15 (<names>), <m> in the Free Hit gate". Printed wherever
+  the table is printed (`free_hit_lines`: the base report, the watch file,
+  CHIPS).
+- **CHIPS's calculator** (`fpl_chips.own_week_points`): in the own week, a
+  player with no own row counts 0 (source `no own`) in place of the own
+  formula (`own-model`); the other weeks are unchanged (the own formula for
+  gated players, 0 for gated-out and blank, every player on that one
+  scale). Its header notes the rule. CHIPS's Free Hit screen calls
+  `free_hit_table` and takes the amended metric with it.
+- **Unchanged:** CHIPS reads the dated archive (amendment 3, point 3;
+  Ruling 2: "CHIPS may stay one night behind"). Whether its Free Hit screen
+  should read tonight's export instead is parked below, with a measurement.
+- **The test** (`tests/test_W3fix.py`, red on the current code): the 12 Nov
+  case. CHIPS's export (last night's) has a player at status `a` in the
+  gate, with a high bottomup and no own row; tonight's export has him at
+  `d`. Before: CHIPS's screen puts him in the FH XI and flags (gap > 8),
+  and the base screen does not. After: both screens give the same FH XI
+  points, gap and flag. Also: one of our flagged players without an own row
+  counts 0 in "ours" in both screens, and in CHIPS's own week; weeks with
+  no own rows are unchanged; the note names them.
+- **Measured:** the suite before and after; the test red on the current
+  code; mutations (bottomup back in `one_week_points`; `own-model` back in
+  `own_week_points`; the note dropped) each red; the 12 Nov data
+  (`6f9ecb8`) reproduced before (30.8, +8.5, flagged) and after; tonight's
+  report, watch file and CHIPS before and after.
