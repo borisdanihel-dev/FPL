@@ -151,3 +151,48 @@ Revised schedule (one runner change per night; Boris clicks each real run; GW11 
 - Thu 19: no runner change. The GW11 bundle on Boris's paste, with xp_v2_g2 numbers as information.
 - After the GW11 deadline: xp_v2_g2 recorded by the runner if its check passed and Boris accepts.
 Record each part verbatim in its prereg before acting. If a question blocks you while Boris is away, park it, carry on with the next item, and post all parked questions together.
+
+## Pinned after the answers of Mon 16 Nov, point 3, before the code (on `fj-wip`, landing with W3fix)
+
+- **The GW15 tie rule, complete (`--tie id`; model-neutral):**
+  - **XI:** of every formation-legal XI from our 15 (1 GK, DEF 3-5, MID 2-5,
+    FWD 1-3), the one with the highest sum of the model's forecasts; when
+    two or more have equal sums, the one whose sorted player-id list is
+    lexicographically smallest (Boris, Mon 16 Nov, point 3 (ii)). Sums are
+    compared exactly: each forecast is read as the decimal it is written as
+    and summed as a fraction, so float rounding can neither make nor break
+    a tie. A missing forecast counts 0, as before.
+  - **Bench:** the sub keeper first, then the outfield three in forecast
+    order, equal forecasts by the lower id (`fpl_chips.xi_and_bench`'s
+    order, unchanged).
+  - **Captain:** the highest forecast in the XI, equal forecasts by the
+    lower id (`realised_on`'s rule, unchanged).
+  - **Realised points:** `rule_autosubs` on the realised minutes and the
+    captain doubled, as in `realised_on`. `realised_on` picks its XI with
+    `_best_xi`, which keeps the first of equal totals across formations
+    (3-4-3 first), so the id run computes the same points from the XI
+    chosen above, in `checkpoint.py`; a test shows the two agree whenever
+    their XIs agree.
+  - The slot run (`--tie slot`, the GW10 result as pinned) is unchanged and
+    still calls `realised_on`.
+  - On GW8-10 the id run must reproduce the recorded lowest-id figures
+    (d +0, -1, +12); a difference is reported, never hidden.
+- **The end-to-end test of `main()`** (point 3 (i), `tests/test_FJ.py`): a
+  toy built in the test's temporary folder - `fpl.sqlite` (events,
+  fixtures, players, picks in slot order, player_gw), `projection_log.csv`
+  with own rows before each deadline, and a git repository holding each
+  week's bundle `xp_v2_all.csv` and `run.txt` committed before the deadline
+  - with the module's `CODE`, `GWS` and `BUNDLE` pointed at it. It runs
+  `main()` and reads `checkpoint.txt`:
+  - a toy where xp_v2 does worse every week: per-week own, xp_v2 and
+    d = xp_v2 - own, all d negative, and "own returns";
+  - a toy where it does better: d positive and "xp_v2 stays";
+  - which model is which, the slot order of the picks, the run's order
+    (slot by default, id when asked) and the interval the verdict reads,
+    each pinned by a number in the output;
+  - a week not locked down, and a bundle commit other than the ruled one,
+    each stop with `MissingInput` and write no `checkpoint.txt`.
+  It reads the printed numbers, so it does not rely on the script's own
+  `assert`. It must go red for a reversed d in `main()` and for a wrong
+  revert verdict; the verifier's eight `main()` mutants (2 and 10-16 in
+  `worklog/verify_FJ.md`) are rerun against it.
