@@ -2,11 +2,15 @@
 rulings of Thu 12 Nov, point B). Report only; nothing in the runner, the models or the decisions changes.
 Standard library only.
 
-    python -I checkpoint.py --code DIR --data DIR --out DIR
+    python -I checkpoint.py --code DIR --data DIR --out DIR [--tie slot|id]
 
   --code  a clean worktree of master at the prereg's commit: its fpl_squad, fpl_realised, fpl_chips, fpl_edge and
           fpl_bt are imported unchanged, its git history holds the bundle commits, and its commit goes in run.txt
+          (without --code, as when tests/test_FJ.py imports this file: the repository this file is in)
   --data  a copy of the data worktree (fpl.sqlite, projection_log.csv)
+  --tie   how equal forecasts are ordered before realised_on: 'slot' (our picks in slot order; the GW10 run as
+          pinned, the default) or 'id' (the lower player id first; the GW15 run, prereg/FJ.md, rulings of Thu 12
+          Nov night). The other order is printed beside it as information.
 
 method (pinned in prereg/FJ.md before this ran)
   - lockdown guard per gameweek: data_checked = 1 and every fixture finished = 1;
@@ -36,7 +40,8 @@ def _arg(argv, name):
     sys.exit(f"{name} is required")
 
 
-CODE = os.path.abspath(_arg(sys.argv[1:], "--code"))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CODE = os.path.abspath(_arg(sys.argv[1:], "--code")) if "--code" in " ".join(sys.argv[1:]) else ROOT
 sys.path.insert(0, CODE)
 sys.path.insert(0, os.path.join(CODE, "tools"))
 import fpl_bt as BT                                               # noqa: E402
@@ -74,11 +79,37 @@ def choice(squad, proj, actual):
     return xi, [gk] + list(bench), cap["id"], subs
 
 
+def ordered(squad, tie):
+    """The 15 as realised_on receives them: as given (slot order) or by player id (the lower id first)."""
+    if tie not in ("slot", "id"):
+        raise ValueError(f"tie must be 'slot' or 'id', not {tie!r}")
+    return list(squad) if tie == "slot" else sorted(squad, key=lambda r: r["id"])
+
+
+def score(squad, own, xp, actual, tie="slot"):
+    """(own's realised points, its captain, xp_v2's, its captain) on our 15 under one tie order."""
+    sq = ordered(squad, tie)
+    pts_own, cap_own = RL.realised_on(sq, own, actual)
+    pts_v2, cap_v2 = RL.realised_on(sq, xp, actual)
+    return pts_own, cap_own, pts_v2, cap_v2
+
+
+def paired(own_pts, v2_pts):
+    """d per gameweek: realised(xp_v2) - realised(own)."""
+    return [v - o for o, v in zip(own_pts, v2_pts)]
+
+
+def verdict(boot):
+    """The revert rule (S6b acceptance, point 3): own returns only if the 90% upper bound is below 0."""
+    return "own returns" if boot["hi"] < 0 else "xp_v2 stays"
+
+
 def main(argv=None):
     utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     for name in ("--code", "--data", "--out"):
         ap.add_argument(name, required=True)
+    ap.add_argument("--tie", choices=("slot", "id"), default="slot")
     a = ap.parse_args(argv)
     run_ = Run("worklog/checkpoint_gw10/checkpoint.py", a.out, argv if argv is not None else sys.argv[1:], root=CODE)
     lines = []
@@ -113,7 +144,8 @@ def main(argv=None):
     out("  captain = highest xP in its XI (doubled), rule_autosubs on realised minutes: fpl_realised.realised_on, unchanged;")
     out("  no vice promotion, no chips. d = realised(xp_v2) - realised(own).")
 
-    d, per = [], []
+    other = "id" if a.tie == "slot" else "slot"
+    d, per, alt = [], [], []
     for g in GWS:
         n_fx, n_fin = db.execute("SELECT COUNT(*), COALESCE(SUM(finished = 1), 0) FROM fixtures WHERE event = ?",
                                  (g,)).fetchone()
@@ -139,10 +171,12 @@ def main(argv=None):
         if absent:
             raise MissingInput(f"GW{g}: {len(absent)} of our 15 not in the bundle's xp_v2_all.csv")
         no_own = [r["id"] for r in squad if r["id"] not in own]
-        pts_own, cap_own = RL.realised_on(squad, own, actual)
-        pts_v2, cap_v2 = RL.realised_on(squad, {r["id"]: xp[r["id"]] for r in squad}, actual)
+        xp15 = {r["id"]: xp[r["id"]] for r in squad}
+        pts_own, cap_own, pts_v2, cap_v2 = score(squad, own, xp15, actual, a.tie)
         d.append(pts_v2 - pts_own)
         per.append((g, pts_own, pts_v2, cap_own, cap_v2))
+        alt.append(score(squad, own, xp15, actual, other))
+        squad = ordered(squad, a.tie)                                     # the display follows the run's order
 
         out("")
         out(f"GW{g}  deadline {deadline[g]:%Y-%m-%d %H:%M} UTC; locked down (data_checked 1, {n_fin}/{n_fx} finished)")
@@ -172,6 +206,7 @@ def main(argv=None):
     db.close()
 
     boot = BT.bootstrap_mean(d)
+    assert d == paired([p[1] for p in per], [p[2] for p in per])
     out("")
     out("=" * 100)
     out("SUMMARY")
@@ -182,10 +217,15 @@ def main(argv=None):
     out(f"  total {sum(p[1] for p in per):.0f} v {sum(p[2] for p in per):.0f}; mean d = {boot['mean']:+.2f} a gameweek, "
         f"90% [{boot['lo']:+.2f}, {boot['hi']:+.2f}] (bootstrap over {boot['n']} gameweeks, B {BT.B}, seed {BT.SEED}); "
         f"two-sided bootstrap p {boot['p']:.3f}")
-    verdict = "own returns" if boot["hi"] < 0 else "xp_v2 stays"
     out(f"  revert rule (S6b acceptance, point 3): own returns if the 90% upper bound is below 0. "
-        f"Upper bound {boot['hi']:+.2f}: {verdict}. Reported only; Boris decides.")
+        f"Upper bound {boot['hi']:+.2f}: {verdict(boot)}. Reported only; Boris decides.")
     out("  with three gameweeks the percentile interval can only take values from the 10 resample multisets; it is coarse.")
+    d_alt = paired([x[0] for x in alt], [x[2] for x in alt])
+    b_alt = BT.bootstrap_mean(d_alt)
+    out(f"  tie order: this run '{a.tie}' ({'our picks in slot order' if a.tie == 'slot' else 'the lower player id first'}); "
+        f"information, the other order '{other}': own {', '.join(f'{x[0]:.0f}' for x in alt)}, "
+        f"xp_v2 {', '.join(f'{x[2]:.0f}' for x in alt)}, d {', '.join(f'{x:+.0f}' for x in d_alt)}; "
+        f"mean {b_alt['mean']:+.2f}, 90% [{b_alt['lo']:+.2f}, {b_alt['hi']:+.2f}]: {verdict(b_alt)}")
 
     os.makedirs(a.out, exist_ok=True)
     path_out = os.path.join(a.out, "checkpoint.txt")

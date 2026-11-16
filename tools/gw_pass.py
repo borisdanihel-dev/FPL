@@ -30,6 +30,7 @@ bundle continues; nothing is substituted.
     python tools/gw_pass.py [--data DIR] [--hist ROOT] [--out DIR]
 """
 import argparse
+import csv
 import os
 import sqlite3
 import sys
@@ -42,6 +43,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import backtest as BT                                             # noqa: E402
+import capflag as CF                                              # noqa: E402
 import chips as CH                                                # noqa: E402
 import odds_lambda as OL                                          # noqa: E402
 import league as LG                                               # noqa: E402
@@ -50,11 +52,12 @@ import xp_v2_live as XL                                           # noqa: E402
 import points_pmf as PM                                           # noqa: E402
 import minutes_v2 as MV                                           # noqa: E402
 import planner as PL                                              # noqa: E402
+import planner_live as PLV                                        # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
 from provenance import Run                                        # noqa: E402
 
-MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, XL, PM, MV, PL)) if c is not None)
-SECTIONS = ("S5 ODDS CLEAN SHEETS", "S7 CHIPS", "S8 TRANSFER PLANNER AND THE BASELINE", "S9 LEAGUE, CAPTAIN AND EFFECTIVE OWNERSHIP",
+MISSING = tuple(c for c in (getattr(m, "MissingInput", None) for m in (E, BT, CH, OL, LG, XV, XL, PM, MV, PL, PLV)) if c is not None)
+SECTIONS = ("S5 ODDS CLEAN SHEETS", "S7 CHIPS", "TRANSFER PLANNER: THE XP_V2 NO-HIT DEFAULT, S8 AND THE BASELINE", "S9 LEAGUE, CAPTAIN AND EFFECTIVE OWNERSHIP",
             "OWN v XP_V2 AS TESTED: XI, BENCH AND CAPTAIN", "KEEPER LINE: OWN P(START) AND THE S12 KEEPER LOCK",
             "CAPTAIN TABLE: S14 POINTS DISTRIBUTIONS (INFORMATION ONLY)")
 
@@ -127,12 +130,12 @@ def baseline_note(results, inp):
     top = results.get((PL.DECAY, "boris")) or []
     nohit = results.get(("no hits", "boris")) or []
     base_key = (tuple(sorted(o["id"] for o in b_outs)), tuple(sorted(i["id"] for i in b_ins)))
-    p_text = plan_text(top[0]["outs"], top[0]["ins"]) if top else "none"
-    n_text = plan_text(nohit[0]["outs"], nohit[0]["ins"]) if nohit else "none"
+    p_text = plan_text(top[0]["outs"], top[0]["ins"]) + CF.move_flag(inp["squad"], top[0]["outs"], top[0]["ins"]) if top else "none"
+    n_text = plan_text(nohit[0]["outs"], nohit[0]["ins"]) + CF.move_flag(inp["squad"], nohit[0]["outs"], nohit[0]["ins"]) if nohit else "none"
     agree = bool(top) and PL.plan_key(top[0]) == base_key
     default = ("the planner agrees with the baseline" if agree
                else "DEFAULT = the baseline; the planner's top plan is the note (RULING S8 verifier FAIL item d)")
-    return plan_text(b_outs, b_ins), p_text, n_text, default
+    return plan_text(b_outs, b_ins) + CF.move_flag(inp["squad"], b_outs, b_ins), p_text, n_text, default
 
 
 CONFIRMED_FT = {8: 1}                      # Boris, 19 Oct: 1 free transfer for GW8 (the planner's estimate was right)
@@ -258,7 +261,100 @@ def keeper_line(keepers, own_ps, lock):
     return [(r["name"], r["team"], own_ps.get(r["id"]), lock.get(r["id"])) for r in keepers]
 
 
-def bundle(data_dir, out=print, now=None, hist_root=None):
+CSV_NAME = "xp_v2_all.csv"
+CSV_COLUMNS = ("id", "name", "team", "position", "xp_v2", "p_start", "lambda_source")
+
+
+def xp_v2_rows(res):
+    """Amendment 3: one row per player in the export's all_players, by id.
+    Forecast players carry section 5's xp_v2 and P(start) (repr, exact)
+    and their club's target-week lambda sources in kickoff order; the
+    others carry 0 (the bundle's "0 in the choice"), no P(start) and
+    "not forecast"."""
+    d, xp, detail, target = res["d"], res["xp"], res["detail"], res["target"]
+    fx = sorted(XL.target_fixtures(d, target).items(), key=lambda kv: (kv[1]["kickoff"], kv[0]))
+    rows = []
+    for p in sorted(d["all_players"], key=lambda p: int(p["id"])):
+        pid = int(p["id"])
+        if pid in xp:
+            src = ";".join(res["sources"][fid] for fid, f in fx if p["team"] in (f["home"], f["away"]))
+            rows.append((pid, p["web_name"], p["team"], BT.POS_NAME.get(p["pos"], "?"), repr(float(xp[pid])),
+                         repr(float(detail[pid]["p_start"])), src))
+        else:
+            rows.append((pid, p["web_name"], p["team"], BT.POS_NAME.get(p["pos"], "?"), repr(0.0), "", "not forecast"))
+    return rows
+
+
+def write_xp_v2_csv(out_dir, res):
+    """xp_v2_all.csv beside the bundle's text (amendment 3); its path."""
+    path = os.path.join(out_dir, CSV_NAME)
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh, lineterminator="\n")
+        w.writerow(CSV_COLUMNS)
+        w.writerows(xp_v2_rows(res))
+    return path
+
+
+OWN_HORIZON = 6                     # fpl_edge.py --record's default --horizon, the nightly's own
+FLAG_HEADER = ("  information - our players FPL flags (status not 'a'): the status gate stays for the picks, the CSV and "
+               "the grading (Ruling, Tue 20 Oct, 21:00 Prague, point 2)")
+
+
+def own_if_plays(d, p, target, horizon=OWN_HORIZON):
+    """Amendment 4: own for one player as fpl_edge.record_status's own
+    branch computes it, with the status part of its gate lifted (the
+    minutes part stays): (value, None) or (None, why)."""
+    if (p.get("mins_last4") or 0) < 45:
+        return None, "under 45 minutes in the last four"
+    tick, _ = E.build_ticker(d, horizon)
+    fx = [f for f in tick.get(p["team"], []) if f[0] == target]
+    if not fx:
+        return None, f"no GW{target} fixture"
+    priors, personal = E.positional_priors(d["all_players"]), E.personal_priors(d)
+    return sum(E.project(p, {p["team"]: [f]}, horizon, d["gameweek"], priors, personal)[0] for f in fx), None
+
+
+def if_he_plays(data_dir, hist_root, now, res, squad, out):
+    """Amendment 4: for every player in our 15 whose status is not 'a':
+    status, chance, news, and xp_v2 and own as if available (only the
+    status gate lifted), with his place in the captain table on that
+    number. Information only: the picks, the CSV and the grading keep the
+    gate. Returns [(pid, xp_v2 or None, own or None, place or None)]."""
+    d, target = res["d"], res["target"]
+    allp = {int(p["id"]): p for p in d["all_players"]}
+    flagged = [r for r in squad if allp[r["id"]]["status"] != "a"]
+    if not flagged:
+        return []
+    out(FLAG_HEADER)
+    sums = PM.live_pmfs(res)
+    done = []
+    for r in flagged:
+        p = allp[r["id"]]
+        ch = p.get("chance_next_round")
+        out(f"    {r['name']} ({r['team']} {BT.POS_NAME.get(r['pos'], '?')}): status {p['status']}, chance_next_round "
+            f"{'none' if ch is None else ch}, news \"{p.get('news') or ''}\"")
+        own, why = own_if_plays(d, p, target)
+        own_txt = f"own {own:.2f}" if own is not None else f"own none even if he plays ({why})"
+        lifted = XL.live(data_dir, hist_root, now, lift=(r["id"],))
+        if r["id"] not in lifted["xp"]:
+            gone = "under 45 minutes in the last four" if (p.get("mins_last4") or 0) < 45 else f"no GW{target} fixture"
+            out(f"      if he plays; the picks treat him as 0: no xp_v2 even if he plays ({gone}); {own_txt}")
+            done.append((r["id"], None, own, None))
+            continue
+        x, det = lifted["xp"][r["id"]], lifted["detail"][r["id"]]
+        one = PM.live_pmfs(dict(lifted, xp={r["id"]: x}, detail={r["id"]: det}))[r["id"]]
+        sums2 = dict(sums)
+        sums2[r["id"]] = one
+        order = sorted(squad, key=lambda q: -(sums2[q["id"]]["mean"] if q["id"] in sums2 else -1))   # section 7's sort
+        k = [q["id"] for q in order].index(r["id"]) + 1
+        out(f"      if he plays; the picks treat him as 0: xp_v2 {x:.2f} (P(start) {det['p_start']:.2f}, P(sub) {det['p_sub']:.2f} "
+            f"scaled by chance); {own_txt}; captain table place on that number: {k} of {len(squad)} (mean {one['mean']:.2f}, "
+            f"P>=10 {one['p10']:.3f}, P>=15 {one['p15']:.3f}, p90 {one['p90']})")
+        done.append((r["id"], x, own, k))
+    return done
+
+
+def bundle(data_dir, out=print, now=None, hist_root=None, keep=None):
     hist_root = hist_root or os.path.join(ROOT, "historical")
     d, path = CH.newest_export(data_dir)
     log_rows = E.read_log(os.path.join(data_dir, E.LOG_PATH))
@@ -266,11 +362,19 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
     now = now or datetime.now(timezone.utc)
     dl = sqlite_deadline(data_dir, target)                   # RULING landing + S11 item 3: fpl.sqlite events.deadline_time, as the runner reads it
     out(f"GW PASS  GW{target} (deadline {f'{dl:%Y-%m-%d %H:%M} UTC' if dl else 'not in fpl.sqlite events'}) from {os.path.basename(path)}; generated {now:%Y-%m-%d %H:%M} UTC; "
-        f"information only - no section here is adopted or recorded; the baseline is the default where the planner differs")
+        f"information only - no section here is recorded; the transfer default from GW8 is the no-hit planner on xp_v2 (section 3, "
+        f"Ruling, Tue 20 Oct, point 1), the simple rule beside it")
     section(out, SECTIONS[0], lambda: OL.live(data_dir, out, now=now))
     section(out, SECTIONS[1], lambda: CH.live(data_dir, out))
 
     def planner():
+        try:
+            PLV.plan(data_dir, hist_root, out)
+            out("")
+            out("  below, information: S8's planner on own xP, its baseline and the named plans (the default is the xp_v2 planner above)")
+        except Exception as e:                   # missing or failed: said, and the ruling's fallback; nothing substituted
+            out(f"  the xp_v2 planner: {'missing input' if isinstance(e, MISSING + (PLV.MissingInput,)) else 'failed: ' + type(e).__name__}: {e}")
+            out("  the ruling's fallback (Ruling, Tue 20 Oct, point 1): S8's planner and the simple rule below, and the decision by hand")
         results = PL.live(data_dir, out)
         inp = planner_inputs(d, log_rows)
         b_text, p_text, n_text, default = baseline_note(results, inp)
@@ -292,7 +396,7 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
             if ev is None:
                 out(f"  {i:>2} {'-':>7} {'-':>7} {'-':>5} {'-':>7}  {'':<36} {label}: {note}")
                 continue
-            plan = plan_text(ev["outs"], ev["ins"]) if ev["outs"] else "roll"
+            plan = (plan_text(ev["outs"], ev["ins"]) if ev["outs"] else "roll") + CF.move_flag(inp["squad"], ev["outs"], ev["ins"])
             weekly = " ".join(f"{g:+5.1f}" for g in ev["gains"])
             out(f"  {i:>2} {ev['score']:7.2f} {ev['gain']:7.2f} {ev['hits']:5d} {ev['lost']:7.2f}  {weekly:<36} {label}: {plan}"
                 + ("   (GW term 1 under Bench Boost)" if label.startswith("best single bench") else ""))
@@ -335,8 +439,11 @@ def bundle(data_dir, out=print, now=None, hist_root=None):
             out(f"  {slot:>4}{tag}{a['name']:<16}{BT.POS_NAME.get(a['pos'], '?'):>4} {a['proj']:5.2f}       {b['name']:<16}{BT.POS_NAME.get(b['pos'], '?'):>4} {b['proj']:5.2f}")
         co, cv = sbs["captain"]
         out(f"  captain: own {co['name']} ({co['proj']:.2f})  |  xp_v2 as tested {cv['name']} ({cv['proj']:.2f})" + ("" if co["id"] == cv["id"] else "   *"))
+        if keep is not None:
+            keep["res"] = res                    # amendment 3: the same run's forecast, for xp_v2_all.csv
         out(f"  {sbs['changed']} slots differ; the XI {'differs' if sbs['xi_differs'] else 'is the same set'}; DEFAULT = xp_v2 as tested "
-            f"(slots 1-11, the bench order and the captain)")
+            f"(slots 1-11, the bench order and the captain)" + CF.flag(squad))
+        if_he_plays(data_dir, hist_root, now, res, squad, out)              # amendment 4: information only
         return sbs
     section(out, SECTIONS[4], own_v_xp)
 
@@ -388,8 +495,9 @@ def main(argv=None):
 
     def out(s=""):
         print(s); lines.append(s)
+    keep = {}
     try:
-        target = bundle(args.data, out, hist_root=args.hist)
+        target = bundle(args.data, out, hist_root=args.hist, keep=keep)
     except MISSING + (MissingInput,) as e:
         print(f"MISSING INPUT: {e} - stopping; nothing is substituted")
         return 2
@@ -397,6 +505,8 @@ def main(argv=None):
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
     run.wrote(path)
+    if keep.get("res") is not None:              # amendment 3: no section 5, no CSV (the print says why)
+        run.wrote(write_xp_v2_csv(args.out, keep["res"]))
     run.close()
     return 0
 

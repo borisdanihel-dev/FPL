@@ -4039,6 +4039,41 @@ W1b's cap moves to 12 when W1b is worked.
   - the prior file on master and the export keys;
   - GW8's xp_v2 in REALISED;
   - the ban line's finished-fixture rule.
+
+---
+
+## 2026-10-19 — S10b (F-C): 2023/24 and 2024/25 re-scored under the 2026/27 rules (`c0116fe` prereg, `5918f02` downloads, `a2902f9` code; on `s10b-wip`)
+
+- **Downloads (approved in F-C):** 11 files, recorded in
+  `worklog/downloads_2026-10-19b.md`: vaastav 2022-23 to 2024-25 and
+  football-data E0 2023-24 and 2024-25.
+- **Method:** `tools/rules.py --season`. The claim under test, that each
+  season's own table is the 2026/27 table without the DEFCON category,
+  holds exactly:
+  - 2023-24: 11,086 of 11,086 player-gameweeks within ±1, all exact;
+  - 2024-25: 11,431 of 11,431, all exact; 322 manager rows out.
+  - Bar ≥ 0.99: PASS for both.
+  - Neither season has a goalkeeper goal, so that value is untested.
+- **Re-scores** under the 2026/27 table and positions (by code; DEFCON
+  missing and flagged; bonus official): 28,742 and 26,919 rows in
+  `tools/out/rules_<season>/`.
+- **Checks:** the 2025/26 path byte-identical to Step 10; suite 692;
+  mutations 8 of 8; verifier PASS (`worklog/verify_S10b.md`).
+
+## 2026-10-19 — S6e (F-E): xp_v2 + saves, the 2025/26 test FAILS (`16f6605` prereg, `87f6282` code; on `s6e-wip`)
+
+- **Model:** for goalkeepers, xp_v2 + P(start) × E[saves | start] / 3, with
+  S11's shrink (k from 2024/25 split-half, 33.3) and the λ_opp ratio.
+- **Primary** (keeper points on S7's 50 squads, + saves − xp_v2):
+  −0.101 per squad per gameweek, 90% CI [−0.197, −0.007] → **FAIL**; season
+  −3.4.
+- **Information:** keeper MAE +0.393 [+0.340, +0.444] (worse); the choice
+  differs in 13% of squad-gameweeks.
+- **Not adopted.** The ruled E[saves]/3 overstates E[floor(saves/3)]; a
+  discretised variant would need its own test. The 2024/25 run waits on
+  the harness (shared with the parked F-D).
+- **Checks:** suite 692; mutations 6 of 6 after the test-gap fix; verifier
+  PASS (`worklog/verify_S6e.md`).
 ## 2026-10-20 — S15 (F-G): the unified squad builder passes its A/B and is accepted (`ae1d368`, `3b31599` prereg; `6f362a8`, `91f401d` code; on `s15-wip`)
 
 - **A/B:** 68 hypothetical wildcards (2025/26 and 2024/25 GW5–38), the
@@ -4059,6 +4094,93 @@ W1b's cap moves to 12 when W1b is worked.
   default for Free Hit and Wildcard builds, the GK+DEF cap on live with its
   cost printed and the three-layer rule's squad beside it. Not used for
   GW8.
+
+## 2026-10-20 — S8c: the live no-hit planner on xp_v2 for the GW8 bundle; S15 amendment 2, the rule's squad beside the builder's (`de8ca68`, `5c90e08` preregs; `7773a58`, `50e89dd`, `615b35b` code; on `s8c-wip`)
+
+- **Built (tools only):**
+  - `tools/planner_live.py`: S8's `rank_plans` unchanged on S15's live
+    xp_v2 horizon matrix, with each fixture's source printed. 1 FT, no
+    hits, decay 0.85, Boris's schedule. The simple rule is printed
+    beside it, and the GW8 Bench Boost re-score (top 3) as information.
+  - `tools/gw_pass.py` section 3: the planner is the default. The ruling's
+    fallback (S8's planner and the simple rule) is printed when an input
+    is missing.
+  - `tools/builder.py` live: prints the frozen three-layer rule's squad,
+    its spend, its objective and builder − rule. The rule's squad is a
+    start when it is cap-legal.
+- **Measured (read-only, GW8):**
+  - planner default Branthwaite → De Cuyper, 4.17;
+  - simple rule Tarkowski → Gabriel, +2.18 in week t;
+  - lambdas: week t 10 odds; later weeks 10 odds + 40 fallback;
+  - `--freehit`: builder 65.93 v rule 61.98 (spent 87.2), +3.95; the cap
+    costs 0.00.
+- **Checks:** suite 727 → 756; mutations 11 of 11 and 6 of 6; verifier
+  PASS (`worklog/verify_S8c.md`, Fable 5.1). Its recomputation matches
+  326 plans to 1e-13; 9 of its 11 mutations went red, and the 2
+  survivors are toy-coverage gaps.
+
+## 2026-10-20 — S8c amendment 1: two test gaps and the GK+DEF cap flag (Ruling, Tue 20 Oct afternoon; `9ed7919` prereg; `52b2a65` code; on `s8c-wip`)
+
+- **Point 2 (tests only):**
+  - a toy fixture with no odds price prints "fallback";
+  - under `--bb` the rule is scored with the bench at full weight.
+  - Together they close the S8c verifier's two surviving mutations.
+- **Point 3 (print only):** `tools/capflag.py`. Every printed squad or
+  suggested move over the 2-per-club GK+DEF cap ends with "breaks the
+  cap: ARS 3". It covers the live planner, S8's planner, the bundle
+  (planner section and our 15) and the builder. No rule, ranking or plan
+  changed.
+- **Measured (GW8, data `63e6a44`):**
+  - nothing the planner or the bundle suggests breaks the cap (default
+    Branthwaite → De Cuyper; simple rule Tarkowski → Gabriel);
+  - only the three-layer rule's squad does (ARS 3);
+  - the outputs are byte-identical to `ca96b6a` apart from that flag.
+- **Checks:** suite 756 → 764; mutations 19 of 19; verifier PASS
+  (`worklog/verify_S8c_a1.md`, Fable 5.1; 15 of its 16 mutations red, one
+  sort-order coverage note).
+
+## 2026-10-20 — S8c amendment 3: the bundle writes xp_v2_all.csv (Ruling, Tue 20 Oct night, point 3; `6e7c918` prereg; `ea95cf6` code; on `s8c-wip`)
+
+- **Built:** `tools/gw_pass.py` also writes `xp_v2_all.csv` in the same
+  run: one row per export player, with id, name, team, position, xp_v2,
+  P(start) and the lambda source. Floats are exact. Players not forecast
+  are at 0 and marked "not forecast". It is recorded in `run.txt`. The
+  print is unchanged.
+- **Measured (GW8, data `63e6a44`):** 668 rows, of which 277 are forecast
+  (all from odds). Haaland is "not forecast". The print is byte-identical
+  to before, apart from the stamp.
+- **Checks:** suite 764 → 767; mutations 8 of 8; verifier PASS
+  (`worklog/verify_S8c_a3.md`, Fable 5.1; 7 of its 9 mutations red, two
+  toy gaps). This commit is Thursday's bundle commit.
+
+## 2026-10-20 — S8c amendment 3, point 3 clarified: every CSV value is the picker's (`65d6797` prereg; `2ff26dd` tests; on `s8c-wip`)
+
+- **The value:** the bundle's xp_v2 XI picker (`chips.xi_and_bench`) uses
+  `pts.get(id, 0.0)`. A player xp_v2 does not forecast is therefore used
+  at 0.0, which is the CSV's value with the flag "not forecast". No tool
+  changed.
+- **The test:** it captures the picker's values in the bundle's own run,
+  for our 15 including one not-forecast player. It puts every other
+  export player through the same picker. Red with a not-forecast value
+  of 0.5, and with a rounded xp_v2.
+- **Checks:** suite 767 → 768. Verifier PASS (`worklog/verify_S8c_a3b.md`,
+  Fable 5.1). On the real data, all 668 rows equal the picker's values,
+  Haaland (411, in our 15) at 0.0. 4 of its 4 mutations red. This commit
+  is Thursday's bundle commit.
+
+## 2026-10-20 — S8c amendment 4: "if he plays" for our flagged players (Ruling, Tue 20 Oct, 21:00 Prague, point 2; `6a46a79` prereg; `4d4bfa9` code; on `s8c-wip`)
+
+- **Built:** the bundle's section 5 ends with an information block for
+  every player in our 15 whose status is not 'a': status, chance and
+  news, then xp_v2 and own as if available, and his captain-table place.
+  - Only the status gate is lifted: `xp_v2_live` gains `lift`; own is the
+    record branch.
+  - The picks, the CSV and the grading keep the gate.
+- **Measured (GW8):** Haaland (d, 75%) if he plays: xp_v2 4.25, own 4.44,
+  captain table 9 of 15. The CSV and the rest of the print are unchanged.
+- **Checks:** suite 768 → 773; mutations 8 of 9; verifier PASS
+  (`worklog/verify_S8c_a4.md`, Fable 5.1; its independent `core` recompute
+  differs by 0). This commit is Thursday's bundle commit.
 
 ## 2026-10-20 — S8b (F-F): the no-hit planner on xp_v2 passes on 2024/25 and is accepted (`bd4d044` prereg; `401fb20` code, `7580cf2` tests; on `s8b-wip`)
 
@@ -4365,3 +4487,77 @@ two runs in one day keep the S2 rule: the scheduled run's xp_v2 rows survive
 at data `2e0b948`.
 
 `dry/W3` and `data-dryrun-W3` are deleted.
+
+---
+
+## 2026-10-19 — S6f (F-D): S6b and S6c repeated on 2024/25, the test FAILS (`3c955b5` prereg, `161cd69` code; on `s6f-wip`)
+
+- 2024/25 GW5–38: priors 2023/24, football-data 2024/25, S10b's re-score,
+  50 squads (seed 7, 2024/25 GW1 ownership). S6b's and S6c's drivers ran
+  unchanged.
+- **DEFCON removed on both sides** (RULING 19 Oct evening point 1). The
+  outcomes have none. The primary's xp_v2 and own_rebuilt DEFCON terms are
+  exactly 0. own_proxy (secondary) keeps a logistic floor (≤ 0.027 a
+  fixture); without it, the secondary is +0.373 [+0.187, +0.568].
+- **Primary,** xp_v2 − own_rebuilt: −0.396 per squad per gameweek, 90% CI
+  [−0.864, +0.045] → **FAIL**; season −13.5.
+- **Secondary:** S6b's xp_v2 − own_proxy +0.357 [+0.177, +0.548];
+  own_rebuilt − own_proxy +0.754 [+0.269, +1.271].
+- Per F-D this reverts nothing by itself; it goes to the chat, and the GW10
+  revert rule governs.
+- Verifier PASS (Fable 5.1, `worklog/verify_S6f.md`), its own loop within
+  1e-6; mutations 12 of 12.
+
+---
+
+## 2026-10-20 — S6e2: xp_v2 + discretised save points on 2024/25, the test FAILS; the line closes (`f485223` and `3b74e0c` prereg; `639a11a`, `21d1c3a` code; on `s6e2-wip`)
+
+- **Model:** for goalkeepers, xp_v2 + P(start) × Σ over fixtures of
+  E[floor(S/3)], S ~ Poisson(S6e's E[saves] for the fixture); k from
+  2023/24 split-half (17.40).
+- **Run:** S6e's loop unchanged on S6f's 2024/25 harness.
+- **Primary,** keeper points: +0.024 per squad per gameweek, 90% CI
+  [−0.016, +0.066] → **FAIL**.
+- **Information:** MAE +0.305 (worse); the choice differs 0.05; mean
+  E[floor(S/3)] 0.767 v E[S]/3 1.100.
+- **Amendment 1:** `floor_points` is bounded (pmf underflow, J_CAP), after
+  the verifier's WARN (it could hang for μ ≥ 12.765). The real output is
+  byte-identical; re-verification PASS (Fable 5.1).
+- **Not adopted.** The keeper-saves line closes (no S6e3); keepers stay on
+  xp_v2, with bottomup_lambda as the tie-break.
+
+---
+
+## 2026-11-12 — S8c landing, ready on `s8c-wip`: point 5 (the tests' repos disable signing), the copy fix, the three items' final commits, the status-gate test (`97ded86`, `88c77df` prereg; `f5cc8b3`, `f1f5df2`, `4245b80` on `s8c-wip`; the merge Fri 13 Nov)
+
+**Why:** Boris's rulings of Fri 6 Nov (point 5), Thu 12 Nov (the date) and
+Thu 12 Nov night (S8c points 1–6), verbatim in `prereg/S8c.md`.
+
+**Changed:**
+
+- Tests only: twelve per-repo `commit.gpgsign false` lines where the suite
+  creates its repositories; the guard `tests/test_S8c_p5.py`;
+  `ChecksMain.setUp` checks its commit; `tests/test_W3.py`
+  `StatusGateInTheRecord` (a status `d` player gets no xp_v2 row).
+- `fpl_xpv2.forecast` takes `tools/xp_v2_live.forecast`'s text again (the
+  merge with S8c amendment 4's `lift=()` broke `test_W3.Copies`); the runner
+  never passes `lift`.
+- Merged: master, and the final commits of S6f, S6e2 and S8b (their reports
+  and verifier files, two CHANGELOG entries, two S6f test lines).
+
+**Measured:**
+
+- With `commit.gpgsign = true` globally: 852 run, 69 not passing before
+  (68 signing, 1 the merge break); after, 855 OK (11 skipped).
+- Each of the twelve lines left out turns the guard red (11 of 12 on
+  `f5cc8b3`; the twelfth once ChecksMain checks its commit).
+- The copy fix: xp_v2 recorded with master's code and the branch's on the
+  same data gives the same 299 GW11 rows.
+- The status-gate test is red with the gate lifted.
+- Suite: master 787 OK; the branch 855 OK (11 skipped) bare, 855 OK (4 skipped) with the
+  data.
+
+**Verifier:** pre-check FAIL on two items (the missing final commits; no
+ruling for the copy fix), every claim reproducing; re-check to follow.
+Report `worklog/cc_2026-11-13_S8c_landing.md`. The duplicate "W2 amendment 2"
+entry is left as recorded (S8c point 6).
