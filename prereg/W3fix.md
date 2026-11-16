@@ -153,3 +153,20 @@ amendment entry lands with the item, before the GW11 deadline).
   `own_week_points`; the note dropped) each red; the 12 Nov data
   (`6f9ecb8`) reproduced before (30.8, +8.5, flagged) and after; tonight's
   report, watch file and CHIPS before and after.
+
+### Ruling 3, addendum pinned before its code (Mon 16 Nov, 18:05 UTC): W2's byte-identity
+
+- Found by the suite: `tests/test_W2.ReportSections.test_byte_identical_to_the_tools`
+  (W2's frozen rule) requires the runner's CHIPS section (`fpl_chips.live`)
+  to print exactly what `tools/chips.py`'s `live` prints. The pin above named
+  only `fpl_chips`, so the suite went red (1 failure, bare and with the data).
+- Pinned: `tools/chips.py` takes the same three changes, byte for byte
+  (`own_week_points`' own-week rule, the header note, the Free Hit screen's
+  label), so W2's rule holds unchanged. Its other users,
+  `tools/gw_pass.py` and `tools/planner.py`, then count a gated player
+  without an own row 0 in the own week too (offline; on tonight's data no
+  player is affected: "0 in this export").
+- Parked for Boris (exact wording, with the other parked questions): "W2's
+  byte-identity made Ruling 3 reach tools/chips.py, so the GW pass and the
+  planner take the zero too. Keep that (a), or (b) amend W2's identity test
+  to allow exactly Ruling 3's lines and leave tools/chips.py as it was?"
