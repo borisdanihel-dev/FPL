@@ -7,7 +7,37 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Mon 16 Nov, 19:25 UTC): Boris's answers of Mon 16 Nov** (verbatim in
+- **NOW (Thu 19 Nov, 22:35 UTC): Boris's answers of Thu 19 Nov night and late**
+  (verbatim in `prereg/W3fix.md`, `FM.md`, `FJ.md`, `runcommit.md`, `FJ6.md`,
+  `bundle.md`; `448e652` pushed; `101a485`, `2f0f3cd`, `2c04cd4`, `73c4a12` local,
+  pushed after tonight's nightly). **Standing rule:** a WARN or FAIL stops
+  that item only; its questions are parked here; carry on with the next
+  independent item.
+  - **GW11 deadline pass (Sat 21 Nov 11:00 UTC; freeze from Fri 05:00, tools
+    and worklog only):** bundle and scripts in `worklog/gw_pass/gw11/`
+    (`bb_moves.py` transfer tables gated / lifted / Thomas every week as
+    information; `s7_post_transfer.py`; `bb_timing.py`; ban risk) tested on
+    the 19 Nov export from a clean master worktree. Next: rerun on tonight's
+    export after the nightly, commit, post by Fri 09:00 UTC; Friday's refresh
+    after Boris's real run (~15:00 UTC), commit before 18:00 UTC.
+  - **FM (xp_v2_g2): STOPPED, verifier WARN** (`worklog/verify_FM.md`). Result
+    on `fm-wip` `f6d1c34`: GW5-10, 830 flagged player-weeks, mean e -0.158,
+    90% [-0.310, -0.016], bar NOT passed; not recorded Mon 23 Nov (Boris
+    confirmed). Boris's answers of Thu 19 late recorded: six origins accepted,
+    amendment 1, the prospective squared-error test GW11-15 pre-registered.
+    Open work before GW15: the two information prints and main()'s
+    end-to-end test; the item report; rebase `fm-wip`.
+  - **W3fix: STOPPED, re-check WARN** of `5385c57` (`worklog/verify_W3fix.md`).
+    Parked (exact wording in `prereg/W3fix.md`): (1) the float-sum mutant's
+    test; (2) four minor green mutants; (3) may `dry/W3fix` be pushed in the
+    freeze or after the deadline; (4) CHIPS's screen label's generated time;
+    (5) the changelog says the amended screen starts with GW12 (information).
+    Landing steps left: regenerate checkpoint.txt, CHANGELOG, report, merge
+    master, dry run, tag, merge, Boris's run, final check.
+  - **runcommit (Sun 22) + price-moves name fix;** the calibration RMSE
+    column rides with it (Boris, Thu 19 late; `prereg/runcommit.md`).
+
+- (Earlier) **NOW (Mon 16 Nov, 19:25 UTC): Boris's answers of Mon 16 Nov** (verbatim in
   `prereg/S8c.md`, `W3fix.md`, `FJ.md`, `FM.md`, `FJ6.md`, `runcommit.md`,
   `dbc6ad0`; the item count stays). Pins before code: `4274955` (W3fix
   Ruling 3, FJ tie rule and main() test, FM design), `2af773c` (W3fix
