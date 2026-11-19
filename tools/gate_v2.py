@@ -127,11 +127,15 @@ def window(rows, gws, suspended):
             a[1] += r["minutes"] or 0
     out = {}
     for pid in set(per) | set(suspended):
-        sus = suspended.get(pid, set())
-        ws = [e for e in range(gws, 0, -1) if e not in sus][:min(4, gws)]
+        ws = window_weeks(gws, suspended.get(pid, set()))
         out[pid] = (sum(per[pid][e][0] for e in ws if e in per[pid]),
                     sum(per[pid][e][1] for e in ws if e in per[pid]), len(ws))
     return out
+
+
+def window_weeks(gws, suspended_weeks):
+    """The gameweeks of one player's point-5 window: his last min(4, gws) up to gws without a suspension."""
+    return [e for e in range(gws, 0, -1) if e not in suspended_weeks][:min(4, gws)]
 
 
 def origin_inputs(d, c_rows, gws, suspended):

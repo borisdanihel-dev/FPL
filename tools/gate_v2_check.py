@@ -119,8 +119,9 @@ def check(data_dir, hist_root, out=print, origins=ORIGINS, last=LAST):
                              "mode": modes.get(pid, ["?"] * weeks_n)[i], "v1": a, "v2": b, "r": r, "e": e})
                 s += e
                 n += 1
+        touch = sum(1 for p in flagged if set(G.window_weeks(d["gameweek"], sus.get(p["id"], set()))) & unknown)
         per_origin.append({"origin": g, "export": os.path.basename(path), "snapshot": snap, "sum": s, "n": n,
-                           "no_row": no_row, "flagged": len(flagged), "unknown": sorted(unknown & set(range(1, d["gameweek"] + 1)))})
+                           "no_row": no_row, "flagged": len(flagged), "touch": touch, "unknown": sorted(unknown)})
     return rows, per_origin
 
 
@@ -139,13 +140,14 @@ def main(argv=None):
     rows, per = check(a.data, a.hist, out)
     out("STATUS GATE V2 (xp_v2_g2): THE RETROSPECTIVE CHECK, GW4-10 (prereg/FM.md; Boris's answer 4, Thu 12 Nov night)")
     out(f"  code {run_.commit[:7]} (modified tracked files {run_.dirty})")
-    out(f"  {'origin':<7}{'export':<36}{'odds':<30}{'flagged':>8}{'n':>5}{'mean e':>9}  unknown GWs (point 5)")
+    out(f"  {'origin':<7}{'export':<36}{'odds':<30}{'flagged':>8}{'n':>5}{'mean e':>9}  point 5: flagged windows touching a GW with no archive")
     for o in per:
         if "missing" in o:
             out(f"  GW{o['origin']:<5}missing input, not scored: {o['missing']}")
             continue
         out(f"  GW{o['origin']:<5}{o['export']:<36}{(o['snapshot'] or 'fallback'):<30}{o['flagged']:>8}{o['n']:>5}"
-            f"{(o['sum'] / o['n'] if o['n'] else float('nan')):>9.3f}  {o['unknown'] or '-'}")
+            f"{(o['sum'] / o['n'] if o['n'] else float('nan')):>9.3f}  {o['touch']} of {o['flagged']}"
+            + (f" (GW{', GW'.join(map(str, o['unknown']))} taken as unsuspended)" if o['touch'] else ""))
     scored = [o for o in per if "missing" not in o]
     boot = cluster_bootstrap([(o["sum"], o["n"]) for o in scored])
     out("")
