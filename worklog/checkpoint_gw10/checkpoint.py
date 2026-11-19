@@ -101,6 +101,11 @@ def legal(xi):
     return n[1] == 1 and 3 <= n[2] <= 5 and 2 <= n[3] <= 5 and 1 <= n[4] <= 3
 
 
+def xi_key(xi, val):
+    """xi_lex's order: the highest exact sum first, then the lexicographically smallest sorted id list."""
+    return -sum(val[r["id"]] for r in xi), sorted(r["id"] for r in xi)
+
+
 def xi_lex(squad, proj):
     """The GW15 tie rule's XI (prereg/FJ.md, pinned Mon 16 Nov): of every formation-legal XI from the 15, the highest
     sum of the forecasts, compared exactly; on equal sums the one whose sorted player-id list is lexicographically
@@ -108,8 +113,7 @@ def xi_lex(squad, proj):
     forecasts, the sub keeper)."""
     rows = [dict(r, proj=proj.get(r["id"], 0.0)) for r in squad]
     val = {r["id"]: _exact(r["proj"]) for r in rows}
-    best = min((c for c in combinations(rows, 11) if legal(c)),
-               key=lambda c: (-sum(val[r["id"]] for r in c), sorted(r["id"] for r in c)))
+    best = min((c for c in combinations(rows, 11) if legal(c)), key=lambda c: xi_key(c, val))
     xi = sorted(best, key=lambda r: (r["pos"], -val[r["id"]], r["id"]))
     rest = [r for r in rows if r["id"] not in {x["id"] for x in xi}]
     gk = [r for r in rest if r["pos"] == 1]

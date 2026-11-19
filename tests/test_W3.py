@@ -401,7 +401,11 @@ class Captain(unittest.TestCase):
         got = []
         out = SQ.captain(self.tmp, got.append, prior_path=self.prior)
         self.assertEqual(got[1:], want)
-        self.assertTrue(got[0].startswith("  GW9 from fpl_export_gw8.json: the points distribution of xp_v2"))   # tonight's (W3fix)
+        with open(os.path.join(self.tmp, "fpl_export_gw8.json"), encoding="utf-8") as fh:
+            gen = datetime.fromisoformat(json.load(fh)["generated"])
+        gen = gen.replace(tzinfo=timezone.utc) if gen.tzinfo is None else gen.astimezone(timezone.utc)
+        self.assertTrue(got[0].startswith(f"  GW9 from fpl_export_gw8.json (generated {gen:%Y-%m-%d %H:%M} UTC): the points "
+                                          "distribution of xp_v2"), got[0])   # tonight's (W3fix), its own time (point 5)
         self.assertIn("odds_2098-12-31T10-00-00Z.json.gz", got[0])
         self.assertEqual((out["captain"], out["options"]), (cap, options))
         xi = [b["id"] for _, _, b in G.side_by_side(squad, {}, res["xp"])["rows"][:11]]

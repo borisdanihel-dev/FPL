@@ -49,6 +49,16 @@ class MissingInput(Exception):
     """A required input is missing: reported, never substituted."""
 
 
+def _gen(d):
+    """The export's own generated time, UTC to the minute (W3fix point 5, Boris, Thu 19 Nov night)."""
+    try:
+        t = datetime.fromisoformat(str(d["generated"]))
+    except (KeyError, ValueError):
+        return "unknown"
+    t = t.replace(tzinfo=timezone.utc) if t.tzinfo is None else t.astimezone(timezone.utc)   # never the machine's zone
+    return t.strftime("%Y-%m-%d %H:%M UTC")
+
+
 def current_export(data_dir):
     """W3fix, Ruling 2 of Thu 12 Nov (prereg/W3fix.md): tonight's export - the
     working fpl_export_gw<N>.json the night's sync writes (fpl_ship.newest_export,
@@ -93,7 +103,7 @@ def captain(data_dir, out, prior_path=None):
     squad = CH.my_squad(d)
     xi, cap = xp_v2_captain(squad, res["xp"])
     snap = res["snapshot"]
-    out(f"  GW{target} from {os.path.basename(path)}: the points distribution of xp_v2 as tested (Step 14, option (a): "
+    out(f"  GW{target} from {os.path.basename(path)} (generated {_gen(d)}): the points distribution of xp_v2 as tested (Step 14, option (a): "
         f"its mean is xp_v2; no saves term); odds " + (f"{snap[0]}" if snap else "none before the deadline (every fixture "
         "on the fallback)") + "; information: the captain rule is unchanged (the highest xp_v2 in the XI) and there is no tie-break")
     PM.captain_table(squad, sums, out)
@@ -189,7 +199,7 @@ def ban_risk(data_dir, out):
     rows, prov = ban_rows(data_dir, d)
     inp = E.reliability_inputs(E.canonical_through(E.canonical_from_export(d), d["gameweek"]), gws_played=d["gameweek"])
     rates = position_rates(rows, dl)
-    out(f"  GW{target} from {os.path.basename(path)} (S12's rule): cautions = yellow cards in league matches before the deadline; one booking from a ban = 4 "
+    out(f"  GW{target} from {os.path.basename(path)} (generated {_gen(d)}) (S12's rule): cautions = yellow cards in league matches before the deadline; one booking from a ban = 4 "
         f"with the club's next league match its 18th or earlier, or 9 with it its 31st or earlier; rate90 = cautions per 90 "
         f"shrunk m/(m+{MV.CRED_K:g}) to the position's pooled rate; P(ban for the following gameweek) = min(1, rate90 x P(start)), "
         f"P(start) as xp_v2 as tested; a result FPL has ended but not yet marked finished counts, labelled provisional")

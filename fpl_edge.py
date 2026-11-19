@@ -3835,6 +3835,7 @@ def free_hit_table(d, log):
     gate = [p for p in d["all_players"] if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
     spare = [p for p in d["all_players"] if p["status"] == "a"]
     out = {"budget": budget, "weeks": []}
+    inp = fx = None
     for w in weeks:
         def row(p):
             return {"id": p["id"], "name": p["web_name"], "team": p["team"], "pos": p["pos"],
@@ -3842,7 +3843,18 @@ def free_hit_table(d, log):
         fh = best_one_week_xi([row(p) for p in gate], [row(p) for p in spare], budget)
         xi = _best_xi([dict(row(by_id[i]), proj=pts[w][i]) for i in ours_ids])
         ours = sum(p["proj"] for p in xi)
-        not_a = sum(1 for p in xi if p["status"] != "a")
+        # W3fix point 2 (Boris, Thu 19 Nov night): "not a" counts our best XI before Ruling 3's zero - item N's frozen
+        # metric, own where recorded, else bottomup - so an injury crisis still shows; the gap keeps the amended metric
+        frozen = {i: pts[w][i] for i in ours_ids}
+        no_own = [i for i in ours_ids if src[w][i] == "no own"]
+        if no_own:
+            if inp is None:
+                inp = reliability_inputs(canonical_from_export(d), gws_played=d["gameweek"])
+                fx = week_fixtures(d)
+            for i in no_own:
+                frozen[i] = project_week(i, by_id[i], inp, fx, w, ALL_TERMS) or 0.0
+        xi_frozen = _best_xi([dict(row(by_id[i]), proj=frozen[i]) for i in ours_ids])
+        not_a = sum(1 for p in xi_frozen if p["status"] != "a")
         gap = fh["pts"] - ours if fh else None
         metric = "own" if any(s == "own" for s in src[w].values()) else "bottomup"
         out["weeks"].append({
@@ -3908,7 +3920,8 @@ def sec_free_hit(d, horizon, log=None):
     print("          bench: dynamic programme on cost, branch and bound on the club limit.")
     print("  ours    the best XI from our current 15 by the same metric, any formation.")
     print(f"  flag    FH candidate when the gap exceeds {FH_GAP:g} or {FH_NOT_A}+ of our XI are")
-    print("          not status 'a' (today's status, for every week).")
+    print("          not status 'a' (today's status, for every week; counted on our best XI before")
+    print("          Ruling 3's zero, W3fix point 2).")
     print("  The formation is chosen on the sums here, which review D ruled out for the")
     print("  wildcard while DEF is over-spread: read a 5-DEF FH XI in a bottomup week so.")
     print()

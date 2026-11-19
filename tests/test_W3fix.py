@@ -49,7 +49,7 @@ class TonightsExport(unittest.TestCase):
         self._flag(cap)
         got = []
         res = SQ.captain(self.tmp, got.append, prior_path=self.prior)
-        self.assertTrue(got[0].startswith(f"  GW9 from {WORKING}: "), got[0])
+        self.assertTrue(got[0].startswith(f"  GW9 from {WORKING} (generated "), got[0])
         name = {r["id"]: r["name"] for r in fpl_chips.my_squad(self.d)}[cap]
         self.assertIn(f"  {name:<16}", "\n".join(got))
         self.assertTrue(any(s.startswith(f"  {name:<16}") and s.endswith("no xp_v2 forecast") for s in got), got)
@@ -77,6 +77,23 @@ class TonightsExport(unittest.TestCase):
         line = [s for s in got if s.startswith(f"  {ours['name']:<16}")]
         self.assertEqual(len(line), 1, got)
         self.assertIn("P(start) 0.00  P(ban) 0.000", line[0])
+
+    def test_the_headers_print_the_exports_own_time(self):
+        with open(self.working, encoding="utf-8") as fh:
+            d = json.load(fh)
+        d["generated"] = "2098-12-30T09:07:00"                                   # naive: read as UTC, never the machine's zone
+        with open(self.working, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(d, fh)
+        for section in (lambda o: SQ.captain(self.tmp, o, prior_path=self.prior), lambda o: SQ.ban_risk(self.tmp, o)):
+            got = []
+            section(got.append)
+            self.assertIn(f"from {WORKING} (generated 2098-12-30 09:07 UTC)", got[0])
+        d["generated"] = "2098-12-30T10:07:00+01:00"
+        with open(self.working, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(d, fh)
+        got = []
+        SQ.ban_risk(self.tmp, got.append)
+        self.assertIn("(generated 2098-12-30 09:07 UTC)", got[0])
 
     def test_no_working_export_is_a_missing_input_never_the_archive(self):
         os.remove(self.working)
@@ -120,6 +137,11 @@ class OneScale(unittest.TestCase):
         for p in cls.archive["all_players"]:
             if p["id"] == cls.mine["id"]:
                 p["status"], p["chance_next_round"] = "d", 75
+        # status 'a' but under 45 minutes in both exports: no own row, yet outside the Free Hit gate (W3fix point 4: the
+        # note's gate count must not count him)
+        cls.short = next(p for p in gate if p["id"] != cls.stale["id"])
+        for ex in (tonight, cls.archive):
+            next(p for p in ex["all_players"] if p["id"] == cls.short["id"])["mins_last4"] = 30
         cls.tonight, cls.next = tonight, nxt
         path = os.path.join(cls.tmp, "projection_log.csv")
         with redirect_stdout(io.StringIO()):
@@ -127,7 +149,7 @@ class OneScale(unittest.TestCase):
                 E.record_projections(tonight, 6, src, None, path)
         cls.log = E.read_log(path)
         own = {int(r["player_id"]) for r in cls.log if r["source"] == "own" and int(r["event"]) == nxt}
-        assert own and cls.stale["id"] not in own and cls.mine["id"] not in own
+        assert own and cls.stale["id"] not in own and cls.mine["id"] not in own and cls.short["id"] not in own
 
     @classmethod
     def tearDownClass(cls):
@@ -183,6 +205,122 @@ class OneScale(unittest.TestCase):
         self.assertNotIn(self.mine["id"], {p["id"] for p in t["weeks"][0]["ours_xi"]}, "counted 0, he is benched")
         self.assertEqual(t["weeks"][1]["no_own_ours"], [])                     # a bottomup week has no note
         self.assertEqual(len(notes), sum(1 for w in t["weeks"] if w["metric"] == "own"))
+
+    def test_the_gate_count_skips_a_player_under_45_minutes(self):
+        weeks, pts, src = self.E.one_week_points(self.tonight, self.log)
+        self.assertEqual(src[self.next][self.short["id"]], "no own")             # no own row in the own week ...
+        t = self.E.free_hit_table(self.tonight, self.log)
+        self.assertEqual(t["weeks"][0]["no_own_gate"], 0)                         # ... but not in the Free Hit gate
+
+    def test_tools_chips_counts_zero_in_its_own_week(self):
+        import chips as CHt                                                       # tools/chips.py, the GW pass's copy
+        weeks, pts, src = CHt.own_week_points(self.archive, self.log)
+        self.assertEqual((pts[self.next][self.stale["id"]], src[self.next][self.stale["id"]]), (0.0, "no own"))
+        self.assertEqual(src[weeks[1]][self.stale["id"]], "own-model")
+
+
+class InjuryCrisisStillFlags(unittest.TestCase):
+    """W3fix point 2 (Boris, Thu 19 Nov night): "the '3+ of our XI not a' trigger counts our best XI before the zero
+    (it exists to catch an injury crisis; zeroing first would hide it)"."""
+
+    def test_three_flagged_starters_without_own_rows_still_trigger(self):
+        import io
+        import shutil
+        import tempfile
+        from contextlib import redirect_stdout
+        from test_fpl import _recordable_export
+        import fpl_edge as E
+        d = _recordable_export(blank_team="HUL")
+        nxt = d["gameweek"] + 1
+        playing = {t for f in d["fixtures_next6"] if f["event"] == nxt for t in (f["home"], f["away"])}
+        inp = E.reliability_inputs(E.canonical_from_export(d), gws_played=d["gameweek"])
+        fx = E.week_fixtures(d)
+        ours = [p for p in d["all_players"] if p["id"] in set(E.my_squad_ids(d)) and p["pos"] != 1
+                and p["status"] == "a" and p["team"] in playing]
+        top = sorted(ours, key=lambda p: -(E.project_week(p["id"], p, inp, fx, nxt, E.ALL_TERMS) or 0.0))[:3]
+        for p in top:                                       # our three best outfield players flagged tonight: no own rows
+            p["status"], p["chance_next_round"] = "d", 75
+        tmp = tempfile.mkdtemp()
+        try:
+            path = os.path.join(tmp, "projection_log.csv")
+            with redirect_stdout(io.StringIO()):
+                for src in ("own", "bottomup"):
+                    E.record_projections(d, 6, src, None, path)
+            log = E.read_log(path)
+            w = E.free_hit_table(d, log)["weeks"][0]
+            _, pts, src = E.one_week_points(d, log)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        self.assertEqual(w["metric"], "own")
+        self.assertGreaterEqual(w["not_a"], 3)
+        self.assertIn("of our XI not 'a'", w["flag"])
+        for p in top:                                       # the gap still counts them 0 (Ruling 3)
+            self.assertEqual((pts[nxt][p["id"]], src[nxt][p["id"]]), (0.0, "no own"))
+
+
+class ChipsScreenOnTonightsExport(unittest.TestCase):
+    """W3fix point 1 (Boris, Thu 19 Nov night): "CHIPS's Free Hit screen reads tonight's export, so its flag always
+    matches the base screen"; the calculator above it stays on the dated archive. Also point 4: CHIPS's header note."""
+
+    def setUp(self):
+        import tempfile
+        from tests.test_S4 import toy_data
+        from tests.test_S7 import toy_export
+        import fpl_edge as E
+        self.E = E
+        self.tmp = tempfile.mkdtemp()
+        toy_data(self.tmp)
+        self.d = toy_export(self.tmp)
+        self.log = E.read_log(os.path.join(self.tmp, E.LOG_PATH))
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _working(self):
+        """Tonight's export: the archive with the archive screen's dearest Free Hit starter injured."""
+        d = json.loads(json.dumps(self.d))
+        fh = self.E.free_hit_table(self.d, self.E.forecasts(self.log, self.d))["weeks"][0]["fh"]
+        star = max(fh["xi"], key=lambda p: (p["price"], -p["id"]))["id"]
+        next(p for p in d["all_players"] if p["id"] == star)["status"] = "i"
+        with open(os.path.join(self.tmp, "fpl_export_gw7.json"), "w", encoding="utf-8", newline="\n") as fh_:
+            json.dump(d, fh_)
+        return d
+
+    @staticmethod
+    def screen(lines):
+        i = next(k for k, s in enumerate(lines) if s.startswith("  FREE HIT SCREEN"))
+        return lines[i], lines[i + 1:]
+
+    def test_the_screen_is_the_base_screen_of_tonight(self):
+        import chips as CHt
+        tonight = self._working()
+        got, tool = [], []
+        fpl_chips.live(self.tmp, out=got.append, resamples=40)
+        CHt.live(self.tmp, out=tool.append, resamples=40)
+        self.assertEqual(got, tool)                                             # W2's identity holds with the export
+        head, body = self.screen(got)
+        self.assertTrue(head.startswith("  FREE HIT SCREEN from fpl_export_gw7.json (tonight's export;"), head)
+        want = self.E.free_hit_lines(self.E.free_hit_table(tonight, self.E.forecasts(self.log, tonight)))
+        self.assertEqual(body, want)
+        old = self.E.free_hit_lines(self.E.free_hit_table(self.d, self.E.forecasts(self.log, self.d)))
+        self.assertNotEqual(body, old, "the toy must tell tonight's export from last night's")
+        self.assertTrue(got[0].startswith("CHIP CALCULATOR  export fpl_export_gw7_2026-10-18.json.gz"))   # the archive
+
+    def test_no_working_export_is_one_line_never_last_nights(self):
+        got = []
+        fpl_chips.live(self.tmp, out=got.append, resamples=40)
+        head, body = self.screen(got)
+        self.assertTrue(head.startswith("  FREE HIT SCREEN not built: no working export"), head)
+        self.assertEqual(body, [])
+
+    def test_the_header_note(self):
+        import chips as CHt
+        for live in (fpl_chips.live, CHt.live):
+            got = []
+            live(self.tmp, out=got.append, resamples=40)
+            notes = [s for s in got if s.startswith("  GW8 has own rows: a player through the gate with no own row counts 0")]
+            self.assertEqual(len(notes), 1, live)
 
 
 if __name__ == "__main__":

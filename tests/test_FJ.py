@@ -118,6 +118,18 @@ class GW15TieRule(unittest.TestCase):
         self.assertNotEqual(0.1 + 0.2, 0.3)                                 # as floats they differ
         self.assertEqual(CK._exact(0.1) + CK._exact(0.2), CK._exact(0.3))  # as the decimals written, a tie
         self.assertEqual(CK._exact(float("2.1500")), CK._exact(2.15))
+        # the comparison xi_lex uses (W3fix point 4, Boris, Thu 19 Nov night: the float-sum mutant)
+        a, b = [{"id": 1}, {"id": 2}], [{"id": 3}, {"id": 4}]
+        val = {1: CK._exact(0.1), 2: CK._exact(0.2), 3: CK._exact(0.3), 4: CK._exact(0.0)}
+        self.assertEqual(CK.xi_key(a, val)[0], CK.xi_key(b, val)[0])          # a tie, exactly
+        self.assertLess(CK.xi_key(a, val), CK.xi_key(b, val))                  # settled by the smaller sorted ids
+
+    def test_a_missing_forecast_counts_zero(self):
+        proj = {k: v for k, v in self.PROJ.items() if k != 300}               # FWD 300 has no forecast
+        proj[5], proj[24] = 0.5, 0.0                                           # DEF 5 at 0.5: 300 at 1 would start instead
+        ids = {r["id"] for r in CK.xi_lex(self.TOY, proj)[0]}
+        self.assertIn(5, ids)
+        self.assertNotIn(300, ids)
 
     def test_realised_lex_equals_realised_on_whenever_the_xis_agree(self):
         import random

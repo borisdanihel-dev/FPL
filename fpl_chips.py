@@ -7,6 +7,7 @@ sections byte-identical to the tools' output. Standard library only.
 """
 import fpl_bt as BT
 import fpl_edge as E
+import fpl_ship
 import glob
 import gzip
 import json
@@ -351,13 +352,20 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
             "one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)")
         for line in bench_prep(d, squad, pts[bb_week], detail[bb_week], budget):
             out(line)
-    # the Free Hit screen (item N, selling budget)
+    # the Free Hit screen (item N, selling budget), on tonight's export (W3fix point 1, Boris, Thu 19 Nov night): the
+    # base screen's own table, so its flag always matches; the calculator above stays on the dated archive
     out("")
-    out("  FREE HIT SCREEN (item N, as amended by W3fix Ruling 3: own where recorded, 0 for a player without an own row "
-        "in that week, else bottomup; budget = bank + selling prices)")
-    fh_table = E.free_hit_table(d, E.forecasts(log_rows, d))
-    for line in E.free_hit_lines(fh_table):
-        out(line)
+    tonight = fpl_ship.newest_export(data_dir)
+    if not tonight:
+        out("  FREE HIT SCREEN not built: no working export (fpl_export_gw<N>.json) in the data folder - never last night's")
+    else:
+        with open(tonight, encoding="utf-8") as fh:
+            dt = json.load(fh)
+        out(f"  FREE HIT SCREEN from {os.path.basename(tonight)} (tonight's export; item N, as amended by W3fix Ruling 3: own "
+            "where recorded, 0 for a player without an own row in that week, else bottomup; budget = bank + selling prices)")
+        fh_table = E.free_hit_table(dt, E.forecasts(log_rows, dt))
+        for line in E.free_hit_lines(fh_table):
+            out(line)
     return {"weeks": weeks, "v_bb": v_bb, "v_fh": v_fh, "induction": ind, "next": nxt, "chips": chips,
             "budget": budget, "detail": detail}
 
