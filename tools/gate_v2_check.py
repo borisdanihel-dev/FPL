@@ -90,11 +90,15 @@ def check(data_dir, hist_root, out=print, origins=ORIGINS, last=LAST):
     locked, realised = locked_weeks(os.path.join(data_dir, "fpl.sqlite"))
     rows, per_origin = [], []
     for g in origins:
-        d, path, dl, book, model, snap = G.origin(data_dir, g, exports)
-        sus, unknown = G.suspensions([x for x in exports if x[0] < dl], deadlines, d["gameweek"])
         weeks_n = 6
-        v1, _ = G.matrix(d, g, weeks_n, book, model, prior, names, "v1")
-        v2, modes = G.matrix(d, g, weeks_n, book, model, prior, names, "v2", sus)
+        try:
+            d, path, dl, book, model, snap = G.origin(data_dir, g, exports)
+            sus, unknown = G.suspensions([x for x in exports if x[0] < dl], deadlines, d["gameweek"])
+            v1, _ = G.matrix(d, g, weeks_n, book, model, prior, names, "v1")
+            v2, modes = G.matrix(d, g, weeks_n, book, model, prior, names, "v2", sus)
+        except (G.MissingInput, ValueError) as e:              # reported, never substituted: the origin is not scored
+            per_origin.append({"origin": g, "missing": f"{type(e).__name__}: {e}", "sum": 0.0, "n": 0})
+            continue
         flagged = [p for p in d["all_players"] if p["status"] in FLAGGED and (p.get("mins_last4") or 0) >= 45]
         s, n, no_row = 0.0, 0, 0
         for i, u in enumerate(range(g, g + weeks_n)):
@@ -137,9 +141,13 @@ def main(argv=None):
     out(f"  code {run_.commit[:7]} (modified tracked files {run_.dirty})")
     out(f"  {'origin':<7}{'export':<36}{'odds':<30}{'flagged':>8}{'n':>5}{'mean e':>9}  unknown GWs (point 5)")
     for o in per:
+        if "missing" in o:
+            out(f"  GW{o['origin']:<5}missing input, not scored: {o['missing']}")
+            continue
         out(f"  GW{o['origin']:<5}{o['export']:<36}{(o['snapshot'] or 'fallback'):<30}{o['flagged']:>8}{o['n']:>5}"
             f"{(o['sum'] / o['n'] if o['n'] else float('nan')):>9.3f}  {o['unknown'] or '-'}")
-    boot = cluster_bootstrap([(o["sum"], o["n"]) for o in per])
+    scored = [o for o in per if "missing" not in o]
+    boot = cluster_bootstrap([(o["sum"], o["n"]) for o in scored])
     out("")
     out(f"  PRIMARY: e = |v1 - r| - |v2 - r| over {boot['n']} flagged player-weeks in {boot['n_clusters']} origins: "
         f"mean {boot['mean']:+.3f}, 90% [{boot['lo']:+.3f}, {boot['hi']:+.3f}] (origins resampled, B {FB.B}, seed {FB.SEED}"
@@ -149,7 +157,10 @@ def main(argv=None):
     for r in rows:
         by_status[r["status"]].append(r["e"])
     out("  by status (information): " + ", ".join(f"{st} n={len(v)} mean {sum(v) / len(v):+.3f}" for st, v in sorted(by_status.items())))
-    out(f"  no player_gw row (counted 0): {sum(o['no_row'] for o in per)}")
+    out(f"  no player_gw row (counted 0): {sum(o.get('no_row', 0) for o in per)}")
+    if len(scored) < len(per):
+        out(f"  NOT SCORED: {', '.join('GW' + str(o['origin']) for o in per if 'missing' in o)} (missing input above); the primary "
+            f"line covers {len(scored)} of {len(per)} origins")
     os.makedirs(a.out, exist_ok=True)
     path = os.path.join(a.out, "gate_v2_check.txt")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
@@ -169,6 +180,6 @@ def main(argv=None):
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except G.MissingInput as e:
+    except (G.MissingInput, XL.MissingInput) as e:
         print(f"missing input: {e} - nothing is substituted")
         sys.exit(2)
