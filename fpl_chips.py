@@ -359,7 +359,7 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
     if not tonight:
         out("  FREE HIT SCREEN not built: no working export (fpl_export_gw<N>.json) in the data folder - never last night's")
     else:
-        with open(tonight, encoding="utf-8") as fh:
+        with open(tonight, encoding="utf-8", newline="") as fh:
             dt = json.load(fh)
         out(f"  FREE HIT SCREEN from {os.path.basename(tonight)} (tonight's export; item N, as amended by W3fix Ruling 3: own "
             "where recorded, 0 for a player without an own row in that week, else bottomup; budget = bank + selling prices)")
