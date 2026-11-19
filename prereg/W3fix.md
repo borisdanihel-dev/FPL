@@ -264,3 +264,31 @@ the 21:00 UTC window covers master).
 - **Measured:** the suite before and after; mutations; the 12 Nov case and
   tonight's report, watch file and CHIPS before and after; across the nightly
   data commits the CHIPS screen's flag equals the base screen's in every row.
+
+## Questions parked for Boris (exact wording), Thu 19 Nov 22:25 UTC, after the re-check WARN of `5385c57` (`worklog/verify_W3fix.md`, appended)
+
+The item stops (standing rule of Thu 19 Nov); its dry run and merge wait.
+Every measured claim reproduced: CHIPS's screen equals the base screen on 38
+of 38 replayed nights; the not-'a' count equals the pre-Ruling-3 code's on 228
+of 228 week-rows; 884 OK three ways; no recorded row moves.
+
+1. **The float-sum mutant.** "Point 4's test for the float-sum survivor checks
+   xi_key with exact values it builds itself, so a float conversion inside
+   xi_lex still passes (it changes no XI in 6,000 random squads on Python
+   3.14). Add a small test of what xi_lex hands to its key (yes), or accept
+   the gap (no)?"
+2. **Four minor green mutants** (the screen's log read through the archive's
+   deadlines; the frozen value by three-layer terms; the archive's table
+   printed above the "not built" line; the generated time's "unknown"
+   branch). "Add tests (yes), or accept them (no)?"
+3. **The dry run's timing.** "May dry/W3fix be pushed during the freeze from
+   Fri 20 Nov 05:00 UTC (a dry run writes nothing to data), or does it wait
+   until after the GW11 deadline, Sat 21 Nov 11:00 UTC?"
+4. **CHIPS's screen label.** "It says 'tonight's export' with no time; on a
+   night the sync fails that file is the restored copy of last night's. Print
+   its generated time there too, as in the CAPTAIN and BAN RISK headers
+   (yes), or leave it (no)?"
+5. **The changelog wording** (information, no answer needed unless you
+   object): the Ruling 3 pin said the item N amendment lands before the GW11
+   deadline; with the landing after it, the entry will say the amended screen
+   starts with GW12.

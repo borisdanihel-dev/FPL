@@ -123,3 +123,13 @@ c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15
 d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
 e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
 Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Answers on FM, Thu 19 Nov late (Boris's message verbatim; for this item: its last paragraph, Thomas in the GW11 tables)
+
+Answers on FM, Thu 19 Nov late.
+1. Yes: accept the six-origin result (GW5-10); note in the report that GW4's only pre-deadline export predates the player ids and could not change the verdict.
+2. Confirmed: the bar is not passed (mean -0.158, 90% [-0.310, -0.016]); xp_v2_g2 is not recorded on Mon 23 Nov. The result stays on record as run.
+3. Yes: before the GW15 re-run, print the two information lines (the suspension-window-only player-weeks; our own flagged players) and add an end-to-end test of the check's main().
+4. (a) Keep the code's reading: with no archived export a gameweek counts as unsuspended, but a known suspension is still skipped. Record it as an amendment to prereg/FM.md, with the literal reading's figures ([-0.301, -0.009]; same verdict).
+5. No: pre-register a new prospective test now, before any GW11 result exists. Data: flagged player-weeks from GW11 onward (deadlines GW11-15) from the archived nightly exports. Primary metric: the paired squared-error difference (v1 - realised)^2 - (v2 - realised)^2, which is the right scoring for expected-points forecasts. Same bootstrap (unit = deadline gameweek, B 10,000, seed 20261018). Bar: 90% lower bound above 0. Absolute error is printed as secondary information. Judge it at GW15 with F-L. Record in prereg/FM.md that the earlier absolute-error bar favoured predicting 0 (462 of 830 scored 0) and that the squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before this test was set: that is why the new test uses GW11 onward only.
+Thomas in the GW11 tables: his 50% applies in GW11 only, then as normal (the FM 'd' rule Boris approved). Also print the every-week version beside it as information.

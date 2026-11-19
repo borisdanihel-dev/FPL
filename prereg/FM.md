@@ -351,3 +351,48 @@ recorded on Mon 23 Nov. The item stops here (standing rule of Thu 19 Nov).
 Corrections: the commit message of `f6d1c34` says 23 tests; there are 22.
 The cited `run.txt` is in the session scratch, not `tools/out/gate_v2_check/`;
 it is copied there with the item's report.
+
+## Answers on FM, Thu 19 Nov late (Boris's message verbatim; for this item: points 1-5)
+
+Answers on FM, Thu 19 Nov late.
+1. Yes: accept the six-origin result (GW5-10); note in the report that GW4's only pre-deadline export predates the player ids and could not change the verdict.
+2. Confirmed: the bar is not passed (mean -0.158, 90% [-0.310, -0.016]); xp_v2_g2 is not recorded on Mon 23 Nov. The result stays on record as run.
+3. Yes: before the GW15 re-run, print the two information lines (the suspension-window-only player-weeks; our own flagged players) and add an end-to-end test of the check's main().
+4. (a) Keep the code's reading: with no archived export a gameweek counts as unsuspended, but a known suspension is still skipped. Record it as an amendment to prereg/FM.md, with the literal reading's figures ([-0.301, -0.009]; same verdict).
+5. No: pre-register a new prospective test now, before any GW11 result exists. Data: flagged player-weeks from GW11 onward (deadlines GW11-15) from the archived nightly exports. Primary metric: the paired squared-error difference (v1 - realised)^2 - (v2 - realised)^2, which is the right scoring for expected-points forecasts. Same bootstrap (unit = deadline gameweek, B 10,000, seed 20261018). Bar: 90% lower bound above 0. Absolute error is printed as secondary information. Judge it at GW15 with F-L. Record in prereg/FM.md that the earlier absolute-error bar favoured predicting 0 (462 of 830 scored 0) and that the squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before this test was set: that is why the new test uses GW11 onward only.
+Thomas in the GW11 tables: his 50% applies in GW11 only, then as normal (the FM 'd' rule Boris approved). Also print the every-week version beside it as information.
+
+### Amendment 1 (answer 4): point 5 where a gameweek has no archived export, Thu 19 Nov 22:25 UTC
+
+The design pin's "the plain window is used" is amended to the code's reading,
+as Boris ruled: with no archived export a gameweek counts as unsuspended, but
+a suspension the archive does show is still skipped (the window is the last
+four gameweeks without a known suspension). The literal reading (the plain
+four gameweeks wherever the window touches a gameweek without an archive)
+gives, on the same run, 90% [-0.301, -0.009]: the same verdict, the bar not
+passed (the verifier's figures, `worklog/verify_FM.md`).
+
+### The prospective test, pre-registered (answer 5), Thu 19 Nov 22:25 UTC, before any GW11 result exists
+
+- **Data:** flagged player-weeks (status d, s or i in the origin's export,
+  45+ minutes in its last four) at the deadlines of GW11-GW15, from the
+  archived nightly exports, each origin's horizon weeks scored once locked
+  down (data_checked = 1, every fixture finished), the club playing.
+- **Primary metric:** the paired squared-error difference
+  (v1 - r)^2 - (v2 - r)^2 per player-week, r = player_gw.total_points over
+  the week; the mean over player-weeks.
+- **Bootstrap:** unit = the deadline gameweek (origins resampled with
+  replacement, the pooled mean recomputed), B 10,000, seed 20261018, 90%.
+- **Bar:** the 90% lower bound above 0. Absolute error (the GW5-10 metric) is
+  printed beside it as secondary information.
+- **Judged:** at GW15, with F-L.
+- **Why GW11 onward only:** the GW5-10 absolute-error bar favoured
+  predicting 0 (v1 is 0 in all 830 rows and 462 of them scored 0), and the
+  squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before
+  this test was set; using any of GW5-10 again would choose the test after
+  seeing its result.
+- **The result of GW5-10 stays on record as run** (answer 2): the bar not
+  passed; xp_v2_g2 is not recorded on Mon 23 Nov.
+- **Before the GW15 run** (answer 3): the check prints the two information
+  lines (the player-weeks moved only by the suspension window; our own
+  flagged players) and gains an end-to-end test of its main().
