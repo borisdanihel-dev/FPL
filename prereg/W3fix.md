@@ -232,3 +232,35 @@ c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15
 d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
 e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
 Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Answers of Thu 19 Nov night, pinned before their code (W3fix points 1, 2, 4, 5; Thu 19 Nov 21:10 UTC)
+
+Committed locally before any code; pushed after tonight's nightly (mode (d):
+the 21:00 UTC window covers master).
+
+- **Point 1 (i), CHIPS's Free Hit screen on tonight's export:** the screen
+  printed at the end of CHIPS (`fpl_chips.live`, and `tools/chips.py`'s
+  `live` byte for byte, W2's identity) is built from tonight's working export
+  (`fpl_ship.newest_export`, the file CAPTAIN and BAN RISK read since Ruling
+  2) with tonight's log, so it is the base screen's own table. Its label names
+  that export. No working export: one line, "FREE HIT SCREEN not built: no
+  working export (...)", never last night's. The calculator above it (V_BB,
+  V_FH, the induction) stays on the dated archive (amendment 3, point 3).
+- **Point 2 (no), the not-'a' trigger:** `free_hit_table` counts "not a" on
+  our best XI chosen by the metric before Ruling 3's zero (item N as frozen:
+  own where recorded, else bottomup), so an injury crisis still shows; the gap
+  ("ours") keeps the amended metric. The flag rule itself is unchanged.
+- **Point 4, the five surviving mutants, one test each:** CHIPS's header note
+  (fpl_chips and tools/chips); the note's gate count (a status-'a' player under
+  45 minutes without an own row is not counted); float sums in `xi_lex` (its
+  comparison key ties 0.1 + 0.2 with 0.3); a missing forecast in `xi_lex`
+  counts 0 (a toy where 1 would start him); `tools/chips.own_week_points`'
+  own-week rule on its own.
+- **Point 5, the headers:** CAPTAIN's and BAN RISK's headers print the
+  export's own `generated` time (UTC, to the minute) beside its name.
+- **Tests:** each red on the current branch code (`7c40c6a`); the not-'a' rule
+  on a toy where three of our XI are flagged without own rows; point 1 on a
+  toy where last night's archive and tonight's export differ.
+- **Measured:** the suite before and after; mutations; the 12 Nov case and
+  tonight's report, watch file and CHIPS before and after; across the nightly
+  data commits the CHIPS screen's flag equals the base screen's in every row.
