@@ -199,3 +199,9 @@ c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15
 d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
 e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
 Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Boris's message of Thu 19 Nov late, verbatim (calibration: a squared-error column; it rides with runcommit, or with W3fix if that lands first)
+
+After the GW11 deadline, with W3fix or runcommit: add a squared-error column (RMSE, and RMSE against the constant) beside MAE in the calibration section, so forecasts that run low or high are judged on the same scale as expected points. Report only; no bar changes.
+
+(Recorded Thu 19 Nov 22:30 UTC. The design, the constant RMSE is measured against, and the tests are pinned here before the code, after the GW11 deadline.)
