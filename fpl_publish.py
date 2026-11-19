@@ -176,7 +176,7 @@ def main(argv=None, sleep=None, say=print, env=None):
     else:
         msg = (f"dry run {stamp} {env.get('GITHUB_REF_NAME', '')} "
                f"{env.get('GITHUB_SHA', '')[:7]} [skip ci]" if mode == "dry"
-               else f"nightly {stamp} [skip ci]")
+               else f"nightly {stamp} {env.get('GITHUB_SHA', '')[:7]} [skip ci]")   # runcommit: the code commit
         r = _git(data, "commit", "-q", "-m", " ".join(msg.split()))
         if r.returncode != 0:
             say(f"COMMIT FAILED {r.stdout.strip()}")

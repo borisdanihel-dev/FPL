@@ -874,33 +874,41 @@ def sec_diff(d, prev, horizon):
               f"{s['total']:>4} ({s['total']-o['total']:+d})  "
               f"val {s['value']/10:>5.1f} ({(s['value']-o['value'])/10:+.1f})")
 
-    pa = {p["web_name"]: p for p in prev.get("all_players", [])}
-    mine = {r["web_name"] for r in d["squads"] if r["entry_name"] == me}
+    # runcommit (prereg/runcommit.md, the price-moves fix): every block matches players by id, never by web_name
+    # (two players of one name collided: Coventry's Thomas showed Hull's price move)
+    pa = {p["id"]: p for p in prev.get("all_players", []) if "id" in p}
+    by_id = {p["id"]: p for p in d["all_players"]}
+    rows_ok = all(r.get("player_id") is not None for r in d["squads"])
+    mine = {r["player_id"] for r in d["squads"] if r["entry_name"] == me} if rows_ok else set()
 
     if not pa:
         print("\n  price moves / new flags / form movers: need 'all_players' in "
               "both exports - skipped")
         _diff_chips(d, prev)
         return
+    if not rows_ok:
+        print("\n  price moves / new flags / form movers: not comparable: squads rows without player_id")
+        _diff_chips(d, prev)
+        return
 
     print("\n  YOUR SQUAD: price moves")
     moved = False
-    for n in sorted(mine):
-        p, o = next((x for x in d["all_players"] if x["web_name"] == n), None), pa.get(n)
+    for pid in sorted(mine, key=lambda i: by_id[i]["web_name"] if i in by_id else str(i)):
+        p, o = by_id.get(pid), pa.get(pid)
         if p and o and p["price"] != o["price"]:
             moved = True
-            print(f"    {n[:15]:15s}{p['team']:5s} £{o['price']:.1f} -> "
+            print(f"    {p['web_name'][:15]:15s}{p['team']:5s} £{o['price']:.1f} -> "
                   f"£{p['price']:.1f}  ({p['price']-o['price']:+.1f})")
     if not moved:
         print("    none")
 
     print("\n  NEW FLAGS (owned by anyone in the league)")
-    league = {r["web_name"] for r in d["squads"]}
+    league = {r["player_id"] for r in d["squads"]}
     newflag = False
     for p in d["all_players"]:
-        if p["web_name"] not in league or p["status"] == "a":
+        if p["id"] not in league or p["status"] == "a":
             continue
-        o = pa.get(p["web_name"])
+        o = pa.get(p["id"])
         if o and o["status"] == "a":
             newflag = True
             print(f"    !! {p['web_name'][:15]:15s}{p['team']:5s}{p['status']} "
@@ -911,13 +919,13 @@ def sec_diff(d, prev, horizon):
     print("\n  FORM MOVERS  (last-4 points, biggest gains, 60+ mins)")
     rows = []
     for p in d["all_players"]:
-        o = pa.get(p["web_name"])
+        o = pa.get(p["id"])
         if not o or p["mins_last4"] < 60 or p["status"] != "a":
             continue
         rows.append((p["pts_last4"] - o["pts_last4"], p))
     rows.sort(key=lambda x: -x[0])
     for delta, p in rows[:10]:
-        own = " *YOURS*" if p["web_name"] in mine else ""
+        own = " *YOURS*" if p["id"] in mine else ""
         print(f"    {p['web_name'][:15]:15s}{p['team']:5s}£{p['price']:>5.1f} "
               f"L4 {p['pts_last4']:>3} ({delta:+d})  own {p['owned_pct']:>5.1f}%{own}")
 
@@ -3151,6 +3159,14 @@ def grade_forecasts(d, log, detail=False):
     return graded, pending
 
 
+def _rmse(pairs, const):
+    """(RMSE of the forecasts, RMSE of the constant `const`) over (forecast, realised) pairs - squared error on the
+    same scale as expected points (runcommit addendum, Boris's message of Thu 19 Nov late; report only)."""
+    n = len(pairs)
+    return ((sum((p - a) ** 2 for p, a in pairs) / n) ** 0.5,
+            (sum((const - a) ** 2 for _, a in pairs) / n) ** 0.5)
+
+
 def sec_calibration(d, horizon, path=None):
     """Rolling accuracy across every gameweek we forecast in advance."""
     print("=" * 78)
@@ -3204,7 +3220,7 @@ def sec_calibration(d, horizon, path=None):
         print()
         return
 
-    print(f"\n  {'source':10s}{'GW':>4}{'n':>6}{'MAE':>7}{'const':>7}"
+    print(f"\n  {'source':10s}{'GW':>4}{'n':>6}{'MAE':>7}{'const':>7}{'RMSE':>7}{'rconst':>7}"
           f"{'rho':>8}{'starters':>10}{'n_st':>6}{'bias':>7}   verdict")
     by_source = defaultdict(list)
     for (src, ev), rows in sorted(graded.items()):
@@ -3214,15 +3230,16 @@ def sec_calibration(d, horizon, path=None):
         mean = sum(a for _, a in pairs) / n
         mae = sum(abs(p - a) for p, a in pairs) / n
         const = sum(abs(mean - a) for _, a in pairs) / n
+        rmse, rconst = _rmse(pairs, mean)               # runcommit addendum: report only, no bar reads it
         rho = _spearman([p for p, _ in pairs], [a for _, a in pairs])
         rho_st = _spearman([p for p, _ in st], [a for _, a in st])
         bias = sum(p - a for p, a in pairs) / n
         by_source[src].extend(pairs)
         if src == "minutes":
-            print(f"  {src[:10]:10s}{ev:>4}{n:>6}{'-':>7}{'-':>7}"
+            print(f"  {src[:10]:10s}{ev:>4}{n:>6}{'-':>7}{'-':>7}{'-':>7}{'-':>7}"
                   f"{rho:>8.3f}{rho_st:>10.3f}{len(st):>6}{'-':>7}   rho only")
         else:
-            print(f"  {src[:10]:10s}{ev:>4}{n:>6}{mae:>7.2f}{const:>7.2f}"
+            print(f"  {src[:10]:10s}{ev:>4}{n:>6}{mae:>7.2f}{const:>7.2f}{rmse:>7.2f}{rconst:>7.2f}"
                   f"{rho:>8.3f}{rho_st:>10.3f}{len(st):>6}{bias:>+7.2f}   "
                   f"{'beats const' if mae < const else 'loses'}")
     if any(src == "minutes" for src, _ in graded):
@@ -3236,13 +3253,14 @@ def sec_calibration(d, horizon, path=None):
         mean = sum(a for _, a in pairs) / n
         mae = sum(abs(p - a) for p, a in pairs) / n
         const = sum(abs(mean - a) for _, a in pairs) / n
+        rmse, rconst = _rmse(pairs, mean)
         rho = _spearman([p for p, _ in pairs], [a for _, a in pairs])
         se = (1.0 / (n - 1)) ** 0.5 if n > 2 else 1.0
         print(f"  {src.upper()} over {weeks} gameweek(s), {n} forecasts")
         if src == "minutes":
             print(f"    rho {rho:+.3f} +-{1.96*se:.3f}   (start probability: rho only)")
         else:
-            print(f"    MAE {mae:.3f} vs constant {const:.3f}   "
+            print(f"    MAE {mae:.3f} vs constant {const:.3f}   RMSE {rmse:.3f} vs constant {rconst:.3f}   "
                   f"rho {rho:+.3f} +-{1.96*se:.3f}")
         verdict = ("real signal" if rho - 1.96 * se > 0.10
                    else "still indistinguishable from noise")

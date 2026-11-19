@@ -204,6 +204,8 @@ def nightly(root=".", stamp=None, py=None, echo=print, data=None):
         say(f"working dir: {root}")
         say(f"data dir: {data}")
         say(f"using: {py}")
+        sha = os.environ.get("GITHUB_SHA") or ""        # runcommit (prereg/runcommit.md): never a substitute
+        say(f"code commit: {sha[:7]}" if sha else "code commit: unknown (no GITHUB_SHA)")
 
         restore_exports(data, say)
 

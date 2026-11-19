@@ -2909,12 +2909,13 @@ class MinutesIsAProbability(unittest.TestCase):
     def test_minutes_row_shows_rho_only(self):
         import re
         out = self._out()
-        row = re.search(r"^  minutes\s+\d+\s+(\d+)\s+(\S+)\s+(\S+)\s+([+-]?\d\.\d{3})\s+([+-]?\d\.\d{3})\s+\d+\s+(\S+)\s+(.*)$",
-                        out, re.M)
+        # runcommit addendum: RMSE and rconst sit after const, "-" for a start probability like MAE
+        row = re.search(r"^  minutes\s+\d+\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+([+-]?\d\.\d{3})\s+([+-]?\d\.\d{3})"
+                        r"\s+\d+\s+(\S+)\s+(.*)$", out, re.M)
         self.assertIsNotNone(row, "no minutes row")
-        self.assertEqual((row.group(2), row.group(3), row.group(6)), ("-", "-", "-"),
-                         "MAE / const / bias printed for a start probability")
-        self.assertIn("rho only", row.group(7))
+        self.assertEqual((row.group(2), row.group(3), row.group(4), row.group(5), row.group(8)), ("-",) * 5,
+                         "MAE / const / RMSE / rconst / bias printed for a start probability")
+        self.assertIn("rho only", row.group(9))
         self.assertIn("its MAE, const and bias are undefined", out, "the one-line note is missing")
 
     def test_other_sources_still_print_mae(self):

@@ -653,7 +653,13 @@ def next_deadline(con, now):
     return min(rows, key=lambda r: r[1]) if rows else None
 
 
-def status_line(results, now, deadline, repo_kb, tz):
+def code_commit(env):
+    """runcommit (prereg/runcommit.md): the run's code commit - GITHUB_SHA's first 7 characters, the commit the
+    nightly checks out - or None outside Actions; never read from anywhere else."""
+    return ((env or {}).get("GITHUB_SHA") or "")[:7] or None
+
+
+def status_line(results, now, deadline, repo_kb, tz, code=None):
     ran = [r for r in results if r.level != SKIP]
     good = sum(1 for r in ran if r.level == OK)
     if deadline is None:
@@ -664,7 +670,7 @@ def status_line(results, now, deadline, repo_kb, tz):
               f"{when.astimezone(tz):%Y-%m-%d %H:%M} Prague")
     repo = f"{repo_kb / 1024:.0f} MB" if repo_kb is not None else "? MB"
     return (f"STATUS {overall(results)} | generated {now.astimezone(timezone.utc):%Y-%m-%dT%H:%M:%SZ}"
-            f" | next deadline {dl} | checks {good}/{len(ran)} | repo {repo}")
+            f" | next deadline {dl} | checks {good}/{len(ran)} | repo {repo} | code {code or '?'}")
 
 
 def status_time(text):
@@ -819,7 +825,7 @@ def main(argv=None, env=None, tz=None, now=None):
     try:
         results = run_all(x)
         line = status_line(results, x.now, next_deadline(x.db, x.now), x.repo_kb,
-                           tz or prague_tz())
+                           tz or prague_tz(), code=code_commit(env))
     finally:
         for con in (x.db, x.prev):
             if con is not None:

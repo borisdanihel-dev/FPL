@@ -516,7 +516,7 @@ class StatusLine(unittest.TestCase):
     def test_the_line_and_its_fields(self):
         line = self._line(datetime(2026, 10, 23, 17, 30, tzinfo=UTC))
         self.assertEqual(line, "STATUS OK | generated 2026-10-18T21:50:00Z | next deadline GW8 "
-                               "2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 29/29 | repo 120 MB")
+                               "2026-10-23 17:30 UTC / 2026-10-23 19:30 Prague | checks 29/29 | repo 120 MB | code ?")
 
     def test_both_sides_of_the_25_october_change(self):
         before = self._line(datetime(2026, 10, 25, 0, 30, tzinfo=UTC))
