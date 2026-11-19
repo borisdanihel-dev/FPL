@@ -272,3 +272,45 @@ following year, a double gameweek split by the date, no date in the news);
 GW1-3 case printed, not guessed); the check's metric sign, its bootstrap
 unit and its bar on toy numbers; nothing after a deadline read (a planted
 later export changes nothing). Each test red on a planted bug.
+
+## Questions parked for Boris (exact wording), Mon 16 Nov 19:20 UTC, before the check is run on the data
+
+1. **Point 5's window.** "Answer 5 ('neither started nor missed in the
+   last-four window') is built as: the window is the last four gameweeks in
+   which the player was not suspended (counting back), for both the starts
+   and the 45-minute gate (A). The other reading keeps the same four
+   gameweeks and drops the suspended ones from both sides of the fraction,
+   e.g. 1 start in 1 after a three-match ban (B). Keep (A), or (B)?"
+2. **GW1-3.** "No archived export exists before the GW1-3 deadlines (the
+   archive starts 11 Sep), so point 5 cannot see suspensions in GW1-3; those
+   windows use the plain four gameweeks and the count of affected players is
+   printed. That touches the check's origins GW4-7. Score all seven origins
+   GW4-10 (A), or judge the bar on the GW8-10 origins only (B)?"
+
+The check (`tools/gate_v2_check.py` on `fm-wip`) is not run on the data
+until these are answered, so no number is seen before the method is fixed.
+
+## Answers, Thu 19 Nov night (Boris's message verbatim; for this item: the standing rule, points 6-7, Mon 23 (xp_v2_g2 recorded if its check passed and Boris accepts) and 'Then, still offline')
+
+Answers, Thu 19 Nov night. Standing rule from now on: a WARN or FAIL stops that item only. Park its questions in the state file and carry on with the next independent item; never sit idle waiting for the chat.
+
+W3fix (lands after the GW11 deadline, on the first free night from Sat 21 Nov):
+1. (i) CHIPS's Free Hit screen reads tonight's export, so its flag always matches the base screen.
+2. No: the "3+ of our XI not 'a'" trigger counts our best XI before the zero (it exists to catch an injury crisis; zeroing first would hide it).
+3. (a) Keep tools/chips.py matched to fpl_chips: one rule everywhere, and the GW pass and planner take the zero too.
+4. Yes: add tests for the five surviving mutants before the merge.
+5. Yes: print the export's own generated time beside its name in the CAPTAIN and BAN RISK headers.
+FM (xp_v2_g2):
+6. (A) P(start) uses the last four gameweeks in which the player was not suspended.
+7. (A) Score all seven origins, GW4-10.
+FJ:
+8. Yes: regenerate checkpoint.txt with the landing.
+After the GW11 deadline: Sat 21 W3fix (with fj-wip's tests), Sun 22 runcommit plus the price-moves name fix, Mon 23 xp_v2_g2 recorded if its check passed and Boris accepts.
+
+GW11 deadline pass, now (deadline Sat 21 Nov 11:00 UTC; freeze from Fri 20 Nov 05:00 UTC: tools and worklog only):
+a. Tonight: git pull --ff-only in C:\GIT\FPL-data; run the GW11 bundle from master (the S8c tools are now on master; clean worktree) on the newest export. Commit gw11_pass.txt, xp_v2_all.csv and run.txt to master under worklog/gw_pass/gw11/.
+b. Transfers (2 FTs, bank 0.9, no hits). Thiago is banned GW11-13 (back GW14); Thomas is d 50% (calf). Post the best pairs with and without a Bench Boost in GW11, run twice: under the gate, and with Thiago lifted from GW14 and Thomas at his chance (information, as in GW10). Also the named options: Thiago + Thomas out; Thiago out only (roll one).
+c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15 and on the two best candidate squads (with and without a Bench Boost), with the GW11-19 lines; bb_timing for a Bench Boost in GW11 against later first-half weeks, on the post-transfer squads.
+d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
+e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
+Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
