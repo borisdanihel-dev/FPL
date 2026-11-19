@@ -205,3 +205,34 @@ Then, still offline: the FM code and its retrospective check (answers 6-7), then
 After the GW11 deadline, with W3fix or runcommit: add a squared-error column (RMSE, and RMSE against the constant) beside MAE in the calibration section, so forecasts that run low or high are judged on the same scale as expected points. Report only; no bar changes.
 
 (Recorded Thu 19 Nov 22:30 UTC. The design, the constant RMSE is measured against, and the tests are pinned here before the code, after the GW11 deadline.)
+
+## Addendum, pinned before its code (Thu 19 Nov 22:55 UTC): the price-moves fix and the calibration RMSE column
+
+### The price-moves fix (amendment 1)
+
+- Found: `fpl_edge.sec_diff` matches players by `web_name` in all three of
+  its player blocks - YOUR SQUAD price moves, NEW FLAGS, FORM MOVERS - so two
+  players of one name collide (Coventry's Thomas showed Hull's price move).
+- Pinned: all three blocks match by player id. The previous export's players
+  are keyed by `id`; "our squad" and "owned by anyone in the league" are the
+  `player_id`s of the export's `squads` rows (present since S2). A squads row
+  without `player_id`: the block prints one line, "not comparable: squads
+  rows without player_id", never a name match.
+- The printed lines keep their format (name, club, prices).
+- Test (`tests/test_runcommit.py`): two players named Thomas at two clubs,
+  ours unchanged in price and the other moved: our price-moves block says
+  "none" and NEW FLAGS / FORM MOVERS follow the ids; red on the current code.
+
+### The calibration RMSE column (Boris's message of Thu 19 Nov late)
+
+- `fpl_edge.sec_calibration`'s per-gameweek table gains two columns after
+  `const`: `RMSE` = sqrt(mean((forecast - realised)^2)) and `rconst` =
+  sqrt(mean((c - realised)^2)) with c the same constant as the MAE's `const`
+  (the pool's mean realised points). The `minutes` row prints `-` for both,
+  as for MAE (a start probability).
+- The per-source summary line reads "MAE x vs constant y   RMSE x vs constant
+  y   rho ...".
+- Report only: the verdict column ("beats const" / "loses", on MAE), the
+  "real signal" verdict and every bar are unchanged; p1_eval.py is untouched.
+- Test: on a toy log the two numbers equal the formulas; the minutes row
+  prints `-`; the verdicts are byte-identical to the current code's.
