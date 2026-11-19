@@ -314,3 +314,40 @@ c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15
 d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
 e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
 Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Result and questions parked for Boris (exact wording), Thu 19 Nov 22:10 UTC, after the verifier's WARN (`worklog/verify_FM.md`)
+
+Result (run on `fm-wip` `f6d1c34`, 0 modified files, data `029bcfd`; reproduced
+byte for byte and by an independent count by the verifier): GW4 not scored
+(missing input: its export of 11 Sep has no `player_id`); 830 flagged
+player-weeks over GW5-10; mean e = |v1 - r| - |v2 - r| = -0.158, 90% [-0.310,
+-0.016]; **the bar is not passed** (by status, information: d -0.314 n 378,
+i -0.093 n 370, s +0.265 n 82). By the rulings on file xp_v2_g2 is not
+recorded on Mon 23 Nov. The item stops here (standing rule of Thu 19 Nov).
+
+1. **GW4.** "Answer 7 asked for all seven origins; GW4's only pre-deadline
+   export has no player ids, so the check scored six. The verifier shows the
+   lower bound cannot pass whatever GW4 holds (at least 33% of seven-origin
+   resamples are at or below 0), and that every row of that export matches
+   exactly one player by name, club and position. Accept the six-origin result
+   (yes), or rule a way to build GW4 and rerun (no)?"
+2. **The result.** "The bar is not passed, so xp_v2_g2 is not recorded on Mon
+   23 Nov. Confirm (yes)?"
+3. **Prints and tests.** "Two pinned information prints are missing (point-5-
+   only players: 76 player-weeks, mean e -0.227; our flagged players: 17,
+   mean -0.193) and the check's own function has no end-to-end test (14 of
+   the verifier's 17 check mutants survive). Add both before the GW15 re-run
+   (yes), or leave them (no)?"
+4. **GW1-3 wording.** "The pin says the plain window is used where a gameweek
+   has no archive; the code still skips known suspensions in such a window
+   (6 player-weeks differ; the literal reading gives [-0.301, -0.009], also
+   not passed). Keep the code's reading (a), or the pin's literal (b)?"
+5. **GW15 revisit.** "v1 is 0 in all 830 rows and 462 of them scored 0, so
+   absolute error favours the constant 0; on squared error the same rows
+   favour v2 (+1.93, 90% [+0.75, +3.12]) - information only, a change now
+   would be chosen after seeing results. Keep the absolute-error bar for GW15
+   (yes), or pre-register a different test on gameweeks from GW11 on (no)?"
+
+Corrections: the commit message of `f6d1c34` says 23 tests; there are 22.
+The cited `run.txt` is in the session scratch, not `tools/out/gate_v2_check/`;
+it is copied there with the item's report.
