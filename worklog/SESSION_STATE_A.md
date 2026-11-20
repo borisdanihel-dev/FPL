@@ -19,9 +19,16 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     `gw11_code`), the transfer tables, S7, bb_timing and ban risk in
     `worklog/gw_pass/gw11/`, master `cc51a47`. Thomas is now 75% (50% on 19
     Nov); the plans are unchanged from the 19 Nov test. Point d posted.
-    Next: point e, Friday's refresh after Boris's real run (~15:00 UTC):
-    pull, `--restore`, rerun the bundle, bb_moves, s7, bb_timing, ban risk
-    into a new scratch folder (`gw11/run2`), commit before 18:00 UTC.
+    **Point e DONE (Fri 20 Nov, ~19:57 UTC)**, Boris's message verbatim in
+    `prereg/bundle.md` with the reading of items 3-5 pinned before code
+    (`64b8df8`): on Boris's real run (data `fc543da`, 19:47 UTC) from clean
+    master `64b8df8`: the bundle `676dd33` (xp_v2 captain now Haaland 5.69 v
+    Gabriel 5.66; BHA-NEW GW12 now on odds); the tables, S7, bb_timing, ban
+    risk and `refresh_extra.py` (Calafiori P(start) 1.0, the clean-sheet
+    flattening A/B, the captain tie), post `gw11_post_refresh.md`. Thomas ->
+    Van Hecke alone is not affordable (4.9 < 5.1). **After the deadline:
+    draft prereg F-N** (flattening fixture-specific P(cs) toward the team
+    average, the no-hit planner on 2024/25) for Boris's ruling.
   - **FM (xp_v2_g2): STOPPED, verifier WARN** (`worklog/verify_FM.md`). Result
     GW5-10, 830 flagged player-weeks, mean e -0.158, 90% [-0.310, -0.016],
     bar NOT passed, unchanged on `fm-wip` `dfb4691` (modified 0); not

@@ -1,9 +1,9 @@
 tool: worklog/gw_pass/gw11/bb_timing.py
-args: --code C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11_code --data C:/GIT/FPL-data --hist C:/GIT/FPL/historical --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11/run1/bbt --squad (a) best pair with a Bench Boost=Thiago:BRE>N.Jackson:AVL,Thomas:COV>De Cuyper:BHA --squad (b) best pair without a Bench Boost=Calafiori:ARS>De Cuyper:BHA,Thomas:COV>Van Hecke:TOT
-commit: 352dd366d35520d41ab710ca24a6248b25c75a5f
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11_code --data C:/GIT/FPL-data --hist C:/GIT/FPL/historical --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11/run3/bbt --squad (a) best pair with a Bench Boost=Thiago:BRE>N.Jackson:AVL,Thomas:COV>De Cuyper:BHA --squad (b) best pair without a Bench Boost=Calafiori:ARS>De Cuyper:BHA,Thomas:COV>Van Hecke:TOT
+commit: 64b8df8c230aff0b578a770909e2679f5f335fcd
 modified tracked files at the run: 0
-start_utc: 2026-11-20T02:39:53+00:00
-end_utc: 2026-11-20T02:39:58+00:00
+start_utc: 2026-11-20T19:51:06+00:00
+end_utc: 2026-11-20T19:51:11+00:00
 duration_s: 5
 outputs:
-  bb_timing.txt  sha256 e151978e3361bab9449f7f2090c2c805d90eec33226a5d0555adb114e17a9953
+  bb_timing.txt  sha256 bcfcc0ba3393f5043dcada54c5b3f542f85322b04bc4c40237807576482f9d77

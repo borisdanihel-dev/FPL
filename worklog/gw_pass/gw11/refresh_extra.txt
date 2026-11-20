@@ -1,0 +1,59 @@
+GW11 REFRESH, INFORMATION ITEMS 3-5 (Boris, point e of Fri 20 Nov; reading pinned in prereg/bundle.md); read-only, no tool change
+  data fc543da, export fpl_export_gw10_2026-11-20.json.gz; code 64b8df8 (modified tracked files 0); script sha256 d1a79a97dc482c0616a053165cadcc440d12c3ea6c47868d03b5a92765290662; generated 2026-11-20 19:51 UTC
+  check: this script's lifted matrix, no switch, equals bb_moves.lifted_matrix: True
+  check: this script's gated matrix, no switch, equals the planner's: True
+  check: Calafiori's P(start) 1.0 moves no other player's value: True
+  Calafiori (ARS DEF, status a, chance 100): model P(start) 0.75; xp_v2 by week as is (lifted) GW11 4.07, GW12 3.60, GW13 4.18, GW14 4.83, GW15 4.68, GW16 5.03; at P(start) 1.0 GW11 5.33, GW12 4.71, GW13 5.48, GW14 6.35, GW15 6.15, GW16 6.61
+
+ITEM 3  CALAFIORI AT P(START) 1.0, NO BENCH BOOST (2 free transfers, bank 0.9, no hits, decay 0.85, Boris's schedule (1.5, 1.0, 0.6, 0.3))
+  LIFTED (Thiago from GW14; Thomas at his chance in GW11, then normal): 41443 plans
+                                                    score   gain lostFT   rank   weekly dxP GW11-16
+    best (P(start) 1.0)                             11.52  13.12   1.60      1    +3.4  +2.7  +3.5  +1.4  +4.7  +3.6   Tarkowski -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    best pair (P(start) 1.0)                        11.52  13.12   1.60      1    +3.4  +2.7  +3.5  +1.4  +4.7  +3.6   Tarkowski -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper + Thomas -> Van Hecke     7.81   9.41   1.60     26    +2.6  +2.3  +2.7  +0.8  +2.8  +2.2   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper alone + roll one          2.97   3.57   0.60    610    +0.7  +0.8  +0.5  +0.5  +1.4  +1.7   Calafiori -> De Cuyper (BHA, 5.5)
+    Thomas -> Van Hecke alone + roll one           not legal: bank after -0.2 (or a club over 3)
+    beside it, Calafiori as the model has him (P(start) 0.75):
+    best pair (model P(start))                      13.37  14.97   1.60      1    +3.9  +3.4  +4.0  +2.3  +4.3  +3.8   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper + Thomas -> Van Hecke    13.37  14.97   1.60      1    +3.9  +3.4  +4.0  +2.3  +4.3  +3.8   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper alone + roll one          8.53   9.13   0.60     61    +2.0  +1.9  +1.8  +2.0  +2.9  +3.3   Calafiori -> De Cuyper (BHA, 5.5)
+    Thomas -> Van Hecke alone + roll one           not legal: bank after -0.2 (or a club over 3)
+  GATED (Thiago, Thomas 0): 41443 plans
+                                                    score   gain lostFT   rank   weekly dxP GW11-16
+    best (P(start) 1.0)                             12.18  13.78   1.60      1    +3.4  +2.7  +3.5  +1.5  +5.5  +4.0   Tarkowski -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    best pair (P(start) 1.0)                        12.18  13.78   1.60      1    +3.4  +2.7  +3.5  +1.5  +5.5  +4.0   Tarkowski -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper + Thomas -> Van Hecke     8.38   9.98   1.60     44    +2.6  +2.3  +2.7  +0.9  +3.5  +2.6   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper alone + roll one          2.97   3.57   0.60    846    +0.7  +0.8  +0.5  +0.5  +1.4  +1.7   Calafiori -> De Cuyper (BHA, 5.5)
+    Thomas -> Van Hecke alone + roll one           not legal: bank after -0.2 (or a club over 3)
+    beside it, Calafiori as the model has him (P(start) 0.75):
+    best pair (model P(start))                      13.93  15.53   1.60      1    +3.9  +3.4  +4.0  +2.4  +4.9  +4.2   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper + Thomas -> Van Hecke    13.93  15.53   1.60      1    +3.9  +3.4  +4.0  +2.4  +4.9  +4.2   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Calafiori -> De Cuyper alone + roll one          8.53   9.13   0.60    100    +2.0  +1.9  +1.8  +2.0  +2.9  +3.3   Calafiori -> De Cuyper (BHA, 5.5)
+    Thomas -> Van Hecke alone + roll one           not legal: bank after -0.2 (or a club over 3)
+
+ITEM 4  CLEAN-SHEET SENSITIVITY (only P(cs) flattened, GW11-16, every team; goals-conceded, attack, DEFCON and minutes unchanged)
+  (A) the realised 2026/27 clean-sheet rate before the deadline; (B) the mean of the model's own P(cs) over the team's GW11-16 fixtures
+  the four clubs of the moves: model P(cs) by week, (A), (B)
+    ARS  0.40 0.29 0.50 0.70 0.61 0.65   (A) 0.70 (7 of 10)   (B) 0.53
+    BHA  0.42 0.34 0.45 0.64 0.69 0.56   (A) 0.70 (7 of 10)   (B) 0.52
+    COV  0.24 0.14 0.12 0.08 0.09 0.05   (A) 0.10 (1 of 10)   (B) 0.12
+    TOT  0.37 0.31 0.60 0.34 0.44 0.29   (A) 0.40 (4 of 10)   (B) 0.39
+  every club (A): ARS 0.7, AVL 0.2, BHA 0.7, BOU 0.3, BRE 0.3, CHE 0.2, COV 0.1, CRY 0.1, EVE 0.4, FUL 0.3, HUL 0.3, IPS 0.0, LEE 0.4, LIV 0.4, MCI 0.3, MUN 0.0, NEW 0.2, NFO 0.1, SUN 0.3, TOT 0.4
+  LIFTED, Calafiori at P(start) 1.0 (item 3's matrix)  (check: no forward's value moves under any switch: True); this matrix's best pair: Tarkowski -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    move                                              gain  flat A  flat B   no CS  CS share
+    this matrix's best pair (above)                  13.12   15.52   13.44    5.33       59%
+    Calafiori -> De Cuyper + Thomas -> Van Hecke      9.41    8.74    8.35    5.29       44%
+    Calafiori -> De Cuyper alone + roll one           3.57    4.21    3.54    2.83       21%
+    Thomas -> Van Hecke alone + roll one           not legal: bank after -0.2 (or a club over 3)
+  LIFTED, Calafiori as the model has him  (check: no forward's value moves under any switch: True); this matrix's best pair: Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    move                                              gain  flat A  flat B   no CS  CS share
+    Calafiori -> De Cuyper + Thomas -> Van Hecke     14.97   15.15   13.89    7.29       51%
+    Calafiori -> De Cuyper alone + roll one           9.13   10.61    9.08    4.83       47%
+    Thomas -> Van Hecke alone + roll one           not legal: bank after -0.2 (or a club over 3)
+  gain = the planner's decayed gain over GW11-16 (no BB, before the lost-FT value); CS share = (gain - no CS) / gain
+
+ITEM 5  THE CAPTAIN TIE (own: Gabriel v Haaland)
+  Gabriel  ARS  recorded GW11: own 3.32   xg 5.84   bottomup 6.17   bottomup_lambda 4.83   xp_v2 5.66
+  Haaland  MCI  recorded GW11: own 3.03   xg 5.96   bottomup 4.63   bottomup_lambda 4.63   xp_v2 5.69
+  Newcastle, at home to Arsenal: all 10 matches GF 13 (1.30/m) GA 16 (1.60/m), clean sheets 2; home 5 matches GF 6 (1.20/m) GA 7 (1.40/m)
+  Fulham, away at City: all 10 matches GF 10 (1.00/m) GA 12 (1.20/m), clean sheets 3; away 5 matches GF 3 (0.60/m) GA 4 (0.80/m)

@@ -1,5 +1,5 @@
 S7 CHIP CALCULATOR ON THE POST-TRANSFER SQUADS  GW11 (Boris, Thu 19 Nov night, point c); information, read-only, no tool change
-  data 0a54132, export fpl_export_gw10_2026-11-20.json.gz; code 352dd36 (modified tracked files 0); script sha256 f39ed04c2fe5e95e1ae298734e059849a9e7456f12b3c41ab2f79a7fb2d2978d; generated 2026-11-20 02:39 UTC
+  data fc543da, export fpl_export_gw10_2026-11-20.json.gz; code 64b8df8 (modified tracked files 0); script sha256 f39ed04c2fe5e95e1ae298734e059849a9e7456f12b3c41ab2f79a7fb2d2978d; generated 2026-11-20 19:51 UTC
   method: tools/chips.py live() unchanged, with my_squad() returning the 15 after the two transfers (each
   incoming player in the outgoing player's slot, selling price = today's price). xP source as the bundle: own.
   Free Hit budget: bank after + selling prices = the export's £100.0m (bank now 0.9), so unchanged.
