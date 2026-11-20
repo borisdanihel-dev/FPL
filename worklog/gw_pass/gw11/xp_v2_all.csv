@@ -1,0 +1,673 @@
+id,name,team,position,xp_v2,p_start,lambda_source
+1,Raya,ARS,GK,3.6977909787872303,1.0,odds
+2,Arrizabalaga,ARS,GK,0.0,,not forecast
+3,Meslier,ARS,GK,0.0,,not forecast
+4,Gabriel,ARS,DEF,5.650282643026241,1.0,odds
+5,J.Timber,ARS,DEF,2.5280333576589413,0.5,odds
+6,Saliba,ARS,DEF,0.0,,not forecast
+7,Lewis-Skelly,ARS,MID,1.1410615887213578,0.25,odds
+8,Calafiori,ARS,DEF,4.056574253646252,0.75,odds
+9,Hincapie,ARS,DEF,0.0,,not forecast
+10,White,ARS,DEF,2.2540415451167526,0.5,odds
+11,Mosquera,ARS,DEF,0.0,,not forecast
+12,Saka,ARS,MID,0.0,,not forecast
+13,Rice,ARS,MID,4.374290088288399,1.0,odds
+14,Eze,ARS,MID,2.0342002249093514,0.5,odds
+15,Ødegaard,ARS,MID,4.976110640474113,1.0,odds
+16,Madueke,ARS,MID,3.742958174117738,0.75,odds
+17,Merino,ARS,MID,2.012970309675852,0.25,odds
+18,Martinelli,ARS,MID,0.0,,not forecast
+19,Zubimendi,ARS,MID,0.0,,not forecast
+20,Dowman,ARS,MID,0.0,,not forecast
+21,Nørgaard,EVE,MID,0.0,,not forecast
+22,Nwaneri,ARS,MID,0.0,,not forecast
+23,Fábio Vieira,ARS,MID,0.0,,not forecast
+24,Nelson,ARS,MID,0.0,,not forecast
+25,Gyökeres,ARS,FWD,1.8084871648589778,0.25,odds
+26,Havertz,ARS,FWD,3.1975062847555815,0.75,odds
+27,G.Jesus,ARS,FWD,0.0,,not forecast
+28,Martinez,CHE,GK,0.0,,not forecast
+29,M.Bizot,AVL,GK,0.0,,not forecast
+30,Digne,AVL,DEF,0.0,,not forecast
+31,Konsa,ARS,DEF,5.026410669549909,1.0,odds
+32,Cash,AVL,DEF,0.0,,not forecast
+33,Mings,AVL,DEF,1.0759158272733718,0.25,odds
+34,Pau,AVL,DEF,3.3969254721580913,0.75,odds
+35,Bogarde,AVL,MID,0.0,,not forecast
+36,Maatsen,AVL,DEF,3.3217258478586453,0.75,odds
+37,Lindelöf,AVL,DEF,4.410729601213906,1.0,odds
+38,A.García,AVL,DEF,0.0,,not forecast
+39,Nedeljkovic,AVL,DEF,0.0,,not forecast
+40,Rogers,CHE,MID,4.947293392018802,1.0,odds
+41,Buendía,AVL,MID,1.6701465229753054,0.25,odds
+42,Guessand,CRY,MID,0.0,,not forecast
+43,Tielemans,MUN,MID,2.9780725286818512,0.75,odds
+44,Bailey,AVL,MID,0.0,,not forecast
+45,McGinn,AVL,MID,3.8716925252305634,0.75,odds
+46,Barkley,AVL,MID,1.2567049808429118,0.0,odds
+47,Kamara,AVL,MID,3.6196686232904423,1.0,odds
+48,Onana,AVL,MID,0.0,,not forecast
+49,Iling Jr,AVL,MID,0.0,,not forecast
+50,Burrowes,AVL,MID,0.0,,not forecast
+51,George Hemmings,AVL,MID,0.0,,not forecast
+52,Alysson,AVL,MID,3.0437088798160117,1.0,odds
+53,Manzambi,AVL,MID,0.0,,not forecast
+54,Gomes,AVL,MID,2.298061785711629,0.5,odds
+55,Watkins,AVL,FWD,0.0,,not forecast
+56,Abraham,AVL,FWD,0.0,,not forecast
+57,Petrović,BOU,GK,3.3207246577239102,1.0,odds
+58,Forster,BOU,GK,0.0,,not forecast
+59,Dennis,BOU,GK,0.0,,not forecast
+60,Hill,BOU,DEF,5.293926573153069,1.0,odds
+61,Truffert,BOU,DEF,4.4013478781278454,1.0,odds
+62,Diakité,BOU,DEF,0.0,,not forecast
+63,Milosavljević,BOU,DEF,0.0,,not forecast
+64,Smith,BOU,DEF,3.9052781054233083,1.0,odds
+65,J.Araujo,BOU,DEF,0.0,,not forecast
+66,Soler,BOU,DEF,0.0,,not forecast
+67,Rayan,BOU,MID,4.194603604233571,1.0,odds
+68,Tavernier,BOU,MID,5.224814494978782,1.0,odds
+69,Scott,BOU,MID,0.0,,not forecast
+70,Kluivert,BOU,MID,3.0611312775833226,0.75,odds
+71,Cook,BOU,MID,2.1006534424086283,0.5,odds
+72,Gannon-Doak,BOU,MID,0.0,,not forecast
+73,Adams,BOU,MID,3.6112607895243025,1.0,odds
+74,Brooks,BOU,MID,0.0,,not forecast
+75,Christie,BOU,MID,3.798016883434338,0.75,odds
+76,Tóth.A,BOU,MID,0.0,,not forecast
+77,Adli,BOU,MID,0.0,,not forecast
+78,Kroupi.Jr,BOU,MID,0.9425287356321839,0.0,odds
+79,Evanilson,BOU,FWD,4.336088865748926,1.0,odds
+80,Enes Ünal,BOU,FWD,0.0,,not forecast
+81,Rodríguez,BOU,FWD,0.0,,not forecast
+82,Kelleher,BRE,GK,3.1873691930349217,1.0,odds
+83,Valdimarsson,BRE,GK,0.0,,not forecast
+84,Collins,BRE,DEF,0.0,,not forecast
+85,Van den Berg,BRE,DEF,4.335531120470991,1.0,odds
+86,Lewis-Potter,BRE,MID,3.862699396100554,1.0,odds
+87,Ajer,BRE,DEF,4.618775940434871,1.0,odds
+88,Kayode,BRE,DEF,4.173637677482905,1.0,odds
+89,Henry,BRE,DEF,0.0,,not forecast
+90,Hickey,BRE,DEF,0.0,,not forecast
+91,Pinnock,COV,DEF,4.667910504780597,1.0,odds
+92,Ji-soo,BRE,DEF,0.0,,not forecast
+93,Schuster,BRE,DEF,0.0,,not forecast
+94,Schade,BRE,MID,3.4134680725845197,0.75,odds
+95,O.Dango,BRE,MID,4.236807710592787,1.0,odds
+96,Damsgaard,BRE,MID,0.9425287356321839,0.0,odds
+97,Jensen,BRE,MID,2.827452624753692,0.75,odds
+98,Janelt,BRE,MID,3.221271336416071,0.75,odds
+99,Milambo,BRE,MID,0.0,,not forecast
+100,Carvalho,BRE,MID,0.0,,not forecast
+101,Henderson,CHE,MID,2.8862572556988946,0.75,odds
+102,Yarmoliuk,BRE,MID,1.0952204230232268,0.25,odds
+103,Dasilva,BRE,MID,0.0,,not forecast
+104,Onyeka,COV,MID,0.0,,not forecast
+105,Anthony,BRE,MID,1.6802202441193237,0.25,odds
+106,Thiago,BRE,FWD,0.0,,not forecast
+107,Furo,BRE,FWD,0.0,,not forecast
+108,Wilson,BRE,FWD,0.0,,not forecast
+109,Verbruggen,BHA,GK,3.87653109340629,1.0,odds
+110,Rushworth,COV,GK,2.9570424168086964,1.0,odds
+111,Steele,BHA,GK,0.0,,not forecast
+112,Van Hecke,TOT,DEF,5.8724755876365275,1.0,odds
+113,F.Kadıoğlu,BHA,DEF,2.195236259691322,0.5,odds
+114,Boscagli,BHA,DEF,4.597506093318305,1.0,odds
+115,De Cuyper,BHA,DEF,5.853929942876109,1.0,odds
+116,Dunk,BHA,DEF,4.323284840377886,1.0,odds
+117,Coppola,BHA,DEF,0.0,,not forecast
+118,Igor,BHA,DEF,0.0,,not forecast
+119,Costinha,BHA,DEF,2.824905052127719,0.5,odds
+120,Svoboda,BHA,DEF,0.0,,not forecast
+121,Mitoma,BHA,MID,0.0,,not forecast
+122,Minteh,BHA,MID,0.0,,not forecast
+123,Hinshelwood,BHA,MID,1.2567049808429118,0.0,odds
+124,Groß,BHA,MID,5.310083415465509,1.0,odds
+125,Georginio,BHA,FWD,1.3227848101265822,0.0,odds
+126,O'Riley,BHA,MID,0.0,,not forecast
+127,Gomez,BHA,MID,4.54310037621217,1.0,odds
+128,Buonanotte,BHA,MID,0.0,,not forecast
+129,Ayari,BHA,MID,4.126677833597117,1.0,odds
+130,Wieffer,BHA,DEF,0.5394088669950738,0.0,odds
+131,Baleba,MUN,MID,0.0,,not forecast
+132,Howell,BHA,MID,0.0,,not forecast
+133,Watson,BHA,MID,0.0,,not forecast
+134,Oriola,BHA,MID,0.0,,not forecast
+135,Yohanna,BHA,MID,0.0,,not forecast
+136,Welbeck,CHE,FWD,0.0,,not forecast
+137,Tzimas,BHA,FWD,0.0,,not forecast
+138,Kostoulas,BHA,FWD,3.528573661134225,1.0,odds
+139,Ferguson,BHA,FWD,0.0,,not forecast
+140,Sánchez,CHE,GK,0.0,,not forecast
+141,Jörgensen,CHE,GK,0.0,,not forecast
+142,James,CHE,DEF,0.0,,not forecast
+143,Chalobah,CHE,DEF,0.0,,not forecast
+144,Gusto,CHE,DEF,0.0,,not forecast
+145,Fofana,CHE,DEF,2.2845815450568985,0.5,odds
+146,B.Badiashile,CHE,DEF,0.0,,not forecast
+147,Tosin,TOT,DEF,1.0646900135098378,0.25,odds
+148,Hato,CHE,DEF,0.0,,not forecast
+149,Colwill,CHE,DEF,3.919895375908067,1.0,odds
+150,M.Sarr,CHE,DEF,0.0,,not forecast
+151,Acheampong,CHE,DEF,0.0,,not forecast
+152,Palestra,CHE,DEF,2.3408040206342595,0.5,odds
+153,Disasi,CRY,DEF,3.774202955425105,0.75,odds
+154,Palmer,CHE,MID,4.634096073537968,1.0,odds
+155,Enzo,MCI,MID,3.557861951634056,0.75,odds
+156,Neto,CHE,MID,4.320349887877901,1.0,odds
+157,Estêvão,CHE,MID,1.6461954755022705,0.25,odds
+158,Gittens,CHE,MID,0.0,,not forecast
+159,Caicedo,CHE,MID,0.0,,not forecast
+160,Garnacho,AVL,MID,0.0,,not forecast
+161,Lavia,CHE,MID,2.27264236825206,0.5,odds
+162,Andrey Santos,MUN,MID,2.68249159525579,0.75,odds
+163,D.Essugo,CHE,MID,0.0,,not forecast
+164,Quenda,CHE,MID,1.6918243908031552,0.25,odds
+165,João Pedro,CHE,FWD,0.0,,not forecast
+166,N.Jackson,AVL,FWD,4.41893734662759,1.0,odds
+167,Delap,NFO,FWD,3.6302862281208337,1.0,odds
+168,Marc Guiu,CHE,FWD,0.0,,not forecast
+169,Mheuka,CHE,FWD,0.0,,not forecast
+170,Emegha,CHE,FWD,0.0,,not forecast
+171,Dovin,COV,GK,0.0,,not forecast
+172,Wilson,COV,GK,0.0,,not forecast
+173,Thomas,COV,DEF,0.0,,not forecast
+174,Kitching,COV,DEF,0.0,,not forecast
+175,van Ewijk,COV,DEF,4.027439599951069,1.0,odds
+176,Dasilva,COV,DEF,3.881481187092411,1.0,odds
+177,Kesler-Hayden,COV,DEF,0.0,,not forecast
+178,Bidwell,COV,DEF,0.0,,not forecast
+179,Latibeaudiere,COV,DEF,0.0,,not forecast
+180,Woolfenden,COV,DEF,0.0,,not forecast
+181,Brau,COV,DEF,0.0,,not forecast
+182,Amenda,COV,DEF,0.0,,not forecast
+183,Rudoni,COV,MID,4.780714041303078,1.0,odds
+184,Grimes,COV,MID,2.0995287558424103,0.5,odds
+185,Sakamoto,COV,MID,3.230076185611755,1.0,odds
+186,Mason-Clark,COV,MID,0.0,,not forecast
+187,Eccles,COV,MID,0.0,,not forecast
+188,Torp,COV,MID,1.981336887196273,0.5,odds
+189,Shepherd,COV,MID,0.0,,not forecast
+190,Tchaouna,COV,MID,0.0,,not forecast
+191,Borges Rodrigues,COV,MID,0.0,,not forecast
+192,Andrews,COV,MID,0.0,,not forecast
+193,Wright,COV,FWD,0.0,,not forecast
+194,Thomas-Asante,COV,FWD,2.125714465934901,0.5,odds
+195,Simms,COV,FWD,0.0,,not forecast
+196,Markelo,COV,FWD,0.0,,not forecast
+197,Bassette,COV,FWD,0.0,,not forecast
+198,Henderson,CRY,GK,1.4216870737213196,0.5,odds
+199,Benitez,CRY,GK,1.3841084328885551,0.5,odds
+200,Lacroix,CHE,DEF,0.0,,not forecast
+201,Muñoz,NFO,DEF,3.136184394791126,0.75,odds
+202,Richards,CRY,DEF,4.441785302922318,1.0,odds
+203,Canvot,CRY,DEF,2.8963030873183406,0.75,odds
+204,Mitchell,CRY,DEF,4.215287831253084,1.0,odds
+205,Sosa,CRY,DEF,0.0,,not forecast
+206,Chadi Riad,CRY,DEF,0.0,,not forecast
+207,Mingueza,CRY,DEF,1.6275763432274681,0.5,odds
+208,Sarr,CRY,MID,0.0,,not forecast
+209,Johnson,EVE,MID,1.8069487637179598,0.25,odds
+210,Wharton,CRY,MID,3.799527408551503,1.0,odds
+211,Yeremy,CRY,MID,3.952950419380388,1.0,odds
+212,Hughes,CRY,MID,0.0,,not forecast
+213,Lerma,CRY,MID,1.9297597104765967,0.25,odds
+214,Kamada,CRY,MID,3.6863354048116266,1.0,odds
+215,Devenny,CRY,MID,0.0,,not forecast
+216,Esse,CRY,MID,0.0,,not forecast
+217,M.França,CRY,MID,0.0,,not forecast
+218,Doucouré,CRY,MID,0.0,,not forecast
+219,J.Rak-Sakyi,CRY,MID,0.0,,not forecast
+220,Cardines,CRY,DEF,0.0,,not forecast
+221,Drakes-Thomas,CRY,MID,0.0,,not forecast
+222,Strand Larsen,CRY,FWD,0.0,,not forecast
+223,Mateta,CRY,FWD,0.0,,not forecast
+224,Nketiah,CRY,FWD,1.3227848101265822,0.0,odds
+225,Uche,CRY,FWD,0.0,,not forecast
+226,Pickford,EVE,GK,2.771724638116437,1.0,odds
+227,Travers,EVE,GK,0.0,,not forecast
+228,King,EVE,GK,0.0,,not forecast
+229,Tarkowski,EVE,DEF,3.9979392960000655,1.0,odds
+230,Branthwaite,EVE,DEF,3.1363096600753813,0.75,odds
+231,Keane,EVE,DEF,0.0,,not forecast
+232,O'Brien,EVE,DEF,2.210091016834034,0.5,odds
+233,Mykolenko,EVE,DEF,3.8222931202937485,1.0,odds
+234,Patterson,EVE,DEF,0.0,,not forecast
+235,Aznou,EVE,DEF,0.0,,not forecast
+236,Dewsbury-Hall,EVE,MID,4.141566278819239,1.0,odds
+237,Ndiaye,MCI,MID,4.433833675684182,1.0,odds
+238,Grealish,EVE,MID,0.9085254429086347,0.25,odds
+239,Garner,EVE,MID,3.9200680875303284,1.0,odds
+240,Iroegbunam,HUL,MID,2.9517955895720176,0.75,odds
+241,McNeil,CRY,MID,2.1762513980248164,0.5,odds
+242,George,EVE,MID,2.949036041637968,0.75,odds
+243,Alcaraz,EVE,MID,0.0,,not forecast
+244,Armstrong,EVE,MID,3.6377215945779304,1.0,odds
+245,Dibling,EVE,MID,1.2523026610193781,0.25,odds
+246,Röhl,EVE,MID,2.9841173858673615,1.0,odds
+247,Hackney,EVE,MID,0.0,,not forecast
+248,Beto,EVE,FWD,0.0,,not forecast
+249,Barry,EVE,FWD,4.865020265578699,1.0,odds
+250,Leno,FUL,GK,2.0986244645779735,1.0,odds
+251,Lecomte,FUL,GK,0.0,,not forecast
+252,McNally,FUL,GK,0.0,,not forecast
+253,Andersen,FUL,DEF,0.0,,not forecast
+254,Robinson,FUL,DEF,3.057515725311326,1.0,odds
+255,J.Cuenca,FUL,DEF,0.0,,not forecast
+256,Tete,FUL,DEF,0.0,,not forecast
+257,Bassey,FUL,DEF,2.9070561290385646,1.0,odds
+258,Castagne,FUL,DEF,3.015978783159305,1.0,odds
+259,Diop,IPS,DEF,3.323942112610341,1.0,odds
+260,Wilson,LEE,MID,1.8582187898443001,0.5,odds
+261,Iwobi,FUL,MID,3.9576441633100488,1.0,odds
+262,Smith Rowe,FUL,MID,0.0,,not forecast
+263,Kevin,FUL,MID,0.0,,not forecast
+264,Bobb,FUL,MID,3.744031860903221,1.0,odds
+265,Berge,FUL,MID,2.646395118246672,0.75,odds
+266,Cairney,FUL,MID,0.0,,not forecast
+267,Lukić,IPS,MID,0.0,,not forecast
+268,King,FUL,MID,3.6495128570887054,1.0,odds
+269,Sessegnon,FUL,DEF,0.0,,not forecast
+270,Reed,FUL,MID,0.0,,not forecast
+271,Muniz,FUL,FWD,0.0,,not forecast
+272,Kusi-Asare,FUL,FWD,0.0,,not forecast
+273,Phillips,HUL,GK,0.0,,not forecast
+274,Butland,HUL,GK,0.0,,not forecast
+275,Cartwright,HUL,GK,0.0,,not forecast
+276,Lo-Tutala,HUL,GK,0.0,,not forecast
+277,Egan,HUL,DEF,3.6828795491349755,1.0,odds
+278,Hughes,HUL,DEF,0.0,,not forecast
+279,Ajayi,HUL,DEF,3.176680931107887,1.0,odds
+280,Coyle,HUL,DEF,2.4747259271402573,1.0,odds
+281,Drameh,HUL,DEF,0.0,,not forecast
+282,Giles,HUL,DEF,1.9042931701851307,0.5,odds
+283,Jacob,HUL,DEF,0.0,,not forecast
+284,McCarthy,HUL,DEF,0.0,,not forecast
+285,McNair,HUL,DEF,0.0,,not forecast
+286,Belloumi,HUL,MID,0.0,,not forecast
+287,Millar,HUL,MID,0.0,,not forecast
+288,Dowell,HUL,MID,0.0,,not forecast
+289,Crooks,HUL,MID,0.9872588425243416,0.25,odds
+290,Slater,HUL,MID,3.11583471747313,1.0,odds
+291,Matazo,HUL,MID,0.0,,not forecast
+292,Ömür,HUL,MID,0.0,,not forecast
+293,Kamara,HUL,MID,0.0,,not forecast
+294,Zambrano,HUL,MID,0.0,,not forecast
+295,McBurnie,HUL,FWD,3.32853730734048,1.0,odds
+296,Akintola,HUL,MID,0.0,,not forecast
+297,Gyabi,HUL,MID,0.0,,not forecast
+298,Destan,HUL,FWD,0.0,,not forecast
+299,Burstow,HUL,FWD,0.0,,not forecast
+300,Walton,IPS,GK,2.221773277634551,1.0,odds
+301,Palmer,IPS,GK,0.0,,not forecast
+302,Button,IPS,GK,0.0,,not forecast
+303,Kipré,IPS,DEF,0.0,,not forecast
+304,O'Shea,IPS,DEF,3.413880955428734,1.0,odds
+305,Davis,IPS,DEF,3.453208061580657,1.0,odds
+306,Greaves,IPS,DEF,0.7011632663528965,0.25,odds
+307,Johnson,IPS,DEF,0.0,,not forecast
+308,Furlong,IPS,DEF,0.0,,not forecast
+309,Núñez,IPS,MID,0.0,,not forecast
+310,Matusiwa,IPS,MID,0.0,,not forecast
+311,Burns,IPS,MID,0.0,,not forecast
+312,Taylor,IPS,MID,0.0,,not forecast
+313,Clarke,IPS,MID,1.2567049808429118,0.0,odds
+314,Ogbene,IPS,MID,0.0,,not forecast
+315,Fatawu,IPS,MID,2.3322779294987845,0.5,odds
+316,Emersonn,IPS,FWD,3.3721531132335327,1.0,odds
+317,Hirst,IPS,FWD,0.0,,not forecast
+318,Philogene,IPS,MID,2.0975718101444594,0.75,odds
+319,Szmodics,IPS,MID,0.0,,not forecast
+320,Akpom,IPS,FWD,0.0,,not forecast
+321,Walle Egeli,IPS,FWD,0.0,,not forecast
+322,Al-Hamadi,IPS,FWD,0.0,,not forecast
+323,McAteer,IPS,MID,0.0,,not forecast
+324,Mehmeti,IPS,MID,0.0,,not forecast
+325,Darlow,MUN,GK,0.0,,not forecast
+326,Perri,LEE,GK,0.0,,not forecast
+327,Bijol,LEE,DEF,1.1326647287412341,0.25,odds
+328,Struijk,BHA,DEF,0.0,,not forecast
+329,Rodon,LEE,DEF,0.0,,not forecast
+330,Bogle,LEE,DEF,3.9464414616556054,1.0,odds
+331,Gudmundsson,LEE,DEF,3.026916027740211,1.0,odds
+332,Justin,LEE,DEF,4.05825181021323,1.0,odds
+333,Bornauw,LEE,DEF,0.0,,not forecast
+334,Muharemović,LEE,DEF,4.451152898203426,1.0,odds
+335,Stach,LEE,MID,1.7336682218468962,0.25,odds
+336,Okafor,LEE,MID,1.4844987634391726,0.25,odds
+337,Aaronson,LEE,MID,1.0122513412833452,0.25,odds
+338,Ampadu,LEE,MID,3.7962901764951367,1.0,odds
+339,Longstaff,LEE,MID,1.829449381467134,0.25,odds
+340,Gelhardt,HUL,MID,1.2567049808429118,0.0,odds
+341,Gnonto,LEE,MID,0.0,,not forecast
+342,Harrison,LEE,MID,0.0,,not forecast
+343,James,LEE,MID,0.8340741611639186,0.25,odds
+344,Gruev,LEE,MID,0.0,,not forecast
+345,Tanaka,LEE,MID,3.5654655262112147,1.0,odds
+346,Calvert-Lewin,LEE,FWD,3.988515804545173,1.0,odds
+347,Nmecha,LEE,FWD,1.8054891629248928,0.25,odds
+348,Piroe,LEE,FWD,0.0,,not forecast
+349,Mateo Joseph,LEE,FWD,0.0,,not forecast
+350,A.Becker,LIV,GK,3.108032864310715,1.0,odds
+351,Mamardashvili,LIV,GK,0.0,,not forecast
+352,Woodman,LIV,GK,0.0,,not forecast
+353,Pecsi,LIV,GK,0.0,,not forecast
+354,Jaros,LIV,GK,0.0,,not forecast
+355,Davies,LIV,GK,0.0,,not forecast
+356,Virgil,LIV,DEF,0.0,,not forecast
+357,Frimpong,LIV,DEF,0.0,,not forecast
+358,Kerkez,LIV,DEF,3.6969413602311523,1.0,odds
+359,Gomez,LIV,DEF,0.0,,not forecast
+360,Bradley,LIV,DEF,0.0,,not forecast
+361,Lucky,LIV,DEF,0.0,,not forecast
+362,Jacquet,LIV,DEF,4.604778736872992,1.0,odds
+363,Leoni,LIV,DEF,0.0,,not forecast
+364,Tsimikas,LIV,DEF,0.0,,not forecast
+365,Ramsay,LIV,DEF,0.0,,not forecast
+366,Wirtz,LIV,MID,4.37257916001068,1.0,odds
+367,Gakpo,LIV,MID,3.6440531899477127,0.75,odds
+368,Szoboszlai,LIV,MID,2.7707375893707606,0.5,odds
+369,Ngumoha,LIV,MID,1.2567049808429118,0.0,odds
+370,Chiesa,LIV,MID,0.0,,not forecast
+371,Gravenberch,LIV,MID,0.0,,not forecast
+372,Mac Allister,LIV,MID,4.289177840577731,1.0,odds
+373,C.Jones,LIV,MID,0.0,,not forecast
+374,Endo,LIV,MID,0.0,,not forecast
+375,Nyoni,LIV,MID,1.780447305868119,0.25,odds
+376,Bajcetic,LIV,MID,0.0,,not forecast
+377,Munoz,LIV,MID,1.5334934913826233,0.25,odds
+378,McConnell,LIV,MID,0.0,,not forecast
+379,Isak,LIV,FWD,4.541367842409242,1.0,odds
+380,Ekitiké,LIV,FWD,0.0,,not forecast
+381,Koumas,LIV,MID,0.0,,not forecast
+382,Danns,LIV,FWD,0.0,,not forecast
+383,Elliott,LIV,MID,0.0,,not forecast
+384,Donnarumma,MCI,GK,3.713261469150962,1.0,odds
+385,Trafford,LEE,GK,2.681033410596042,1.0,odds
+386,Bettinelli,MCI,GK,0.0,,not forecast
+387,O'Reilly,MCI,DEF,1.9024997189965913,0.25,odds
+388,Guéhi,MCI,DEF,0.0,,not forecast
+389,Matheus N.,MCI,DEF,2.595934975149371,0.5,odds
+390,Rúben,MCI,DEF,4.525668637506853,1.0,odds
+391,Gvardiol,MCI,DEF,0.0,,not forecast
+392,Aït-Nouri,MCI,DEF,0.0,,not forecast
+393,Khusanov,MCI,DEF,3.7919658005292476,0.75,odds
+394,Alleyne,MCI,DEF,0.0,,not forecast
+395,Lewis,MCI,DEF,0.2697044334975369,0.0,odds
+396,Vitor Reis,MCI,DEF,0.0,,not forecast
+397,Semenyo,MCI,MID,0.0,,not forecast
+398,Foden,MCI,MID,2.2801278107651997,0.25,odds
+399,Cherki,MCI,MID,2.717776527557274,0.5,odds
+400,Doku,MCI,MID,4.757104242303617,1.0,odds
+401,Marmoush,TOT,FWD,3.2899346719148963,1.0,odds
+402,Rodrigo,MCI,MID,0.0,,not forecast
+403,Sávio,TOT,MID,0.0,,not forecast
+404,Reijnders,MCI,MID,0.0,,not forecast
+405,N.Gonzalez,NEW,MID,3.323130734511563,1.0,odds
+406,Kovačić,MCI,MID,0.7613238333497958,0.25,odds
+407,Echeverri,MCI,MID,0.0,,not forecast
+408,Phillips,MCI,MID,0.0,,not forecast
+409,Mukasa,MCI,MID,0.0,,not forecast
+410,Monga,MCI,MID,0.0,,not forecast
+411,Haaland,MCI,FWD,5.640864701634873,1.0,odds
+412,Lammens,MUN,GK,2.3775031092026824,1.0,odds
+413,Bayindir,MUN,GK,0.0,,not forecast
+414,Heaton,MUN,GK,0.0,,not forecast
+415,Dorgu,MUN,MID,0.0,,not forecast
+416,De Ligt,MUN,DEF,0.0,,not forecast
+417,Dalot,MUN,DEF,3.2651441577408598,1.0,odds
+418,Maguire,MUN,DEF,0.0,,not forecast
+419,Martinez,MUN,DEF,1.9534166489750246,0.5,odds
+420,Yoro,MUN,DEF,3.6105613173128153,1.0,odds
+421,Heaven,MUN,DEF,1.196753402128067,0.25,odds
+422,Mazraoui,MUN,DEF,1.0339824040722427,0.25,odds
+423,Shaw,MUN,DEF,0.0,,not forecast
+424,Amass,MUN,DEF,0.0,,not forecast
+425,Fredricson,MUN,DEF,0.0,,not forecast
+426,B.Fernandes,MUN,MID,3.7428579043319554,0.75,odds
+427,Mbeumo,MUN,MID,4.661216155429141,1.0,odds
+428,Cunha,MUN,MID,2.553953939659919,0.5,odds
+429,Rashford,MUN,MID,0.0,,not forecast
+430,Mount,MUN,MID,1.9371334420292015,0.25,odds
+431,Amad,MUN,MID,3.5455490131261373,1.0,odds
+432,Mainoo,MUN,MID,1.468088401623715,0.25,odds
+433,Ugarte,MUN,MID,0.0,,not forecast
+434,J.Fletcher,MUN,MID,0.0,,not forecast
+435,Lacey,MUN,MID,0.0,,not forecast
+436,Collyer,MUN,MID,0.0,,not forecast
+437,Bendito Mantato,MUN,MID,0.0,,not forecast
+438,Fletcher,MUN,MID,0.0,,not forecast
+439,Šeško,MUN,FWD,0.0,,not forecast
+440,Zirkzee,MUN,FWD,0.0,,not forecast
+441,Obi,MUN,FWD,0.0,,not forecast
+442,Pope,NEW,GK,0.0,,not forecast
+443,Gillespie,NEW,GK,0.0,,not forecast
+444,Jaouen,NEW,GK,0.0,,not forecast
+445,Thiaw,NEW,DEF,1.9012786980702332,0.5,odds
+446,Schär,NEW,DEF,2.4684858311705975,0.5,odds
+447,Botman,NEW,DEF,1.0009003405624082,0.25,odds
+448,Burn,NEW,DEF,2.686752677025996,0.75,odds
+449,Hall,NEW,DEF,3.954941827167025,1.0,odds
+450,Livramento,NEW,DEF,0.0,,not forecast
+451,A.Murphy,NEW,DEF,0.0,,not forecast
+452,Bruno G.,ARS,MID,3.1373038370464874,0.75,odds
+453,Barnes,NEW,MID,3.7861129098095225,1.0,odds
+454,Elanga,NEW,MID,1.4627781527609063,0.25,odds
+455,Tonali,TOT,MID,4.176553078163662,1.0,odds
+456,J.Ramsey,NEW,MID,0.0,,not forecast
+457,J.Murphy,NEW,MID,2.0009594198552834,0.5,odds
+458,Joelinton,NEW,MID,0.0,,not forecast
+459,L.Miley,NEW,MID,1.1836357010156628,0.25,odds
+460,Willock,NEW,MID,2.7646800266710008,0.75,odds
+461,Touré,NEW,MID,0.0,,not forecast
+462,Steur,NEW,MID,1.3238027692720347,0.25,odds
+463,Woltemade,NEW,FWD,0.0,,not forecast
+464,Wissa,NEW,FWD,2.451156236725136,0.5,odds
+465,Osula,NEW,FWD,2.556856744686127,0.75,odds
+466,Neave,NEW,FWD,0.0,,not forecast
+467,Sels,NFO,GK,2.6738457990948357,1.0,odds
+468,John,NFO,GK,0.0,,not forecast
+469,N.Williams,NFO,DEF,0.0,,not forecast
+470,Morato,NFO,DEF,0.0,,not forecast
+471,Milenković,NFO,DEF,2.6770916251233414,0.75,odds
+472,Murillo,NFO,DEF,4.722803237780217,1.0,odds
+473,Aina,NFO,DEF,0.8159539862556509,0.25,odds
+474,Jair Cunha,NFO,DEF,3.4940429061476337,1.0,odds
+475,Savona,NFO,DEF,0.0,,not forecast
+476,O.Richards,NFO,DEF,0.0,,not forecast
+477,Abbott,NFO,DEF,0.0,,not forecast
+478,Netz,NFO,DEF,0.0,,not forecast
+479,Bindon,NFO,DEF,0.0,,not forecast
+480,Gibbs-White,NFO,MID,3.3757207547361503,0.75,odds
+481,Anderson,MCI,MID,3.5401264430990356,0.75,odds
+482,Hudson-Odoi,NFO,MID,0.0,,not forecast
+483,Ndoye,NFO,MID,3.253704496738056,0.75,odds
+484,Hutchinson,NFO,MID,0.0,,not forecast
+485,Bakwa,NFO,MID,0.0,,not forecast
+486,McAtee,NFO,MID,4.14678811419301,1.0,odds
+487,Dominguez,NFO,MID,0.0,,not forecast
+488,I.Sangaré,NFO,MID,0.0,,not forecast
+489,Yates,NFO,MID,1.1475663467765844,0.25,odds
+490,Wood,NFO,FWD,0.0,,not forecast
+491,Igor Jesus,NFO,FWD,0.0,,not forecast
+492,Awoniyi,COV,FWD,2.461044840520835,0.5,odds
+493,Kalimuendo,NFO,FWD,0.0,,not forecast
+494,Vicario,TOT,GK,0.0,,not forecast
+495,Austin,TOT,GK,0.0,,not forecast
+496,Kinsky,TOT,GK,3.556193213733097,1.0,odds
+497,Dubravka,TOT,GK,0.0,,not forecast
+498,Senesi,TOT,DEF,0.0,,not forecast
+499,Pedro Porro,TOT,DEF,1.6821087803411316,0.25,odds
+500,Romero,TOT,DEF,0.0,,not forecast
+501,Danso,SUN,DEF,0.0,,not forecast
+502,Robertson,TOT,DEF,4.924399159859091,1.0,odds
+503,Van de Ven,TOT,DEF,4.410302321369753,1.0,odds
+504,Vuskovic,BHA,DEF,5.41281605928592,1.0,odds
+505,Spence,TOT,DEF,0.0,,not forecast
+506,Udogie,TOT,DEF,0.0,,not forecast
+507,Phillips,TOT,DEF,0.0,,not forecast
+508,Davies,TOT,DEF,0.0,,not forecast
+509,Byfield,TOT,DEF,0.0,,not forecast
+510,Rowswell,TOT,DEF,0.0,,not forecast
+511,Souza,TOT,DEF,0.0,,not forecast
+512,Kudus,TOT,MID,4.439773578294243,1.0,odds
+513,Xavi,TOT,MID,0.0,,not forecast
+514,Tel,TOT,MID,0.0,,not forecast
+515,Maddison,TOT,MID,1.7094952459768138,0.5,odds
+516,Bentancur,TOT,MID,0.0,,not forecast
+517,Odobert,TOT,MID,0.0,,not forecast
+518,P.M.Sarr,TOT,MID,0.0,,not forecast
+519,Gallagher,TOT,MID,1.2567049808429118,0.0,odds
+520,Bergvall,TOT,MID,0.0,,not forecast
+521,Kulusevski,TOT,MID,0.0,,not forecast
+522,Gray,TOT,MID,3.4799405937089007,1.0,odds
+523,Moore,TOT,MID,0.0,,not forecast
+524,Olusesi,TOT,MID,0.0,,not forecast
+525,Fernandes,TOT,MID,3.533716939253797,0.75,odds
+526,Solanke,TOT,FWD,2.462686287392888,0.5,odds
+527,Richarlison,TOT,FWD,0.0,,not forecast
+528,Scarlett,TOT,FWD,0.0,,not forecast
+529,Roefs,SUN,GK,2.554470750761335,1.0,odds
+530,Patterson,SUN,GK,0.0,,not forecast
+531,Ellborg,SUN,GK,0.0,,not forecast
+532,Ballard,SUN,DEF,0.0,,not forecast
+533,Mukiele,SUN,DEF,3.457085671145692,0.75,odds
+534,Hume,SUN,DEF,3.4284614105908124,1.0,odds
+535,Alderete,SUN,DEF,2.2913570323839396,0.5,odds
+536,Reinildo,SUN,DEF,3.010306106914083,1.0,odds
+537,Seelt,SUN,DEF,0.0,,not forecast
+538,Hjelde,SUN,DEF,0.0,,not forecast
+539,O'Nien,SUN,DEF,2.9426298840127556,0.75,odds
+540,Masuaku,SUN,DEF,0.0,,not forecast
+541,Meunier,SUN,DEF,1.0785913011304824,0.25,odds
+542,E.Le Fée,SUN,MID,4.737953263017684,1.0,odds
+543,Diarra,SUN,MID,0.0,,not forecast
+544,Xhaka,SUN,MID,0.0,,not forecast
+545,Sadiki,SUN,MID,3.1000541669761947,1.0,odds
+546,Adingra,SUN,MID,0.0,,not forecast
+547,Mundle,SUN,MID,0.0,,not forecast
+548,Rigg,SUN,MID,2.4580809511892525,0.75,odds
+549,Talbi,SUN,MID,1.450161977664998,0.25,odds
+550,Jocelin.T,SUN,MID,0.0,,not forecast
+551,N.Angulo,SUN,MID,1.843126745707817,0.5,odds
+552,Brobbey,SUN,FWD,0.0,,not forecast
+553,Isidor,SUN,FWD,0.6613924050632911,0.0,odds
+554,Van Oevelen,IPS,GK,0.0,,not forecast
+555,Matthews,CRY,GK,0.0,,not forecast
+556,Targett,HUL,DEF,0.0,,not forecast
+557,Tzolis,ARS,MID,1.929800012710902,0.5,odds
+558,Schlager,NFO,MID,0.0,,not forecast
+559,Bamba,NEW,MID,0.0,,not forecast
+560,Penders,CHE,GK,2.6603821264277734,0.75,odds
+561,Anselmino,CHE,DEF,0.0,,not forecast
+562,Maeda,IPS,MID,2.1830207844930607,0.5,odds
+563,Morita,HUL,MID,0.0,,not forecast
+564,Scherpen,IPS,GK,0.0,,not forecast
+565,M.Sangaré,BRE,MID,3.9670497317591993,0.75,odds
+566,Silva,BOU,DEF,5.427535319130643,1.0,odds
+567,Horníček,NEW,GK,2.411069357576479,1.0,odds
+568,Barco,CHE,MID,0.0,,not forecast
+569,Gonzalo,FUL,FWD,3.7309863171520252,1.0,odds
+570,Palacios,FUL,MID,1.2567049808429118,0.0,odds
+571,Florentino,IPS,MID,3.2775347556766388,1.0,odds
+572,Tzolakis,HUL,GK,2.3541696772098057,1.0,odds
+573,Sanchez,BOU,DEF,0.0,,not forecast
+574,Hjertø-Dahl,HUL,MID,0.0,,not forecast
+575,Yirenkyi,COV,MID,0.0,,not forecast
+576,Stroud,HUL,MID,2.2968167647145927,0.75,odds
+577,Tomiyasu,CRY,DEF,0.0,,not forecast
+578,Mudryk,TOT,MID,0.0,,not forecast
+579,Araujo,LIV,DEF,4.7736292887468315,1.0,odds
+580,Charles,FUL,MID,3.600687815280836,1.0,odds
+581,Diomande,NFO,DEF,0.8706989413332751,0.25,odds
+582,Madjo,AVL,FWD,0.0,,not forecast
+583,Chavarria,CHE,DEF,1.2558832314628923,0.25,odds
+584,Hamer,COV,MID,0.0,,not forecast
+585,Herrington,HUL,DEF,1.9455836393647323,0.5,odds
+586,Mendy,HUL,DEF,0.0,,not forecast
+587,Rulli,MCI,GK,0.0,,not forecast
+588,Khalaili,CRY,DEF,2.864904005600293,0.5,odds
+589,Gourna-Douath,HUL,MID,0.7294087539985628,0.25,odds
+590,Benda,NFO,GK,0.0,,not forecast
+591,Enciso,IPS,MID,4.1099717070728,1.0,odds
+592,Ouattara,IPS,DEF,2.8647128677483176,1.0,odds
+593,Dedić,NEW,DEF,2.318362615304793,0.75,odds
+594,David,BHA,FWD,0.0,,not forecast
+595,Gozo,CRY,MID,0.0,,not forecast
+596,Ruggeri,AVL,DEF,0.0,,not forecast
+597,Suzuki,AVL,GK,3.5456352944676106,1.0,odds
+598,Elvedi,LEE,DEF,3.013282171926676,0.75,odds
+599,Cherif,COV,FWD,2.0776539246234043,0.5,odds
+600,Osman,BHA,MID,0.0,,not forecast
+601,Williams-Barnett,TOT,MID,0.0,,not forecast
+602,Humphreys,IPS,MID,0.0,,not forecast
+603,Lienou,LEE,DEF,0.0,,not forecast
+604,Cresswell,LEE,MID,0.0,,not forecast
+605,Yalcouyé,BHA,MID,1.2567049808429118,0.0,odds
+606,Rowe,AVL,DEF,0.0,,not forecast
+607,Lynch,AVL,MID,0.0,,not forecast
+608,Jebbison,BOU,FWD,0.0,,not forecast
+609,Shahar,NEW,DEF,0.0,,not forecast
+610,De Fougerolles,FUL,DEF,0.0,,not forecast
+611,Wan-Bissaka,AVL,DEF,0.0,,not forecast
+612,Methalie,SUN,DEF,0.0,,not forecast
+613,Ahoka,SUN,MID,0.6283524904214559,0.0,odds
+614,Hadjam,BHA,DEF,0.0,,not forecast
+615,Di Gregorio,BOU,GK,0.0,,not forecast
+616,Bouaddi,MCI,MID,1.6755849163884196,0.5,odds
+617,Cho,HUL,MID,1.6794337859747723,0.25,odds
+618,Goretzka,AVL,MID,2.433732451135947,0.5,odds
+619,Palacios,IPS,MID,4.323202573954502,1.0,odds
+620,Diouf,BRE,DEF,0.8091133004926108,0.0,odds
+621,McAidoo,MCI,MID,0.0,,not forecast
+622,Braithwaite,MCI,DEF,0.0,,not forecast
+623,Bentley,COV,GK,0.0,,not forecast
+624,Cozier-Duberry,BHA,MID,0.0,,not forecast
+625,Cairns,LEE,GK,0.0,,not forecast
+626,Zepa,FUL,MID,0.0,,not forecast
+627,Barcola,LIV,MID,4.2591116547940455,1.0,odds
+628,Allan,MCI,MID,0.0,,not forecast
+629,Zetterer,LEE,GK,0.0,,not forecast
+630,Harwood-Bellis,AVL,DEF,0.9842186654257169,0.25,odds
+631,Mbaye,AVL,MID,1.2567049808429118,0.0,odds
+632,Ansah,HUL,FWD,0.0,,not forecast
+633,Ahanor,CRY,DEF,1.1129605778396914,0.25,odds
+634,Fernandez-Pardo,NEW,FWD,1.0460924628409196,0.25,odds
+635,Larsson,FUL,MID,1.1075225284230699,0.25,odds
+636,Ángel,FUL,MID,0.0,,not forecast
+637,Vaz,HUL,FWD,0.0,,not forecast
+638,Norton-Cuffy,HUL,DEF,1.4364436622649932,0.25,odds
+639,Andrés,BHA,MID,0.0,,not forecast
+640,Flemming,IPS,FWD,1.3227848101265822,0.0,odds
+641,Bard,LEE,DEF,0.2697044334975369,0.0,odds
+642,Thomas,HUL,MID,0.8296637121813761,0.25,odds
+643,Chilwell,CRY,DEF,0.0,,not forecast
+644,Timber,CRY,MID,1.8696600343740268,0.5,odds
+645,Mouzakitis,HUL,MID,0.0,,not forecast
+646,Fofana,SUN,MID,0.0,,not forecast
+647,Osorio,CRY,MID,0.9425287356321839,0.0,odds
+648,Bahoya,LEE,MID,0.0,,not forecast
+649,Maitland-Niles,EVE,DEF,0.8898355075339955,0.25,odds
+650,Affengruber,FUL,DEF,3.4599686035882686,1.0,odds
+651,J.Angulo,SUN,FWD,0.0,,not forecast
+652,Azeez,BHA,MID,0.0,,not forecast
+653,Samba,MCI,MID,0.0,,not forecast
+654,Graham,EVE,MID,0.0,,not forecast
+655,Gboho,COV,MID,1.6106410317291167,0.5,odds
+656,Mfuni,COV,DEF,2.3662235407216397,0.5,odds
+657,Nunes,BRE,MID,0.0,,not forecast
+658,Ibrahim,BHA,MID,0.0,,not forecast
+659,Miley,NEW,MID,0.0,,not forecast
+660,Fredrick,BRE,DEF,0.0,,not forecast
+661,Balcombe,BRE,GK,0.0,,not forecast
+662,Nicoll-Jazuli,CHE,MID,0.0,,not forecast
+663,Pivas,NEW,DEF,0.0,,not forecast
+664,Salia,NEW,FWD,0.0,,not forecast
+665,Mills,NEW,MID,0.0,,not forecast
+666,Thompson,NEW,MID,0.0,,not forecast
+667,Wright,AVL,GK,0.0,,not forecast
+668,Tutierov,SUN,MID,0.9569835996009113,0.25,odds
+669,Sharman-Lowe,CHE,GK,0.0,,not forecast
+670,Subuloye,CHE,DEF,0.0,,not forecast
+671,Gunter,TOT,GK,0.0,,not forecast
+672,Cissé,AVL,DEF,0.0,,not forecast

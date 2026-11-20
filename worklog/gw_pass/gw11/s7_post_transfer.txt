@@ -1,0 +1,78 @@
+S7 CHIP CALCULATOR ON THE POST-TRANSFER SQUADS  GW11 (Boris, Thu 19 Nov night, point c); information, read-only, no tool change
+  data 0a54132, export fpl_export_gw10_2026-11-20.json.gz; code 352dd36 (modified tracked files 0); script sha256 f39ed04c2fe5e95e1ae298734e059849a9e7456f12b3c41ab2f79a7fb2d2978d; generated 2026-11-20 02:39 UTC
+  method: tools/chips.py live() unchanged, with my_squad() returning the 15 after the two transfers (each
+  incoming player in the outgoing player's slot, selling price = today's price). xP source as the bundle: own.
+  Free Hit budget: bank after + selling prices = the export's £100.0m (bank now 0.9), so unchanged.
+  The FREE HIT SCREEN that live() prints last reads the export's squad, not my_squad(): cut from the candidates.
+  control: the current 15 through the same path vs the bundle's S7 section: 34 of 34 lines equal (34 printed)
+
+==============================================================================================================
+(a) best pair with a Bench Boost   bank after 0.0; clubs at 3: BHA
+==============================================================================================================
+  the 15: Verbruggen (BHA, a), Muharemović (LEE, a), Gabriel (ARS, a), Tarkowski (EVE, a), Calafiori (ARS, a), Rogers (CHE, a), Mbeumo (MUN, a), Groß (BHA, a), Rudoni (COV, a), Haaland (MCI, a), Barry (EVE, a), Kelleher (BRE, a), N.Jackson (AVL, a), Slater (HUL, a), De Cuyper (BHA, a)
+CHIP CALCULATOR  export fpl_export_gw10_2026-11-20.json.gz (GW10 played), next GW11, chips left: BB, FH; budget £100.0m = bank + selling prices
+  xP source: own - the recorded row for GW11 where the log holds one, else the own
+  formula on each week's real fixtures from the fixtures table, GW11-GW19 (no proxy weeks).
+  Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).
+
+    GW     metric    V_BB    V_FH  ours XI   FH XI   V(none)  V(BB)  V(FH)  V(BB+FH)   action with all chips
+    11        own    4.41    3.84    24.87   28.71        0.00       4.84       3.90       8.74   HOLD
+    12  own-model    4.74    3.19    23.16   26.36        0.00       4.84       3.90       8.74   HOLD
+    13  own-model    4.52    3.87    22.66   26.52        0.00       4.84       3.90       8.74   HOLD
+    14  own-model    4.50    3.53    25.30   28.84        0.00       4.84       3.90       8.74   HOLD
+    15  own-model    4.37    3.71    23.56   27.27        0.00       4.84       3.90       8.74   HOLD
+    16  own-model    4.29    3.90    25.04   28.93        0.00       4.84       3.90       8.74   PLAY FH
+    17  own-model    4.84    3.73    24.97   28.70        0.00       4.84       3.86       8.71   PLAY BB
+    18  own-model    4.83    3.86    23.93   27.79        0.00       4.84       3.86       8.70   PLAY FH
+    19  own-model    4.84    4.55    23.98   28.53        0.00       4.84       0.00       4.84   PLAY BB
+
+  NEXT GAMEWEEK GW11: HOLD   (margin over the best other action +0.06 xP)
+  residuals by position (2026/27 own, graded gameweeks): GK n=144, DEF n=713, MID n=908, FWD n=198
+  uncertainty: 1000 residual resamples by position (XIs held fixed): margin of HOLD over the best other action 90% [-11.15, +16.08], same action in 77%
+
+  BENCH PREP for GW17: one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)
+    Tarkowski         1.59 -> Konsa             2.96 (£4.9m, ARS)  gain +1.37
+    Rudoni            1.44 -> Röhl              1.54 (£4.9m, EVE)  gain +0.09
+    Slater            0.91 -> Yates             0.53 (£4.4m, NFO)  gain -0.38
+    Kelleher          1.59 -> Roefs             1.83 (£4.8m, SUN)  gain +0.23
+
+==============================================================================================================
+(b) best pair without a Bench Boost   bank after 0.1; clubs at 3: BHA
+==============================================================================================================
+  the 15: Verbruggen (BHA, a), Muharemović (LEE, a), Gabriel (ARS, a), Tarkowski (EVE, a), De Cuyper (BHA, a), Rogers (CHE, a), Mbeumo (MUN, a), Groß (BHA, a), Rudoni (COV, a), Haaland (MCI, a), Barry (EVE, a), Kelleher (BRE, a), Thiago (BRE, s), Slater (HUL, a), Van Hecke (TOT, a)
+CHIP CALCULATOR  export fpl_export_gw10_2026-11-20.json.gz (GW10 played), next GW11, chips left: BB, FH; budget £100.0m = bank + selling prices
+  xP source: own - the recorded row for GW11 where the log holds one, else the own
+  formula on each week's real fixtures from the fixtures table, GW11-GW19 (no proxy weeks).
+  Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).
+
+    GW     metric    V_BB    V_FH  ours XI   FH XI   V(none)  V(BB)  V(FH)  V(BB+FH)   action with all chips
+    11        own    3.08    4.58    24.13   28.71        0.00       3.47       4.70       8.17   HOLD
+    12  own-model    3.30    3.86    22.49   26.36        0.00       3.47       4.70       8.17   HOLD
+    13  own-model    3.14    4.06    22.46   26.52        0.00       3.47       4.70       8.17   HOLD
+    14  own-model    3.04    4.70    24.14   28.84        0.00       3.47       4.70       8.17   PLAY FH
+    15  own-model    3.18    4.65    22.62   27.27        0.00       3.47       4.65       8.12   PLAY FH
+    16  own-model    2.97    4.56    24.37   28.93        0.00       3.47       4.56       8.04   PLAY FH
+    17  own-model    3.38    4.51    24.19   28.70        0.00       3.47       4.51       7.98   PLAY FH
+    18  own-model    3.35    4.33    23.46   27.79        0.00       3.47       4.33       7.80   PLAY FH
+    19  own-model    3.47    5.71    22.82   28.53        0.00       3.47       0.00       3.47   PLAY BB
+
+  NEXT GAMEWEEK GW11: HOLD   (margin over the best other action +0.12 xP)
+  residuals by position (2026/27 own, graded gameweeks): GK n=144, DEF n=713, MID n=908, FWD n=198
+  uncertainty: 1000 residual resamples by position (XIs held fixed): margin of HOLD over the best other action 90% [-10.41, +17.11], same action in 78%
+
+  BENCH PREP for GW19: one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)
+    Tarkowski         1.42 -> Konsa             2.96 (£4.9m, ARS)  gain +1.54
+    Slater            1.04 -> Yates             0.60 (£4.4m, NFO)  gain -0.44
+    Thiago            0.00 -> Evanilson         2.42 (£6.5m, BOU)  gain +2.42
+    Kelleher          1.59 -> Roefs             2.05 (£4.8m, SUN)  gain +0.45
+
+==============================================================================================================
+GW11 SUMMARY (own xP; margin over the best other action; 90% interval of 1000 residual resamples, XIs fixed)
+==============================================================================================================
+  squad       GW11 action    V_BB   margin   90% interval        same   GW11 value of:   HOLD  PLAY BB  PLAY FH
+  current 15  PLAY FH        2.02    +0.17   [-45.37, +10.90]     13%                    8.58     8.33     8.75
+  (a)         HOLD           4.41    +0.06   [-11.15, +16.08]     77%                    8.74     8.31     8.68
+  (b)         HOLD           3.08    +0.12   [-10.41, +17.11]     78%                    8.17     7.77     8.05
+  value of an action = its chip's GW11 value + V(GW12, the chips left after it); HOLD = V(GW12, BB+FH).
+  The interval re-runs the induction on each resample with fresh noise in every week, so HOLD takes the best
+  of the later noisy weeks: a play-now action carries the long lower tail, HOLD the long upper one.

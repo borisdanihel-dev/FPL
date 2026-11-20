@@ -1,0 +1,28 @@
+BENCH BOOST TIMING ON THE POST-TRANSFER SQUADS  GW11-16 (Boris, Thu 19 Nov night, point c); information, read-only, no tool change
+  data 0a54132, export fpl_export_gw10_2026-11-20.json.gz; code 352dd36 (modified tracked files 0); script sha256 3ba8ff8fab077fcd042f7ce471336f9959af7957bb285d7e660f069c5707011c; generated 2026-11-20 02:39 UTC
+  check: bb_moves' copy of the matrix, no gate lifted, equals the planner's: True
+  value: the four outside xp_v2's best XI, the squad held GW11-16 (no later transfers); BB = that week's bench at full weight
+
+  UNDER THE GATE (Thiago, Thomas 0)
+    squad          GW11   GW12   GW13   GW14   GW15   GW16   best week   GW11 rank   GW11 bench
+    current 15     6.30   5.83   6.79   6.44   7.60   7.06   GW15           5 of 6   Kelleher 3.19, Slater 3.12, Thiago 0.00, Thomas 0.00
+    (a)           14.36  13.29  15.10  15.64  15.15  15.36   GW14           5 of 6   Kelleher 3.19, Calafiori 4.06, Tarkowski 4.00, Slater 3.12
+    (b)           10.30   9.70  10.92  10.98  11.07  11.01   GW15           5 of 6   Kelleher 3.19, Tarkowski 4.00, Slater 3.12, Thiago 0.00
+    (a): best pair with a Bench Boost (bank after 0.0)
+    (b): best pair without a Bench Boost (bank after 0.1)
+
+  LIFTED (Thiago from GW14 at chance 100; Thomas at his chance in GW11, then as normal)
+    squad          GW11   GW12   GW13   GW14   GW15   GW16   best week   GW11 rank   GW11 bench
+    current 15     8.18   7.98   9.11  13.07  13.21  12.90   GW15           5 of 6   Kelleher 3.19, Slater 3.12, Thomas 1.88, Thiago 0.00
+    (a)           14.36  13.29  15.10  15.64  15.15  15.36   GW14           5 of 6   Kelleher 3.19, Calafiori 4.06, Tarkowski 4.00, Slater 3.12
+    (b)           10.30   9.70  10.92  15.64  15.15  15.36   GW14           5 of 6   Kelleher 3.19, Tarkowski 4.00, Slater 3.12, Thiago 0.00
+    (a): best pair with a Bench Boost (bank after 0.0)
+    (b): best pair without a Bench Boost (bank after 0.1)
+
+  INFORMATION: LIFTED WITH THOMAS AT HIS CHANCE IN EVERY WEEK
+    squad          GW11   GW12   GW13   GW14   GW15   GW16   best week   GW11 rank   GW11 bench
+    current 15     8.18   7.44   8.53  12.55  12.68  12.43   GW15           5 of 6   Kelleher 3.19, Slater 3.12, Thomas 1.88, Thiago 0.00
+    (a)           14.36  13.29  15.10  15.64  15.15  15.36   GW14           5 of 6   Kelleher 3.19, Calafiori 4.06, Tarkowski 4.00, Slater 3.12
+    (b)           10.30   9.70  10.92  15.64  15.15  15.36   GW14           5 of 6   Kelleher 3.19, Tarkowski 4.00, Slater 3.12, Thiago 0.00
+    (a): best pair with a Bench Boost (bank after 0.0)
+    (b): best pair without a Bench Boost (bank after 0.1)
