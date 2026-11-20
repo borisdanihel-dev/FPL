@@ -7,26 +7,32 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 20 Nov, 00:55 UTC; power cut at ~00:30, nothing lost): Boris's answers of Thu 19 Nov night and late**
+- **NOW (Fri 20 Nov, 02:45 UTC): Boris's answers of Thu 19 Nov night and late**
   (verbatim in `prereg/W3fix.md`, `FM.md`, `FJ.md`, `runcommit.md`, `FJ6.md`,
-  `bundle.md`; `448e652` pushed; `101a485`, `2f0f3cd`, `2c04cd4`, `73c4a12` local,
-  pushed after tonight's nightly). **Standing rule:** a WARN or FAIL stops
-  that item only; its questions are parked here; carry on with the next
-  independent item.
+  `bundle.md`; all pushed after tonight's nightly, master `cc51a47`).
+  **Standing rule:** a WARN or FAIL stops that item only; its questions are
+  parked here; carry on with the next independent item.
   - **GW11 deadline pass (Sat 21 Nov 11:00 UTC; freeze from Fri 05:00, tools
-    and worklog only):** bundle and scripts in `worklog/gw_pass/gw11/`
-    (`bb_moves.py` transfer tables gated / lifted / Thomas every week as
-    information; `s7_post_transfer.py`; `bb_timing.py`; ban risk) tested on
-    the 19 Nov export from a clean master worktree. Next: rerun on tonight's
-    export after the nightly, commit, post by Fri 09:00 UTC; Friday's refresh
-    after Boris's real run (~15:00 UTC), commit before 18:00 UTC.
+    and worklog only): points a-c DONE** on tonight's nightly (data
+    `0a54132`, committed 02:35 UTC, STATUS WARN = the standing 5 Nov price
+    gap only): the bundle from clean master `352dd36` (worktree
+    `gw11_code`), the transfer tables, S7, bb_timing and ban risk in
+    `worklog/gw_pass/gw11/`, master `cc51a47`. Thomas is now 75% (50% on 19
+    Nov); the plans are unchanged from the 19 Nov test. Point d posted.
+    Next: point e, Friday's refresh after Boris's real run (~15:00 UTC):
+    pull, `--restore`, rerun the bundle, bb_moves, s7, bb_timing, ban risk
+    into a new scratch folder (`gw11/run2`), commit before 18:00 UTC.
   - **FM (xp_v2_g2): STOPPED, verifier WARN** (`worklog/verify_FM.md`). Result
-    on `fm-wip` `f6d1c34`: GW5-10, 830 flagged player-weeks, mean e -0.158,
-    90% [-0.310, -0.016], bar NOT passed; not recorded Mon 23 Nov (Boris
-    confirmed). Boris's answers of Thu 19 late recorded: six origins accepted,
-    amendment 1, the prospective squared-error test GW11-15 pre-registered.
-    Open work before GW15: the two information prints and main()'s
-    end-to-end test; the item report; rebase `fm-wip`.
+    GW5-10, 830 flagged player-weeks, mean e -0.158, 90% [-0.310, -0.016],
+    bar NOT passed, unchanged on `fm-wip` `dfb4691` (modified 0); not
+    recorded Mon 23 Nov (Boris confirmed). Boris's answers of Thu 19 late
+    recorded: six origins accepted, amendment 1, the prospective
+    squared-error test GW11-15 pre-registered. Answer 3 DONE on `dfb4691`:
+    the two information prints (point 5 alone n=72, -0.315; ours n=38,
+    -0.253) and main()'s end-to-end test (7 of 7 check mutants red; found and
+    fixed the n=0 crash). Open before GW15: a verifier re-check of the new
+    code; the item report with the GW4 note; the prospective test's code;
+    rebase `fm-wip`.
   - **W3fix: STOPPED, re-check WARN** of `5385c57` (`worklog/verify_W3fix.md`).
     Parked (exact wording in `prereg/W3fix.md`): (1) the float-sum mutant's
     test; (2) four minor green mutants; (3) may `dry/W3fix` be pushed in the
