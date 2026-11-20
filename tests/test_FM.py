@@ -260,5 +260,101 @@ class MatrixOnAToy(unittest.TestCase):
             os.remove(planted)
 
 
+class CheckEndToEnd(unittest.TestCase):
+    """gate_v2_check.main on W3's toy (Boris, answers on FM of Thu 19 Nov late, point 3: an end-to-end test of the
+    check's main()): GW9 locked with points, three flagged players in the origin's export and one under 45 minutes;
+    the printed numbers against the rows file and an independent sum."""
+
+    def setUp(self):
+        import gzip
+        import json
+        import sqlite3
+        from tests.test_W3 import toy_world
+        toy_world(self)
+        exp = os.path.join(self.tmp, "exports", "fpl_export_gw8_2026-10-17.json.gz")
+        with gzip.open(exp, "rt", encoding="utf-8") as fh:
+            d = json.load(fh)
+        teams9 = {t for f in d["fixtures_next6"] if f["event"] == 9 for t in (f["home"], f["away"])}
+        cand = [p for p in d["all_players"] if p["team"] in teams9 and (p.get("mins_last4") or 0) >= 45]
+        self.hurt, self.gone, self.ban, self.short = (p["id"] for p in cand[:4])
+        flags = {self.hurt: ("d", 50, "Calf injury - 50% chance of playing"),
+                 self.gone: ("i", 0, "Knee injury - Unknown return date"),
+                 self.ban: ("s", 0, "Suspended"),
+                 self.short: ("d", 75, "Knock - 75% chance of playing")}
+        for p in d["all_players"]:
+            if p["id"] in flags:
+                p["status"], p["chance_next_round"], p["news"] = flags[p["id"]]
+            if p["id"] == self.short:
+                p["mins_last4"] = 30                                        # under 45: outside the population
+        from datetime import timedelta
+        for f in [f for f in d["fixtures_next6"] if f["event"] == 9]:        # GW10 in the horizon, never locked
+            ko = datetime.fromisoformat(f["kickoff_time"].replace("Z", "+00:00")) + timedelta(days=7)
+            d["fixtures_next6"].append(dict(f, event=10, home=f["away"], away=f["home"],
+                                            kickoff_time=ko.strftime("%Y-%m-%dT%H:%M:%SZ")))
+        with gzip.open(exp, "wt", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        self.points = {p["id"]: 2 for p in d["all_players"]}
+        self.points.update({self.hurt: 6, self.gone: 0, self.ban: 0})
+        c = sqlite3.connect(os.path.join(self.tmp, "fpl.sqlite"))
+        c.execute("update events set data_checked = 1, finished = 1 where id = 9")
+        c.execute("update fixtures set finished = 1 where event = 9")
+        c.executemany("insert into player_gw (player_id, event, total_points, minutes) values (?, 9, ?, ?)",
+                      [(pid, pts, 90 if pts else 0) for pid, pts in self.points.items()])
+        c.commit()
+        c.close()
+
+    def tearDown(self):
+        from tests.test_W3 import drop_world
+        drop_world(self)
+
+    def run_main(self, origins="9", last="9"):
+        import csv
+        import io
+        import tempfile
+        from contextlib import redirect_stdout
+        import gate_v2_check as GC
+        out = tempfile.mkdtemp(dir=self.side)
+        with redirect_stdout(io.StringIO()):
+            GC.main(["--data", self.tmp, "--hist", self.hist, "--out", out, "--origins", origins, "--last", last])
+        with open(os.path.join(out, "gate_v2_check.txt"), encoding="utf-8") as fh:
+            text = fh.read()
+        with open(os.path.join(out, "gate_v2_rows.csv"), encoding="utf-8", newline="") as fh:
+            rows = list(csv.DictReader(fh))
+        return text, rows
+
+    def test_the_numbers_from_the_rows(self):
+        text, rows = self.run_main()
+        flagged = [r for r in rows if r["group"] == "flagged"]
+        self.assertEqual({int(r["id"]) for r in flagged}, {self.hurt, self.gone, self.ban})   # never the 30-minute one
+        e = []
+        for r in flagged:
+            v1, v2, real = float(r["v1"]), float(r["v2"]), float(r["r"])
+            self.assertEqual(real, self.points[int(r["id"])])                   # GW9's points, not another week's
+            self.assertEqual(v1, 0.0)                                            # v1: the gate
+            self.assertAlmostEqual(float(r["e"]), abs(v1 - real) - abs(v2 - real), 9)
+            e.append(abs(v1 - real) - abs(v2 - real))
+        by_id = {int(r["id"]): float(r["v2"]) for r in flagged}
+        self.assertGreater(by_id[self.hurt], 0.0)                                # d: lifted in week t
+        self.assertEqual((by_id[self.gone], by_id[self.ban]), (0.0, 0.0))        # i unknown, s without a date: 0 in t
+        mean = sum(e) / len(e)
+        self.assertGreater(mean, 0)
+        self.assertIn(f"over 3 flagged player-weeks in 1 origins: mean {mean:+.3f}, 90% [{mean:+.3f}, {mean:+.3f}]", text)
+        self.assertIn("bar: the 90% lower bound above 0 - PASS.", text)
+        self.assertIn("THE RETROSPECTIVE CHECK, GW9-9 scored through GW9", text)
+
+    def test_only_locked_weeks_up_to_the_last_are_scored(self):
+        _, rows = self.run_main(last="10")                                    # GW10 is in the horizon but not locked
+        self.assertEqual({r["week"] for r in rows}, {"9"})
+        text, rows = self.run_main(last="8")                                  # nothing up to GW8 from origin 9
+        self.assertEqual(rows, [])
+        self.assertIn("over 0 flagged player-weeks", text)
+
+    def test_an_origin_without_its_export_is_reported_not_scored(self):
+        text, rows = self.run_main("8-9")
+        self.assertRegex(text, r"(?m)^  GW8\s+missing input, not scored: ")
+        self.assertIn("NOT SCORED: GW8 (missing input above); the primary line covers 1 of 2 origins", text)
+        self.assertEqual({r["origin"] for r in rows}, {"9"})
+
+
 if __name__ == "__main__":
     unittest.main()

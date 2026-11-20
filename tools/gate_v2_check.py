@@ -149,15 +149,20 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     for name in ("--data", "--hist", "--out"):
         ap.add_argument(name, required=True)
+    ap.add_argument("--origins", default=f"{ORIGINS[0]}-{ORIGINS[-1]}", help="the origins' gameweeks, e.g. 4-10 (the default)")
+    ap.add_argument("--last", type=int, default=LAST, help="the last gameweek scored (default 10)")
     a = ap.parse_args(argv)
+    lo_, _, hi_ = a.origins.partition("-")
+    origins = tuple(range(int(lo_), int(hi_ or lo_) + 1))
     run_ = Run("tools/gate_v2_check.py", a.out, argv if argv is not None else sys.argv[1:])
     lines = []
 
     def out(s=""):
         print(s, flush=True)
         lines.append(s)
-    rows, per = check(a.data, a.hist, out)
-    out("STATUS GATE V2 (xp_v2_g2): THE RETROSPECTIVE CHECK, GW4-10 (prereg/FM.md; Boris's answer 4, Thu 12 Nov night)")
+    rows, per = check(a.data, a.hist, out, origins=origins, last=a.last)
+    out(f"STATUS GATE V2 (xp_v2_g2): THE RETROSPECTIVE CHECK, GW{origins[0]}-{origins[-1]} scored through GW{a.last} "
+        "(prereg/FM.md; Boris's answer 4, Thu 12 Nov night)")
     out(f"  code {run_.commit[:7]} (modified tracked files {run_.dirty})")
     out(f"  {'origin':<7}{'export':<36}{'odds':<30}{'flagged':>8}{'n':>5}{'mean e':>9}  point 5: flagged windows touching a GW with no archive")
     for o in per:
@@ -170,9 +175,12 @@ def main(argv=None):
     scored = [o for o in per if "missing" not in o]
     boot = cluster_bootstrap([(o["sum"], o["n"]) for o in scored])
     out("")
-    out(f"  PRIMARY: e = |v1 - r| - |v2 - r| over {boot['n']} flagged player-weeks in {boot['n_clusters']} origins: "
-        f"mean {boot['mean']:+.3f}, 90% [{boot['lo']:+.3f}, {boot['hi']:+.3f}] (origins resampled, B {FB.B}, seed {FB.SEED}"
-        f"{'; ' + str(boot['dropped']) + ' empty resamples dropped' if boot['dropped'] else ''})")
+    if not boot["n"]:
+        out(f"  PRIMARY: e = |v1 - r| - |v2 - r| over 0 flagged player-weeks in {boot['n_clusters']} origins: no result")
+    else:
+        out(f"  PRIMARY: e = |v1 - r| - |v2 - r| over {boot['n']} flagged player-weeks in {boot['n_clusters']} origins: "
+            f"mean {boot['mean']:+.3f}, 90% [{boot['lo']:+.3f}, {boot['hi']:+.3f}] (origins resampled, B {FB.B}, seed {FB.SEED}"
+            f"{'; ' + str(boot['dropped']) + ' empty resamples dropped' if boot['dropped'] else ''})")
     out(f"  bar: the 90% lower bound above 0 - {'PASS' if passes(boot) else 'not passed'}. Reported only; Boris decides.")
     by_status = defaultdict(list)
     for r in rows:
