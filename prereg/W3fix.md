@@ -170,3 +170,125 @@ amendment entry lands with the item, before the GW11 deadline).
   byte-identity made Ruling 3 reach tools/chips.py, so the GW pass and the
   planner take the zero too. Keep that (a), or (b) amend W2's identity test
   to allow exactly Ruling 3's lines and leave tools/chips.py as it was?"
+
+## Questions parked for Boris (exact wording), Mon 16 Nov 19:20 UTC, after the verifier's pre-check WARN (`worklog/verify_W3fix.md`)
+
+Recorded late: the Ruling 3 pin said the CHIPS-export question was "parked
+below, with a measurement" and it was not written here; the verifier found
+the gap (its decision 1). The dry run waits for the answers.
+
+1. **CHIPS's export.** "Under (a), CHIPS's Free Hit screen still reads last
+   night's export, and its flag disagrees with the base screen's in 15 of 186
+   week-rows since 19 Oct (the implementer's count; the verifier's over all 35
+   data commits: 16 of 207), one of them an own week (1 Nov GW10: base +8.31
+   flagged, CHIPS +7.95 not), the rest bottomup weeks around match days
+   (before the change: 24 of 186). Make CHIPS's Free Hit screen read tonight's
+   export, the base screen's own table, so the flag agrees by construction
+   (i), or keep it on last night's export (ii)?"
+2. **The not-'a' trigger** (the verifier's decision 2). "Under (a) a flagged
+   player of ours without an own row counts 0 in the own week, so he drops
+   out of our best XI: the gap rises (flags added on 2 of 35 past commits,
+   none removed) and the trigger '3+ of our XI not a' can no longer fire in an
+   own week (it reached 3 twice under the old metric, at most 1 under the
+   new). Is that the intended reading of (a) (yes), or should the not-'a'
+   count read our best XI before the zero (no)?"
+3. **`tools/chips.py`** (in the addendum above, unchanged): "Keep the mirror
+   (a), or (b) amend W2's identity test?"
+4. **Surviving mutants** (the verifier's decision 4): five of its 35 survive -
+   CHIPS's header note dropped; the note's gate count from every status-'a'
+   player; float sums in `xi_lex`; a missing forecast counted 1 in `xi_lex`;
+   own-model back in `tools/chips.py` alone. "Add small tests for them before
+   the merge (yes), or accept them (no)?"
+5. **The headers' export** (the verifier's decision 5): "CAPTAIN and BAN RISK
+   now name the working export, `fpl_export_gw10.json`, which on a night the
+   sync fails is the restored copy of last night's. Print the export's own
+   `generated` time beside its name (yes), or leave it (no)?"
+
+Measured besides (the verifier): 31 Oct GW10 also changes reason under the
+new metric ("3 of our XI not 'a'" at +5.6 becomes "gap > 8" at +8.8), a
+rollover night the implementer's script skipped.
+
+## Answers, Thu 19 Nov night (Boris's message verbatim; for this item: the standing rule, points 1-5 (W3fix lands after the GW11 deadline, from Sat 21 Nov) and the dates)
+
+Answers, Thu 19 Nov night. Standing rule from now on: a WARN or FAIL stops that item only. Park its questions in the state file and carry on with the next independent item; never sit idle waiting for the chat.
+
+W3fix (lands after the GW11 deadline, on the first free night from Sat 21 Nov):
+1. (i) CHIPS's Free Hit screen reads tonight's export, so its flag always matches the base screen.
+2. No: the "3+ of our XI not 'a'" trigger counts our best XI before the zero (it exists to catch an injury crisis; zeroing first would hide it).
+3. (a) Keep tools/chips.py matched to fpl_chips: one rule everywhere, and the GW pass and planner take the zero too.
+4. Yes: add tests for the five surviving mutants before the merge.
+5. Yes: print the export's own generated time beside its name in the CAPTAIN and BAN RISK headers.
+FM (xp_v2_g2):
+6. (A) P(start) uses the last four gameweeks in which the player was not suspended.
+7. (A) Score all seven origins, GW4-10.
+FJ:
+8. Yes: regenerate checkpoint.txt with the landing.
+After the GW11 deadline: Sat 21 W3fix (with fj-wip's tests), Sun 22 runcommit plus the price-moves name fix, Mon 23 xp_v2_g2 recorded if its check passed and Boris accepts.
+
+GW11 deadline pass, now (deadline Sat 21 Nov 11:00 UTC; freeze from Fri 20 Nov 05:00 UTC: tools and worklog only):
+a. Tonight: git pull --ff-only in C:\GIT\FPL-data; run the GW11 bundle from master (the S8c tools are now on master; clean worktree) on the newest export. Commit gw11_pass.txt, xp_v2_all.csv and run.txt to master under worklog/gw_pass/gw11/.
+b. Transfers (2 FTs, bank 0.9, no hits). Thiago is banned GW11-13 (back GW14); Thomas is d 50% (calf). Post the best pairs with and without a Bench Boost in GW11, run twice: under the gate, and with Thiago lifted from GW14 and Thomas at his chance (information, as in GW10). Also the named options: Thiago + Thomas out; Thiago out only (roll one).
+c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15 and on the two best candidate squads (with and without a Bench Boost), with the GW11-19 lines; bb_timing for a Bench Boost in GW11 against later first-half weeks, on the post-transfer squads.
+d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
+e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
+Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Answers of Thu 19 Nov night, pinned before their code (W3fix points 1, 2, 4, 5; Thu 19 Nov 21:10 UTC)
+
+Committed locally before any code; pushed after tonight's nightly (mode (d):
+the 21:00 UTC window covers master).
+
+- **Point 1 (i), CHIPS's Free Hit screen on tonight's export:** the screen
+  printed at the end of CHIPS (`fpl_chips.live`, and `tools/chips.py`'s
+  `live` byte for byte, W2's identity) is built from tonight's working export
+  (`fpl_ship.newest_export`, the file CAPTAIN and BAN RISK read since Ruling
+  2) with tonight's log, so it is the base screen's own table. Its label names
+  that export. No working export: one line, "FREE HIT SCREEN not built: no
+  working export (...)", never last night's. The calculator above it (V_BB,
+  V_FH, the induction) stays on the dated archive (amendment 3, point 3).
+- **Point 2 (no), the not-'a' trigger:** `free_hit_table` counts "not a" on
+  our best XI chosen by the metric before Ruling 3's zero (item N as frozen:
+  own where recorded, else bottomup), so an injury crisis still shows; the gap
+  ("ours") keeps the amended metric. The flag rule itself is unchanged.
+- **Point 4, the five surviving mutants, one test each:** CHIPS's header note
+  (fpl_chips and tools/chips); the note's gate count (a status-'a' player under
+  45 minutes without an own row is not counted); float sums in `xi_lex` (its
+  comparison key ties 0.1 + 0.2 with 0.3); a missing forecast in `xi_lex`
+  counts 0 (a toy where 1 would start him); `tools/chips.own_week_points`'
+  own-week rule on its own.
+- **Point 5, the headers:** CAPTAIN's and BAN RISK's headers print the
+  export's own `generated` time (UTC, to the minute) beside its name.
+- **Tests:** each red on the current branch code (`7c40c6a`); the not-'a' rule
+  on a toy where three of our XI are flagged without own rows; point 1 on a
+  toy where last night's archive and tonight's export differ.
+- **Measured:** the suite before and after; mutations; the 12 Nov case and
+  tonight's report, watch file and CHIPS before and after; across the nightly
+  data commits the CHIPS screen's flag equals the base screen's in every row.
+
+## Questions parked for Boris (exact wording), Thu 19 Nov 22:25 UTC, after the re-check WARN of `5385c57` (`worklog/verify_W3fix.md`, appended)
+
+The item stops (standing rule of Thu 19 Nov); its dry run and merge wait.
+Every measured claim reproduced: CHIPS's screen equals the base screen on 38
+of 38 replayed nights; the not-'a' count equals the pre-Ruling-3 code's on 228
+of 228 week-rows; 884 OK three ways; no recorded row moves.
+
+1. **The float-sum mutant.** "Point 4's test for the float-sum survivor checks
+   xi_key with exact values it builds itself, so a float conversion inside
+   xi_lex still passes (it changes no XI in 6,000 random squads on Python
+   3.14). Add a small test of what xi_lex hands to its key (yes), or accept
+   the gap (no)?"
+2. **Four minor green mutants** (the screen's log read through the archive's
+   deadlines; the frozen value by three-layer terms; the archive's table
+   printed above the "not built" line; the generated time's "unknown"
+   branch). "Add tests (yes), or accept them (no)?"
+3. **The dry run's timing.** "May dry/W3fix be pushed during the freeze from
+   Fri 20 Nov 05:00 UTC (a dry run writes nothing to data), or does it wait
+   until after the GW11 deadline, Sat 21 Nov 11:00 UTC?"
+4. **CHIPS's screen label.** "It says 'tonight's export' with no time; on a
+   night the sync fails that file is the restored copy of last night's. Print
+   its generated time there too, as in the CAPTAIN and BAN RISK headers
+   (yes), or leave it (no)?"
+5. **The changelog wording** (information, no answer needed unless you
+   object): the Ruling 3 pin said the item N amendment lands before the GW11
+   deadline; with the landing after it, the entry will say the amended screen
+   starts with GW12.

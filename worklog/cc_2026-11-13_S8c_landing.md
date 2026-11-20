@@ -88,7 +88,39 @@ pre-check verifier's probe) the test is red.
   commits were missing, and `f1f5df2` had no ruling. Every measured claim
   reproduced. Write guard clean. Boris's answers: S8c points 1–6 of Thu 12
   Nov night, all done above.
-- Re-check of the new head: to follow (`worklog/verify_S8c_landing.md`, appended).
+- Re-check of the new head `4bbb43c` (appended to `worklog/verify_S8c_landing.md`,
+  Fable 5.2, launched at high, not confirmable): **PASS**. Write guard clean.
+
+## The landing (Mon 16 Nov; Boris's answers of Mon 16 Nov, point 1, verbatim in `prereg/S8c.md`)
+
+- **Dry run** (read back Fri 13 Nov, 02:20 UTC): run 43350236630 on
+  `4bbb43c`, `data-dryrun-S8c` `a3d4363` on the night's data `5de86ab`;
+  855 tests green on Linux; all seven sources' GW11 rows equal the real
+  run's, key and value; report and watch file differ only in timestamps and
+  the export's date; checks 28/30 (the odds snapshot skipped, as every dry
+  run does).
+- **Master since the dry run:** `13b07b2` (state file) and `dbc6ad0` (the
+  prereg records of Boris's Mon 16 answers) only. Since the branch point
+  `99c9161` master gained only docs and worklog files, none touched by the
+  branch.
+- **Merge:** tag `pre-S8c` = `dbc6ad0`; master `3d5975c` = the merge of
+  `4bbb43c`, pushed 17:44 UTC (113 h before the GW11 deadline). Suites:
+  master before 787 OK; the merge 855 OK bare, with the data and with
+  signing on.
+- **Boris's real run:** run 43926712904 (workflow_dispatch on master
+  `fc36850`, 18:14:23-18:17:06 UTC, success; Boris in the chat: "Dispatched
+  now"), data `352228e`; test gate 855 green; status 29/30 (the same
+  price-gap WARN as the 01:23 run); no section SKIPPED or FAILED.
+- **Final verifier** (`worklog/verify_S8c_final.md`, Fable 5.2, launched at
+  high, not confirmable): **PASS**. The run executed exactly `4bbb43c`'s
+  runner code; its 2,360 GW11 rows reproduce on copies of its inputs, and
+  all seven sources, the watch file and the report equal what pre-S8c code
+  gives on the same inputs; 855 OK three ways; 3 of 3 mutants red. Write
+  guard clean.
+- Its information items (not S8c): the 01:23 report's false Free Hit flag
+  (CHIPS on the 01:23 export) and the captain order flip (the 01:23 export
+  with the 18:16 odds) are W3fix's subject (Rulings 2 and 3).
+- `dry/S8c` and `data-dryrun-S8c` deleted after the verdict.
 
 ## Notes
 
@@ -100,7 +132,4 @@ pre-check verifier's probe) the test is red.
 
 ## Next
 
-`dry/S8c` after tonight's nightly; read back `data-dryrun-S8c` against the
-last real data commit; tag `pre-S8c`; the merge Fri 13 Nov before 21:00 UTC
-on Boris's click; his real run; the final verifier; delete `dry/S8c` and
-`data-dryrun-S8c`.
+Done (Mon 16 Nov). Nothing open for S8c.

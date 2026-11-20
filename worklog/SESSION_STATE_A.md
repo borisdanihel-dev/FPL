@@ -7,7 +7,86 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Thu 12 Nov, 23:40 UTC): after Boris's rulings of Thu 12 Nov night**
+- **NOW (Fri 20 Nov, 00:55 UTC; power cut at ~00:30, nothing lost): Boris's answers of Thu 19 Nov night and late**
+  (verbatim in `prereg/W3fix.md`, `FM.md`, `FJ.md`, `runcommit.md`, `FJ6.md`,
+  `bundle.md`; `448e652` pushed; `101a485`, `2f0f3cd`, `2c04cd4`, `73c4a12` local,
+  pushed after tonight's nightly). **Standing rule:** a WARN or FAIL stops
+  that item only; its questions are parked here; carry on with the next
+  independent item.
+  - **GW11 deadline pass (Sat 21 Nov 11:00 UTC; freeze from Fri 05:00, tools
+    and worklog only):** bundle and scripts in `worklog/gw_pass/gw11/`
+    (`bb_moves.py` transfer tables gated / lifted / Thomas every week as
+    information; `s7_post_transfer.py`; `bb_timing.py`; ban risk) tested on
+    the 19 Nov export from a clean master worktree. Next: rerun on tonight's
+    export after the nightly, commit, post by Fri 09:00 UTC; Friday's refresh
+    after Boris's real run (~15:00 UTC), commit before 18:00 UTC.
+  - **FM (xp_v2_g2): STOPPED, verifier WARN** (`worklog/verify_FM.md`). Result
+    on `fm-wip` `f6d1c34`: GW5-10, 830 flagged player-weeks, mean e -0.158,
+    90% [-0.310, -0.016], bar NOT passed; not recorded Mon 23 Nov (Boris
+    confirmed). Boris's answers of Thu 19 late recorded: six origins accepted,
+    amendment 1, the prospective squared-error test GW11-15 pre-registered.
+    Open work before GW15: the two information prints and main()'s
+    end-to-end test; the item report; rebase `fm-wip`.
+  - **W3fix: STOPPED, re-check WARN** of `5385c57` (`worklog/verify_W3fix.md`).
+    Parked (exact wording in `prereg/W3fix.md`): (1) the float-sum mutant's
+    test; (2) four minor green mutants; (3) may `dry/W3fix` be pushed in the
+    freeze or after the deadline; (4) CHIPS's screen label's generated time;
+    (5) the changelog says the amended screen starts with GW12 (information).
+    Landing steps left: regenerate checkpoint.txt, CHANGELOG, report, merge
+    master, dry run, tag, merge, Boris's run, final check.
+  - **runcommit: STOPPED, pre-check WARN** of `runcommit-wip` `7f44c65`
+    (`worklog/verify_runcommit.md`): the three records, the price-moves fix
+    by id and the calibration RMSE columns built and reproduced; 869 OK
+    four ways; recording path unchanged. Parked (exact wording in
+    `prereg/runcommit.md`): (1) the namesake-after test; (2) FORM MOVERS and
+    checks.main tests; (3) no substitute everywhere, a or b; (4) calibration
+    value checks and wording; (5) the merge date; (6) order with W3fix.
+
+- (Earlier) **NOW (Mon 16 Nov, 19:25 UTC): Boris's answers of Mon 16 Nov** (verbatim in
+  `prereg/S8c.md`, `W3fix.md`, `FJ.md`, `FM.md`, `FJ6.md`, `runcommit.md`,
+  `dbc6ad0`; the item count stays). Pins before code: `4274955` (W3fix
+  Ruling 3, FJ tie rule and main() test, FM design), `2af773c` (W3fix
+  addendum: `tools/chips.py` mirrors `fpl_chips` for W2's byte-identity).
+  - **S8c DONE:** master `3d5975c` (merge of `4bbb43c`), tag `pre-S8c` =
+    `dbc6ad0`, pushed 17:44 UTC. Boris's real run 43926712904 (18:14 UTC,
+    master `fc36850`, "Dispatched now" in the chat): success, 855 green,
+    data `352228e`. Final verifier PASS (`worklog/verify_S8c_final.md`),
+    write guard clean; "S8c done" entry in CHANGELOG; `dry/S8c` and
+    `data-dryrun-S8c` deleted.
+  - **W3fix (Tue 17):** `w3fix-wip` = Ruling 2 (`14523e2`) + Ruling 3
+    option (a) (`96a7c5f`) + the `tools/chips.py` mirror (`3e4bbd5`) +
+    `fj-wip` merged (`7c40c6a`). Ruling 3: 4 tests red 4 of 4 on the old
+    code, 3 of 3 mutations red; 862 OK bare and with the data (858 before).
+    The 12 Nov case: CHIPS's screen 30.8 +8.5 flagged before, 28.7 +6.5
+    after = the base screen; tonight's numbers unchanged. Two parked
+    questions (CHIPS's export; `tools/chips.py`). **Pre-check of `7c40c6a`:
+    WARN** (`worklog/verify_W3fix.md`; every claim reproduces, 876 OK three
+    ways; Ruling 3's last clause met for the scale cause only; 5 of 35
+    mutants survive). Stopped there (mode e): the dry-run waiter cancelled;
+    five questions on file in `prereg/W3fix.md` (`85f3a69`). After the
+    answers: any change, a re-check, `dry/W3fix`, the merge. Was: the combined suite,
+    the verifier pre-check (after S8c's final verifier), `dry/W3fix` after
+    tonight's nightly, the merge on Boris's click.
+  - **FJ (lands with W3fix):** `fj-wip` `4455cbd`: `--tie id` = the complete
+    GW15 rule (xi_lex, realised_lex); GW8-10 id run = the recorded
+    lowest-id figures exactly; slot run unchanged. `tests/test_FJ.py` 14
+    tests incl. `main()` end to end; the verifier's 8 `main()` mutants red 8
+    of 8; the rule's 4 mutants red 3 of 4 (float sums green: no realistic
+    toy).
+  - **FM (xp_v2_g2), offline:** `fm-wip` `b04c3f8`: `tools/gate_v2.py` (the
+    rule, point 5, the matrix; v1 = `builder.live_matrix` exactly at GW11),
+    `tests/test_FM.py` 12 tests; `tools/gate_v2_check.py` drafted, not run
+    (two parked questions decide what it computes). Tue 17: tests for the
+    matrix and the check, the run, the verifier.
+  - **Schedule (revised Mon 16):** Mon 16 S8c; Tue 17 W3fix + fj-wip tests;
+    Wed 18 runcommit + price-moves name fix, chip plan (offline); Thu 19 no
+    runner change, GW11 bundle with xp_v2_g2 as information; after the GW11
+    deadline xp_v2_g2 recorded if it passes and Boris accepts.
+  - **Parked questions (exact wording):** in the chat reply of Mon 16 Nov;
+    four (W3fix CHIPS export; W3fix `tools/chips.py`; FM point 5 window;
+    FM GW1-3).
+
+- (Earlier) **NOW (Thu 12 Nov, 23:40 UTC): after Boris's rulings of Thu 12 Nov night**
   (chat review: the item count reset to 0 of 6; verbatim in `prereg/FJ.md`,
   `FM.md`, `S8c.md`, `runcommit.md`, `W3fix.md`, new `FJ6.md`; master
   `88c77df`). Items since the reset: S8c landing prep (1), FJ fixes (2).

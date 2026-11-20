@@ -98,3 +98,38 @@ RULING landing + S11:
 2. S11: if the re-verify passes, it is adopted as the share input to the xg half of xp_v2, as S5 was for the bottomup half. Not a decision input on its own; it enters the past-season test of xp_v2, which I rule on once Step 10 lands. Close the verifier's test gap and the two bundle mutation gaps first.
 3. Bundle header: read the deadline from fpl.sqlite events.deadline_time, as the runner does.
 END
+
+## Answers, Thu 19 Nov night (Boris's message verbatim; for this item: the GW11 deadline pass, points a-e (the GW11 bundle, transfers, chips, the post by Fri 20 Nov 09:00 UTC, Friday's refresh))
+
+Answers, Thu 19 Nov night. Standing rule from now on: a WARN or FAIL stops that item only. Park its questions in the state file and carry on with the next independent item; never sit idle waiting for the chat.
+
+W3fix (lands after the GW11 deadline, on the first free night from Sat 21 Nov):
+1. (i) CHIPS's Free Hit screen reads tonight's export, so its flag always matches the base screen.
+2. No: the "3+ of our XI not 'a'" trigger counts our best XI before the zero (it exists to catch an injury crisis; zeroing first would hide it).
+3. (a) Keep tools/chips.py matched to fpl_chips: one rule everywhere, and the GW pass and planner take the zero too.
+4. Yes: add tests for the five surviving mutants before the merge.
+5. Yes: print the export's own generated time beside its name in the CAPTAIN and BAN RISK headers.
+FM (xp_v2_g2):
+6. (A) P(start) uses the last four gameweeks in which the player was not suspended.
+7. (A) Score all seven origins, GW4-10.
+FJ:
+8. Yes: regenerate checkpoint.txt with the landing.
+After the GW11 deadline: Sat 21 W3fix (with fj-wip's tests), Sun 22 runcommit plus the price-moves name fix, Mon 23 xp_v2_g2 recorded if its check passed and Boris accepts.
+
+GW11 deadline pass, now (deadline Sat 21 Nov 11:00 UTC; freeze from Fri 20 Nov 05:00 UTC: tools and worklog only):
+a. Tonight: git pull --ff-only in C:\GIT\FPL-data; run the GW11 bundle from master (the S8c tools are now on master; clean worktree) on the newest export. Commit gw11_pass.txt, xp_v2_all.csv and run.txt to master under worklog/gw_pass/gw11/.
+b. Transfers (2 FTs, bank 0.9, no hits). Thiago is banned GW11-13 (back GW14); Thomas is d 50% (calf). Post the best pairs with and without a Bench Boost in GW11, run twice: under the gate, and with Thiago lifted from GW14 and Thomas at his chance (information, as in GW10). Also the named options: Thiago + Thomas out; Thiago out only (roll one).
+c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15 and on the two best candidate squads (with and without a Bench Boost), with the GW11-19 lines; bb_timing for a Bench Boost in GW11 against later first-half weeks, on the post-transfer squads.
+d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
+e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
+Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Answers on FM, Thu 19 Nov late (Boris's message verbatim; for this item: its last paragraph, Thomas in the GW11 tables)
+
+Answers on FM, Thu 19 Nov late.
+1. Yes: accept the six-origin result (GW5-10); note in the report that GW4's only pre-deadline export predates the player ids and could not change the verdict.
+2. Confirmed: the bar is not passed (mean -0.158, 90% [-0.310, -0.016]); xp_v2_g2 is not recorded on Mon 23 Nov. The result stays on record as run.
+3. Yes: before the GW15 re-run, print the two information lines (the suspension-window-only player-weeks; our own flagged players) and add an end-to-end test of the check's main().
+4. (a) Keep the code's reading: with no archived export a gameweek counts as unsuspended, but a known suspension is still skipped. Record it as an amendment to prereg/FM.md, with the literal reading's figures ([-0.301, -0.009]; same verdict).
+5. No: pre-register a new prospective test now, before any GW11 result exists. Data: flagged player-weeks from GW11 onward (deadlines GW11-15) from the archived nightly exports. Primary metric: the paired squared-error difference (v1 - realised)^2 - (v2 - realised)^2, which is the right scoring for expected-points forecasts. Same bootstrap (unit = deadline gameweek, B 10,000, seed 20261018). Bar: 90% lower bound above 0. Absolute error is printed as secondary information. Judge it at GW15 with F-L. Record in prereg/FM.md that the earlier absolute-error bar favoured predicting 0 (462 of 830 scored 0) and that the squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before this test was set: that is why the new test uses GW11 onward only.
+Thomas in the GW11 tables: his 50% applies in GW11 only, then as normal (the FM 'd' rule Boris approved). Also print the every-week version beside it as information.

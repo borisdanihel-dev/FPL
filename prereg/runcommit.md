@@ -174,3 +174,99 @@ Revised schedule (one runner change per night; Boris clicks each real run; GW11 
 - Thu 19: no runner change. The GW11 bundle on Boris's paste, with xp_v2_g2 numbers as information.
 - After the GW11 deadline: xp_v2_g2 recorded by the runner if its check passed and Boris accepts.
 Record each part verbatim in its prereg before acting. If a question blocks you while Boris is away, park it, carry on with the next item, and post all parked questions together.
+
+## Answers, Thu 19 Nov night (Boris's message verbatim; for this item: Sun 22 (runcommit plus the price-moves name fix))
+
+Answers, Thu 19 Nov night. Standing rule from now on: a WARN or FAIL stops that item only. Park its questions in the state file and carry on with the next independent item; never sit idle waiting for the chat.
+
+W3fix (lands after the GW11 deadline, on the first free night from Sat 21 Nov):
+1. (i) CHIPS's Free Hit screen reads tonight's export, so its flag always matches the base screen.
+2. No: the "3+ of our XI not 'a'" trigger counts our best XI before the zero (it exists to catch an injury crisis; zeroing first would hide it).
+3. (a) Keep tools/chips.py matched to fpl_chips: one rule everywhere, and the GW pass and planner take the zero too.
+4. Yes: add tests for the five surviving mutants before the merge.
+5. Yes: print the export's own generated time beside its name in the CAPTAIN and BAN RISK headers.
+FM (xp_v2_g2):
+6. (A) P(start) uses the last four gameweeks in which the player was not suspended.
+7. (A) Score all seven origins, GW4-10.
+FJ:
+8. Yes: regenerate checkpoint.txt with the landing.
+After the GW11 deadline: Sat 21 W3fix (with fj-wip's tests), Sun 22 runcommit plus the price-moves name fix, Mon 23 xp_v2_g2 recorded if its check passed and Boris accepts.
+
+GW11 deadline pass, now (deadline Sat 21 Nov 11:00 UTC; freeze from Fri 20 Nov 05:00 UTC: tools and worklog only):
+a. Tonight: git pull --ff-only in C:\GIT\FPL-data; run the GW11 bundle from master (the S8c tools are now on master; clean worktree) on the newest export. Commit gw11_pass.txt, xp_v2_all.csv and run.txt to master under worklog/gw_pass/gw11/.
+b. Transfers (2 FTs, bank 0.9, no hits). Thiago is banned GW11-13 (back GW14); Thomas is d 50% (calf). Post the best pairs with and without a Bench Boost in GW11, run twice: under the gate, and with Thiago lifted from GW14 and Thomas at his chance (information, as in GW10). Also the named options: Thiago + Thomas out; Thiago out only (roll one).
+c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15 and on the two best candidate squads (with and without a Bench Boost), with the GW11-19 lines; bb_timing for a Bench Boost in GW11 against later first-half weeks, on the post-transfer squads.
+d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
+e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
+Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Boris's message of Thu 19 Nov late, verbatim (calibration: a squared-error column; it rides with runcommit, or with W3fix if that lands first)
+
+After the GW11 deadline, with W3fix or runcommit: add a squared-error column (RMSE, and RMSE against the constant) beside MAE in the calibration section, so forecasts that run low or high are judged on the same scale as expected points. Report only; no bar changes.
+
+(Recorded Thu 19 Nov 22:30 UTC. The design, the constant RMSE is measured against, and the tests are pinned here before the code, after the GW11 deadline.)
+
+## Addendum, pinned before its code (Thu 19 Nov 22:55 UTC): the price-moves fix and the calibration RMSE column
+
+### The price-moves fix (amendment 1)
+
+- Found: `fpl_edge.sec_diff` matches players by `web_name` in all three of
+  its player blocks - YOUR SQUAD price moves, NEW FLAGS, FORM MOVERS - so two
+  players of one name collide (Coventry's Thomas showed Hull's price move).
+- Pinned: all three blocks match by player id. The previous export's players
+  are keyed by `id`; "our squad" and "owned by anyone in the league" are the
+  `player_id`s of the export's `squads` rows (present since S2). A squads row
+  without `player_id`: the block prints one line, "not comparable: squads
+  rows without player_id", never a name match.
+- The printed lines keep their format (name, club, prices).
+- Test (`tests/test_runcommit.py`): two players named Thomas at two clubs,
+  ours unchanged in price and the other moved: our price-moves block says
+  "none" and NEW FLAGS / FORM MOVERS follow the ids; red on the current code.
+
+### The calibration RMSE column (Boris's message of Thu 19 Nov late)
+
+- `fpl_edge.sec_calibration`'s per-gameweek table gains two columns after
+  `const`: `RMSE` = sqrt(mean((forecast - realised)^2)) and `rconst` =
+  sqrt(mean((c - realised)^2)) with c the same constant as the MAE's `const`
+  (the pool's mean realised points). The `minutes` row prints `-` for both,
+  as for MAE (a start probability).
+- The per-source summary line reads "MAE x vs constant y   RMSE x vs constant
+  y   rho ...".
+- Report only: the verdict column ("beats const" / "loses", on MAE), the
+  "real signal" verdict and every bar are unchanged; p1_eval.py is untouched.
+- Test: on a toy log the two numbers equal the formulas; the minutes row
+  prints `-`; the verdicts are byte-identical to the current code's.
+
+## Questions parked for Boris (exact wording), Fri 20 Nov 00:55 UTC, after the pre-check WARN of `7f44c65` (`worklog/verify_runcommit.md`)
+
+The item stops (standing rule of Thu 19 Nov); its dry run and merge wait. Every
+behaviour reproduced: the three records end to end with and without
+GITHUB_SHA, real and dry; the price-moves fix on tonight's data (the six
+removed report lines are other players' values); the RMSE columns and every
+verdict; the recording path; 869 OK four ways. The gaps are in the tests.
+
+1. **The bug as it happened.** "With the name lookup put back on the previous
+   export's side, the suite stays green and tonight's report prints Hull's
+   Thomas move again (the toy only catches the current-side lookup). Add tests
+   with the namesake after our player in the previous export, for all three
+   blocks (yes), or accept (no)?"
+2. **Two pinned tests missing.** "No test reads FORM MOVERS, and no test passes
+   GITHUB_SHA through checks.main for a real and a dry run. Add both (yes), or
+   accept (no)?"
+3. **No substitute, everywhere.** "'Never a substitute' is tested for
+   checks.code_commit only. Add a decoy variable to the log and message tests
+   (a), or route all three records through checks.code_commit (b)?"
+4. **Calibration wording and checks.** "Add value checks for the calibration
+   summary line and the two surviving verdict cases, and name RMSE and rconst
+   in the section's DEFINITIONS and the minutes note (yes), or leave the
+   report text as pinned (no)?"
+5. **The merge date.** "The pin and the code were made before the GW11
+   deadline on a work branch. Confirm that 'After the GW11 deadline' governs
+   the merge only (yes)?"
+6. **Order with W3fix** (information): whichever of W3fix and runcommit lands
+   second is rebased onto the first and gets a short re-check before its dry
+   run.
+
+Correction: the commit message of `7f44c65` says 11 of the new tests are red on
+the old code; with the fourteenth test (the verdict where RMSE disagrees,
+added after that count) it is 12 (9 failures, 3 errors).

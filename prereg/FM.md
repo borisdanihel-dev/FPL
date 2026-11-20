@@ -272,3 +272,127 @@ following year, a double gameweek split by the date, no date in the news);
 GW1-3 case printed, not guessed); the check's metric sign, its bootstrap
 unit and its bar on toy numbers; nothing after a deadline read (a planted
 later export changes nothing). Each test red on a planted bug.
+
+## Questions parked for Boris (exact wording), Mon 16 Nov 19:20 UTC, before the check is run on the data
+
+1. **Point 5's window.** "Answer 5 ('neither started nor missed in the
+   last-four window') is built as: the window is the last four gameweeks in
+   which the player was not suspended (counting back), for both the starts
+   and the 45-minute gate (A). The other reading keeps the same four
+   gameweeks and drops the suspended ones from both sides of the fraction,
+   e.g. 1 start in 1 after a three-match ban (B). Keep (A), or (B)?"
+2. **GW1-3.** "No archived export exists before the GW1-3 deadlines (the
+   archive starts 11 Sep), so point 5 cannot see suspensions in GW1-3; those
+   windows use the plain four gameweeks and the count of affected players is
+   printed. That touches the check's origins GW4-7. Score all seven origins
+   GW4-10 (A), or judge the bar on the GW8-10 origins only (B)?"
+
+The check (`tools/gate_v2_check.py` on `fm-wip`) is not run on the data
+until these are answered, so no number is seen before the method is fixed.
+
+## Answers, Thu 19 Nov night (Boris's message verbatim; for this item: the standing rule, points 6-7, Mon 23 (xp_v2_g2 recorded if its check passed and Boris accepts) and 'Then, still offline')
+
+Answers, Thu 19 Nov night. Standing rule from now on: a WARN or FAIL stops that item only. Park its questions in the state file and carry on with the next independent item; never sit idle waiting for the chat.
+
+W3fix (lands after the GW11 deadline, on the first free night from Sat 21 Nov):
+1. (i) CHIPS's Free Hit screen reads tonight's export, so its flag always matches the base screen.
+2. No: the "3+ of our XI not 'a'" trigger counts our best XI before the zero (it exists to catch an injury crisis; zeroing first would hide it).
+3. (a) Keep tools/chips.py matched to fpl_chips: one rule everywhere, and the GW pass and planner take the zero too.
+4. Yes: add tests for the five surviving mutants before the merge.
+5. Yes: print the export's own generated time beside its name in the CAPTAIN and BAN RISK headers.
+FM (xp_v2_g2):
+6. (A) P(start) uses the last four gameweeks in which the player was not suspended.
+7. (A) Score all seven origins, GW4-10.
+FJ:
+8. Yes: regenerate checkpoint.txt with the landing.
+After the GW11 deadline: Sat 21 W3fix (with fj-wip's tests), Sun 22 runcommit plus the price-moves name fix, Mon 23 xp_v2_g2 recorded if its check passed and Boris accepts.
+
+GW11 deadline pass, now (deadline Sat 21 Nov 11:00 UTC; freeze from Fri 20 Nov 05:00 UTC: tools and worklog only):
+a. Tonight: git pull --ff-only in C:\GIT\FPL-data; run the GW11 bundle from master (the S8c tools are now on master; clean worktree) on the newest export. Commit gw11_pass.txt, xp_v2_all.csv and run.txt to master under worklog/gw_pass/gw11/.
+b. Transfers (2 FTs, bank 0.9, no hits). Thiago is banned GW11-13 (back GW14); Thomas is d 50% (calf). Post the best pairs with and without a Bench Boost in GW11, run twice: under the gate, and with Thiago lifted from GW14 and Thomas at his chance (information, as in GW10). Also the named options: Thiago + Thomas out; Thiago out only (roll one).
+c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15 and on the two best candidate squads (with and without a Bench Boost), with the GW11-19 lines; bb_timing for a Bench Boost in GW11 against later first-half weeks, on the post-transfer squads.
+d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
+e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
+Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Result and questions parked for Boris (exact wording), Thu 19 Nov 22:10 UTC, after the verifier's WARN (`worklog/verify_FM.md`)
+
+Result (run on `fm-wip` `f6d1c34`, 0 modified files, data `029bcfd`; reproduced
+byte for byte and by an independent count by the verifier): GW4 not scored
+(missing input: its export of 11 Sep has no `player_id`); 830 flagged
+player-weeks over GW5-10; mean e = |v1 - r| - |v2 - r| = -0.158, 90% [-0.310,
+-0.016]; **the bar is not passed** (by status, information: d -0.314 n 378,
+i -0.093 n 370, s +0.265 n 82). By the rulings on file xp_v2_g2 is not
+recorded on Mon 23 Nov. The item stops here (standing rule of Thu 19 Nov).
+
+1. **GW4.** "Answer 7 asked for all seven origins; GW4's only pre-deadline
+   export has no player ids, so the check scored six. The verifier shows the
+   lower bound cannot pass whatever GW4 holds (at least 33% of seven-origin
+   resamples are at or below 0), and that every row of that export matches
+   exactly one player by name, club and position. Accept the six-origin result
+   (yes), or rule a way to build GW4 and rerun (no)?"
+2. **The result.** "The bar is not passed, so xp_v2_g2 is not recorded on Mon
+   23 Nov. Confirm (yes)?"
+3. **Prints and tests.** "Two pinned information prints are missing (point-5-
+   only players: 76 player-weeks, mean e -0.227; our flagged players: 17,
+   mean -0.193) and the check's own function has no end-to-end test (14 of
+   the verifier's 17 check mutants survive). Add both before the GW15 re-run
+   (yes), or leave them (no)?"
+4. **GW1-3 wording.** "The pin says the plain window is used where a gameweek
+   has no archive; the code still skips known suspensions in such a window
+   (6 player-weeks differ; the literal reading gives [-0.301, -0.009], also
+   not passed). Keep the code's reading (a), or the pin's literal (b)?"
+5. **GW15 revisit.** "v1 is 0 in all 830 rows and 462 of them scored 0, so
+   absolute error favours the constant 0; on squared error the same rows
+   favour v2 (+1.93, 90% [+0.75, +3.12]) - information only, a change now
+   would be chosen after seeing results. Keep the absolute-error bar for GW15
+   (yes), or pre-register a different test on gameweeks from GW11 on (no)?"
+
+Corrections: the commit message of `f6d1c34` says 23 tests; there are 22.
+The cited `run.txt` is in the session scratch, not `tools/out/gate_v2_check/`;
+it is copied there with the item's report.
+
+## Answers on FM, Thu 19 Nov late (Boris's message verbatim; for this item: points 1-5)
+
+Answers on FM, Thu 19 Nov late.
+1. Yes: accept the six-origin result (GW5-10); note in the report that GW4's only pre-deadline export predates the player ids and could not change the verdict.
+2. Confirmed: the bar is not passed (mean -0.158, 90% [-0.310, -0.016]); xp_v2_g2 is not recorded on Mon 23 Nov. The result stays on record as run.
+3. Yes: before the GW15 re-run, print the two information lines (the suspension-window-only player-weeks; our own flagged players) and add an end-to-end test of the check's main().
+4. (a) Keep the code's reading: with no archived export a gameweek counts as unsuspended, but a known suspension is still skipped. Record it as an amendment to prereg/FM.md, with the literal reading's figures ([-0.301, -0.009]; same verdict).
+5. No: pre-register a new prospective test now, before any GW11 result exists. Data: flagged player-weeks from GW11 onward (deadlines GW11-15) from the archived nightly exports. Primary metric: the paired squared-error difference (v1 - realised)^2 - (v2 - realised)^2, which is the right scoring for expected-points forecasts. Same bootstrap (unit = deadline gameweek, B 10,000, seed 20261018). Bar: 90% lower bound above 0. Absolute error is printed as secondary information. Judge it at GW15 with F-L. Record in prereg/FM.md that the earlier absolute-error bar favoured predicting 0 (462 of 830 scored 0) and that the squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before this test was set: that is why the new test uses GW11 onward only.
+Thomas in the GW11 tables: his 50% applies in GW11 only, then as normal (the FM 'd' rule Boris approved). Also print the every-week version beside it as information.
+
+### Amendment 1 (answer 4): point 5 where a gameweek has no archived export, Thu 19 Nov 22:25 UTC
+
+The design pin's "the plain window is used" is amended to the code's reading,
+as Boris ruled: with no archived export a gameweek counts as unsuspended, but
+a suspension the archive does show is still skipped (the window is the last
+four gameweeks without a known suspension). The literal reading (the plain
+four gameweeks wherever the window touches a gameweek without an archive)
+gives, on the same run, 90% [-0.301, -0.009]: the same verdict, the bar not
+passed (the verifier's figures, `worklog/verify_FM.md`).
+
+### The prospective test, pre-registered (answer 5), Thu 19 Nov 22:25 UTC, before any GW11 result exists
+
+- **Data:** flagged player-weeks (status d, s or i in the origin's export,
+  45+ minutes in its last four) at the deadlines of GW11-GW15, from the
+  archived nightly exports, each origin's horizon weeks scored once locked
+  down (data_checked = 1, every fixture finished), the club playing.
+- **Primary metric:** the paired squared-error difference
+  (v1 - r)^2 - (v2 - r)^2 per player-week, r = player_gw.total_points over
+  the week; the mean over player-weeks.
+- **Bootstrap:** unit = the deadline gameweek (origins resampled with
+  replacement, the pooled mean recomputed), B 10,000, seed 20261018, 90%.
+- **Bar:** the 90% lower bound above 0. Absolute error (the GW5-10 metric) is
+  printed beside it as secondary information.
+- **Judged:** at GW15, with F-L.
+- **Why GW11 onward only:** the GW5-10 absolute-error bar favoured
+  predicting 0 (v1 is 0 in all 830 rows and 462 of them scored 0), and the
+  squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before
+  this test was set; using any of GW5-10 again would choose the test after
+  seeing its result.
+- **The result of GW5-10 stays on record as run** (answer 2): the bar not
+  passed; xp_v2_g2 is not recorded on Mon 23 Nov.
+- **Before the GW15 run** (answer 3): the check prints the two information
+  lines (the player-weeks moved only by the suspension window; our own
+  flagged players) and gains an end-to-end test of its main().
