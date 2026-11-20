@@ -89,6 +89,7 @@ def check(data_dir, hist_root, out=print, origins=ORIGINS, last=LAST):
                               os.path.join(hist_root, XL.PRIOR_SEASON))
     locked, realised = locked_weeks(os.path.join(data_dir, "fpl.sqlite"))
     rows, per_origin = [], []
+    name_matched = 0
     for g in origins:
         weeks_n = 6
         try:
@@ -100,28 +101,46 @@ def check(data_dir, hist_root, out=print, origins=ORIGINS, last=LAST):
             per_origin.append({"origin": g, "missing": f"{type(e).__name__}: {e}", "sum": 0.0, "n": 0})
             continue
         flagged = [p for p in d["all_players"] if p["status"] in FLAGGED and (p.get("mins_last4") or 0) >= 45]
+        mine = [r for r in d.get("squads") or [] if r.get("entry_id") == d.get("my_entry")]
+        ours = {r["player_id"] for r in mine if r.get("player_id") is not None}
+        key = {}                                    # older exports' squad rows carry no player_id: name, club, position
+        for p in d["all_players"]:
+            key.setdefault((p["web_name"], p["team"], p["pos"]), []).append(p["id"])
+        by_name = [key.get((r["web_name"], r["team"], r["pos"]), []) for r in mine if r.get("player_id") is None]
+        ours |= {ids[0] for ids in by_name if len(ids) == 1}
+        name_matched += sum(1 for ids in by_name if len(ids) == 1)
+        # information (Boris, answers on FM of Thu 19 Nov late, point 3): status-a players whose plain last-four window
+        # holds a suspended gameweek - the players v2 moves through point 5 alone
+        plain = set(range(max(1, d["gameweek"] - 3), d["gameweek"] + 1))
+        p5 = [p for p in d["all_players"] if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45
+              and sus.get(p["id"], set()) & plain]
         s, n, no_row = 0.0, 0, 0
         for i, u in enumerate(range(g, g + weeks_n)):
             if u > last or u not in locked:
                 continue
             playing = {t for f in XL.target_fixtures(d, u).values() for t in (f["home"], f["away"])}
-            for p in flagged:
+            for p in flagged + p5:
                 if p["team"] not in playing:
                     continue
                 pid = p["id"]
                 r = realised.get((pid, u))
-                if r is None:
+                if r is None and p["status"] in FLAGGED:
                     no_row += 1
-                    r = 0.0
+                r = 0.0 if r is None else r
                 a, b = v1[i].get(pid, 0.0), v2[i].get(pid, 0.0)
                 e = abs(a - r) - abs(b - r)
+                group = "flagged" if p["status"] in FLAGGED else "point5"
                 rows.append({"origin": g, "week": u, "id": pid, "name": p["web_name"], "status": p["status"],
-                             "mode": modes.get(pid, ["?"] * weeks_n)[i], "v1": a, "v2": b, "r": r, "e": e})
-                s += e
-                n += 1
+                             "mode": modes.get(pid, ["?"] * weeks_n)[i], "v1": a, "v2": b, "r": r, "e": e,
+                             "group": group, "ours": pid in ours})
+                if group == "flagged":
+                    s += e
+                    n += 1
         touch = sum(1 for p in flagged if set(G.window_weeks(d["gameweek"], sus.get(p["id"], set()))) & unknown)
         per_origin.append({"origin": g, "export": os.path.basename(path), "snapshot": snap, "sum": s, "n": n,
                            "no_row": no_row, "flagged": len(flagged), "touch": touch, "unknown": sorted(unknown)})
+    if per_origin:
+        per_origin[-1]["name_matched"] = name_matched
     return rows, per_origin
 
 
@@ -157,9 +176,20 @@ def main(argv=None):
     out(f"  bar: the 90% lower bound above 0 - {'PASS' if passes(boot) else 'not passed'}. Reported only; Boris decides.")
     by_status = defaultdict(list)
     for r in rows:
-        by_status[r["status"]].append(r["e"])
+        if r["group"] == "flagged":
+            by_status[r["status"]].append(r["e"])
     out("  by status (information): " + ", ".join(f"{st} n={len(v)} mean {sum(v) / len(v):+.3f}" for st, v in sorted(by_status.items())))
     out(f"  no player_gw row (counted 0): {sum(o.get('no_row', 0) for o in per)}")
+    for label, sel in (("point 5 alone (status a, a suspended gameweek in the plain last-four window; information)",
+                        [r for r in rows if r["group"] == "point5"]),
+                       (f"our own flagged players (in our 15 at the origin; {sum(o.get('name_matched', 0) for o in per)} squad rows "
+                        f"without player_id matched by name, club and position; information)",
+                        [r for r in rows if r["group"] == "flagged" and r["ours"]])):
+        mean = f"{sum(r['e'] for r in sel) / len(sel):+.3f}" if sel else "-"
+        out(f"  {label}: n={len(sel)} mean e {mean}")
+    for r in (r for r in rows if r["group"] == "flagged" and r["ours"]):
+        out(f"    GW{r['origin']} -> GW{r['week']}  {r['name']:<16} {r['status']}  v1 {r['v1']:.2f}  v2 {r['v2']:.2f}  "
+            f"realised {r['r']:.0f}  e {r['e']:+.2f}")
     if len(scored) < len(per):
         out(f"  NOT SCORED: {', '.join('GW' + str(o['origin']) for o in per if 'missing' in o)} (missing input above); the primary "
             f"line covers {len(scored)} of {len(per)} origins")
@@ -171,7 +201,7 @@ def main(argv=None):
     csv_path = os.path.join(a.out, "gate_v2_rows.csv")
     with open(csv_path, "w", encoding="utf-8", newline="") as fh:
         import csv
-        w = csv.DictWriter(fh, fieldnames=["origin", "week", "id", "name", "status", "mode", "v1", "v2", "r", "e"])
+        w = csv.DictWriter(fh, fieldnames=["origin", "week", "id", "name", "status", "mode", "v1", "v2", "r", "e", "group", "ours"])
         w.writeheader()
         w.writerows(rows)
     run_.wrote(csv_path)
