@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Thu 19 Nov, 22:35 UTC): Boris's answers of Thu 19 Nov night and late**
+- **NOW (Fri 20 Nov, 00:55 UTC; power cut at ~00:30, nothing lost): Boris's answers of Thu 19 Nov night and late**
   (verbatim in `prereg/W3fix.md`, `FM.md`, `FJ.md`, `runcommit.md`, `FJ6.md`,
   `bundle.md`; `448e652` pushed; `101a485`, `2f0f3cd`, `2c04cd4`, `73c4a12` local,
   pushed after tonight's nightly). **Standing rule:** a WARN or FAIL stops
@@ -34,8 +34,13 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     (5) the changelog says the amended screen starts with GW12 (information).
     Landing steps left: regenerate checkpoint.txt, CHANGELOG, report, merge
     master, dry run, tag, merge, Boris's run, final check.
-  - **runcommit (Sun 22) + price-moves name fix;** the calibration RMSE
-    column rides with it (Boris, Thu 19 late; `prereg/runcommit.md`).
+  - **runcommit: STOPPED, pre-check WARN** of `runcommit-wip` `7f44c65`
+    (`worklog/verify_runcommit.md`): the three records, the price-moves fix
+    by id and the calibration RMSE columns built and reproduced; 869 OK
+    four ways; recording path unchanged. Parked (exact wording in
+    `prereg/runcommit.md`): (1) the namesake-after test; (2) FORM MOVERS and
+    checks.main tests; (3) no substitute everywhere, a or b; (4) calibration
+    value checks and wording; (5) the merge date; (6) order with W3fix.
 
 - (Earlier) **NOW (Mon 16 Nov, 19:25 UTC): Boris's answers of Mon 16 Nov** (verbatim in
   `prereg/S8c.md`, `W3fix.md`, `FJ.md`, `FM.md`, `FJ6.md`, `runcommit.md`,

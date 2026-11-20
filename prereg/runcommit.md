@@ -236,3 +236,37 @@ After the GW11 deadline, with W3fix or runcommit: add a squared-error column (RM
   "real signal" verdict and every bar are unchanged; p1_eval.py is untouched.
 - Test: on a toy log the two numbers equal the formulas; the minutes row
   prints `-`; the verdicts are byte-identical to the current code's.
+
+## Questions parked for Boris (exact wording), Fri 20 Nov 00:55 UTC, after the pre-check WARN of `7f44c65` (`worklog/verify_runcommit.md`)
+
+The item stops (standing rule of Thu 19 Nov); its dry run and merge wait. Every
+behaviour reproduced: the three records end to end with and without
+GITHUB_SHA, real and dry; the price-moves fix on tonight's data (the six
+removed report lines are other players' values); the RMSE columns and every
+verdict; the recording path; 869 OK four ways. The gaps are in the tests.
+
+1. **The bug as it happened.** "With the name lookup put back on the previous
+   export's side, the suite stays green and tonight's report prints Hull's
+   Thomas move again (the toy only catches the current-side lookup). Add tests
+   with the namesake after our player in the previous export, for all three
+   blocks (yes), or accept (no)?"
+2. **Two pinned tests missing.** "No test reads FORM MOVERS, and no test passes
+   GITHUB_SHA through checks.main for a real and a dry run. Add both (yes), or
+   accept (no)?"
+3. **No substitute, everywhere.** "'Never a substitute' is tested for
+   checks.code_commit only. Add a decoy variable to the log and message tests
+   (a), or route all three records through checks.code_commit (b)?"
+4. **Calibration wording and checks.** "Add value checks for the calibration
+   summary line and the two surviving verdict cases, and name RMSE and rconst
+   in the section's DEFINITIONS and the minutes note (yes), or leave the
+   report text as pinned (no)?"
+5. **The merge date.** "The pin and the code were made before the GW11
+   deadline on a work branch. Confirm that 'After the GW11 deadline' governs
+   the merge only (yes)?"
+6. **Order with W3fix** (information): whichever of W3fix and runcommit lands
+   second is rebased onto the first and gets a short re-check before its dry
+   run.
+
+Correction: the commit message of `7f44c65` says 11 of the new tests are red on
+the old code; with the fourteenth test (the verdict where RMSE disagrees,
+added after that count) it is 12 (9 failures, 3 errors).
