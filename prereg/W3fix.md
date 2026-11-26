@@ -292,3 +292,13 @@ of 228 week-rows; 884 OK three ways; no recorded row moves.
    object): the Ruling 3 pin said the item N amendment lands before the GW11
    deadline; with the landing after it, the entry will say the amended screen
    starts with GW12.
+
+## GW12 deadline pass message, Thu 26 / Fri 27 Nov (Boris's message verbatim; for this item: its last paragraph, the schedule after the GW12 deadline)
+
+GW12 deadline pass (deadline today Fri 27 Nov 18:30 UTC; GW12 freeze: tools and worklog only). 1 free transfer, bank 0.5; Thiago banned until GW14.
+1. git pull --ff-only in C:\GIT\FPL-data; run the GW12 bundle from clean master on the newest export; commit gw12_pass.txt, xp_v2_all.csv and run.txt to master under worklog/gw_pass/gw12/.
+2. Transfer tables (1 FT, no hits): the best single moves and roll, under the gate and with Thiago lifted from GW14, and with Calafiori at P(start) 1.0 (his GW8 cameo is still in the window). Also the clean-sheet-flattened gain for the top three moves (information, as in GW11).
+3. Captain: Arsenal v City is in our XI both ways. Print the captain table, xg, bottomup and bottomup_lambda for the top four, and the GW12 odds for ARS-MCI (each side's lambda and P(cs)).
+4. Chips: S7 GW12-19 lines on the current 15 and on the best post-transfer squad, and bb_timing for GW14 v GW15 (the Bench Boost plan is GW14).
+5. Post, no decisions, by 10:00 UTC. After Boris's real run (about 14:00 UTC, after the press conferences): refresh 1-4 and commit before 16:30 UTC.
+After the GW12 deadline, runner changes resume (one per night, Boris clicks each real run): Fri 27 W3fix (with fj-wip's tests); Sat 28 runcommit plus the price-moves name fix plus the RMSE column; Sun 29 free. Then the GW13 freeze from Mon 30 Nov 12:30 UTC. Also draft F-N's prereg and post the parked questions in one batch.
