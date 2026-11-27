@@ -146,6 +146,45 @@ class GW15TieRule(unittest.TestCase):
                 self.assertEqual(len(calls), legal)
                 self.assertTrue(all(calls))
 
+    def test_a_decimal_tie_on_xi_lex_values_goes_to_the_smaller_ids(self):
+        """T1 (Boris, Fri 27 Nov 16:00 UTC, prereg/W3fix.md): 0.1 + 0.2 against 0.3 + 0.0 on the values xi_lex
+        hands xi_key is a tie as the decimals written, and the smaller sorted ids win. Such a tie can never top
+        xi_lex itself (formation-legal XIs are a matroid's bases), so it is tested on xi_lex's own values."""
+        proj = {**self.PROJ, 13: 0.1, 24: 0.2, 5: 0.3, 300: 0.0}
+        seen = []
+        real = CK.xi_key
+
+        def spy(xi, val):
+            seen.append(val)
+            return real(xi, val)
+
+        with mock.patch.object(CK, "xi_key", side_effect=spy):
+            CK.xi_lex(self.TOY, proj)
+        val = seen[0]
+        core = [r for r in self.TOY if r["id"] in (1, 10, 11, 12, 20, 21, 22, 23, 30)]
+        a = core + [r for r in self.TOY if r["id"] in (13, 24)]                 # DEF 13 at 0.1, MID 24 at 0.2
+        b = core + [r for r in self.TOY if r["id"] in (5, 300)]                 # DEF 5 at 0.3, FWD 300 at 0.0
+        self.assertTrue(CK.legal(a) and CK.legal(b))
+        self.assertEqual(real(a, val)[0], real(b, val)[0])                      # a tie, as the decimals written
+        self.assertLess(real(b, val), real(a, val))                             # settled by the smaller sorted ids
+
+    def test_xi_lex_returns_the_xi_its_key_ranks_first(self):
+        """T2 (Boris, Fri 27 Nov 16:00 UTC, prereg/W3fix.md): xi_lex returns the XI that xi_key ranks first - with
+        xi_key patched to rank the lowest exact sum first, xi_lex follows it, so a key called and then ignored is
+        caught."""
+        from itertools import combinations
+
+        def lowest_first(xi, val):
+            return sum(val[r["id"]] for r in xi), sorted(r["id"] for r in xi)
+
+        legal = [c for c in combinations(self.TOY, 11) if CK.legal(c)]
+        val = {r["id"]: CK._exact(self.PROJ.get(r["id"], 0.0)) for r in self.TOY}
+        want = {r["id"] for r in min(legal, key=lambda c: lowest_first(c, val))}
+        self.assertNotEqual(want, {r["id"] for r in CK.xi_lex(self.TOY, self.PROJ)[0]})   # not the rule's XI
+        with mock.patch.object(CK, "xi_key", side_effect=lowest_first):
+            got = {r["id"] for r in CK.xi_lex(self.TOY, self.PROJ)[0]}
+        self.assertEqual(got, want)
+
     def test_a_missing_forecast_counts_zero(self):
         proj = {k: v for k, v in self.PROJ.items() if k != 300}               # FWD 300 has no forecast
         proj[5], proj[24] = 0.5, 0.0                                           # DEF 5 at 0.5: 300 at 1 would start instead
