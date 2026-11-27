@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 15:55 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -68,6 +68,24 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
          21:00 UTC.
       3. Boris's real run, then the final verifier.
       4. The "W3fix done" entry; delete the dry branches.
+  - **Update 15:55 UTC.**
+    - **Boris's rulings of 15:30 UTC** are verbatim in W3fix.md and
+      bundle.md (`b3fba57`):
+      - the GW13 wording is accepted;
+      - the decimal-tie test: yes, test-only, not in tonight's landing,
+        Sun 29 is fine;
+      - GW12 is locked (roll, no chip, captain Muharemović, vice De Cuyper).
+    - **The decimal-tie test cannot be built as ruled.** My 14:20 claim was
+      wrong: no decimal-but-not-binary tie can sit at the top of `xi_lex`.
+      - Evidence: legal XIs are a matroid's bases; 3,000 squads with 1,798
+        top ties showed 0 exceptions (`worklog/w3fix_tie/`, `89e3987`).
+      - The question is parked in W3fix.md (`89e3987`). The candidates are
+        T1 (the 0.1+0.2 v 0.3 tie on `xi_lex`'s own values, decided by the
+        ids) and T2 (`xi_lex` follows its key). Together they turn both
+        mutants red and pass on the code.
+    - **The landing report and CHANGELOG entry are corrected** on
+      `w3fix-wip`, docs only (`05825ec`, `3fe7500`). Head `3fe7500`: the code
+      is `f1c3704`'s, so the dry run pushes `3fe7500`.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
