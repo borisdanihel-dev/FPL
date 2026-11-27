@@ -158,7 +158,7 @@ class OneScale(unittest.TestCase):
         hurt = next(p for p in tonight["all_players"] if p["id"] == cls.stale["id"])
         hurt["status"], hurt["chance_next_round"] = "d", 50               # tonight: 'd', so own records no row
         cls.mine = next(p for p in tonight["all_players"] if p["id"] in ours and p["status"] == "a"
-                        and p["team"] in playing and p["pos"] != 1)
+                        and p["team"] in playing and p["pos"] == 3)    # a midfielder: three_layer_terms differs from ALL_TERMS (W3fix WARN ruling, Fri 27 Nov)
         cls.mine_name = cls.mine["web_name"]
         cls.mine["status"], cls.mine["chance_next_round"] = "d", 75      # one of ours flagged tonight: no own row
         for p in cls.archive["all_players"]:
