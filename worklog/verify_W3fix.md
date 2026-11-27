@@ -893,3 +893,107 @@ terms spelled out, the frozen-value mutant passes all 890 tests, since the toy's
 is a defender and the pin's "toy whose count depends on the scale" needs a midfielder or
 forward. That is one word in a test fixture and needs Boris's answer (fix and re-check,
 or accept); the landing steps are still to do.
+
+# Narrow re-check of `origin/w3fix-wip` `f1c3704` (Fri 27 Nov 2026, 14:00-14:16 UTC) — the W3fix WARN ruling, point 1
+
+Model: Fable 5.2 (`claude-fable-5-2`), the agent file's model; effort as launched (the
+file says high; not confirmable from inside). The agent file on disk was read first and
+equals the loaded instructions.
+
+Scope, by the ruling (`prereg/W3fix.md`, "W3fix WARN ruling, Fri 27 Nov", point 1):
+"Re-check only this: the test against both forms of mutant 2, plus one full-suite run."
+Nothing else was re-run; the checks of `3847ebd` above stand as they were.
+
+## Summary table
+
+| Check | Result | Evidence |
+|---|---|---|
+| 0. Ruling pinned before the code | PASS | `1b3b52b` (master, 13:36:07 UTC) holds the ruling; `f1c3704` is 13:59:57 UTC |
+| The diff `e41cdaf..f1c3704` | PASS | 1 file, 1 line in, 1 line out: `tests/test_W3fix.py` line 161, `p["pos"] != 1` to `p["pos"] == 3` plus a comment |
+| 1. The test against both forms of mutant 2 | PASS | real code green; without the terms red; by `three_layer_terms(pos)` red |
+| 2. One full-suite run, by discovery | PASS | 890 OK, 11 skipped (plain); 890 OK, 4 skipped (with the data) |
+| 7. Secrets | PASS | the one changed line holds no key, URL or header |
+
+## Check 0 — the ruling before the code
+
+- `1b3b52b` on `origin/master` adds the ruling (8 lines of `prereg/W3fix.md`) at
+  14:36:07 +0100. `f1c3704` on `origin/w3fix-wip` is at 14:59:57 +0100.
+- The branch has not merged master since `5b0964c`, so its own copy of
+  `prereg/W3fix.md` does not hold the ruling yet; I read it on master. The merge is one
+  of the landing steps.
+- `e41cdaf` is `3847ebd` plus this file only (313 lines added, nothing else).
+
+## Check 1 — the test against both forms of mutant 2
+
+Test: `tests.test_W3fix.OneScale.test_the_frozen_value_is_bottomup_with_all_terms`.
+My own copies, made by `git archive` from `f1c3704` (and from `e41cdaf` for the old
+toy), each with one line of `fpl_edge.py` (3855) changed by `scripts\mutate.py`.
+
+| Copy | Frozen value | Toy player | Result |
+|---|---|---|---|
+| `real` | `project_week(..., w, ALL_TERMS)` | midfielder | OK |
+| `m_noterms` | `project_week(..., w)` | midfielder | FAIL: `1 != 2` |
+| `m_threelayer` | `project_week(..., w, three_layer_terms(by_id[i]["pos"]))` | midfielder | FAIL: `1 != 2` |
+| `m_xgics` (extra) | `project_week(..., w, frozenset({"xgi", "cs"}))` | midfielder | FAIL: `1 != 2` |
+| `old_real` | as `real` | defender (`e41cdaf`) | OK |
+| `old_m_noterms` | as `m_noterms` | defender | FAIL: `1 != 2` |
+| `old_m_threelayer` | as `m_threelayer` | defender | OK (the gap of the WARN, reproduced) |
+
+- Each red is the test's own last assertion, `high["not_a"] == low["not_a"] + 1`; no
+  error in `setUpClass`, no other line.
+- The toy player is position 3 on `f1c3704` (position 2 on `e41cdaf`), and for him
+  `three_layer_terms` is not `ALL_TERMS`. His real values in the fixture: 3.446711 with
+  all terms, 2.136000 with the three-layer terms and with the default.
+- Each copy imports its own `fpl_edge.py` (printed by `scripts\probe.py`).
+- The same three results (OK, FAIL, FAIL) with `PYTHONHASHSEED` 0, 1, 7 and 12345.
+- The implementer's copies in `scratchpad\w3m2` are byte-identical to mine in both files
+  (`fpl_edge.py`, `tests/test_W3fix.py`) for `base`, `m_noterms`, `m_threelayer` and
+  `old_m_threelayer`; my mutant `m14` of the earlier run equals `m_threelayer`.
+
+## Check 2 — the suite, by discovery
+
+A fresh clone at `f1c3704` (`scratchpad\verify_w3fix_27b\clone`),
+`python -m unittest discover -p "test*.py"`, Python 3.14.7.
+
+| Run | Tests | Result | Skipped | Time (UTC) |
+|---|---|---|---|---|
+| plain (no `FPL_DATA_DIR`) | 890 | OK | 11 | 14:02-14:08 |
+| `FPL_DATA_DIR=C:/GIT/FPL-data` | 890 | OK | 4 | 14:08-14:14 |
+
+Both match the implementer's claim (890 OK; 11 and 4 skipped).
+
+## Notes
+
+- The data folder moved during my run, and not by me: it was at `2efc924` at 14:00:53
+  UTC and at `0768766` (the 14:00:50 UTC nightly) by 14:02 UTC, with the GW11 working
+  export rewritten at 14:01 UTC. The run with the data read `0768766`. My manifest of
+  its 326 files (size, time, SHA-256) is identical before and after that run; `git
+  status` there is clean. I did not pull.
+- Ruling point 2 (the refresh first): the refresh commit `617e040` is on master at
+  14:05:24 UTC, before the 16:30 UTC it was due. Seen in the log only; not checked.
+- Not in this re-check, by the ruling: point 3 (the 3 surviving mutants listed in the
+  report, each with a reason) and the landing steps (`checkpoint.txt`, `run.txt`,
+  CHANGELOG, the report, the state file, `dry/W3fix` at or after 19:30 UTC, the tag, the
+  merge, the final verifier after Boris's real run).
+- I wrote this section only. The worktree, `C:\GIT\FPL` and the clone show a clean `git
+  status` before it; nothing was committed or pushed.
+
+## Evidence files (scratch, not committed)
+
+Under `...\scratchpad\verify_w3fix_27b`:
+- `scripts\mutate.py`, `out\mutate.txt`; the copies `real`, `m_noterms`, `m_threelayer`,
+  `m_xgics`, `old_real`, `old_m_noterms`, `old_m_threelayer`; `out\one_<copy>.txt` (the
+  seven runs of the test);
+- `scripts\probe.py` (the toy player and his values);
+- `clone\`, `out\suite_plain.txt`, `out\suite_data.txt` (the two suite runs);
+- `scripts\manifest.py`, `out\data_manifest_before.txt`, `out\data_manifest_after.txt`.
+
+VERDICT: PASS — for the narrow re-check the ruling asks for, and nothing wider. The diff
+`e41cdaf..f1c3704` is the one line of `tests/test_W3fix.py` that chooses a midfielder as
+the toy player. With it, the frozen-value test is green on the real code and red on both
+forms of mutant 2 (the frozen value without the terms, and by `three_layer_terms(pos)`),
+each at the test's own assertion; with the old defender toy the second form is green
+again, so the change is what closes the gap of the WARN. The suite on a fresh clone is
+890 OK with 11 skipped, and 890 OK with 4 skipped with the data, as claimed. The ruling
+was on master 24 minutes before the code. The landing steps and the final verifier after
+Boris's real run are still to do.
