@@ -460,3 +460,40 @@ Ruling (Fri 27 Nov, 16:00 UTC): yes.
   held one multiset of values, and neither mutant changed an XI, a bench or a keeper.
 - **Limit (point 3).** The argument needs the formation limits alone. A budget or a club limit (at most three a
   club) breaks the exchange axiom, so in a builder with those limits a different-value tie can top the ranking.
+
+## T1 and T2, pinned before their code (Fri 27 Nov 16:05 UTC; the 16:00 ruling's points 1 and 3)
+
+- **Where:** `tests/test_FJ.py`, class `GW15TieRule`, beside the `xi_lex` spy test. It is test-only, with no change
+  to `worklog/checkpoint_gw10/checkpoint.py`. The branch is `w3tie-wip`, from `w3fix-wip` `3fe7500`, because
+  `xi_lex` reaches master only with tonight's W3fix merge. It is rebased onto master after that merge.
+- **T1, `test_a_decimal_tie_on_xi_lex_values_goes_to_the_smaller_ids`:**
+  - Input: the class's TOY with PROJ, and DEF 13 at 0.1, MID 24 at 0.2, DEF 5 at 0.3 and FWD 300 at 0.0.
+  - A spy on `xi_key` records the values `xi_lex` hands it.
+  - A = the core (ids 1, 10, 11, 12, 20, 21, 22, 23, 30) + 13 + 24; B = the core + 5 + 300.
+  - Asserts: both are legal; `xi_key(A, val)` and `xi_key(B, val)` have equal sums (the decimal tie); and
+    `xi_key(B, val) < xi_key(A, val)`, so the smaller sorted ids win (5 < 13).
+- **T2, `test_xi_lex_returns_the_xi_its_key_ranks_first`:**
+  - `xi_key` is patched to rank the lowest exact sum first, then the sorted ids.
+  - Asserts:
+    - `xi_lex(TOY, PROJ)`'s XI is the first of every formation-legal XI under that key, computed in the test;
+    - that XI is not the unpatched `xi_lex`'s, so the test cannot pass by coincidence.
+- **The mutants**, exactly as in `worklog/w3fix_tie/check.py`:
+  - m03: `xi_key` is called and its result ignored; float sums, then the ids.
+  - m04: `val = Fraction(float(v))`.
+  - T1 must be red on m04 and T2 red on m03, each in the full suite. Both must pass on the code.
+- **Suites:** the whole suite by discovery before (890 on `3fe7500`) and after (892), plain and with
+  `FPL_DATA_DIR`. After the rebase onto master, it runs again.
+- **Then:**
+  - a narrow verifier re-check (fable, high, the read-from-disk opening), then the write guard;
+  - the report `worklog/cc_2026-11-29_W3fix_tie.md`, with point 3's answer;
+  - the dry run `dry/W3fix_tie` in the 19:30-21:00 UTC window on Sun 29;
+  - the merge on Boris's click, Boris's real run, and the CHANGELOG entry.
+  - If runcommit falls to Sun 29 (the fallback), T1 and T2 take the next non-freeze evening before the GW15
+    freeze: one runner change a night.
+- **Point 3 (information), checked before the code:** no caller uses `xi_key` or `xi_lex` outside
+  `worklog/checkpoint_gw10/checkpoint.py` (its `realised_lex` and `score(..., "id")`), `tests/test_FJ.py` and
+  `worklog/w3fix_tie/check.py`, on any branch of origin (`git grep` over every remote branch).
+  - `tools/builder.py` (S15) has its own `week_value` and a local search under the budget and club limits.
+  - The Free Hit and Wildcard paths (`fpl_chips.free_hit_value`, `fpl_edge.sec_wildcard`, `_best_xi`) have
+    their own selection.
+  - The Sun 29 report states this; nothing is changed.
