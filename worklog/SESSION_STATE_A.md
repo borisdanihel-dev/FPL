@@ -30,6 +30,26 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
   - **The parked questions** were posted in one batch: W3fix 1-5 (Q3
     updated for today's window), runcommit 1-6, and F-N's "season-average"
     reading (A, B or both).
+  - **Boris's rulings of Fri 27 Nov** are verbatim in bundle.md, W3fix.md and
+    runcommit.md (`2831a63`). The pins are in `2831a63` (refresh, W3fix) and
+    `69b612d` (runcommit: the RMSE and rconst formulas). The refresh scripts
+    `flags.py` and `delta.py` are `cf5b429`.
+  - **W3fix: STOPPED, re-check WARN** of `3847ebd` (answers 1, 2, 4:
+    `w3fix-wip` `3847ebd`, the verifier's report `e41cdaf`).
+    - Every claim reproduces: 890 OK four ways; 0 recorded cells move; the
+      label is the only report change.
+    - The gap: the frozen-value test's toy player is a defender
+      (`ALL_TERMS`), so the `three_layer_terms(pos)` spelling stays green.
+    - Parked for Boris in `prereg/W3fix.md` (`8314ed7`): a midfielder or
+      forward toy plus a short re-check, or accept.
+    - The checkpoint was regenerated on `3847ebd` against data `6f9ecb8`
+      (worktrees `ckpt_code3`, `ckpt_data3`; out in `ckpt_out3`). Only the
+      header lines differ. If the commit changes, regenerate it.
+    - Tonight's landing needs the answer in time for 19:30 UTC. Otherwise
+      it lands Sat 28 19:30-21:00 and runcommit moves to Sun 29.
+  - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
+    worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
+    `fm` and `fj` are not yet.
   - **Next:**
     - After Boris's real run (~14:00 UTC), refresh points 1-4 and commit
       before 16:30 UTC.
