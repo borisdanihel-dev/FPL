@@ -497,3 +497,24 @@ Ruling (Fri 27 Nov, 16:00 UTC): yes.
   - The Free Hit and Wildcard paths (`fpl_chips.free_hit_value`, `fpl_edge.sec_wildcard`, `_best_xi`) have
     their own selection.
   - The Sun 29 report states this; nothing is changed.
+
+## Ruling, Fri 27 Nov 16:20 UTC (Boris's message verbatim)
+
+Ruling (Fri 27 Nov, 16:20 UTC):
+1. T1/T2 accepted: 890 → 892, each mutant caught by exactly one test, test-only, pinned before code. Point 3 (no other callers of xi_lex or its key) accepted.
+2. Sequencing: Sun 29's slot goes to W4 (scheduled pre-deadline run) so it's live for GW13. T1/T2 land on any free night before the GW15 freeze: Sat 28 alongside runcommit is fine because they're test-only and don't count as the night's runner change; otherwise Tue 1 Dec after the GW13 deadline.
+3. If the advance-approval rule (my 16:10 UTC rulings, point 1) is recorded, Boris approves T1/T2 in advance under it. If not, T1/T2 wait for his click.
+
+### Session reading (Fri 27 Nov 16:20 UTC; amends the landing dates of the pin of 16:05, which is otherwise unchanged)
+
+- **Point 3.** No "16:10 UTC rulings" have reached this session. No advance-approval rule is recorded in
+  `prereg/`, `CLAUDE.md`, `BUILD_PLAN.md` or the state file. So T1 and T2 wait for Boris's click.
+- **Point 2.**
+  - T1 and T2 (`w3tie-wip`) land Sat 28 in the 19:30-21:00 UTC window, alongside runcommit, after a rebase onto
+    master, the suite and a narrow verifier re-check. They have their own dry run (`dry/W3fix_tie`) and Boris's
+    click.
+  - If that window is missed, they land Tue 1 Dec after the GW13 deadline, with the same steps.
+  - The report becomes `worklog/cc_<landing date>_W3fix_tie.md`.
+- **W4** has no `prereg/W4.md` and no ruling text in this session; `BUILD_PLAN.md` names it only in the lane A
+  queue (Part A, point 8). Its Sun 29 slot is recorded here and in the state file. Its prereg waits for its
+  ruling text.
