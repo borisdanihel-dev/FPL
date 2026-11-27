@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:45 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:24 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -68,7 +68,7 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
          21:00 UTC.
       3. Boris's real run, then the final verifier.
       4. The "W3fix done" entry; delete the dry branches.
-  - **Update 15:55 UTC.**
+  - **Update 15:53 UTC.**
     - **Boris's rulings of 15:30 UTC** are verbatim in W3fix.md and
       bundle.md (`b3fba57`):
       - the GW13 wording is accepted;
@@ -86,7 +86,7 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - **The landing report and CHANGELOG entry are corrected** on
       `w3fix-wip`, docs only (`05825ec`, `3fe7500`). Head `3fe7500`: the code
       is `f1c3704`'s, so the dry run pushes `3fe7500`.
-  - **Update 16:15 UTC: W3fix_tie (T1 + T2) ready for Sun 29.**
+  - **Update 16:11 UTC: W3fix_tie (T1 + T2) ready for Sun 29.**
     - Boris's ruling of 16:00 UTC (yes) is verbatim, with the matroid and
       Gale reason (`b08aab0`). T1 and T2 were pinned before code (`1ba55c2`),
       with point 3's answer: no caller of `xi_key` or `xi_lex` outside the
@@ -107,7 +107,7 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
          click, his real run, and the CHANGELOG entry.
       5. If runcommit falls to Sun 29, T1 and T2 take the next non-freeze
          evening before the GW15 freeze.
-  - **Update 16:25 UTC: Boris's ruling of 16:20 UTC** (verbatim in
+  - **Update 16:18 UTC: Boris's ruling of 16:20 UTC** (verbatim in
     W3fix.md, `f1a4b54`) replaces the Sun 29 plan above.
     - T1/T2 and point 3 are accepted.
     - **Sun 29 goes to W4** (the scheduled pre-deadline run, live for
@@ -120,7 +120,7 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       session and no such rule is recorded, so T1/T2 wait for Boris's click.
     - **Open if tonight fails:** the W3fix fallback (W3fix Sat 28, runcommit
       Sun 29) now collides with W4's Sun 29 slot.
-  - **Update 16:45 UTC: Boris's rulings of 16:25 UTC** are verbatim (`86e50b3`):
+  - **Update 16:24 UTC: Boris's rulings of 16:25 UTC** are verbatim (`86e50b3`):
     point 1 in BUILD_PLAN.md Part B, and the whole block in W3fix.md,
     runcommit.md and the new W5.md. They supersede the 16:25 block above where
     the two differ.

@@ -584,3 +584,15 @@ Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
    runner change. The 16:25 rule's conditions include 'no other runner change that night', and runcommit is one
    on Sat 28. Merge T1/T2 under the approval alongside runcommit (yes), or hold T1/T2 for your click that night
    (no)?"
+
+## Correction of session time labels (Fri 27 Nov; the commit times, UTC, govern)
+
+Several of the session's own time labels today were written ahead of the clock. The sections are not edited;
+these are the commit times. Boris's ruling labels are his own and unchanged.
+- "Question parked ..., Fri 27 Nov 15:55 UTC": committed 15:52:31 (`89e3987`).
+- "T1 and T2, pinned before their code (Fri 27 Nov 16:05 UTC ...)": committed **15:56:13** (`1ba55c2`), before
+  the code (`82977fe`, 15:57:30). The order pin, then code holds.
+- "Session reading (Fri 27 Nov 16:20 UTC ...)": committed 16:17:57 (`f1a4b54`).
+- "Advance approvals for this item ... (session, Fri 27 Nov 16:35 UTC)" and "Question parked ..., Fri 27 Nov
+  16:35 UTC": committed 16:23:02 (`86e50b3`).
+- The W3fix report's "Corrected Fri 27 Nov 15:45 UTC" (on `w3fix-wip`): committed 15:47:22 (`05825ec`).

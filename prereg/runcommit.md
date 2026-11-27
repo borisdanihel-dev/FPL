@@ -412,3 +412,5 @@ j. Once live: when a pre-deadline run lands, do the GW refresh unprompted and co
 Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
 
 - **Session reading (16:30 UTC):** runcommit has no advance approval; it lands on Boris's click. If W3fix lands tonight, runcommit keeps Sat 28 (answer 6's order). If W3fix misses tonight, it lands Tue 1 Dec 19:30-21:00 UTC.
+- **Time label correction:** the "Session reading (16:30 UTC)" above was committed at 16:23:02 UTC (`86e50b3`);
+  the label ran ahead of the clock.

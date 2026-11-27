@@ -1,7 +1,7 @@
 # Proposal: recovery runs dispatched by Claude Code (information; not in use until Boris rules)
 
 Boris's rulings of Fri 27 Nov 16:25 UTC, point 4 (verbatim in `prereg/W3fix.md`, `runcommit.md`, `W5.md`).
-Session draft, Fri 27 Nov ~16:40 UTC.
+Session draft, Fri 27 Nov 16:24 UTC.
 
 ## What was checked
 - `gh` 2.106.0 is installed at `C:\Program Files\GitHub CLI\gh.exe`. It is not on the Git Bash PATH, so it is
