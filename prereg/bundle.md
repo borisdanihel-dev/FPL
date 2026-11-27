@@ -235,3 +235,10 @@ Weekend (after the deadline, tools only)
     side and listed on a rank change only.
 - **Deadline:** committed to master (worklog only; the freeze holds) by 16:30
   UTC, then a short post.
+
+## Rulings, Fri 27 Nov 15:30 UTC (Boris's message verbatim; for this item: point 3, GW12 locked; points 1 and 2 are W3fix's, in prereg/W3fix.md)
+
+Rulings (Fri 27 Nov, 15:30 UTC):
+1. Changelog wording "starts with GW13": accepted — correct.
+2. Decimal-tie test (0.1+0.2 v 0.3, decided by the id list): yes. Test-only, in the offline checkpoint tool. It must turn both surviving mutants (xi_key result ignored; Fraction(float(v))) red and pass on real code. Not in tonight's W3fix landing. Land it on any non-freeze day before the GW15 freeze; Sun 29 is fine.
+3. GW12 is locked from the refresh: roll, no chip, captain Muharemović, vice De Cuyper, XI and bench as in gw12_post_refresh.md. Nothing more needed for GW12.

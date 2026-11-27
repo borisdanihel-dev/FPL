@@ -405,3 +405,10 @@ the GW15 tie rule uses (not the runner):
    two legal XIs tie as written decimals but not as binary floats. Add a toy test with
    such a tie (0.1 + 0.2 against 0.3), where the rule must pick by the id list, before
    GW15 (yes), or accept (no)?"
+
+## Rulings, Fri 27 Nov 15:30 UTC (Boris's message verbatim; for this item: points 1 and 2; point 3 is the GW12 pass's, in prereg/bundle.md)
+
+Rulings (Fri 27 Nov, 15:30 UTC):
+1. Changelog wording "starts with GW13": accepted — correct.
+2. Decimal-tie test (0.1+0.2 v 0.3, decided by the id list): yes. Test-only, in the offline checkpoint tool. It must turn both surviving mutants (xi_key result ignored; Fraction(float(v))) red and pass on real code. Not in tonight's W3fix landing. Land it on any non-freeze day before the GW15 freeze; Sun 29 is fine.
+3. GW12 is locked from the refresh: roll, no chip, captain Muharemović, vice De Cuyper, XI and bench as in gw12_post_refresh.md. Nothing more needed for GW12.
