@@ -309,3 +309,69 @@ runcommit answers
 Weekend (after the deadline, tools only)
 - Re-run S7 and bb_timing for GW13–19 assuming 2 FT in GW13, Thiago back GW14, and Groß's ban risk. Report BB and FH week candidates with and without the Calafiori lift.
 - Draft the F-N prereg (CS shrinkage in the planner) for my review.
+
+## Answers of Fri 27 Nov, pinned before their code (Fri 27 Nov 12:55 UTC)
+
+### Answer 4: the two formulas (Boris: "Write both formulas into the prereg")
+
+Take one cell of the per-gameweek table, (source, gameweek). Its rows R are
+the `pairs` the MAE already uses. They are every logged forecast for that
+source and gameweek whose team played: a blank (no row) is graded as 0, and
+only settled gameweeks count (data_checked = 1 and every fixture finished).
+Each row is (p_i, a_i), the forecast and the realised points, for i = 1..n,
+with n = |R|.
+
+- c = (1/n) · Σ a_i: the mean realised points over R. This is the constant of
+  the existing MAE baseline, `const` = (1/n) · Σ |c − a_i|.
+- MAE = (1/n) · Σ |p_i − a_i| (unchanged).
+- **RMSE = sqrt( (1/n) · Σ (p_i − a_i)² )**
+- **rconst = sqrt( (1/n) · Σ (c − a_i)² )**: the same c, the same rows. It is
+  the population standard deviation of a_i over R.
+
+The per-source summary line uses the same formulas over that source's pooled
+rows: the union of its graded cells. c is the mean a_i of that pool, which is
+again the summary's own MAE constant.
+
+The `minutes` source (a start probability) prints `-` for RMSE and rconst, as
+it does for MAE and const.
+
+Report only:
+- No verdict reads RMSE or rconst.
+- "beats const" / "loses" stays MAE < const.
+- "real signal" stays rho − 1.96·se > 0.10.
+- `p1_eval.py` is untouched.
+
+### The other answers, read for the code
+
+- **Answer 4, tests and text:**
+  - Value checks for the summary line (both RMSE values, in their places).
+  - Value checks for the two verdict cases that survived: one test where
+    RMSE beats its constant and MAE loses (verdict "loses"), and one where
+    the "real signal" line stands while RMSE loses to rconst.
+  - Each test must be red on V24, V28, V29 and V30 of
+    `worklog/verify_runcommit.md`.
+  - DEFINITIONS gains the line `RMSE  sqrt(mean((predicted - actual)^2));
+    rconst = RMSE of predicting the mean actual for everyone (report only, no
+    bar)`.
+  - The minutes note names RMSE and rconst among the undefined columns.
+- **Answer 1:** a test with the namesake listed after our player in the
+  previous export, for all three blocks (YOUR SQUAD price moves, NEW FLAGS,
+  FORM MOVERS). It must be red with the name lookup put back on the previous
+  export's side.
+- **Answer 2:**
+  - A test that reads the FORM MOVERS block.
+  - A test that passes `GITHUB_SHA` through `checks.main` for a real run and
+    a dry run, checking all three records.
+- **Answer 3, option (b):**
+  - The run log line, the status header and the commit message all take the
+    commit from `checks.code_commit` (the one reader of `GITHUB_SHA`). No
+    other code reads the variable for them.
+  - The tests patch `checks.code_commit` and see its value in all three
+    records. There is no decoy test.
+  - A mutant that reads `GITHUB_SHA` directly in one record must be red.
+- **Answer 5:** confirmed. "After the GW11 deadline" governs the merge only.
+- **Answer 6, order:** W3fix lands first. runcommit, with the price-moves fix
+  and the RMSE column, lands the next night in the 19:30-21:00 UTC window,
+  after a rebase onto W3fix and a short re-check before its dry run. If W3fix
+  slips to Sat 28, runcommit goes on Sun 29. Nothing lands after Mon 30 Nov
+  12:30 UTC (the GW13 freeze).
