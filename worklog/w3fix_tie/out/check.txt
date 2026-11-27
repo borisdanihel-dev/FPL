@@ -1,0 +1,23 @@
+W3FIX TIE CHECK (the question parked after Boris's ruling of Fri 27 Nov 15:30 UTC, point 2); information only
+  code 3fe7500 (modified tracked files 0); checkpoint.py sha256 8781a8e545ddf196d8381e053f9a3c7709394dd0cf07fc535e9488f001c8a811
+  script sha256 49ba259e7adf60ce4ed8133d5dad64d49047e97d7ee1434c5df3d76c2dbdddd7; Python 3.14.7; generated 2026-11-27 15:49 UTC
+  m03: key=lambda c: (xi_key(c, val), (-sum(r["proj"] for r in c), sorted(r["id"] for r in c)))[1])
+  m04: val = {r["id"]: Fraction(float(r["proj"])) for r in rows}
+
+PART 1  random 15s, forecasts on the grids 0.0-0.7 by 0.1, 0.00-0.39 by 0.03, {0.0, 0.1, 0.2, 0.3}; seed 20261127
+  squads 3000; with a tie at the top 1798; ties whose XIs hold different multisets of values 0
+  XI, bench or keeper changed: m03 0, m04 0
+
+PART 2  the ruling's shape: core + DEF 13 (0.1) + DEF 14 (0.2) against core + MID 23 (0.3) + MID 24 (0.0)
+  xi_lex takes [14, 23] of the four, sum 0.5 - a mix, above the 0.3 of either
+
+PART 3  Python's sum() on 20,000 random 11-value lists, 5 orders each
+  lists with more than one result 0
+  the naive left-to-right loop: (0.1 + 0.2) + 0.3 = 0.6000000000000001, (0.3 + 0.2) + 0.1 = 0.6; sum(): 0.6 and 0.6
+
+PART 4  candidate tests (scratch form, not in tests/)
+  test  code      m03                       m04                       
+  T1    green     green                     red (sums differ)         
+  T2    green     red (key ignored)         green                     
+  T1: the 0.1 + 0.2 against 0.3 tie on the values xi_lex hands xi_key, decided by the id list
+  T2: xi_lex returns the XI its key ranks first (xi_key patched to rank the lowest sum first)

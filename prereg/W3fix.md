@@ -412,3 +412,19 @@ Rulings (Fri 27 Nov, 15:30 UTC):
 1. Changelog wording "starts with GW13": accepted — correct.
 2. Decimal-tie test (0.1+0.2 v 0.3, decided by the id list): yes. Test-only, in the offline checkpoint tool. It must turn both surviving mutants (xi_key result ignored; Fraction(float(v))) red and pass on real code. Not in tonight's W3fix landing. Land it on any non-freeze day before the GW15 freeze; Sun 29 is fine.
 3. GW12 is locked from the refresh: roll, no chip, captain Muharemović, vice De Cuyper, XI and bench as in gw12_post_refresh.md. Nothing more needed for GW12.
+
+## Question parked for Boris (exact wording), Fri 27 Nov 15:55 UTC, after the 15:30 ruling's point 2; it does not block tonight's landing
+
+Evidence: `worklog/w3fix_tie/check.py`, run on `w3fix-wip` `3fe7500` (`worklog/w3fix_tie/out/check.txt` and
+`run.txt`). The landing report and CHANGELOG entry on `w3fix-wip` are corrected (`05825ec`, `3fe7500`, docs only).
+
+1. **The decimal-tie test cannot be built as ruled.** "My 14:20 claim was wrong. No 15 can have a
+   decimal-but-not-binary tie at the top of `xi_lex`. Legal XIs are the bases of a matroid, so every XI tied
+   at the top holds the same values: in 3,000 random squads there were 1,798 ties at the top and 0
+   exceptions. The ruling's shape (0.1 + 0.2 against 0.3) gives a legal 0.2 + 0.3 mix at 0.5 instead. So
+   `Fraction(float(v))` never changes the XI, and the ignored key changes it only through float rounding no
+   forecast reaches. Two test-only tests turn both mutants red and pass on the code:
+   - T1: the 0.1 + 0.2 against 0.3 tie on the values `xi_lex` hands `xi_key`, decided by the id list (red on
+     `Fraction(float(v))`).
+   - T2: `xi_lex` returns the XI its key ranks first (red on the ignored key).
+   Land T1 and T2 on Sun 29 in place of the toy (yes), or accept both mutants as unable to change an XI (no)?"
