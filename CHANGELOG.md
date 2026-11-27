@@ -4635,7 +4635,7 @@ Report `worklog/cc_2026-11-13_S8c_landing.md`.
     (Python 3.14's `sum()` is compensated).
   - 0 XIs changed in the verifier's 9,000 random squads, and in my 3,000 (1,798
     with a tie at the top, every one with a single multiset of values).
-  - Corrected Fri 27 Nov 16:10 UTC: the first version of this entry said both
+  - Corrected Fri 27 Nov 15:45 UTC: the first version of this entry said both
     can change the XI. Boris's decimal-tie test (ruling of 15:30 UTC) is parked
     with this correction in `prereg/W3fix.md`; it is not part of this landing.
 
