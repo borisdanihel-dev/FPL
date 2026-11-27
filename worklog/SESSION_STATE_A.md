@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:30 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 18:30 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -171,6 +171,15 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       - No dispatch has been made.
     - **Tonight is unchanged:** the W3fix dry run is at 19:31 UTC (waiter
       `b7ma2s4n4`), then the self-merge if every condition holds.
+  - **Update 18:30 UTC: Boris's ruling of 18:30 UTC** (the CLAUDE.md pointer)
+    is verbatim in the new `prereg/claudemd.md`, with its acceptance tests.
+    - The one sentence "Boris clicks only real runs." in CLAUDE.md's "Dry
+      runs by push" bullet is replaced by the ruled text. Nothing else in
+      CLAUDE.md changes.
+    - It is committed after tonight's W3fix merge, with the post-merge
+      worklog post before 21:00 UTC or after the nightly has committed.
+      If the merge runs late or misses, it goes Sat 28 morning.
+    - No code or workflow reads CLAUDE.md (grep: comments only).
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
