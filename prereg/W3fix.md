@@ -428,3 +428,35 @@ Evidence: `worklog/w3fix_tie/check.py`, run on `w3fix-wip` `3fe7500` (`worklog/w
      `Fraction(float(v))`).
    - T2: `xi_lex` returns the XI its key ranks first (red on the ignored key).
    Land T1 and T2 on Sun 29 in place of the toy (yes), or accept both mutants as unable to change an XI (no)?"
+
+## Ruling, Fri 27 Nov 16:00 UTC (Boris's message verbatim)
+
+Ruling (Fri 27 Nov, 16:00 UTC): yes.
+1. Land T1 and T2 on Sun 29 in place of the ruled decimal-tie test. Test-only, offline checkpoint tool. Both must pass on real code and, together, turn both mutants red.
+2. Record in prereg/W3fix.md why the XI-level test can't exist: formation-legal XIs form a matroid, so by Gale's theorem every max-weight XI has the same sorted values, and different-value ties can't top xi_lex. Cite the 3,000-squad check (1,798 top ties, 0 exceptions).
+3. Information, non-blocking: does any other caller (S15 builder, the FH/WC paths) use xi_lex's key function where a budget or club limit applies? Those constraints break the matroid property, so a different-value tie could top the ranking there. If yes, list the callers in the Sun 29 report. Don't fix anything yet.
+4. Tonight unchanged: dry run 19:31 UTC from 3fe7500, merge on Boris's click before 21:00 UTC.
+
+## Why the XI-level decimal-tie test cannot exist (the 16:00 ruling's point 2)
+
+- **The matroid.** A formation-legal XI is 11 of the 15 with 1 GK, DEF 3-5, MID 2-5 and FWD 1-3. These XIs are
+  the bases of a matroid: they satisfy the base exchange axiom. Take legal XIs A and B and a player a in A but
+  not in B, of position p.
+  - If A holds more players of p than B, some position q has fewer in A than in B. A player b of q in B but
+    not in A exists, and A - a + b is legal: every count stays between A's and B's.
+  - Otherwise B holds at least as many players of p as A. Then B has a player b of p that is not in A, and
+    A - a + b keeps every count.
+- **Gale's theorem.** In a matroid, the greedy basis's sorted weights are at least those of every other basis,
+  place by place. So every basis of the highest total weight has the same sorted weights. With the weights
+  `xi_lex` uses (`_exact`, the decimal written), every XI tied at the top holds the same sorted values.
+- **So no different-value tie can top `xi_lex`.** A tie of 0.1 + 0.2 against 0.3 + 0.0 at the top would need two
+  top XIs with different sorted values. Directly: with both XIs legal, the exchange gives a legal mix of one
+  player from each pair that beats both. In the toy of `worklog/w3fix_tie/` that mix is 0.2 + 0.3 = 0.5.
+- **The same argument covers `Fraction(float(v))`.** Which XIs score highest depends only on how the single
+  values are ordered (they are the bases the greedy rule can produce), and the binary and the decimal value
+  order them alike. So that mutant's tie set and id choice are the code's.
+- **Measured** (`worklog/w3fix_tie/check.py` on `w3fix-wip` `3fe7500`; `out/check.txt`, `out/run.txt`): 3,000
+  random 15s with forecasts on coarse decimal grids gave 1,798 ties at the top and 0 exceptions. Every tie's XIs
+  held one multiset of values, and neither mutant changed an XI, a bench or a keeper.
+- **Limit (point 3).** The argument needs the formation limits alone. A budget or a club limit (at most three a
+  club) breaks the exchange axiom, so in a builder with those limits a different-value tie can top the ranking.
