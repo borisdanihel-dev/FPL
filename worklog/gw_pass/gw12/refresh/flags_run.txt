@@ -1,0 +1,9 @@
+tool: worklog/gw_pass/gw12/flags.py
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12_code --data C:/GIT/FPL-data --csv C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12/run2/bundle/xp_v2_all.csv --bb C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12/run2/bb/bb_moves.txt --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12/run2/flags
+commit: 1b3b52bbec95287a66798e7ae3e280f1234f40e7
+modified tracked files at the run: 0
+start_utc: 2026-11-27T14:04:32+00:00
+end_utc: 2026-11-27T14:04:32+00:00
+duration_s: 0
+outputs:
+  flags.txt  sha256 70c6b3285419b1c8f6c9717e376764d02c6be7a11e59babcd6d65220a997d689

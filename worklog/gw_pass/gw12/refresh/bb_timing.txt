@@ -1,0 +1,16 @@
+BENCH BOOST TIMING ON THE POST-TRANSFER SQUADS  GW12-17 (Boris, GW12 pass of Fri 27 Nov, point 4); information, read-only, no tool change
+  data 0768766, export fpl_export_gw11_2026-11-27.json.gz; code 1b3b52b (modified tracked files 0); script sha256 267227d531ede5d756068fb9116b181a7bcadb660b18d345705ba9b65bcfb6ee; generated 2026-11-27 14:04 UTC
+  check: bb_moves' copy of the matrix, no gate lifted, equals the planner's: True
+  value: the four outside xp_v2's best XI, the squad held GW12-17 (no later transfers); BB = that week's bench at full weight
+
+  UNDER THE GATE (Thiago 0)
+    squad          GW12   GW13   GW14   GW15   GW16   GW17  GW14-GW15   best week   GW12 rank   GW14 bench
+    current 15     9.53   9.64  11.09  11.67  11.00  10.98      -0.58   GW15           6 of 6   Kelleher 3.50, Barry 4.40, Slater 3.19, Thiago 0.00
+    (a)           10.15   9.80  11.09  11.67  11.00  10.98      -0.58   GW15           5 of 6   Kelleher 3.50, Barry 4.40, Slater 3.19, Thiago 0.00
+    (a): best single move (bank after 1.2)
+
+  LIFTED (Thiago from GW14 at chance 100)
+    squad          GW12   GW13   GW14   GW15   GW16   GW17  GW14-GW15   best week   GW12 rank   GW14 bench
+    current 15     9.53   9.64  14.97  14.93  15.21  15.08      +0.04   GW16           6 of 6   Kelleher 3.50, Barry 4.40, Thiago 3.88, Slater 3.19
+    (a)           10.15   9.80  14.97  14.93  15.21  15.08      +0.04   GW16           5 of 6   Kelleher 3.50, Barry 4.40, Thiago 3.88, Slater 3.19
+    (a): best single move (bank after 1.2)
