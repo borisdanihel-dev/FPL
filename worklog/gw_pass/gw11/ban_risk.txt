@@ -1,0 +1,4 @@
+# fpl_squad.ban_risk from master 64b8df8 (modified tracked files 0) on data fc543da, 2026-11-20T19:51:12Z
+  GW11 (S12's rule): cautions = yellow cards in league matches before the deadline; one booking from a ban = 4 with the club's next league match its 18th or earlier, or 9 with it its 31st or earlier; rate90 = cautions per 90 shrunk m/(m+4) to the position's pooled rate; P(ban for the following gameweek) = min(1, rate90 x P(start)), P(start) as xp_v2 as tested; a result FPL has ended but not yet marked finished counts, labelled provisional
+  Groß              BHA MID  cautions 4, club match 11 next  rate90 0.350  P(start) 1.00  P(ban) 0.350
+  Thiago            BRE FWD  cautions 4, club match 11 next  rate90 0.357  P(start) 0.00  P(ban) 0.000

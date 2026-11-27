@@ -1,0 +1,9 @@
+tool: worklog/gw_pass/gw11/s7_post_transfer.py
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11_code --data C:/GIT/FPL-data --bundle C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11/run3/bundle/gw11_pass.txt --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11/run3/s7 --squad (a) best pair with a Bench Boost=Thiago:BRE>N.Jackson:AVL,Thomas:COV>De Cuyper:BHA --squad (b) best pair without a Bench Boost=Calafiori:ARS>De Cuyper:BHA,Thomas:COV>Van Hecke:TOT
+commit: 64b8df8c230aff0b578a770909e2679f5f335fcd
+modified tracked files at the run: 0
+start_utc: 2026-11-20T19:51:03+00:00
+end_utc: 2026-11-20T19:51:06+00:00
+duration_s: 3
+outputs:
+  s7_post_transfer.txt  sha256 d63fc04a7a1d0335fe2604a5e2790ed6469151489257c71dc86ea6d1dc016363

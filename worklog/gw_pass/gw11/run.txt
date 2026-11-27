@@ -1,0 +1,10 @@
+tool: tools/gw_pass.py
+args: --data C:/GIT/FPL-data --hist C:/GIT/FPL/historical --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11/run3/bundle
+commit: 64b8df8c230aff0b578a770909e2679f5f335fcd
+modified tracked files at the run: 0
+start_utc: 2026-11-20T19:49:42+00:00
+end_utc: 2026-11-20T19:50:33+00:00
+duration_s: 51
+outputs:
+  gw11_pass.txt  sha256 337f269de72ea728ecb417876b0d554b3ce14f5e22c46b94f0c467925207b98c
+  xp_v2_all.csv  sha256 e26c1e44fb5d2fff0d603a8457fecfffc0c432e7558dc2134eb3cb9f5578a694

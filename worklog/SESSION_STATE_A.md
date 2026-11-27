@@ -7,7 +7,87 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Mon 16 Nov, 19:25 UTC): Boris's answers of Mon 16 Nov** (verbatim in
+- **NOW (Fri 27 Nov, ~04:00 UTC): the GW12 deadline pass** (deadline today
+  18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
+  captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
+  before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
+  (`2d0650c`, `f587bce`, pushed after tonight's nightly).
+  - **Points 1-5 DONE** on tonight's nightly (data `2efc924`, 03:47 UTC,
+    STATUS WARN = the standing 5 Nov gap only; odds
+    `odds_2026-11-27T0347Z`, 20 of 20 events) from clean master `f587bce`
+    (worktree `gw12_code`):
+    - The bundle is `71fb2ba`.
+    - The tables, captain block, S7, bb_timing and the post
+      `gw12_post.md` are in `worklog/gw_pass/gw12/`.
+  - **Results:**
+    - Best single move gated and lifted: Calafiori -> Silva (BOU), 3.44;
+      roll is rank 18.
+    - With Calafiori at 1.0: Mbeumo -> Tavernier 0.16; roll is rank 3.
+    - xp_v2 captain: Muharemović 5.66, De Cuyper 5.57.
+    - ARS-MCI: λ 1.71 / 1.20; P(cs) 0.301 / 0.181.
+    - S7: HOLD +0.10 (74%) on both squads.
+    - bb_timing GW14 - GW15: gated -0.58, lifted +0.04.
+  - **The parked questions** were posted in one batch: W3fix 1-5 (Q3
+    updated for today's window), runcommit 1-6, and F-N's "season-average"
+    reading (A, B or both).
+  - **Next:**
+    - After Boris's real run (~14:00 UTC), refresh points 1-4 and commit
+      before 16:30 UTC.
+    - After the deadline, the W3fix landing per his answers. Dry runs skip
+      17:30-19:30 and from 21:30 UTC; master takes no push from 21:00 UTC.
+    - Sat 28: runcommit, plus the price-moves fix and the RMSE column.
+    - The F-N prereg draft.
+    - The GW13 freeze starts Mon 30 Nov 12:30 UTC.
+
+- (Earlier) **NOW (Fri 20 Nov, 02:45 UTC): Boris's answers of Thu 19 Nov night and late**
+  (verbatim in `prereg/W3fix.md`, `FM.md`, `FJ.md`, `runcommit.md`, `FJ6.md`,
+  `bundle.md`; all pushed after tonight's nightly, master `cc51a47`).
+  **Standing rule:** a WARN or FAIL stops that item only; its questions are
+  parked here; carry on with the next independent item.
+  - **GW11 deadline pass (Sat 21 Nov 11:00 UTC; freeze from Fri 05:00, tools
+    and worklog only): points a-c DONE** on tonight's nightly (data
+    `0a54132`, committed 02:35 UTC, STATUS WARN = the standing 5 Nov price
+    gap only): the bundle from clean master `352dd36` (worktree
+    `gw11_code`), the transfer tables, S7, bb_timing and ban risk in
+    `worklog/gw_pass/gw11/`, master `cc51a47`. Thomas is now 75% (50% on 19
+    Nov); the plans are unchanged from the 19 Nov test. Point d posted.
+    **Point e DONE (Fri 20 Nov, ~19:57 UTC)**, Boris's message verbatim in
+    `prereg/bundle.md` with the reading of items 3-5 pinned before code
+    (`64b8df8`): on Boris's real run (data `fc543da`, 19:47 UTC) from clean
+    master `64b8df8`: the bundle `676dd33` (xp_v2 captain now Haaland 5.69 v
+    Gabriel 5.66; BHA-NEW GW12 now on odds); the tables, S7, bb_timing, ban
+    risk and `refresh_extra.py` (Calafiori P(start) 1.0, the clean-sheet
+    flattening A/B, the captain tie), post `gw11_post_refresh.md`. Thomas ->
+    Van Hecke alone is not affordable (4.9 < 5.1). **After the deadline:
+    draft prereg F-N** (flattening fixture-specific P(cs) toward the team
+    average, the no-hit planner on 2024/25) for Boris's ruling.
+  - **FM (xp_v2_g2): STOPPED, verifier WARN** (`worklog/verify_FM.md`). Result
+    GW5-10, 830 flagged player-weeks, mean e -0.158, 90% [-0.310, -0.016],
+    bar NOT passed, unchanged on `fm-wip` `dfb4691` (modified 0); not
+    recorded Mon 23 Nov (Boris confirmed). Boris's answers of Thu 19 late
+    recorded: six origins accepted, amendment 1, the prospective
+    squared-error test GW11-15 pre-registered. Answer 3 DONE on `dfb4691`:
+    the two information prints (point 5 alone n=72, -0.315; ours n=38,
+    -0.253) and main()'s end-to-end test (7 of 7 check mutants red; found and
+    fixed the n=0 crash). Open before GW15: a verifier re-check of the new
+    code; the item report with the GW4 note; the prospective test's code;
+    rebase `fm-wip`.
+  - **W3fix: STOPPED, re-check WARN** of `5385c57` (`worklog/verify_W3fix.md`).
+    Parked (exact wording in `prereg/W3fix.md`): (1) the float-sum mutant's
+    test; (2) four minor green mutants; (3) may `dry/W3fix` be pushed in the
+    freeze or after the deadline; (4) CHIPS's screen label's generated time;
+    (5) the changelog says the amended screen starts with GW12 (information).
+    Landing steps left: regenerate checkpoint.txt, CHANGELOG, report, merge
+    master, dry run, tag, merge, Boris's run, final check.
+  - **runcommit: STOPPED, pre-check WARN** of `runcommit-wip` `7f44c65`
+    (`worklog/verify_runcommit.md`): the three records, the price-moves fix
+    by id and the calibration RMSE columns built and reproduced; 869 OK
+    four ways; recording path unchanged. Parked (exact wording in
+    `prereg/runcommit.md`): (1) the namesake-after test; (2) FORM MOVERS and
+    checks.main tests; (3) no substitute everywhere, a or b; (4) calibration
+    value checks and wording; (5) the merge date; (6) order with W3fix.
+
+- (Earlier) **NOW (Mon 16 Nov, 19:25 UTC): Boris's answers of Mon 16 Nov** (verbatim in
   `prereg/S8c.md`, `W3fix.md`, `FJ.md`, `FM.md`, `FJ6.md`, `runcommit.md`,
   `dbc6ad0`; the item count stays). Pins before code: `4274955` (W3fix
   Ruling 3, FJ tie rule and main() test, FM design), `2af773c` (W3fix

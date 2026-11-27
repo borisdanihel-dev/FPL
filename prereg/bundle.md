@@ -123,3 +123,115 @@ c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15
 d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
 e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
 Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Answers on FM, Thu 19 Nov late (Boris's message verbatim; for this item: its last paragraph, Thomas in the GW11 tables)
+
+Answers on FM, Thu 19 Nov late.
+1. Yes: accept the six-origin result (GW5-10); note in the report that GW4's only pre-deadline export predates the player ids and could not change the verdict.
+2. Confirmed: the bar is not passed (mean -0.158, 90% [-0.310, -0.016]); xp_v2_g2 is not recorded on Mon 23 Nov. The result stays on record as run.
+3. Yes: before the GW15 re-run, print the two information lines (the suspension-window-only player-weeks; our own flagged players) and add an end-to-end test of the check's main().
+4. (a) Keep the code's reading: with no archived export a gameweek counts as unsuspended, but a known suspension is still skipped. Record it as an amendment to prereg/FM.md, with the literal reading's figures ([-0.301, -0.009]; same verdict).
+5. No: pre-register a new prospective test now, before any GW11 result exists. Data: flagged player-weeks from GW11 onward (deadlines GW11-15) from the archived nightly exports. Primary metric: the paired squared-error difference (v1 - realised)^2 - (v2 - realised)^2, which is the right scoring for expected-points forecasts. Same bootstrap (unit = deadline gameweek, B 10,000, seed 20261018). Bar: 90% lower bound above 0. Absolute error is printed as secondary information. Judge it at GW15 with F-L. Record in prereg/FM.md that the earlier absolute-error bar favoured predicting 0 (462 of 830 scored 0) and that the squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before this test was set: that is why the new test uses GW11 onward only.
+Thomas in the GW11 tables: his 50% applies in GW11 only, then as normal (the FM 'd' rule Boris approved). Also print the every-week version beside it as information.
+
+## Point e, Fri 20 Nov (Boris's message verbatim; for this item: the GW11 refresh, points 1-6; the last paragraph is item F-N's, drafted after the deadline)
+
+Point e, the GW11 refresh (Boris's real run on master is green). Commit before 21:00 UTC tonight.
+1. git pull --ff-only in C:\GIT\FPL-data; re-run the GW11 bundle from clean master on the newest export; commit gw11_pass.txt, xp_v2_all.csv and run.txt under worklog/gw_pass/gw11/ as a new commit.
+2. Re-run the transfer tables, S7 and bb_timing on the new export (Thomas 75% in GW11, then normal).
+3. Calafiori: his P(start) 0.75 comes from the GW8 22-minute cameo (hip); he started GW7, GW9 and GW10. Re-run the no-BB tables with his P(start) at 1.0 (information). Post the best pair, plus the named options: Calafiori -> De Cuyper + Thomas -> Van Hecke; Calafiori -> De Cuyper alone + roll one; Thomas -> Van Hecke alone + roll one.
+4. Clean-sheet sensitivity (information): recompute each of those moves' six-week gain with every team's clean-sheet probability in GW11-16 flattened to its season-average rate (attack, DEFCON and minutes unchanged). Post the gain as is and flattened, and the share that comes from the clean-sheet term.
+5. Captain tie (own: Gabriel 3.32 v Haaland 3.03, within 0.3): print xg and bottomup for both, and the opponents' goals scored and conceded (Newcastle at home to Arsenal; Fulham away at City).
+6. Post everything here, no decisions.
+After the deadline: draft prereg F-N (does flattening fixture-specific clean-sheet probabilities toward the team average improve the no-hit planner on 2024/25?), for Boris's ruling.
+
+### Reading before code (session, Fri 20 Nov 19:50 UTC; information items 3-5, no tool change)
+- The newest export: the data branch is still `0a54132` (the 02:35 UTC nightly); no later commit was found at 19:42 UTC, so points 1-2 re-run on the same export as the morning pass, from clean master.
+- Point 3: on the lifted matrix of point 2 (Thiago from GW14, Thomas at his chance in GW11, then normal) and, beside it, the gated one; Calafiori's P(start) set to 1.0 in every week GW11-16, nothing else changed; no-BB score as the tables (2 free transfers, bank 0.9, no hits).
+- Point 4: only the clean-sheet probability is flattened (the goals-conceded deduction, attack, DEFCON and minutes keep their fixture values), in both xp_v2 blends, every team, GW11-16. Two readings of "its season-average rate", both printed: (A, the literal one) the team's realised clean-sheet rate in its finished 2026/27 league matches before the deadline; (B, information) the mean of the model's own P(cs) over the team's GW11-16 fixtures (the level kept, only the fixture variation removed). "The share from the clean-sheet term" = (gain - gain with every P(cs) set to 0) / gain, XIs re-chosen in each (not additive). The six-week gain = the planner's decayed gain over GW11-16 (no BB).
+- Point 5: xg and bottomup = the recorded GW11 rows in projection_log.csv; goals scored and conceded = finished 2026/27 league fixtures in fpl.sqlite, all and by venue.
+
+## GW12 deadline pass, Thu 26 / Fri 27 Nov (Boris's message verbatim; for this item: points 1-5, the GW12 pass; the last paragraph is the schedule of W3fix, runcommit and F-N)
+
+GW12 deadline pass (deadline today Fri 27 Nov 18:30 UTC; GW12 freeze: tools and worklog only). 1 free transfer, bank 0.5; Thiago banned until GW14.
+1. git pull --ff-only in C:\GIT\FPL-data; run the GW12 bundle from clean master on the newest export; commit gw12_pass.txt, xp_v2_all.csv and run.txt to master under worklog/gw_pass/gw12/.
+2. Transfer tables (1 FT, no hits): the best single moves and roll, under the gate and with Thiago lifted from GW14, and with Calafiori at P(start) 1.0 (his GW8 cameo is still in the window). Also the clean-sheet-flattened gain for the top three moves (information, as in GW11).
+3. Captain: Arsenal v City is in our XI both ways. Print the captain table, xg, bottomup and bottomup_lambda for the top four, and the GW12 odds for ARS-MCI (each side's lambda and P(cs)).
+4. Chips: S7 GW12-19 lines on the current 15 and on the best post-transfer squad, and bb_timing for GW14 v GW15 (the Bench Boost plan is GW14).
+5. Post, no decisions, by 10:00 UTC. After Boris's real run (about 14:00 UTC, after the press conferences): refresh 1-4 and commit before 16:30 UTC.
+After the GW12 deadline, runner changes resume (one per night, Boris clicks each real run): Fri 27 W3fix (with fj-wip's tests); Sat 28 runcommit plus the price-moves name fix plus the RMSE column; Sun 29 free. Then the GW13 freeze from Mon 30 Nov 12:30 UTC. Also draft F-N's prereg and post the parked questions in one batch.
+
+### Reading before code (session, Thu 26 Nov 23:45 UTC; no tool change)
+- "The newest export": tonight's nightly (Fri 27 Nov, usually committed 02:30-04:00 UTC) is awaited, as for GW11 point a; if it has not committed by 08:30 UTC the pass runs on the newest export then. Mode (d): nothing is pushed to master before it ends.
+- Point 2: four matrices, each the planner's xp_v2 GW12-17: gated; Thiago lifted from GW14 (taken as available, P(start) from his starts in the last four); and each of them with Calafiori's P(start) at 1.0 in every week. 1 free transfer, no hits, bank as the export (0.5), Boris's schedule, decay 0.85; the top five single moves and roll, with ranks. The clean-sheet-flattened gain for the top three single moves of the lifted matrix and of the lifted + Calafiori matrix, both readings as in GW11 (A the realised 2026/27 rate, B the model's own mean over GW12-17; the reading is still open), and the clean-sheet share.
+- Point 3: the bundle's captain tables (own and S14 on xp_v2); the top four by xp_v2 in our XI, with own, xg, bottomup, bottomup_lambda and xp_v2 as recorded for GW12; the odds row for ARS-MCI from the bundle's S5 section.
+- Point 4: S7 (tools/chips.py live, own) on the current 15 and on the post-transfer squad of the best single move of the lifted matrix; bb_timing (bench value on xp_v2, squad held) GW12-17, gated and lifted, GW14 v GW15 read off it.
+
+### Boris's answer on the captain block, Thu 26 Nov night (verbatim)
+
+Captain block scope: list both top fours (by xp_v2 and by own) plus Gabriel, Calafiori and Haaland, as you proposed. Carry on as planned: the real pass after tonight's nightly, the post with the parked questions in one batch by 10:00 UTC.
+
+## Rulings, Fri 27 Nov (Boris's message verbatim; for this item: GW12 refresh, points 1-4, and Weekend (the GW13-19 S7 and bb_timing re-run; F-N's draft goes to prereg/FN.md))
+
+Rulings — Fri 27 Nov (GW12 deadline 18:30 UTC). Standing rule holds: a WARN/FAIL stops that item only; park it and carry on.
+
+GW12 refresh
+1. Boris dispatches a real run on master, nothing ticked, ~14:00–15:00 UTC. When green, refresh gw12_post points 1–4 on the new data (XI; captain table with xg/bottomup/P10+; transfers gated + Calafiori-lifted + CS-flat; flags) and commit to worklog by 16:30 UTC. Post a short delta vs data 2efc924: anything that moved >0.3 or changed rank.
+2. Flags must include: status/news for all 15, yellow-card counts for our players (Groß), and status of the planner's top targets (Silva BOU, Justin, Tavernier).
+3. Current lean: roll (2 FT for GW13), no chip, captain by the frozen rule. Give the numbers; don't re-argue the lean.
+4. Freeze applies: tools and worklog only until after the deadline.
+
+W3fix answers
+1. Float-sum xi_lex test: yes.
+2. Four minor mutant tests: yes, all four.
+3. Push dry/W3fix at or after 19:30 UTC tonight. The merge needs Boris's click and must finish before 21:00 UTC. If dry run or verifier isn't green by 20:45 UTC, or Boris isn't available, land it Sat 28 in the same 19:30–21:00 UTC window and move runcommit to Sun 29.
+4. CHIPS label shows the generated time: yes.
+5. Changelog wording: accepted.
+
+runcommit answers
+1. Namesake test against the previous export: yes.
+2. FORM MOVERS and GITHUB_SHA tests: yes, both.
+3. Option (b): route all three records through checks.code_commit. No decoy.
+4. Calibration value checks: yes. RMSE and rconst as drafted, computed on exactly the same rows as MAE, with rconst using the same constant as the existing MAE baseline. Write both formulas into the prereg.
+5. "After the GW11 deadline" governs the merge only: confirmed.
+6. Order: W3fix first; runcommit (with the Thomas/Thomas price-moves fix and the RMSE column) the next night. Sun 29 is the buffer. Nothing lands after Mon 30 Nov 12:30 UTC (GW13 freeze).
+
+Weekend (after the deadline, tools only)
+- Re-run S7 and bb_timing for GW13–19 assuming 2 FT in GW13, Thiago back GW14, and Groß's ban risk. Report BB and FH week candidates with and without the Calafiori lift.
+- Draft the F-N prereg (CS shrinkage in the planner) for my review.
+
+## The GW12 refresh, pinned before its code (Fri 27 Nov 12:45 UTC)
+
+- **Data:** Boris's real run of today, accepted when its workflow is green and
+  its STATUS warns of nothing new.
+- **Code:** clean master at the time, worktree `gw12_code`.
+- **Outputs:** everything of the morning (the bundle, `bb_moves.py`,
+  `s7_post_transfer.py`, `bb_timing.py`; point 4's chips included, for the
+  "no chip" numbers) is rerun into `worklog/gw_pass/gw12/refresh/`, each with
+  its run file. The morning's files stay as they are.
+- **The flags (point 2), `flags.py`:**
+  - for all 15: status, chance, news and news time from the export;
+  - for our 15: yellow cards from the export, and S12's caution count with
+    "one booking from a ban" and P(ban) (the BAN RISK rule);
+  - the same status block for Silva (BOU), Justin (LEE) and Tavernier (BOU),
+    and for the top incoming player of each refreshed table if it is not one
+    of them.
+- **The lean's numbers (point 3), no argument:**
+  - roll's score and rank against the best move in each of the four tables;
+  - S7's GW12 values of HOLD, PLAY BB and PLAY FH, its margin and its
+    same-action share;
+  - the frozen captain rule's pick (highest xp_v2 in xp_v2's XI) and the next
+    two.
+- **The delta against data `2efc924`, `delta.py`:** it reads the morning's
+  committed outputs and the refresh's.
+  - A number is listed when it moved by more than 0.3. That covers xp_v2 and
+    own of our 15 for GW12; the captain block's columns; the plan scores and
+    gains in the four tables and the clean-sheet columns; S7's values; and
+    bb_timing's weeks.
+  - A rank is listed when it changed. That covers XI membership and the
+    captains (xp_v2 and own); the order of each table's top five and roll's
+    rank; the captain block's order; S7's actions; and bb_timing's best week.
+  - Probabilities (P(10+), P(cs)) cannot move by 0.3. They are printed side by
+    side and listed on a rank change only.
+- **Deadline:** committed to master (worklog only; the freeze holds) by 16:30
+  UTC, then a short post.

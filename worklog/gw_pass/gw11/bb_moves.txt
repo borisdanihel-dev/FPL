@@ -1,0 +1,49 @@
+TRANSFER TABLES  GW11 (Boris, Thu 19 Nov night, GW11 pass point b); information, read-only, no tool change
+  data fc543da, export fpl_export_gw10_2026-11-20.json.gz; code 64b8df8 (modified tracked files 0); script sha256 fcf12e61d1452bc3ef825754fd2b3476c2c4bae80924147db93ec7fb46c06578; generated 2026-11-20 19:50 UTC
+  matrix: the planner's xp_v2 horizon matrix GW11-16 (builder.live_matrix; odds odds_2026-11-20T1947Z.json.gz where they price the fixture, else the fallback)
+  check: the GW11 column against the bundle's xp_v2_all.csv: 672 of 672 players equal
+  check: this script's copy of the matrix, no gate lifted, equals the planner's: True
+  check: lifting the two gates (both versions) moves no other player's value: True
+  check: Thiago's news names the ban's end (5 Dec); BRE's first fixture on or after it is in GW14; the lift starts in GW14 (Boris's GW14)
+  Thiago (BRE, selling 7.8): status s, chance_next_round 0, news "Suspended until 5 Dec"; gate: no value in any week
+    lifted: GW11 0.00, GW12 0.00, GW13 0.00, GW14 4.71, GW15 4.26, GW16 5.26  (P(start) from GW14 1.00)
+  Thomas (COV, selling 4.0): status d, chance_next_round 75, news "Calf injury - 75% chance of playing"; gate: no value in any week
+    every week at his chance (information): GW11 1.87, GW12 1.62, GW13 1.74, GW14 1.56, GW15 1.60, GW16 1.42
+    lifted: GW11 1.87, GW12 2.16, GW13 2.32, GW14 2.08, GW15 2.14, GW16 1.90  (P(start) 0.38, P(sub) 0.00)
+  score: S8's rank_plans and evaluate (2 free transfers, no hits, decay 0.85, Boris's schedule (1.5, 1.0, 0.6, 0.3)); bank 0.9; Bench Boost = planner_live.bb_rescore (GW11's gain: all 15 by xP + the captain)
+
+  UNDER THE GATE (Thiago, Thomas 0): 41443 plans
+                                             BB score GW11 gain  rank    no-BB  rank   plan
+    best with a Bench Boost                     18.80    +10.49     1    10.73    24   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    best pair with a Bench Boost                18.80    +10.49     1    10.73    24   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    best without a Bench Boost                  17.94     +7.87     2    13.93     1   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    best pair without a Bench Boost             17.94     +7.87     2    13.93     1   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Thiago + Thomas out, best under BB          18.80    +10.49     1    10.73    24   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    Thiago + Thomas out, best without BB        18.80    +10.49     1    10.73    24   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    Thiago out only (roll one), best under BB     6.12     +4.44  1494     2.12  2413   Thiago -> N.Jackson (AVL, 7.2)
+    Thiago out only (roll one), best without BB     6.12     +4.44  1494     2.12  2413   Thiago -> N.Jackson (AVL, 7.2)
+    roll both                                    0.00     +0.00  8375     0.00  5461   roll
+
+  LIFTED (Thiago from GW14 at chance 100; Thomas at his chance in GW11, then as normal): 41443 plans
+                                             BB score GW11 gain  rank    no-BB  rank   plan
+    best with a Bench Boost                     15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    best pair with a Bench Boost                15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    best without a Bench Boost                  15.50     +6.00     2    13.37     1   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    best pair without a Bench Boost             15.50     +6.00     2    13.37     1   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Thiago + Thomas out, best under BB          15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    Thiago + Thomas out, best without BB        15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    Thiago out only (roll one), best under BB     5.04     +4.44  1220     1.03  3230   Thiago -> N.Jackson (AVL, 7.2)
+    Thiago out only (roll one), best without BB     5.04     +4.44  1220     1.03  3230   Thiago -> N.Jackson (AVL, 7.2)
+    roll both                                    0.00     +0.00  6856     0.00  4843   roll
+
+  INFORMATION: LIFTED WITH THOMAS AT HIS CHANCE IN EVERY WEEK (Thiago as above): 41443 plans
+                                             BB score GW11 gain  rank    no-BB  rank   plan
+    best with a Bench Boost                     15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    best pair with a Bench Boost                15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    best without a Bench Boost                  15.50     +6.00     2    13.37     1   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    best pair without a Bench Boost             15.50     +6.00     2    13.37     1   Calafiori -> De Cuyper (BHA, 5.5); Thomas -> Van Hecke (TOT, 5.1)
+    Thiago + Thomas out, best under BB          15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    Thiago + Thomas out, best without BB        15.84     +8.62     1     9.64    33   Thiago -> N.Jackson (AVL, 7.2); Thomas -> De Cuyper (BHA, 5.5)
+    Thiago out only (roll one), best under BB     5.04     +4.44  1220     1.03  3230   Thiago -> N.Jackson (AVL, 7.2)
+    Thiago out only (roll one), best without BB     5.04     +4.44  1220     1.03  3230   Thiago -> N.Jackson (AVL, 7.2)
+    roll both                                    0.00     +0.00  6856     0.00  4843   roll

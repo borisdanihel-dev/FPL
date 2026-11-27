@@ -1,0 +1,9 @@
+tool: worklog/gw_pass/gw11/bb_moves.py
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11_code --data C:/GIT/FPL-data --hist C:/GIT/FPL/historical --csv C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11/run3/bundle/xp_v2_all.csv --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw11/run3/bb
+commit: 64b8df8c230aff0b578a770909e2679f5f335fcd
+modified tracked files at the run: 0
+start_utc: 2026-11-20T19:50:33+00:00
+end_utc: 2026-11-20T19:50:53+00:00
+duration_s: 20
+outputs:
+  bb_moves.txt  sha256 4079b8e608b57fe00738b6ba4093558de32cdf6accc1153b23b4fbf7381c4d06

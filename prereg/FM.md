@@ -314,3 +314,85 @@ c. Chips (the GW11-19 chip plan, information for the chat): S7 on the current 15
 d. Post, no decisions: the planner, own and xp_v2 side by side, the captain table, the flagged-player block, ban risk, the S7 lines, the transfer tables and bb_timing. By Fri 20 Nov 09:00 UTC.
 e. Friday, after Boris's real run (about 15:00 UTC, after the press conferences): refresh the bundle and re-run b and c; commit before 18:00 UTC.
 Then, still offline: the FM code and its retrospective check (answers 6-7), then W3fix's tests (answer 4), ready for after the deadline.
+
+## Result and questions parked for Boris (exact wording), Thu 19 Nov 22:10 UTC, after the verifier's WARN (`worklog/verify_FM.md`)
+
+Result (run on `fm-wip` `f6d1c34`, 0 modified files, data `029bcfd`; reproduced
+byte for byte and by an independent count by the verifier): GW4 not scored
+(missing input: its export of 11 Sep has no `player_id`); 830 flagged
+player-weeks over GW5-10; mean e = |v1 - r| - |v2 - r| = -0.158, 90% [-0.310,
+-0.016]; **the bar is not passed** (by status, information: d -0.314 n 378,
+i -0.093 n 370, s +0.265 n 82). By the rulings on file xp_v2_g2 is not
+recorded on Mon 23 Nov. The item stops here (standing rule of Thu 19 Nov).
+
+1. **GW4.** "Answer 7 asked for all seven origins; GW4's only pre-deadline
+   export has no player ids, so the check scored six. The verifier shows the
+   lower bound cannot pass whatever GW4 holds (at least 33% of seven-origin
+   resamples are at or below 0), and that every row of that export matches
+   exactly one player by name, club and position. Accept the six-origin result
+   (yes), or rule a way to build GW4 and rerun (no)?"
+2. **The result.** "The bar is not passed, so xp_v2_g2 is not recorded on Mon
+   23 Nov. Confirm (yes)?"
+3. **Prints and tests.** "Two pinned information prints are missing (point-5-
+   only players: 76 player-weeks, mean e -0.227; our flagged players: 17,
+   mean -0.193) and the check's own function has no end-to-end test (14 of
+   the verifier's 17 check mutants survive). Add both before the GW15 re-run
+   (yes), or leave them (no)?"
+4. **GW1-3 wording.** "The pin says the plain window is used where a gameweek
+   has no archive; the code still skips known suspensions in such a window
+   (6 player-weeks differ; the literal reading gives [-0.301, -0.009], also
+   not passed). Keep the code's reading (a), or the pin's literal (b)?"
+5. **GW15 revisit.** "v1 is 0 in all 830 rows and 462 of them scored 0, so
+   absolute error favours the constant 0; on squared error the same rows
+   favour v2 (+1.93, 90% [+0.75, +3.12]) - information only, a change now
+   would be chosen after seeing results. Keep the absolute-error bar for GW15
+   (yes), or pre-register a different test on gameweeks from GW11 on (no)?"
+
+Corrections: the commit message of `f6d1c34` says 23 tests; there are 22.
+The cited `run.txt` is in the session scratch, not `tools/out/gate_v2_check/`;
+it is copied there with the item's report.
+
+## Answers on FM, Thu 19 Nov late (Boris's message verbatim; for this item: points 1-5)
+
+Answers on FM, Thu 19 Nov late.
+1. Yes: accept the six-origin result (GW5-10); note in the report that GW4's only pre-deadline export predates the player ids and could not change the verdict.
+2. Confirmed: the bar is not passed (mean -0.158, 90% [-0.310, -0.016]); xp_v2_g2 is not recorded on Mon 23 Nov. The result stays on record as run.
+3. Yes: before the GW15 re-run, print the two information lines (the suspension-window-only player-weeks; our own flagged players) and add an end-to-end test of the check's main().
+4. (a) Keep the code's reading: with no archived export a gameweek counts as unsuspended, but a known suspension is still skipped. Record it as an amendment to prereg/FM.md, with the literal reading's figures ([-0.301, -0.009]; same verdict).
+5. No: pre-register a new prospective test now, before any GW11 result exists. Data: flagged player-weeks from GW11 onward (deadlines GW11-15) from the archived nightly exports. Primary metric: the paired squared-error difference (v1 - realised)^2 - (v2 - realised)^2, which is the right scoring for expected-points forecasts. Same bootstrap (unit = deadline gameweek, B 10,000, seed 20261018). Bar: 90% lower bound above 0. Absolute error is printed as secondary information. Judge it at GW15 with F-L. Record in prereg/FM.md that the earlier absolute-error bar favoured predicting 0 (462 of 830 scored 0) and that the squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before this test was set: that is why the new test uses GW11 onward only.
+Thomas in the GW11 tables: his 50% applies in GW11 only, then as normal (the FM 'd' rule Boris approved). Also print the every-week version beside it as information.
+
+### Amendment 1 (answer 4): point 5 where a gameweek has no archived export, Thu 19 Nov 22:25 UTC
+
+The design pin's "the plain window is used" is amended to the code's reading,
+as Boris ruled: with no archived export a gameweek counts as unsuspended, but
+a suspension the archive does show is still skipped (the window is the last
+four gameweeks without a known suspension). The literal reading (the plain
+four gameweeks wherever the window touches a gameweek without an archive)
+gives, on the same run, 90% [-0.301, -0.009]: the same verdict, the bar not
+passed (the verifier's figures, `worklog/verify_FM.md`).
+
+### The prospective test, pre-registered (answer 5), Thu 19 Nov 22:25 UTC, before any GW11 result exists
+
+- **Data:** flagged player-weeks (status d, s or i in the origin's export,
+  45+ minutes in its last four) at the deadlines of GW11-GW15, from the
+  archived nightly exports, each origin's horizon weeks scored once locked
+  down (data_checked = 1, every fixture finished), the club playing.
+- **Primary metric:** the paired squared-error difference
+  (v1 - r)^2 - (v2 - r)^2 per player-week, r = player_gw.total_points over
+  the week; the mean over player-weeks.
+- **Bootstrap:** unit = the deadline gameweek (origins resampled with
+  replacement, the pooled mean recomputed), B 10,000, seed 20261018, 90%.
+- **Bar:** the 90% lower bound above 0. Absolute error (the GW5-10 metric) is
+  printed beside it as secondary information.
+- **Judged:** at GW15, with F-L.
+- **Why GW11 onward only:** the GW5-10 absolute-error bar favoured
+  predicting 0 (v1 is 0 in all 830 rows and 462 of them scored 0), and the
+  squared-error figure on GW5-10 (+1.93, 90% [+0.75, +3.12]) was seen before
+  this test was set; using any of GW5-10 again would choose the test after
+  seeing its result.
+- **The result of GW5-10 stays on record as run** (answer 2): the bar not
+  passed; xp_v2_g2 is not recorded on Mon 23 Nov.
+- **Before the GW15 run** (answer 3): the check prints the two information
+  lines (the player-weeks moved only by the suspension window; our own
+  flagged players) and gains an end-to-end test of its main().
