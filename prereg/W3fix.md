@@ -518,3 +518,69 @@ Ruling (Fri 27 Nov, 16:20 UTC):
 - **W4** has no `prereg/W4.md` and no ruling text in this session; `BUILD_PLAN.md` names it only in the lane A
   queue (Part A, point 8). Its Sun 29 slot is recorded here and in the state file. Its prereg waits for its
   ruling text.
+
+## Rulings, Fri 27 Nov 16:25 UTC (Boris's message verbatim; for this item: point 1's advance approvals, W3fix tonight and T1/T2 on Sat 28, and point 3's fallback)
+
+Rulings (Fri 27 Nov, 16:25 UTC). This replaces my 16:10 UTC text, which was never delivered. Record verbatim.
+
+1. Advance approval for merges (protocol change, from tonight). Record it in BUILD_PLAN.md's protocol section; record each item's approval in that item's prereg.
+- Boris may approve a landing in advance, per item, in chat.
+- With an advance approval you merge yourself, but only if ALL hold: verifier PASS (WARN or FAIL holds it); dry run green; full suite passes on a fresh clone; write guard clean; inside 19:30–21:00 UTC; not in a deadline freeze; no other runner change that night; Boris hasn't revoked it.
+- If any condition fails, don't merge: park the question and carry on, as usual.
+- After merging, post the merge commit and the report in the worklog.
+- Advance approval never covers changes to the decision rules, chips or transfers.
+- Boris approves in advance under this rule: W3fix tonight (dry run 19:31 UTC from 3fe7500), and T1/T2 (w3tie-wip 82977fe, after rebase) on Sat 28.
+
+2. Item — scheduled pre-deadline run.
+- Naming: if lane A's W4 in BUILD_PLAN.md is already this item, call it W4. If W4 is a different item, give this one the next free W id. The Sun 29 slot goes to this item, not to anything else called W4.
+a. Prereg verbatim first, then code. Standard library only.
+b. Trigger: an hourly schedule on the nightly workflow (or a thin workflow running the same job), in the nightly's concurrency group so there's never a second writer. Queue, never cancel.
+c. Gate, a pure function predeadline_due(now_utc, deadline_utc, last_predeadline_event):
+   - due only if deadline − 6h ≤ now ≤ deadline − 2h and there's no pre-deadline run yet for that event;
+   - the deadline is the next event's deadline_time from the FPL API, read at gate time so a moved deadline is followed;
+   - not due if there's no next event.
+   It exits within seconds, before any odds call or any write.
+d. When due: run exactly the manual-dispatch path (master, nothing ticked). Commit to data as "predeadline GW<N>" with a marker (event id and time) that the gate reads.
+e. Tests on fixed clocks: both window edges exactly, one minute outside each, already ran, moved deadline, no next event. Mutants: flip each comparison, swap the bounds, drop the marker check. All must go red.
+f. No clock or force override on master. One exists only on dry/ branches, for the dry run.
+g. Dry run via W1b. Recording-path files byte-identical to a manual dispatch on the same export.
+h. CHANGELOG entry; report worklog/cc_<date>_<id>.md.
+i. Landing: Sun 29 19:30–21:00 UTC, with Boris's click. Not advance-approved: it's the first scheduled writer, so he sees it first. Missed → the first free night after the GW13 deadline; Boris clicks manually until then.
+j. Once live: when a pre-deadline run lands, do the GW refresh unprompted and commit it to the worklog within 1h.
+
+3. Fallback if tonight's W3fix misses: W3fix lands Sat 28 (still advance-approved). Sun 29 stays with the pre-deadline run. runcommit moves to the first free night after the GW13 deadline (Tue 1 Dec 19:30–21:00 UTC). T1/T2 ride with the next landing, since they're test-only.
+
+4. Optional, information first: check whether gh is installed and authenticated on the PC (gh auth status, never paste a token). If yes, propose rules for dispatching recovery runs yourself: nightly on master only, nothing ticked, clean master, not within 2h of a deadline, not 21:00 UTC to nightly end, at most 2 a day, each logged with a reason. Don't use it until I rule.
+
+Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
+
+### Advance approvals for this item, and how tonight's conditions are checked (session, Fri 27 Nov 16:35 UTC)
+
+- **Recorded approvals (point 1):** W3fix tonight, dry run 19:31 UTC from `3fe7500`; and T1/T2 (`w3tie-wip`
+  `82977fe`, after its rebase) on Sat 28.
+- **Tonight, every condition is checked before the merge; any failure holds it and parks a question:**
+  1. Verifier PASS: the latest verdict is the narrow re-check of `f1c3704`, PASS (`a552b15`). The commits since
+     then (`1855108`, `d701c7f`, `05825ec`, `3fe7500`) touch only worklog, prereg, CHANGELOG and the checkpoint
+     output.
+  2. Dry run green: `dry/W3fix` pushed at or after 19:31 UTC from `3fe7500`, read back from `data-dryrun-W3fix`.
+  3. The full suite passes on a fresh clone. The merge commit is made in a fresh clone of origin (origin/master
+     merged with `w3fix-wip` `3fe7500`). The suite runs there by discovery, and that same commit is what gets
+     pushed.
+  4. The write guard is clean (git status and git diff in C:\GIT\FPL, the w3fix worktree and FPL-data).
+  5. Inside 19:30-21:00 UTC.
+  6. Not in a deadline freeze: the GW12 deadline is 18:30 UTC, and the GW13 freeze starts Mon 30 Nov 12:30 UTC.
+  7. No other runner change tonight.
+  8. Boris has not revoked it.
+- **Then:**
+  - tag `pre-W3fix` = master before the merge;
+  - post the merge commit and the report in the worklog;
+  - tonight's 21:40 UTC nightly is the first run on the merged code, and the final verifier reads it;
+  - the "W3fix done" CHANGELOG entry;
+  - delete `dry/W3fix` and `data-dryrun-W3fix`.
+
+## Question parked for Boris (exact wording), Fri 27 Nov 16:35 UTC; for Sat 28, it does not block tonight
+
+1. **T1/T2's advance approval on a runcommit night.** "Your 16:20 ruling says T1/T2 don't count as the night's
+   runner change. The 16:25 rule's conditions include 'no other runner change that night', and runcommit is one
+   on Sat 28. Merge T1/T2 under the approval alongside runcommit (yes), or hold T1/T2 for your click that night
+   (no)?"

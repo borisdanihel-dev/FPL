@@ -47,6 +47,16 @@ It lives in the repo root as `BUILD_PLAN.md`.
 
 **Verifier launch (Claude Code, every verifier run).** Every verifier launch starts with: "Read .claude/agents/backtest-verifier.md from disk first; where it differs from your loaded instructions, the file on disk governs."
 
+**Advance approval for merges (RULING Fri 27 Nov 16:25 UTC, point 1, verbatim; from 27 Nov; each item's approval is recorded in its prereg).**
+
+1. Advance approval for merges (protocol change, from tonight). Record it in BUILD_PLAN.md's protocol section; record each item's approval in that item's prereg.
+- Boris may approve a landing in advance, per item, in chat.
+- With an advance approval you merge yourself, but only if ALL hold: verifier PASS (WARN or FAIL holds it); dry run green; full suite passes on a fresh clone; write guard clean; inside 19:30–21:00 UTC; not in a deadline freeze; no other runner change that night; Boris hasn't revoked it.
+- If any condition fails, don't merge: park the question and carry on, as usual.
+- After merging, post the merge commit and the report in the worklog.
+- Advance approval never covers changes to the decision rules, chips or transfers.
+- Boris approves in advance under this rule: W3fix tonight (dry run 19:31 UTC from 3fe7500), and T1/T2 (w3tie-wip 82977fe, after rebase) on Sat 28.
+
 ## Part C — Decision rules in force now (Boris and the chat; the steps below build the tooling)
 
 1. **Expected points first.** At a 56-point gap with ~31 GWs left, maximise xP. Variance-seeking starts only when the gap exceeds σ_d·√n (σ_d is measured in Step 9; on current assumptions about GW25–27).

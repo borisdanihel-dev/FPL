@@ -375,3 +375,40 @@ Report only:
   after a rebase onto W3fix and a short re-check before its dry run. If W3fix
   slips to Sat 28, runcommit goes on Sun 29. Nothing lands after Mon 30 Nov
   12:30 UTC (the GW13 freeze).
+
+## Rulings, Fri 27 Nov 16:25 UTC (Boris's message verbatim; for this item: point 3, the fallback: if tonight's W3fix misses, runcommit moves to Tue 1 Dec 19:30-21:00 UTC)
+
+Rulings (Fri 27 Nov, 16:25 UTC). This replaces my 16:10 UTC text, which was never delivered. Record verbatim.
+
+1. Advance approval for merges (protocol change, from tonight). Record it in BUILD_PLAN.md's protocol section; record each item's approval in that item's prereg.
+- Boris may approve a landing in advance, per item, in chat.
+- With an advance approval you merge yourself, but only if ALL hold: verifier PASS (WARN or FAIL holds it); dry run green; full suite passes on a fresh clone; write guard clean; inside 19:30–21:00 UTC; not in a deadline freeze; no other runner change that night; Boris hasn't revoked it.
+- If any condition fails, don't merge: park the question and carry on, as usual.
+- After merging, post the merge commit and the report in the worklog.
+- Advance approval never covers changes to the decision rules, chips or transfers.
+- Boris approves in advance under this rule: W3fix tonight (dry run 19:31 UTC from 3fe7500), and T1/T2 (w3tie-wip 82977fe, after rebase) on Sat 28.
+
+2. Item — scheduled pre-deadline run.
+- Naming: if lane A's W4 in BUILD_PLAN.md is already this item, call it W4. If W4 is a different item, give this one the next free W id. The Sun 29 slot goes to this item, not to anything else called W4.
+a. Prereg verbatim first, then code. Standard library only.
+b. Trigger: an hourly schedule on the nightly workflow (or a thin workflow running the same job), in the nightly's concurrency group so there's never a second writer. Queue, never cancel.
+c. Gate, a pure function predeadline_due(now_utc, deadline_utc, last_predeadline_event):
+   - due only if deadline − 6h ≤ now ≤ deadline − 2h and there's no pre-deadline run yet for that event;
+   - the deadline is the next event's deadline_time from the FPL API, read at gate time so a moved deadline is followed;
+   - not due if there's no next event.
+   It exits within seconds, before any odds call or any write.
+d. When due: run exactly the manual-dispatch path (master, nothing ticked). Commit to data as "predeadline GW<N>" with a marker (event id and time) that the gate reads.
+e. Tests on fixed clocks: both window edges exactly, one minute outside each, already ran, moved deadline, no next event. Mutants: flip each comparison, swap the bounds, drop the marker check. All must go red.
+f. No clock or force override on master. One exists only on dry/ branches, for the dry run.
+g. Dry run via W1b. Recording-path files byte-identical to a manual dispatch on the same export.
+h. CHANGELOG entry; report worklog/cc_<date>_<id>.md.
+i. Landing: Sun 29 19:30–21:00 UTC, with Boris's click. Not advance-approved: it's the first scheduled writer, so he sees it first. Missed → the first free night after the GW13 deadline; Boris clicks manually until then.
+j. Once live: when a pre-deadline run lands, do the GW refresh unprompted and commit it to the worklog within 1h.
+
+3. Fallback if tonight's W3fix misses: W3fix lands Sat 28 (still advance-approved). Sun 29 stays with the pre-deadline run. runcommit moves to the first free night after the GW13 deadline (Tue 1 Dec 19:30–21:00 UTC). T1/T2 ride with the next landing, since they're test-only.
+
+4. Optional, information first: check whether gh is installed and authenticated on the PC (gh auth status, never paste a token). If yes, propose rules for dispatching recovery runs yourself: nightly on master only, nothing ticked, clean master, not within 2h of a deadline, not 21:00 UTC to nightly end, at most 2 a day, each logged with a reason. Don't use it until I rule.
+
+Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
+
+- **Session reading (16:30 UTC):** runcommit has no advance approval; it lands on Boris's click. If W3fix lands tonight, runcommit keeps Sat 28 (answer 6's order). If W3fix misses tonight, it lands Tue 1 Dec 19:30-21:00 UTC.
