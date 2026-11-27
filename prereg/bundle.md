@@ -166,3 +166,7 @@ After the GW12 deadline, runner changes resume (one per night, Boris clicks each
 - Point 2: four matrices, each the planner's xp_v2 GW12-17: gated; Thiago lifted from GW14 (taken as available, P(start) from his starts in the last four); and each of them with Calafiori's P(start) at 1.0 in every week. 1 free transfer, no hits, bank as the export (0.5), Boris's schedule, decay 0.85; the top five single moves and roll, with ranks. The clean-sheet-flattened gain for the top three single moves of the lifted matrix and of the lifted + Calafiori matrix, both readings as in GW11 (A the realised 2026/27 rate, B the model's own mean over GW12-17; the reading is still open), and the clean-sheet share.
 - Point 3: the bundle's captain tables (own and S14 on xp_v2); the top four by xp_v2 in our XI, with own, xg, bottomup, bottomup_lambda and xp_v2 as recorded for GW12; the odds row for ARS-MCI from the bundle's S5 section.
 - Point 4: S7 (tools/chips.py live, own) on the current 15 and on the post-transfer squad of the best single move of the lifted matrix; bb_timing (bench value on xp_v2, squad held) GW12-17, gated and lifted, GW14 v GW15 read off it.
+
+### Boris's answer on the captain block, Thu 26 Nov night (verbatim)
+
+Captain block scope: list both top fours (by xp_v2 and by own) plus Gabriel, Calafiori and Haaland, as you proposed. Carry on as planned: the real pass after tonight's nightly, the post with the parked questions in one batch by 10:00 UTC.
