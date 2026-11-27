@@ -1,0 +1,10 @@
+tool: tools/gw_pass.py
+args: --data C:/GIT/FPL-data --hist C:/GIT/FPL/historical --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12/run1/bundle
+commit: f587bced15a57fa7798a671fbe7ac75ca9a880b6
+modified tracked files at the run: 0
+start_utc: 2026-11-27T03:48:32+00:00
+end_utc: 2026-11-27T03:49:25+00:00
+duration_s: 53
+outputs:
+  gw12_pass.txt  sha256 75816f3e2cf22cf49a5aa0c4766e615482e8c0c920a8a25eaa66de14f538ac27
+  xp_v2_all.csv  sha256 0230fe11fa7b0ba2f86ecfbf5911725c54d5b06932e3d3fda6333403f7b3b995
