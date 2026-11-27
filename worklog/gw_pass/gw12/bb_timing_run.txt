@@ -1,0 +1,9 @@
+tool: worklog/gw_pass/gw12/bb_timing.py
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12_code --data C:/GIT/FPL-data --hist C:/GIT/FPL/historical --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12/run1/bbt --squad (a) best single move=Calafiori:ARS>Silva:BOU
+commit: f587bced15a57fa7798a671fbe7ac75ca9a880b6
+modified tracked files at the run: 0
+start_utc: 2026-11-27T03:50:56+00:00
+end_utc: 2026-11-27T03:51:01+00:00
+duration_s: 5
+outputs:
+  bb_timing.txt  sha256 511651a98560f8dd4e52a6d03772a281b7696dc4292f6fd63bbbc8e662a0101a

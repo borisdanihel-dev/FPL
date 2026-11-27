@@ -7,7 +7,39 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 20 Nov, 02:45 UTC): Boris's answers of Thu 19 Nov night and late**
+- **NOW (Fri 27 Nov, ~04:00 UTC): the GW12 deadline pass** (deadline today
+  18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
+  captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
+  before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
+  (`2d0650c`, `f587bce`, pushed after tonight's nightly).
+  - **Points 1-5 DONE** on tonight's nightly (data `2efc924`, 03:47 UTC,
+    STATUS WARN = the standing 5 Nov gap only; odds
+    `odds_2026-11-27T0347Z`, 20 of 20 events) from clean master `f587bce`
+    (worktree `gw12_code`):
+    - The bundle is `71fb2ba`.
+    - The tables, captain block, S7, bb_timing and the post
+      `gw12_post.md` are in `worklog/gw_pass/gw12/`.
+  - **Results:**
+    - Best single move gated and lifted: Calafiori -> Silva (BOU), 3.44;
+      roll is rank 18.
+    - With Calafiori at 1.0: Mbeumo -> Tavernier 0.16; roll is rank 3.
+    - xp_v2 captain: Muharemović 5.66, De Cuyper 5.57.
+    - ARS-MCI: λ 1.71 / 1.20; P(cs) 0.301 / 0.181.
+    - S7: HOLD +0.10 (74%) on both squads.
+    - bb_timing GW14 - GW15: gated -0.58, lifted +0.04.
+  - **The parked questions** were posted in one batch: W3fix 1-5 (Q3
+    updated for today's window), runcommit 1-6, and F-N's "season-average"
+    reading (A, B or both).
+  - **Next:**
+    - After Boris's real run (~14:00 UTC), refresh points 1-4 and commit
+      before 16:30 UTC.
+    - After the deadline, the W3fix landing per his answers. Dry runs skip
+      17:30-19:30 and from 21:30 UTC; master takes no push from 21:00 UTC.
+    - Sat 28: runcommit, plus the price-moves fix and the RMSE column.
+    - The F-N prereg draft.
+    - The GW13 freeze starts Mon 30 Nov 12:30 UTC.
+
+- (Earlier) **NOW (Fri 20 Nov, 02:45 UTC): Boris's answers of Thu 19 Nov night and late**
   (verbatim in `prereg/W3fix.md`, `FM.md`, `FJ.md`, `runcommit.md`, `FJ6.md`,
   `bundle.md`; all pushed after tonight's nightly, master `cc51a47`).
   **Standing rule:** a WARN or FAIL stops that item only; its questions are
