@@ -1,0 +1,84 @@
+DELTA  GW12 refresh against the morning (Boris's rulings of Fri 27 Nov, GW12 refresh points 1 and 3); information only
+  old: data 2efc924, export fpl_export_gw11_2026-11-27.json.gz (generated 2026-11-27T03:47:30+00:00); code f587bce (modified tracked files 0); script sha256 2eea035a879fca8e83efa1e3d4092359dfe86d5e77a22c5126f2211d0ef5a1cb; generated 2026-11-27 03:50 UTC
+  new: data 0768766, export fpl_export_gw11_2026-11-27.json.gz (generated 2026-11-27T14:00:35+00:00); code 1b3b52b (modified tracked files 0); script sha256 2eea035a879fca8e83efa1e3d4092359dfe86d5e77a22c5126f2211d0ef5a1cb; generated 2026-11-27 14:03 UTC
+  code 1b3b52b (modified tracked files 0); script sha256 44684e10ed88e270f5d354612d606b8ee6640c64e9d71ae4d25ea1799e8a6376; generated 2026-11-27 14:04 UTC
+  listed (*): a number that moved by more than 0.3, or a rank that changed; probabilities printed beside each other
+
+1. XI AND CAPTAINS (the bundle's OWN v XP_V2)
+  captain own: Gabriel 2.37 -> Gabriel 2.37;  xp_v2: Muharemović 5.66 -> Muharemović 5.66
+
+2. TRANSFER TABLES (bb_moves.txt; 1 free transfer, no hits)
+  GATED (Thiago 0)
+    Calafiori -> Silva (BOU, 5.1)                #1 3.44 (gain 4.44)          -> #1 3.44 (gain 4.44)
+    Calafiori -> Justin (LEE, 4.5)               #2 2.94 (gain 3.94)          -> #2 2.94 (gain 3.94)
+    Calafiori -> Murillo (NFO, 5.5)              #3 2.77 (gain 3.77)          -> #3 2.82 (gain 3.82)
+    Calafiori -> Araujo (LIV, 5.5)               #4 2.77 (gain 3.77)          -> #4 2.78 (gain 3.78)
+    Calafiori -> Hill (BOU, 5.7)                 #5 2.57 (gain 3.57)          -> #5 2.57 (gain 3.57)
+    roll                                         #18 0.00 (gain 0.00)         -> #18 0.00 (gain 0.00)
+  LIFTED (Thiago from GW14 at chance 100)
+    Calafiori -> Silva (BOU, 5.1)                #1 3.44 (gain 4.44)          -> #1 3.44 (gain 4.44)
+    Calafiori -> Justin (LEE, 4.5)               #2 2.94 (gain 3.94)          -> #2 2.94 (gain 3.94)
+    Calafiori -> Murillo (NFO, 5.5)              #3 2.77 (gain 3.77)          -> #3 2.82 (gain 3.82)
+    Calafiori -> Araujo (LIV, 5.5)               #4 2.77 (gain 3.77)          -> #4 2.78 (gain 3.78)
+    Calafiori -> Hill (BOU, 5.7)                 #5 2.57 (gain 3.57)          -> #5 2.57 (gain 3.57)
+    roll                                         #18 0.00 (gain 0.00)         -> #18 0.00 (gain 0.00)
+  GATED, Calafiori at P(start) 1.0
+    Mbeumo -> Tavernier (BOU, 6.8)               #1 0.16 (gain 1.16)          -> #1 0.16 (gain 1.16)
+    Rogers -> Tavernier (BOU, 6.8)               #2 0.07 (gain 1.07)          -> #2 0.10 (gain 1.10)
+    roll                                         #3 0.00 (gain 0.00)          -> #3 0.00 (gain 0.00)
+    Thiago -> Calvert-Lewin (LEE, 6.0)           #4 -0.17 (gain 0.83)         -> #4 -0.14 (gain 0.86)
+    Kelleher -> A.Becker (LIV, 5.5)              #5 -0.18 (gain 0.82)         -> #5 -0.17 (gain 0.83)
+  LIFTED (Thiago from GW14), Calafiori at P(start) 1.0
+    Mbeumo -> Tavernier (BOU, 6.8)               #1 0.13 (gain 1.13)          -> #1 0.13 (gain 1.13)
+    Rogers -> Tavernier (BOU, 6.8)               #2 0.07 (gain 1.07)          -> #2 0.10 (gain 1.10)
+    roll                                         #3 0.00 (gain 0.00)          -> #3 0.00 (gain 0.00)
+    Kelleher -> A.Becker (LIV, 5.5)              #4 -0.18 (gain 0.82)         -> #4 -0.17 (gain 0.83)
+    Thiago -> Calvert-Lewin (LEE, 6.0)           #5 -0.20 (gain 0.80)         -> #5 -0.17 (gain 0.83)
+  clean-sheet columns (gain, flat A, flat B, no CS; CS share)
+  LIFTED (Thiago from GW14)
+    Calafiori -> Silva (BOU, 5.1)                4.44 3.78 4.29 1.96 56%        -> 4.44 3.78 4.29 1.96 56%
+    Calafiori -> Justin (LEE, 4.5)               3.94 1.77 3.69 0.43 89%        -> 3.94 1.77 3.70 0.43 89%
+    Calafiori -> Murillo (NFO, 5.5)              3.77 -1.13 3.50 0.96 74%       -> 3.82 -1.11 3.54 0.98 74%
+    ARS P(cs) 0.30 0.36 0.61 0.52 0.59 0.54 -> 0.30 0.36 0.61 0.52 0.59 0.54; (A) 0.64 -> 0.64; (B) 0.49 -> 0.49
+    BOU P(cs) 0.26 0.24 0.46 0.20 0.39 0.42 -> 0.26 0.24 0.46 0.20 0.39 0.42; (A) 0.36 -> 0.36; (B) 0.33 -> 0.33
+    LEE P(cs) 0.43 0.12 0.51 0.35 0.69 0.38 -> 0.43 0.12 0.51 0.35 0.69 0.38; (A) 0.36 -> 0.36; (B) 0.41 -> 0.41
+    NFO P(cs) 0.25 0.37 0.18 0.48 0.51 0.25 -> 0.26 0.37 0.18 0.48 0.51 0.25; (A) 0.09 -> 0.09; (B) 0.34 -> 0.34
+  LIFTED, Calafiori at P(start) 1.0
+    Mbeumo -> Tavernier (BOU, 6.8)               1.13 1.61 1.20 0.69 39%        -> 1.13 1.61 1.20 0.69 39%
+    Rogers -> Tavernier (BOU, 6.8)               1.07 1.19 1.14 0.69 35%        -> 1.10 1.21 1.16 0.71 35%
+    Kelleher -> A.Becker (LIV, 5.5)              0.82 0.00 0.00 0.01 99%        -> 0.83 0.00 0.00 0.01 99%
+    BOU P(cs) 0.26 0.24 0.46 0.20 0.39 0.42 -> 0.26 0.24 0.46 0.20 0.39 0.42; (A) 0.36 -> 0.36; (B) 0.33 -> 0.33
+    BRE P(cs) 0.17 0.17 0.35 0.50 0.42 0.29 -> 0.17 0.17 0.35 0.50 0.42 0.29; (A) 0.36 -> 0.36; (B) 0.32 -> 0.32
+    CHE P(cs) 0.25 0.31 0.15 0.06 0.17 0.11 -> 0.24 0.31 0.15 0.06 0.17 0.11; (A) 0.18 -> 0.18; (B) 0.17 -> 0.17
+    LIV P(cs) 0.34 0.41 0.24 0.54 0.64 0.47 -> 0.34 0.41 0.24 0.54 0.64 0.47; (A) 0.45 -> 0.45; (B) 0.44 -> 0.44
+    MUN P(cs) 0.24 0.19 0.17 0.13 0.05 0.33 -> 0.24 0.19 0.17 0.13 0.05 0.33; (A) 0.00 -> 0.00; (B) 0.19 -> 0.19
+
+3. CAPTAIN BLOCK (bb_moves.txt: xp_v2 live, own, xg, bottomup, bottomup_lambda, xp_v2 recorded) and S14's P(10+)
+    Muharemović    5.66 1.99 5.99 5.67 4.90 5.66  ->  5.66 1.99 5.99 5.67 4.91 5.66
+    De Cuyper      5.57 1.68 5.95 5.94 4.93 5.57  ->  5.55 1.68 5.95 5.94 4.89 5.55
+    Van Hecke      5.37 2.21 5.86 5.02 4.61 5.37  ->  5.41 2.21 5.86 5.02 4.64 5.41
+    Groß           5.30 1.51 5.27 4.64 4.64 5.30  ->  5.31 1.51 5.27 4.64 4.64 5.31
+    Gabriel        4.95 2.37 5.21 5.05 4.18 4.95  ->  4.96 2.37 5.21 5.05 4.19 4.96
+    Haaland        4.76 1.49 6.04 4.78 4.78 4.76  ->  4.76 1.49 6.04 4.78 4.78 4.75
+    Rogers         4.59 1.81 5.20 4.06 4.06 4.59  ->  4.56 1.81 5.20 4.06 4.06 4.56
+    Calafiori      3.59 1.27 3.41 3.68 3.03 3.59  ->  3.59 1.27 3.41 3.68 3.03 3.59
+    P(10+) (S14): Muharemović 0.120 -> 0.120; De Cuyper 0.156 -> 0.156; Van Hecke 0.132 -> 0.133; Groß 0.139 -> 0.140; Gabriel 0.113 -> 0.113; Mbeumo 0.138 -> 0.137; Haaland 0.093 -> 0.092; Barry 0.085 -> 0.085; Rogers 0.113 -> 0.112; Rudoni 0.089 -> 0.089; Calafiori 0.056 -> 0.056; Verbruggen 0.007 -> 0.007; Slater 0.027 -> 0.027; Kelleher 0.001 -> 0.001
+    ARS-MCI: lambda ARS 1.71 -> 1.71, MCI 1.20 -> 1.20; P(cs) ARS 0.301 -> 0.302, MCI 0.181 -> 0.181
+
+4. CHIPS (S7 on own; bb_timing on xp_v2)
+    current 15: HOLD margin +0.10 same 74%  ->  HOLD margin +0.10 same 74%
+    (a): HOLD margin +0.10 same 74%  ->  HOLD margin +0.10 same 74%
+    bb_timing gated (a): GW14-GW15 -0.58 best GW15  ->  -0.58 best GW15
+    bb_timing gated current 15: GW14-GW15 -0.58 best GW15  ->  -0.58 best GW15
+    bb_timing lifted (a): GW14-GW15 +0.04 best GW16  ->  +0.04 best GW16
+    bb_timing lifted current 15: GW14-GW15 +0.04 best GW16  ->  +0.04 best GW16
+
+  0 item(s) listed
+
+THE LEAN'S NUMBERS (point 3; roll, no chip, captain by the frozen rule) on the refresh
+  GATED (Thiago 0): roll #18 0.00; best #1 Calafiori -> Silva (BOU, 5.1) 3.44 (gain 4.44, lost FT 1.00 included in the score)
+  LIFTED (Thiago from GW14 at chance 100): roll #18 0.00; best #1 Calafiori -> Silva (BOU, 5.1) 3.44 (gain 4.44, lost FT 1.00 included in the score)
+  GATED, Calafiori at P(start) 1.0: roll #3 0.00; best #1 Mbeumo -> Tavernier (BOU, 6.8) 0.16 (gain 1.16, lost FT 1.00 included in the score)
+  LIFTED (Thiago from GW14), Calafiori at P(start) 1.0: roll #3 0.00; best #1 Mbeumo -> Tavernier (BOU, 6.8) 0.13 (gain 1.13, lost FT 1.00 included in the score)
+  S7 GW12, current 15: HOLD 8.95, PLAY BB 8.85, PLAY FH 8.59; HOLD margin +0.10, 90% [-11.40, +16.59], same action in 74%
+  captain by the frozen rule (highest xp_v2 in xp_v2's XI): Muharemović 5.66; next De Cuyper 5.55, Van Hecke 5.41

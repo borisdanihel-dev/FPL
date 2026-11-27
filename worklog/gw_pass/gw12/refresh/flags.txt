@@ -1,0 +1,33 @@
+FLAGS  GW12 (deadline 2026-11-27 18:30 UTC) (Boris's rulings of Fri 27 Nov, GW12 refresh point 2); information, read-only
+  data 0768766, export fpl_export_gw11_2026-11-27.json.gz (generated 2026-11-27T14:00:35+00:00); code 1b3b52b (modified tracked files 0); script sha256 569d123764cc3c58754d9299c48900fe6f1816a66427bdcfc4101fb11c2c0dfd; generated 2026-11-27 14:04 UTC
+  news time: not held - neither the export nor fpl.sqlite carries FPL's news_added (reported, not substituted)
+  cautions: S12's count (yellow cards in league matches before the deadline); ban: one booking from a ban by S12's rule,
+  P(ban) = min(1, rate90 x P(start)) with xp_v2's P(start), as the BAN RISK section
+
+  OUR 15
+    player          club  pos  status   chance  cautions  ban / news
+    Kelleher        BRE   GK   a             -         0  no news
+    Verbruggen      BHA   GK   a             -         0  no news
+    Calafiori       ARS   DEF  a           100         0  no news
+    De Cuyper       BHA   DEF  a             -         3  no news
+    Gabriel         ARS   DEF  a             -         2  no news
+    Muharemović     LEE   DEF  a             -         1  no news
+    Van Hecke       TOT   DEF  a           100         2  no news
+    Groß            BHA   MID  a             -         4  ONE FROM A BAN (club match 12 next), P(ban) 0.326; no news
+    Mbeumo          MUN   MID  a             -         2  no news
+    Rogers          CHE   MID  a             -         3  no news
+    Rudoni          COV   MID  a           100         1  no news
+    Slater          HUL   MID  a             -         2  no news
+    Barry           EVE   FWD  a             -         0  no news
+    Haaland         MCI   FWD  a           100         0  no news
+    Thiago          BRE   FWD  s             0         4  ONE FROM A BAN (club match 12 next), P(ban) 0.000; news "Suspended until 5 Dec"
+
+  TARGETS  (Silva BOU, Justin, Tavernier; and each table's rank-1 incoming player when not one of them)
+    rank 1 of GATED (Thiago 0): -> Silva (BOU)
+    rank 1 of LIFTED (Thiago from GW14 at chance 100): -> Silva (BOU)
+    rank 1 of GATED, Calafiori at P(start) 1.0: -> Tavernier (BOU)
+    rank 1 of LIFTED (Thiago from GW14), Calafiori at P(start) 1.0: -> Tavernier (BOU)
+    player        club  why       status   chance  price  starts4  mins4  xp_v2  P(start)  cautions  ban / news
+    Silva         BOU   named     a             -    5.1        4    360   5.14      1.00         4  ONE FROM A BAN (club match 12 next), P(ban) 0.318; no news
+    Justin        LEE   named     a             -    4.5        4    353   5.61      1.00         1  no news
+    Tavernier     BOU   named     a             -    6.8        4    356   5.20      1.00         4  ONE FROM A BAN (club match 12 next), P(ban) 0.336; no news

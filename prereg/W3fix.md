@@ -367,3 +367,29 @@ Weekend (after the deadline, tools only)
   5. `dry/W3fix` (at or after 19:30 UTC); tag `pre-W3fix`; the merge on
      Boris's click.
   6. Boris's real run; the final verifier.
+
+## Question parked for Boris (exact wording), Fri 27 Nov 13:35 UTC, after the re-check WARN of `3847ebd` (`worklog/verify_W3fix.md` on `w3fix-wip` `e41cdaf`, appended)
+
+The item stops (standing rule); its dry run and merge wait. Every measured
+claim reproduces: 890 OK four ways; the label is the only changed line of the
+654-line report; 0 recorded cells move; 39 of 42 new mutants red.
+
+1. **The test for minor mutant 2.** "`OneScale.test_the_frozen_value_is_bottomup_with_all_terms`
+   is red on the frozen value computed without the terms, but green on the same
+   behaviour spelled `project_week(..., w, three_layer_terms(pos))`, because the
+   toy player is a defender, for whom `three_layer_terms` returns `ALL_TERMS`.
+   The pin asks for 'a toy whose count depends on the scale'. Pick the toy player
+   from midfielders and forwards (a one-word change; the verifier showed both
+   spellings red with it in scratch), then a short re-check, before tonight's
+   19:30 UTC dry run (yes), or accept the gap (no)?"
+2. **The spy of answer 1** (information; the verifier would accept it as it is):
+   a value check in the spy (`val` equals `_exact` of each forecast) would also
+   close a contrived variant that changes no XI in 9,000 random squads.
+
+## W3fix WARN ruling, Fri 27 Nov (Boris's message verbatim)
+
+W3fix WARN ruling (Fri 27 Nov):
+1. Yes. Switch the minor-mutant-2 test's toy player to a midfielder. Re-check only this: the test against both forms of mutant 2, plus one full-suite run. Then push dry/W3fix at or after 19:30 UTC as planned.
+2. The GW12 refresh comes first. Do the W3fix change only when it won't delay the refresh commit (due 16:30 UTC).
+3. The 3 surviving mutants of 42: list each one in the report with a one-line reason it can't change behaviour. That doesn't block tonight. If any of them can change behaviour, park it as a new question.
+4. If the re-check isn't green by 19:30 UTC, the fallback stands: W3fix lands Sat 28 between 19:30 and 21:00 UTC, and runcommit moves to Sun 29.

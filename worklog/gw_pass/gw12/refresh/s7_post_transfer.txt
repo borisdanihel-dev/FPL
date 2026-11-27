@@ -1,0 +1,46 @@
+S7 CHIP CALCULATOR ON THE POST-TRANSFER SQUADS  GW12 (Boris, GW12 pass of Fri 27 Nov, point 4); information, read-only, no tool change
+  data 0768766, export fpl_export_gw11_2026-11-27.json.gz; code 1b3b52b (modified tracked files 0); script sha256 70ae7fc15ff92b087a14af34b0b4e3317f752a0f690d5a2782f27e04afe9c7e0; generated 2026-11-27 14:04 UTC
+  method: tools/chips.py live() unchanged, with my_squad() returning the 15 after the transfer(s) (each
+  incoming player in the outgoing player's slot, selling price = today's price). xP source as the bundle: own.
+  Free Hit budget: bank after + selling prices = the export's £99.9m (bank now 0.5), so unchanged.
+  The FREE HIT SCREEN that live() prints last reads the export's squad, not my_squad(): cut from the candidates.
+  control: the current 15 through the same path vs the bundle's S7 section: 33 of 33 lines equal (33 printed)
+
+==============================================================================================================
+(a) best single move   bank after 1.2; clubs at 3: BHA
+==============================================================================================================
+  the 15: Verbruggen (BHA, a), Van Hecke (TOT, a), Gabriel (ARS, a), De Cuyper (BHA, a), Silva (BOU, a), Rogers (CHE, a), Mbeumo (MUN, a), Groß (BHA, a), Rudoni (COV, a), Haaland (MCI, a), Barry (EVE, a), Kelleher (BRE, a), Muharemović (LEE, a), Slater (HUL, a), Thiago (BRE, s)
+CHIP CALCULATOR  export fpl_export_gw11_2026-11-27.json.gz (GW11 played), next GW12, chips left: BB, FH; budget £99.9m = bank + selling prices
+  xP source: own - the recorded row for GW12 where the log holds one, else the own
+  formula on each week's real fixtures from the fixtures table, GW12-GW19 (no proxy weeks).
+  Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).
+
+    GW     metric    V_BB    V_FH  ours XI   FH XI   V(none)  V(BB)  V(FH)  V(BB+FH)   action with all chips
+    12        own    3.24    4.60    20.06   24.67        0.00       3.35       5.60       8.94   HOLD
+    13  own-model    2.98    4.74    19.81   24.55        0.00       3.35       5.60       8.94   HOLD
+    14  own-model    2.96    4.09    21.26   25.35        0.00       3.35       5.60       8.94   HOLD
+    15  own-model    3.25    5.60    19.42   25.02        0.00       3.35       5.60       8.94   PLAY FH
+    16  own-model    2.74    3.44    21.72   25.16        0.00       3.35       4.45       7.80   HOLD
+    17  own-model    3.14    4.45    21.33   25.78        0.00       3.35       4.45       7.80   PLAY FH
+    18  own-model    3.35    4.03    20.90   24.93        0.00       3.35       4.03       7.16   PLAY FH
+    19  own-model    3.14    5.46    20.36   25.82        0.00       3.14       0.00       3.14   PLAY BB
+
+  NEXT GAMEWEEK GW12: HOLD   (margin over the best other action +0.10 xP)
+  residuals by position (2026/27 own, graded gameweeks): GK n=166, DEF n=817, MID n=1054, FWD n=224
+  uncertainty: 1000 residual resamples by position (XIs held fixed): margin of HOLD over the best other action 90% [-11.40, +16.65], same action in 74%
+
+  BENCH PREP for GW19: one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)
+    Slater            1.10 -> E.Le Fée          2.15 (£5.7m, SUN)  gain +1.05
+    Mbeumo            0.93 -> Wirtz             2.60 (£7.5m, LIV)  gain +1.67
+    Thiago            0.00 -> McBurnie          2.42 (£5.5m, HUL)  gain +2.42
+    Verbruggen        1.58 -> Roefs             2.32 (£4.8m, SUN)  gain +0.74
+
+==============================================================================================================
+GW12 SUMMARY (own xP; margin over the best other action; 90% interval of 1000 residual resamples, XIs fixed)
+==============================================================================================================
+  squad       GW12 action    V_BB   margin   90% interval        same   GW12 value of:   HOLD  PLAY BB  PLAY FH
+  current 15  HOLD           3.24    +0.10   [-11.40, +16.59]     74%                    8.95     8.85     8.59
+  (a)         HOLD           3.24    +0.10   [-11.40, +16.65]     74%                    8.94     8.84     7.95
+  value of an action = its chip's GW12 value + V(GW13, the chips left after it); HOLD = V(GW13, BB+FH).
+  The interval re-runs the induction on each resample with fresh noise in every week, so HOLD takes the best
+  of the later noisy weeks: a play-now action carries the long lower tail, HOLD the long upper one.

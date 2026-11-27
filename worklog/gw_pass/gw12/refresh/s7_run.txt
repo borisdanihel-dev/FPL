@@ -1,0 +1,9 @@
+tool: worklog/gw_pass/gw12/s7_post_transfer.py
+args: --code C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12_code --data C:/GIT/FPL-data --bundle C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12/run2/bundle/gw12_pass.txt --out C:/Users/Boris/AppData/Local/Temp/claude/0131a5cb73db9b13/442a647f-7693-4ced-b840-0df7f5bfd943/scratchpad/gw12/run2/s7 --squad (a) best single move=Calafiori:ARS>Silva:BOU
+commit: 1b3b52bbec95287a66798e7ae3e280f1234f40e7
+modified tracked files at the run: 0
+start_utc: 2026-11-27T14:04:23+00:00
+end_utc: 2026-11-27T14:04:25+00:00
+duration_s: 2
+outputs:
+  s7_post_transfer.txt  sha256 5aff4a85fee4ab54b13f8ef21452a9962fae4566de449474f0e4228f92dd1e43
