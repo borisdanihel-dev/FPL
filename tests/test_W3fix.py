@@ -95,6 +95,33 @@ class TonightsExport(unittest.TestCase):
         SQ.ban_risk(self.tmp, got.append)
         self.assertIn("(generated 2098-12-30 09:07 UTC)", got[0])
 
+    def test_an_unreadable_generated_time_prints_unknown_and_goes_on(self):
+        """W3fix answer 2 (Boris, Fri 27 Nov), the fourth minor mutant: an export with no readable `generated` (no
+        field, an empty value, text that is not a time) - both headers say "unknown" and the section goes on, never
+        stops; every line after the header is the one it prints with a readable time."""
+        sections = {"CAPTAIN": lambda o: SQ.captain(self.tmp, o, prior_path=self.prior),
+                    "BAN RISK": lambda o: SQ.ban_risk(self.tmp, o)}
+        base = {}
+        for k, section in sections.items():
+            base[k] = []
+            section(base[k].append)
+            self.assertNotIn("(generated unknown)", base[k][0], k)
+        with open(self.working, encoding="utf-8") as fh:
+            d = json.load(fh)
+        for bad in (None, "", "not a time"):
+            if bad is None:
+                d.pop("generated", None)
+            else:
+                d["generated"] = bad
+            with open(self.working, "w", encoding="utf-8", newline="\n") as fh:
+                json.dump(d, fh)
+            for k, section in sections.items():
+                got = []
+                section(got.append)
+                self.assertIn(f"from {WORKING} (generated unknown)", got[0], (k, bad))
+                self.assertGreater(len(got), 1, (k, bad))
+                self.assertEqual(got[1:], base[k][1:], (k, bad))
+
     def test_no_working_export_is_a_missing_input_never_the_archive(self):
         os.remove(self.working)
         for section in (lambda: SQ.captain(self.tmp, [].append, prior_path=self.prior),
@@ -218,6 +245,28 @@ class OneScale(unittest.TestCase):
         self.assertEqual((pts[self.next][self.stale["id"]], src[self.next][self.stale["id"]]), (0.0, "no own"))
         self.assertEqual(src[weeks[1]][self.stale["id"]], "own-model")
 
+    def test_the_frozen_value_is_bottomup_with_all_terms(self):
+        """W3fix answer 2 (Boris, Fri 27 Nov), the second minor mutant: for one of ours with no own row, item N's
+        frozen value (the "not a" count's metric) is bottomup - the full model, all terms - never the three-layer
+        terms. Planted: all terms value him 40 (he starts the frozen XI, so his 'd' counts), any other terms 0."""
+        from unittest import mock
+        real = self.E.project_week
+        mine, all_terms = self.mine["id"], self.E.ALL_TERMS
+
+        def planted(value):
+            def f(pid, p, inp, fx, week, terms=None):
+                if pid == mine:
+                    return value if terms == all_terms else 0.0
+                return real(pid, p, inp, fx, week, terms)
+            return mock.patch.object(self.E, "project_week", side_effect=f)
+
+        with planted(40.0):
+            high = self.E.free_hit_table(self.tonight, self.log)["weeks"][0]
+        with planted(0.0):
+            low = self.E.free_hit_table(self.tonight, self.log)["weeks"][0]
+        self.assertEqual(high["metric"], "own")
+        self.assertNotIn(mine, {p["id"] for p in high["ours_xi"]})            # the gap's XI: counted 0 (Ruling 3)
+        self.assertEqual(high["not_a"], low["not_a"] + 1)                     # the frozen XI: by bottomup he starts
 
 class InjuryCrisisStillFlags(unittest.TestCase):
     """W3fix point 2 (Boris, Thu 19 Nov night): "the '3+ of our XI not a' trigger counts our best XI before the zero
@@ -300,7 +349,8 @@ class ChipsScreenOnTonightsExport(unittest.TestCase):
         CHt.live(self.tmp, out=tool.append, resamples=40)
         self.assertEqual(got, tool)                                             # W2's identity holds with the export
         head, body = self.screen(got)
-        self.assertTrue(head.startswith("  FREE HIT SCREEN from fpl_export_gw7.json (tonight's export;"), head)
+        self.assertTrue(head.startswith("  FREE HIT SCREEN from fpl_export_gw7.json (generated "), head)
+        self.assertIn(") (tonight's export;", head)
         want = self.E.free_hit_lines(self.E.free_hit_table(tonight, self.E.forecasts(self.log, tonight)))
         self.assertEqual(body, want)
         old = self.E.free_hit_lines(self.E.free_hit_table(self.d, self.E.forecasts(self.log, self.d)))
@@ -322,6 +372,68 @@ class ChipsScreenOnTonightsExport(unittest.TestCase):
             notes = [s for s in got if s.startswith("  GW8 has own rows: a player through the gate with no own row counts 0")]
             self.assertEqual(len(notes), 1, live)
 
+    def test_the_screen_reads_the_log_through_tonights_deadlines(self):
+        """W3fix answer 2 (Boris, Fri 27 Nov), the first minor mutant: the screen reads the log through tonight's
+        export's deadlines, never the archive's. Tonight's export puts GW8's deadline before GW8's own snapshot (21:00
+        the night before), so tonight's screen has no own rows for GW8; through the archive's deadline it would."""
+        import chips as CHt
+        d = json.loads(json.dumps(self.d))
+        moved = [e for e in d["events"] if e["event"] == 8]
+        self.assertEqual(len(moved), 1)
+        moved[0]["deadline_time"] = "2026-10-27T20:00:00Z"
+        with open(os.path.join(self.tmp, "fpl_export_gw7.json"), "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(d, fh)
+        want = self.E.free_hit_lines(self.E.free_hit_table(d, self.E.forecasts(self.log, d)))
+        old = self.E.free_hit_lines(self.E.free_hit_table(d, self.E.forecasts(self.log, self.d)))
+        self.assertNotEqual(want, old, "the toy must tell the two deadlines apart")
+        self.assertTrue(want[1].startswith("  GW8  bottomup"), want[1])
+        for live in (fpl_chips.live, CHt.live):
+            got = []
+            live(self.tmp, out=got.append, resamples=40)
+            head, body = self.screen(got)
+            self.assertEqual(body, want, live)
+
+    def test_no_working_export_prints_no_table(self):
+        """W3fix answer 2 (Boris, Fri 27 Nov), the third minor mutant: with no working export the screen is the one
+        line - no line of last night's table anywhere in the section, above it or below."""
+        import chips as CHt
+        old = [s for s in self.E.free_hit_lines(self.E.free_hit_table(self.d, self.E.forecasts(self.log, self.d)))
+               if s.strip()]
+        self.assertGreater(len(old), 2)
+        for live in (fpl_chips.live, CHt.live):
+            got = []
+            live(self.tmp, out=got.append, resamples=40)
+            self.assertEqual(sum(1 for s in got if s.startswith("  FREE HIT SCREEN")), 1, live)
+            self.assertEqual([s for s in got if s in old], [], live)
+
+    def test_the_label_prints_the_exports_own_time(self):
+        """W3fix answer 4 (Boris, Fri 27 Nov): CHIPS's screen label prints the working export's own generated time,
+        in the CAPTAIN and BAN RISK header form (UTC, to the minute; a naive time is UTC; "unknown" when unreadable).
+        A restored copy (fpl_nightly --restore: the newest dated archive's bytes) shows its own field - last night's
+        time - never the file's."""
+        import chips as CHt
+        import fpl_nightly
+        path = os.path.join(self.tmp, "fpl_export_gw7.json")
+        self.assertEqual(fpl_nightly.restore_exports(self.tmp, say=lambda s: None), ["fpl_export_gw7.json"])
+        cases = [("restored copy", None, "2026-10-18 18:00 UTC")]
+        for raw, want in (("2098-12-30T09:07:59", "2098-12-30 09:07 UTC"),
+                          ("2098-12-30T10:07:00+01:00", "2098-12-30 09:07 UTC"), ("", "unknown")):
+            cases.append((raw, raw, want))
+        for name, raw, want in cases:
+            if raw is not None:
+                d = json.loads(json.dumps(self.d))
+                d["generated"] = raw
+                with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                    json.dump(d, fh)
+            outs = []
+            for live in (fpl_chips.live, CHt.live):
+                got = []
+                live(self.tmp, out=got.append, resamples=40)
+                head, _ = self.screen(got)
+                self.assertTrue(head.startswith(f"  FREE HIT SCREEN from fpl_export_gw7.json (generated {want}) "
+                                                "(tonight's export; item N,"), (name, live, head))
+                outs.append(got)
+            self.assertEqual(outs[0], outs[1], name)                            # W2's identity holds with the label
 
 if __name__ == "__main__":
     unittest.main()

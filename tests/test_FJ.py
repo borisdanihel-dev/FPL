@@ -124,6 +124,28 @@ class GW15TieRule(unittest.TestCase):
         self.assertEqual(CK.xi_key(a, val)[0], CK.xi_key(b, val)[0])          # a tie, exactly
         self.assertLess(CK.xi_key(a, val), CK.xi_key(b, val))                  # settled by the smaller sorted ids
 
+    def test_xi_lex_hands_its_key_exact_values(self):
+        """W3fix answer 1 (Boris, Fri 27 Nov): every value xi_lex hands xi_key is a Fraction, and xi_key ranks every
+        formation-legal XI - so a float sum inside xi_lex (values built as floats, or an inline float key that
+        bypasses xi_key) is caught here, not only one inside xi_key."""
+        from fractions import Fraction
+        from itertools import combinations
+        calls = []
+        real = CK.xi_key
+
+        def spy(xi, val):
+            calls.append(all(isinstance(v, Fraction) for v in val.values()) and all(r["id"] in val for r in xi))
+            return real(xi, val)
+
+        legal = sum(1 for c in combinations(self.TOY, 11) if CK.legal(c))
+        with mock.patch.object(CK, "xi_key", side_effect=spy):
+            for proj in (self.PROJ, {k: v for k, v in self.PROJ.items() if k != 300},
+                         {k: v + 0.1 for k, v in self.PROJ.items()}):
+                del calls[:]
+                CK.xi_lex(self.TOY, proj)
+                self.assertEqual(len(calls), legal)
+                self.assertTrue(all(calls))
+
     def test_a_missing_forecast_counts_zero(self):
         proj = {k: v for k, v in self.PROJ.items() if k != 300}               # FWD 300 has no forecast
         proj[5], proj[24] = 0.5, 0.0                                           # DEF 5 at 0.5: 300 at 1 would start instead

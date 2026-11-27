@@ -404,7 +404,9 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
     else:
         with open(tonight, encoding="utf-8", newline="") as fh:
             dt = json.load(fh)
-        out(f"  FREE HIT SCREEN from {os.path.basename(tonight)} (tonight's export; item N, as amended by W3fix Ruling 3: own "
+        from fpl_squad import _gen          # the export's own time, as CAPTAIN and BAN RISK print it (W3fix answer 4, Fri 27 Nov)
+        out(f"  FREE HIT SCREEN from {os.path.basename(tonight)} (generated {_gen(dt)}) (tonight's export; item N, as amended "
+            "by W3fix Ruling 3: own "
             "where recorded, 0 for a player without an own row in that week, else bottomup; budget = bank + selling prices)")
         fh_table = E.free_hit_table(dt, E.forecasts(log_rows, dt))
         for line in E.free_hit_lines(fh_table):
