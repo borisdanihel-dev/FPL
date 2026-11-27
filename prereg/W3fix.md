@@ -367,3 +367,21 @@ Weekend (after the deadline, tools only)
   5. `dry/W3fix` (at or after 19:30 UTC); tag `pre-W3fix`; the merge on
      Boris's click.
   6. Boris's real run; the final verifier.
+
+## Question parked for Boris (exact wording), Fri 27 Nov 13:35 UTC, after the re-check WARN of `3847ebd` (`worklog/verify_W3fix.md` on `w3fix-wip` `e41cdaf`, appended)
+
+The item stops (standing rule); its dry run and merge wait. Every measured
+claim reproduces: 890 OK four ways; the label is the only changed line of the
+654-line report; 0 recorded cells move; 39 of 42 new mutants red.
+
+1. **The test for minor mutant 2.** "`OneScale.test_the_frozen_value_is_bottomup_with_all_terms`
+   is red on the frozen value computed without the terms, but green on the same
+   behaviour spelled `project_week(..., w, three_layer_terms(pos))`, because the
+   toy player is a defender, for whom `three_layer_terms` returns `ALL_TERMS`.
+   The pin asks for 'a toy whose count depends on the scale'. Pick the toy player
+   from midfielders and forwards (a one-word change; the verifier showed both
+   spellings red with it in scratch), then a short re-check, before tonight's
+   19:30 UTC dry run (yes), or accept the gap (no)?"
+2. **The spy of answer 1** (information; the verifier would accept it as it is):
+   a value check in the spy (`val` equals `_exact` of each forecast) would also
+   close a contrived variant that changes no XI in 9,000 random squads.
