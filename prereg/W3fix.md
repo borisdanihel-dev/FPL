@@ -385,3 +385,11 @@ claim reproduces: 890 OK four ways; the label is the only changed line of the
 2. **The spy of answer 1** (information; the verifier would accept it as it is):
    a value check in the spy (`val` equals `_exact` of each forecast) would also
    close a contrived variant that changes no XI in 9,000 random squads.
+
+## W3fix WARN ruling, Fri 27 Nov (Boris's message verbatim)
+
+W3fix WARN ruling (Fri 27 Nov):
+1. Yes. Switch the minor-mutant-2 test's toy player to a midfielder. Re-check only this: the test against both forms of mutant 2, plus one full-suite run. Then push dry/W3fix at or after 19:30 UTC as planned.
+2. The GW12 refresh comes first. Do the W3fix change only when it won't delay the refresh commit (due 16:30 UTC).
+3. The 3 surviving mutants of 42: list each one in the report with a one-line reason it can't change behaviour. That doesn't block tonight. If any of them can change behaviour, park it as a new question.
+4. If the re-check isn't green by 19:30 UTC, the fallback stands: W3fix lands Sat 28 between 19:30 and 21:00 UTC, and runcommit moves to Sun 29.
