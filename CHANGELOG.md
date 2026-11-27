@@ -4592,3 +4592,49 @@ test, `ChecksMain`'s commit check. The runner path changes only in
 (`worklog/verify_S8c_final.md`, Fable 5.2, launched at high, not
 confirmable); write guard clean. `dry/S8c` and `data-dryrun-S8c` deleted.
 Report `worklog/cc_2026-11-13_S8c_landing.md`.
+
+## 2026-11-27 — W3fix ready on `w3fix-wip`: Rulings 2 and 3, the answers of Thu 19 and Fri 27 Nov, `fj-wip`'s tests (`w3fix-wip` `1855108` code; prereg `prereg/W3fix.md`; the merge tonight on Boris's click)
+
+**Changed:**
+- **Ruling 2.** CAPTAIN and BAN RISK read tonight's working export, never
+  last night's archive. Their headers print the export's own generated time.
+- **Ruling 3 (a), amending item N's frozen metric.** In a week with own rows,
+  a player with no own row counts 0, never bottomup. This applies on the base
+  screen, the watch file and CHIPS.
+- **The answers of Thu 19 Nov.**
+  - CHIPS's Free Hit screen is built from tonight's working export, as the
+    base screen's own table.
+  - The "not a" count is taken on our best XI before the zero.
+- **The answers of Fri 27 Nov.**
+  - CHIPS's FREE HIT SCREEN label prints the working export's generated
+    time.
+  - The `xi_lex` spy test and the four minor-mutant tests (mutant 2's toy is
+    a midfielder).
+- `tools/chips.py` mirrors `fpl_chips` byte for byte. `fj-wip`'s `--tie id`
+  and its tests land with it.
+- The amended screen starts with **GW13**: the first nightly after the merge.
+  Answer 5's "GW12" assumed a landing before the GW12 deadline.
+
+**Measured:**
+- Suites: 890 OK plain and with the data (master 855).
+- 2,400 GW12 rows re-recorded with the old and the new code: 0 cells differ
+  outside `made_at`.
+- On 2efc924 the CHIPS label is the only changed report line of 654.
+- The screens agree on 47 of 47 replayed data commits.
+- The 12 Nov case: 30.8 at +8.5, flagged, becomes 28.7 at +6.5, equal to the
+  base screen.
+- The GW10 checkpoint, regenerated on `1855108`, is unchanged except its
+  header lines.
+- Mutants: 39 of 42 red on `3847ebd`, and mutant 2's second form red on
+  `f1c3704`.
+  - The two survivors (the `xi_lex` key ignored; `Fraction(float(v))`) can
+    change the GW15 tie rule's XI on a decimal-but-not-binary tie.
+  - 0 XIs changed in 9,000 random squads. Parked for Boris.
+
+**Verifier:**
+- Re-checks WARN, WARN, WARN.
+- Narrow re-check of `f1c3704` PASS (`worklog/verify_W3fix.md`; Fable 5.2,
+  launched at high, not confirmable).
+- Write guard clean each time.
+
+Report `worklog/cc_2026-11-27_W3fix.md`.
