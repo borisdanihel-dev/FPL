@@ -36,3 +36,7 @@ not mention the advance-approval rule or the recovery-dispatch rule (both in BUI
 5. A CHANGELOG line and the state file record it. No other CLAUDE.md edits.
 
 No verifier run is planned for this one-sentence docs edit (session reading; Boris may ask for one).
+
+## Boris's answer, Fri 27 Nov (received 18:36 UTC), verbatim
+
+18:30 ruling: plan accepted as written; no verifier for the CLAUDE.md sentence.
