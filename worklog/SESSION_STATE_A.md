@@ -188,8 +188,8 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       WARNs (5 Nov gap; odds skipped); test gate 890.
     - Fresh-clone suite on `7c1cb85`: Ran 890, OK (skipped=11).
     - **Next tonight:**
-      - the CLAUDE.md sentence (`prereg/claudemd.md`), its suite run and a
-        CHANGELOG line, pushed before 21:00 UTC;
+      - DONE: the CLAUDE.md sentence `f0f2f7b` (suite after: 890 OK) and its
+        CHANGELOG line, pushed with this post before 21:00 UTC;
       - the 21:40 UTC nightly is W3fix's first run; then the final verifier
         (Fable, high) and the write guard;
       - then the "W3fix done" CHANGELOG entry, and deleting `dry/W3fix` and

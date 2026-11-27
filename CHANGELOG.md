@@ -4646,3 +4646,22 @@ Report `worklog/cc_2026-11-13_S8c_landing.md`.
 - Write guard clean each time.
 
 Report `worklog/cc_2026-11-27_W3fix.md`.
+
+## 2026-11-27 — CLAUDE.md points to BUILD_PLAN.md Part B (docs only; `f0f2f7b`; prereg `prereg/claudemd.md`)
+
+- Boris's ruling of Fri 27 Nov 18:30 UTC (verbatim in `prereg/claudemd.md`) changes one sentence. In the "Dry
+  runs by push" bullet, "Boris clicks only real runs." now reads "Boris clicks real runs and merges unless a rule
+  in BUILD_PLAN.md Part B covers them: advance-approved merges, recovery dispatches
+  (worklog/proposal_recovery_dispatch.md) and, once live, W5's scheduled pre-deadline run. Read Part B before
+  asking him to click." Nothing else in CLAUDE.md changed.
+
+**Measured:**
+- With whitespace collapsed, the new CLAUDE.md equals the old one with only that sentence replaced.
+- The commit's diff is CLAUDE.md alone: 4 lines in, 1 out.
+- The suite by discovery runs 890 tests, OK, before and after:
+  - before: on `7c1cb85` in a fresh clone (skipped=11);
+  - after: on `f0f2f7b` in `C:\GIT\FPL` (skipped=8). The skips depend on the folder; the count does not.
+- No code or workflow reads CLAUDE.md (grep: comments only).
+
+No verifier: Boris's answer, received 18:36 UTC. Committed after the W3fix merge (`7c1cb85`) and pushed before
+21:00 UTC with the post-merge worklog post.
