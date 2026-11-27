@@ -1,4 +1,4 @@
-WATCH  GW12  export 2026-11-27T03:47  forecasts recorded 2026-11-27T03:47  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
+WATCH  GW12  export 2026-11-27T14:00  forecasts recorded 2026-11-27T14:00  (own / xg / bu = bottomup / min = P(start), as in projection_log.csv)
   id    player         team pos     £ st ch%   own    xg    bu   min  fixture                news
   109   Verbruggen     BHA  GK    4.7 a    -   1.6   3.9   4.1  1.00  NEW (H) 3
   82    Kelleher       BRE  GK    5.0 a    -   1.5   3.8   3.3  1.00  MUN (A) 3
@@ -66,7 +66,7 @@ TOP 12 PER POSITION BY OWN, GW12
   16    Madueke        ARS  MID   6.2 a  100   1.7   4.7   4.4  1.00  MCI (H) 4
   52    Alysson        AVL  MID   4.9 a  100   1.7   3.7   3.1  1.00  IPS (A) 2
   15    Ødegaard       ARS  MID   6.7 a    -   1.7   4.9   4.5  1.00  MCI (H) 4
-  426   B.Fernandes    MUN  MID  11.6 a    -   1.6   4.5   3.5  0.75  BRE (H) 3
+  154   Palmer         CHE  MID   9.8 a  100   1.6   4.9   3.7  1.00  NFO (A) 2
   295   McBurnie       HUL  FWD   5.5 a    -   2.7   4.2   3.4  1.00  CRY (A) 2
   166   N.Jackson      AVL  FWD   7.3 a    -   2.7   4.8   3.9  1.00  IPS (A) 2
   465   Osula          NEW  FWD   5.8 a  100   2.0   3.4   3.1  1.00  BHA (A) 4
