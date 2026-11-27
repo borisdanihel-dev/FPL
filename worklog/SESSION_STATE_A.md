@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 18:30 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 19:39 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -180,6 +180,22 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       worklog post before 21:00 UTC or after the nightly has committed.
       If the merge runs late or misses, it goes Sat 28 morning.
     - No code or workflow reads CLAUDE.md (grep: comments only).
+  - **Update 19:39 UTC: W3fix MERGED under the advance approval** (master
+    `7c1cb85`, pushed 19:38 UTC; tag `pre-W3fix` -> `05761f1`). All eight
+    conditions held; they are listed in the report's new "Landing" section
+    (`worklog/cc_2026-11-27_W3fix.md`).
+    - Dry run `data-dryrun-W3fix` `136a7a0`: 28/30 checks, the two expected
+      WARNs (5 Nov gap; odds skipped); test gate 890.
+    - Fresh-clone suite on `7c1cb85`: Ran 890, OK (skipped=11).
+    - **Next tonight:**
+      - the CLAUDE.md sentence (`prereg/claudemd.md`), its suite run and a
+        CHANGELOG line, pushed before 21:00 UTC;
+      - the 21:40 UTC nightly is W3fix's first run; then the final verifier
+        (Fable, high) and the write guard;
+      - then the "W3fix done" CHANGELOG entry, and deleting `dry/W3fix` and
+        `data-dryrun-W3fix`.
+    - Sat 28: runcommit on Boris's click, then T1/T2 under the advance
+      approval.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
