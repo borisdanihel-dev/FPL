@@ -164,7 +164,10 @@ h. The main session runs Opus 5.5. Effort: xhigh for runner and data steps (1-3)
   dispatch across a deadline fails the gate (its forecasts were recorded before
   it, the gate runs after) and commits nothing that night.
 - **Dry runs by push (RULING W1b, `prereg/W1b.md`; both lanes).** Boris clicks
-  only real runs.
+  real runs and merges unless a rule in BUILD_PLAN.md Part B covers them:
+  advance-approved merges, recovery dispatches
+  (worklog/proposal_recovery_dispatch.md) and, once live, W5's scheduled
+  pre-deadline run. Read Part B before asking him to click.
   - To ask for a dry run, push the work to `dry/<item>` (a normal push). A
     second run after a rebase goes to `dry/<item>-2`, never a force-push.
   - It runs as a dry run in group `nightly-dryrun`: never data, no release, no
