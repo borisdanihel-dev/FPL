@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:15 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:25 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -107,6 +107,19 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
          click, his real run, and the CHANGELOG entry.
       5. If runcommit falls to Sun 29, T1 and T2 take the next non-freeze
          evening before the GW15 freeze.
+  - **Update 16:25 UTC: Boris's ruling of 16:20 UTC** (verbatim in
+    W3fix.md, `f1a4b54`) replaces the Sun 29 plan above.
+    - T1/T2 and point 3 are accepted.
+    - **Sun 29 goes to W4** (the scheduled pre-deadline run, live for
+      GW13). W4 has no prereg or ruling text yet.
+    - **T1/T2 land Sat 28** in the 19:30-21:00 UTC window alongside
+      runcommit. They are test-only and are not the night's runner change.
+      Otherwise they land Tue 1 Dec after the GW13 deadline. The steps
+      are as listed above, with the report dated on the landing day.
+    - **Advance approval:** the "16:10 UTC rulings" never reached this
+      session and no such rule is recorded, so T1/T2 wait for Boris's click.
+    - **Open if tonight fails:** the W3fix fallback (W3fix Sat 28, runcommit
+      Sun 29) now collides with W4's Sun 29 slot.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
