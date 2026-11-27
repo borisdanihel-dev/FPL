@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:25 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:45 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -120,6 +120,35 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       session and no such rule is recorded, so T1/T2 wait for Boris's click.
     - **Open if tonight fails:** the W3fix fallback (W3fix Sat 28, runcommit
       Sun 29) now collides with W4's Sun 29 slot.
+  - **Update 16:45 UTC: Boris's rulings of 16:25 UTC** are verbatim (`86e50b3`):
+    point 1 in BUILD_PLAN.md Part B, and the whole block in W3fix.md,
+    runcommit.md and the new W5.md. They supersede the 16:25 block above where
+    the two differ.
+    - **Advance approval for merges** is a protocol rule from tonight. I merge
+      myself only if ALL hold: verifier PASS, dry run green, the suite passes
+      on a fresh clone, write guard clean, inside 19:30-21:00 UTC, no deadline
+      freeze, no other runner change that night, and not revoked. It never
+      covers decision rules, chips or transfers.
+    - **W3fix is advance-approved for tonight.** The checklist and how each
+      condition is checked are in W3fix.md:
+      - the merge commit is made and tested in a fresh clone of origin, and
+        that same commit is pushed;
+      - tag `pre-W3fix` first;
+      - after the merge, post the merge commit and the report in the worklog;
+      - the 21:40 UTC nightly is the first run, and the final verifier reads it.
+    - **T1/T2 are advance-approved for Sat 28.** One question is parked in
+      W3fix.md: whether runcommit counts as "another runner change that
+      night".
+    - **The scheduled pre-deadline run is W5**, not W4: the queue's W4 is a
+      later wiring item. Its prereg (`prereg/W5.md`) holds the ruling, with
+      the design pin still to write before code. It lands Sun 29 19:30-21:00
+      UTC on Boris's click, not advance-approved.
+    - **Fallback** (point 3): if W3fix misses tonight, it lands Sat 28, still
+      advance-approved. W5 keeps Sun 29. runcommit moves to Tue 1 Dec
+      19:30-21:00 UTC. T1/T2 ride with the next landing.
+    - **gh** (point 4): installed and logged in, with the `workflow` scope.
+      The rules proposal is `worklog/proposal_recovery_dispatch.md`. It is not
+      in use until Boris rules.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
