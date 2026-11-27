@@ -393,3 +393,15 @@ W3fix WARN ruling (Fri 27 Nov):
 2. The GW12 refresh comes first. Do the W3fix change only when it won't delay the refresh commit (due 16:30 UTC).
 3. The 3 surviving mutants of 42: list each one in the report with a one-line reason it can't change behaviour. That doesn't block tonight. If any of them can change behaviour, park it as a new question.
 4. If the re-check isn't green by 19:30 UTC, the fallback stands: W3fix lands Sat 28 between 19:30 and 21:00 UTC, and runcommit moves to Sun 29.
+
+## Question parked for Boris (exact wording), Fri 27 Nov 14:20 UTC, from the WARN ruling's point 3 (`worklog/cc_2026-11-27_W3fix.md` on `w3fix-wip` `d701c7f`); it does not block tonight
+
+The narrow re-check of `f1c3704` PASSED (`a552b15`). Of the 3 surviving mutants of 42, the
+frozen-value one is now red. Two can change behaviour, in the offline checkpoint tool
+the GW15 tie rule uses (not the runner):
+
+1. **A decimal-tie test for `xi_lex`.** "Two of the three surviving mutants (the key
+   called but ignored, and `Fraction(float(v))`) can change the GW15 tie rule's XI when
+   two legal XIs tie as written decimals but not as binary floats. Add a toy test with
+   such a tie (0.1 + 0.2 against 0.3), where the rule must pick by the id list, before
+   GW15 (yes), or accept (no)?"
