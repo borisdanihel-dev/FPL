@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 15:55 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:15 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -86,6 +86,27 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - **The landing report and CHANGELOG entry are corrected** on
       `w3fix-wip`, docs only (`05825ec`, `3fe7500`). Head `3fe7500`: the code
       is `f1c3704`'s, so the dry run pushes `3fe7500`.
+  - **Update 16:15 UTC: W3fix_tie (T1 + T2) ready for Sun 29.**
+    - Boris's ruling of 16:00 UTC (yes) is verbatim, with the matroid and
+      Gale reason (`b08aab0`). T1 and T2 were pinned before code (`1ba55c2`),
+      with point 3's answer: no caller of `xi_key` or `xi_lex` outside the
+      checkpoint script, its tests and `worklog/w3fix_tie/`, on any branch.
+    - The code is `w3tie-wip` `82977fe` (from `w3fix-wip` `3fe7500`; pushed;
+      `tests/test_FJ.py` only).
+    - Suites: before 890 OK (11 skipped); after 892 OK plain (11 skipped)
+      and with `FPL_DATA_DIR` (4 skipped).
+    - Full suite on each mutant: m03 (key ignored) fails only T2; m04
+      (`Fraction(float(v))`) fails only T1.
+    - Logs are in the scratchpad's `w3tie_logs`.
+    - **Sun 29:**
+      1. Rebase onto master after the W3fix merge and run the suite again.
+      2. A narrow verifier re-check (fable, high), then the write guard.
+      3. The report `worklog/cc_2026-11-29_W3fix_tie.md` (with point 3) and
+         the verify file `worklog/verify_W3fix_tie.md`.
+      4. `dry/W3fix_tie` between 19:30 and 21:00 UTC, the merge on Boris's
+         click, his real run, and the CHANGELOG entry.
+      5. If runcommit falls to Sun 29, T1 and T2 take the next non-freeze
+         evening before the GW15 freeze.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
