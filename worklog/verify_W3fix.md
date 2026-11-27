@@ -580,3 +580,316 @@ one still survives: the float-sum mutant as I ran it in the pre-check passes all
 tests, since the new test checks the comparison key and not what `xi_lex` feeds it. That
 needs Boris's answer (add the small test, or accept it); the landing steps listed under
 claim 8 are still to do.
+
+---
+
+# Re-check of `origin/w3fix-wip` `3847ebd` (Fri 27 Nov 2026) — Boris's answers of Fri 27 Nov, 1, 2 and 4
+
+**VERDICT: WARN.** No check fails and every measured claim reproduces. Answers 1 and 4
+are done as pinned. Answer 2 is done for three of the four minor mutants. For the fourth
+(the frozen value by the three-layer terms) the new test is red on the mutant as the
+implementer wrote it, but the same wrong behaviour written with the terms spelled out
+passes all 890 tests. The pin asks for "a toy whose count depends on the scale"; the
+toy's player is a defender, and for a defender the three-layer terms are all the terms.
+That needs Boris's answer (decision 1). The runner change itself is one label line and
+moves nothing else.
+
+Verifier: Claude Code, model Fable 5.2 (`claude-fable-5-2`); Fable was available, no
+fallback. Effort: as launched, not confirmable from inside the run. Run: Fri 27 Nov 2026,
+12:56 to 13:33 UTC. `.claude/agents/backtest-verifier.md` was read from disk first; it
+matches my loaded instructions. No session transcript or chat log was read, and I did
+not open the scratch files that hold pasted chat text (`rulings_fri27.txt`,
+`answers_*.txt`).
+
+State checked:
+- `C:\GIT\FPL` master `cf5b429`, clean; GitHub holds `w3fix-wip` at `3847ebd` and master
+  at `cf5b429` (`ls-remote`); there is no `dry/*` branch yet.
+- The worktree `scratchpad\w3fix` is on `w3fix-wip` at `3847ebd`, clean before and after.
+- `C:\GIT\FPL-data` at `2efc924`. I did not pull, and I did not need `--restore`: every
+  working export there already equals its newest dated copy byte for byte. All 325 files
+  have the same SHA-256, size and modified time before and after my run.
+- All work was done under `scratchpad\verify_w3fix_27`: git-archive copies of `3847ebd`,
+  `5b0964c` and `5385c57`, a clone of `w3fix-wip`, and copies of the data. Nothing was
+  committed, pushed, merged or deleted outside that folder.
+
+The implementer notes that the cleanup of the temp folder deleted 325 tracked files from
+this worktree at 06:00 and that they were restored. My checks do not depend on the
+worktree's files: they ran on copies taken from the commit. `3847ebd` deletes no file
+relative to master.
+
+## Summary table
+
+| Check | Result | Evidence in one line |
+|---|---|---|
+| 0 prereg before code | PASS | rulings and pins `2831a63` (12:30:19 UTC) are an ancestor of the code `3847ebd` (12:55:30 UTC) |
+| 1 point-in-time | PASS (nothing is recorded) | the screen reads 14,248 log rows, 0 made at or after their deadline; rebuilt from the working export it equals CHIPS's screen on 47 of 47 nights |
+| 2 suites | PASS | `5b0964c` 884 OK; `3847ebd` 890 OK four ways; 6 tests added, 0 removed |
+| 3 re-run of the numbers | PASS | suites, the 2 red tests on the previous code, the mutants and the label on tonight's data all reproduce |
+| 4 rulings and frozen settings | PASS, with decision 1 | answers 1 to 5 and their pin are on file; no constant is touched; answer 2's second test does not do what its pin describes |
+| 5 recording path | PASS | 2,400 GW12 rows re-recorded with the old and the new code: 0 cells differ outside `made_at` in 90,969 rows |
+| 6 mutation | WARN | 39 of 42 new mutants red; 3 green, one of them a real gap (decision 1); 11 of 11 rebuilt earlier mutants red |
+| 7 secrets | PASS | no key pattern, `apiKey=` or Authorization value in the 4 changed files or the commit's added lines |
+
+The five checks of the launch:
+
+| Asked | Result |
+|---|---|
+| (1) Answer 1: the spy test, red on both float variants | PASS |
+| (2) Answer 2: one test per minor mutant, each red on its mutant | three PASS; the second is red on one spelling of its mutant and green on the other (WARN) |
+| (3) Answer 4: the label, both files byte for byte, the restored copy, the only report change | PASS |
+| (4) Suites 890 OK; earlier claims hold; no recorded row moves | PASS |
+| (5) The nightly imports nothing under `tools/` or `analysis/`; no forecast can move | PASS |
+
+## Check 0 — prereg committed before the code
+
+| Commit | What | Time (UTC, Fri 27 Nov) |
+|---|---|---|
+| `2831a63` | Boris's rulings verbatim and the pin of answers 1 to 5, in `prereg/W3fix.md` | 12:30:19 |
+| `cf5b429` | master's head (worklog and prereg only since `2831a63`) | 12:35:25 |
+| `5b0964c` | master merged into the branch | 12:41:30 |
+| `3847ebd` | the code and tests of answers 1, 2 and 4 | 12:55:30 |
+
+- The pin precedes its code by 25 min 11 s and is its ancestor. `prereg/W3fix.md` is the
+  same file at `2831a63` and at `3847ebd`.
+- The pin's heading says "12:40 UTC"; its commit is at 12:30 UTC (a wrong time in the
+  heading, nothing else).
+- `5385c57` to `5b0964c` changes only `prereg/` and `worklog/` (no code, no test, not
+  `checkpoint.py`). `5b0964c` to `3847ebd` changes four files: `fpl_chips.py` and
+  `tools/chips.py` (3 lines each), `tests/test_W3fix.py`, `tests/test_FJ.py`.
+- Against master the whole branch changes 9 files and deletes none; `cf5b429` is the
+  merge base.
+
+## Check 2 — suites, by discovery
+
+| Tree | How | Result |
+|---|---|---|
+| `5b0964c` (before) | git-archive copy, plain | 884 OK, 11 skipped |
+| `3847ebd` | git-archive copy, plain | 890 OK, 11 skipped |
+| `3847ebd` | the same, `FPL_DATA_DIR=C:/GIT/FPL-data` (data `2efc924`) | 890 OK, 4 skipped |
+| `3847ebd` | a clone, run from another folder with `-s`/`-t`, empty global git config, system config off, `TZ=JST-9` | 890 OK, 11 skipped |
+| `3847ebd` | the clone again, global git config with `gpgsign = true` for commits and tags, `TZ=PST8PDT` | 890 OK, 11 skipped |
+| `5b0964c`'s code with `3847ebd`'s two test files | git-archive copy, plain | 890 run, 2 failures |
+
+- The 884 earlier test ids are all in the 890; the six new ones are the five tests of
+  answers 1 and 2 and the label test.
+- The two failures on the previous code are
+  `test_the_label_prints_the_exports_own_time` (new) and
+  `test_the_screen_is_the_base_screen_of_tonight` (an existing test whose head assertion
+  was amended). The commit message calls them "2 of the new tests"; one is new and one is
+  amended. The five tests for unchanged behaviour are green on the old code, as they
+  must be.
+
+## The five checks of the launch
+
+### (1) Answer 1 — the `xi_lex` spy test. Confirmed.
+
+- `GW15TieRule.test_xi_lex_hands_its_key_exact_values` patches `xi_key` with a spy. It
+  asserts that every value handed over is a `Fraction`, that every player of the XI has a
+  value, and that the key is called once per formation-legal XI, on three projections.
+- Red on both variants named in the pin, and on a third spelling:
+
+| Mutant | Result |
+|---|---|
+| `val` built with `float` (my survivor of 16 and 19 Nov) | RED |
+| an inline float key on the raw forecasts, bypassing `xi_key` | RED |
+| an inline float key on `float(val[...])`, bypassing `xi_key` (the implementer's form) | RED |
+
+- Two wrong implementations still pass all 890 tests:
+  - `xi_key` is called and its result thrown away, and a float key decides;
+  - `val` is built as `Fraction(float(v))`, the binary value rather than the decimal
+    written.
+- Neither changes an XI. On 9,000 random 15s (three kinds of forecast values; 1,750 with a
+  tie at the top) both, and the float-`val` mutant, choose the code's XI 9,000 times of
+  9,000 on Python 3.14. So I count them as contrived, not as a gap. The spy is the check
+  I proposed on 19 Nov; it tests the type handed over, not the value.
+
+### (2) Answer 2 — one test per minor mutant. Three confirmed; the second is partial.
+
+| Minor mutant of my Check 6 | New test | My mutants |
+|---|---|---|
+| 1 the screen's log through the archive's deadlines | `test_the_screen_reads_the_log_through_tonights_deadlines` | 4 of 4 red (each file alone, both, and the log not cut at all) |
+| 2 the frozen value by the three-layer terms | `test_the_frozen_value_is_bottomup_with_all_terms` | 2 of 3 red; **1 green** |
+| 3 no working export, the archive's table above the line | `test_no_working_export_prints_no_table` | 4 of 4 red (each file alone, both, and the table below the line) |
+| 4 an unreadable `generated` stops the section | `test_an_unreadable_generated_time_prints_unknown_and_goes_on` | 5 of 5 red (raise; no `except`; only a missing field handled; only bad text handled; the raw text printed) |
+
+About mutant 2:
+- The mutant has two spellings with the same behaviour. `project_week(..., w)` with no
+  terms (the default is the three-layer terms) is RED. `project_week(..., w,
+  three_layer_terms(pos))` is **green**: it passes `tests.test_W3fix` and the whole suite,
+  890 OK.
+- Why: the test plants `project_week` to return 40 when `terms == ALL_TERMS` and 0
+  otherwise, for one of our players. That player (`OneScale.mine`) is a defender, and
+  `three_layer_terms` returns `ALL_TERMS` for keepers and defenders. So for him the two
+  scales are one scale. The test tells the code from the mutant only by the argument
+  being left out, not by the value.
+- The pin's words for this test are "a toy whose count depends on the scale". With a
+  defender it does not.
+- I cannot say which spelling I ran on 19 Nov: the cleanup removed that mutant's files.
+  The report of 19 Nov describes the behaviour, which is the same for both.
+- How much it matters: small. On tonight's data the green mutant's CHIPS section is byte
+  for byte the code's. On 19 Nov the same behaviour changed no count or flag on 456
+  week-rows. It can only differ for a midfielder or forward of ours with no own row.
+- The fix is one word in the fixture. In a scratch copy I chose the toy player from
+  midfielders and forwards (`p["pos"] in (3, 4)`): the code stays 19 OK in
+  `tests.test_W3fix`, and both spellings go red.
+
+### (3) Answer 4 — the label. Confirmed.
+
+- Both files print `FREE HIT SCREEN from <file> (generated <_gen(dt)>) (tonight's export;
+  ...`, with `fpl_squad._gen`, the function behind the CAPTAIN and BAN RISK headers. The
+  whole `live()` function is identical in `fpl_chips.py` and `tools/chips.py` (107 lines),
+  and the two diffs are the same three lines.
+- Tonight's data (`2efc924`, the 27 Nov archive removed, as it was when the sections ran):
+  `FREE HIT SCREEN from fpl_export_gw11.json (generated 2026-11-27 03:47 UTC) (tonight's
+  export; ...`. The export's field is `2026-11-27T03:47:30+00:00`. Runner equals tool,
+  35 lines.
+- The restored copy, on real data, written by the runner's own `--restore` into a copy
+  with no working exports:
+
+| Case | Working export | File written | Label | CAPTAIN and BAN RISK headers |
+|---|---|---|---|---|
+| the 27 Nov archive is the newest (tomorrow's sync fails) | the copy of 27 Nov's | 27 Nov 13:04 UTC | generated 2026-11-27 03:47 UTC | the same time |
+| the 26 Nov archive is the newest (tonight's sync had failed) | the copy of 26 Nov's | 27 Nov 13:04 UTC | generated 2026-11-26 03:46 UTC | the same time |
+
+- The only report change on tonight's data. Record, watch, report and sections replayed
+  on two copies, with `5b0964c`'s code and `3847ebd`'s:
+  - the report: 654 lines each, one line differs, the label;
+  - the watch file: identical, 82 lines;
+  - CAPTAIN and BAN RISK: identical.
+- 17 mutants for the label, 17 red: no time; the archive's field; the file's modified
+  time; the clock; the raw text cut to minutes; the time moved inside the note; "unknown"
+  printed as something else; the archive's field whenever the two exports hold the same
+  players; a naive time read in the machine's zone; an aware time not converted; seconds
+  printed; the label right with the screen back on the archive. The first three were run
+  on each file alone, the second and third also on both.
+- The tool's own command line (`tools/chips.py --data <copy> --out <scratch>`), run from
+  another folder on the clone, prints the same label; its `run.txt` says commit `3847ebd`,
+  modified 0.
+
+### (4) Suites, the earlier claims, the recording path. Confirmed.
+
+- Suites: the table above. 890 OK plain, with the data, and two hostile ways.
+- The code of the earlier claims is unchanged: outside tests, `5385c57` to `3847ebd`
+  changes only the label lines.
+- Eleven of the earlier checks' mutants, rebuilt on `3847ebd`, are all red: the screen on
+  the archive (both files; the tool alone), the label naming the archive, the header note
+  dropped, own-model back in either chips file alone, "not a" counted after the zero, the
+  gate count from every status-'a' player, a missing forecast counted 1, either header
+  without its time.
+- The nights, replayed as the sections saw them with `3847ebd`'s code, on every data
+  commit (52; 5 cannot run: two have no archive from a night before, three hold pre-S2
+  exports):
+
+| | 47 nights |
+|---|---|
+| runner's CHIPS section equals the tool's | 47 |
+| CHIPS's screen equals the base screen of that night's export, line for line | 47 (282 week-rows) |
+| the label's time equals the export's own field, in UTC to the minute | 47 |
+| the calculator's header names the night before's archive | 47 |
+| BAN RISK's header carries the export's name and time | 47 |
+| CAPTAIN's header carries them | 19; on the other 28 (to 11 Nov) the export has no `code` and CAPTAIN is skipped, as before |
+
+  The 9 nights since the last re-check (20 to 27 Nov, with Boris's second run of 20 Nov)
+  are among them, and so are the four rollover nights (23 Oct, 31 Oct, 7 Nov, 22 Nov) and
+  12 Nov (`6f9ecb8`: no flag).
+- Tonight against the real report (`reports/fpl_2026-11-27.txt`, written by master's
+  code), rebuilt from the clone: the differences are the status header (added by
+  `checks.py`, which I did not run), the metric text, the legend, the two note lines,
+  CHIPS's header note, the label, and the CAPTAIN and BAN RISK headers. No table row and
+  no number differs. Master's CAPTAIN and BAN RISK read the 26 Nov archive; the branch's
+  read tonight's export (Ruling 2).
+- The recording path: the seven sources re-recorded on two copies of tonight's data,
+  2,400 GW12 rows each (own 303, xg 280, minutes 280, bottomup 280, fpl_ep 674,
+  bottomup_lambda 280, xp_v2 303). Old code against new code: 0 cells differ. Each
+  against the real log: 90,969 rows in order, 0 cells differ outside `made_at`.
+
+### (5) Imports, and nothing that moves a forecast. Confirmed.
+
+- Each of the 27 runner modules imported in its own interpreter: 0 modules loaded from
+  `tools/` or `analysis/`. For `fpl_sections` I also ran CHIPS, CAPTAIN and BAN RISK on a
+  data copy, so the new import inside `live()` is exercised: still 0.
+- `fpl_edge.py` (the recorder) loads no other local module; `fpl_xpv2` loads neither
+  `fpl_chips` nor `fpl_squad`. The change is a label inside `live()`, which the record
+  step never reaches.
+- New in this commit: `tools/chips.py` imports the runner's `fpl_squad` inside `live()`.
+  That is tool to runner, the allowed direction.
+
+## Check 1 — point-in-time
+
+- Nothing is forecast, recorded or graded by this change.
+- Timestamp audit on tonight's data: the screen reads 14,248 log rows; 0 were made at or
+  after their gameweek's deadline. The GW12 rows were made at 03:47 UTC, before the
+  18:30 UTC deadline, and so was the export.
+- Truncation: CHIPS's screen equals the screen rebuilt from the working export and the
+  log cut at that export's deadlines, on 47 of 47 nights.
+- No correlation metric, so no shift probe.
+
+## Check 6 — mutants on `3847ebd`
+
+42 new mutants: 39 red, 3 green. 11 rebuilt earlier mutants: 11 red.
+
+| Group | Red | Green |
+|---|---|---|
+| answer 1 (9) | 7: the three float variants; `_exact` from the float; float sums in `xi_key`; values rounded to one decimal; XIs with five defenders skipped | 2: the key called then ignored; `Fraction(float(v))` |
+| answer 2 (16) | 15 | 1: the frozen value by `three_layer_terms(pos)` |
+| answer 4 (17) | 17 | |
+
+All three green mutants pass the whole suite (890 OK each).
+
+## Notes
+
+- `_gen` gives "unknown" for a missing field, an empty value, `null`, a number or text
+  that is not a time. A time within hours of year 1 or year 9999 with an offset raises
+  `OverflowError` instead; the sections' catch-all would print a SKIPPED line. The sync
+  writes the current time, so this cannot happen from our own exports.
+- The naive-time mutant is red here because this machine is on Central European Time. On
+  a machine on UTC (the runner) it would pass; the same was noted on 19 Nov.
+- Two worktrees appeared during my run (`ckpt_code3` at `3847ebd`, `ckpt_data3` at
+  `6f9ecb8`; their folders are dated 12:58 UTC). I did not open them. If decision 1
+  changes the commit, a `run.txt` made at `3847ebd` is no longer from the item's final
+  code and is regenerated (the provenance rule).
+- Not on the branch yet, as the pin's order has it: `checkpoint.txt` and `run.txt`, the
+  CHANGELOG entries, the report, the state file; then `dry/W3fix` at or after 19:30 UTC,
+  the tag and the merge.
+
+## Decisions for the chat
+
+1. **The test for minor mutant 2.** It is red on the mutant with the terms left out and
+   green on the same mutant with the terms spelled out, because the toy's player is a
+   defender. Choose the toy player from midfielders and forwards (one word in the
+   fixture; in my scratch copy the code stays green and both spellings go red), then a
+   short re-check of that change, or accept the gap (no count or flag differs on tonight's
+   data or on the 456 week-rows of 19 Nov)? The pin already describes the stronger test.
+2. **The spy of answer 1** (no action needed unless you want it): two contrived variants
+   pass it and change no XI in 9,000 random squads. A value check in the spy (`val` equals
+   `_exact` of each forecast) would close the second. I would accept both as they are.
+
+## Evidence files (scratch, not committed)
+
+Under `...\scratchpad\verify_w3fix_27`:
+- `out\old_plain.txt`, `new_plain.txt`, `new_data.txt`, `new_clone_hostile.txt`,
+  `new_clone_hostile2.txt`, `oldcode_newtests.txt`, `full_m03.txt`, `full_m04.txt`,
+  `full_m14.txt` (the nine suite runs);
+- `scripts\mutate.py`, `out\mutants.txt`, `mut\m03`, `m04`, `m14` (the green mutants; the
+  red ones' copies were removed and regenerate from the script);
+  `scripts\mutate_old.py`, `out\mutants_old.txt`; `demo\` (the fixture with a midfielder
+  or forward); `scripts\xi_search.py`, `out\xi_search.txt`;
+- `scripts\replay.sh`, `dataA\`, `dataB\` (tonight's replay: `reports\fpl_REPLAY.txt`,
+  `watch_REPLAY.txt`, `projection_log.csv`), `out\logcmp.txt`, `out\real_vs_B2.diff`;
+- `dataR\`, `dataR2\`, `scripts\lives.py`, `out\data*_chips_*.txt` (the restored copies);
+- `scripts\night.py`, `out\hist.jsonl`, `out\hist_all.jsonl` (the 52 data commits);
+- `scripts\imports.py`, `out\imports.txt`; `scripts\audit.py`, `out\audit.txt`;
+  `out\data_manifest_before.txt`, `data_manifest_after.txt`; `out\tool_chips\run.txt`.
+
+VERDICT: WARN — every measured claim reproduces and no check fails: 884 OK before and
+890 OK four ways on `3847ebd`, the spy test of answer 1 is red on both float variants,
+the label prints the working export's own time in both files byte for byte (a restored
+copy shows last night's time), the label is the only line of tonight's report that
+changes, CHIPS's screen equals the base screen on all 47 replayed nights, the nightly
+imports nothing under `tools/` or `analysis/`, and the seven recorded sources do not
+move. It is not a PASS because answer 2 asks for a test for each of the four minor
+mutants and the test for the second does not see its behaviour: with the three-layer
+terms spelled out, the frozen-value mutant passes all 890 tests, since the toy's player
+is a defender and the pin's "toy whose count depends on the scale" needs a midfielder or
+forward. That is one word in a test fixture and needs Boris's answer (fix and re-check,
+or accept); the landing steps are still to do.
