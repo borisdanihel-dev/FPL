@@ -1,6 +1,6 @@
 GW10 CHECKPOINT: THE PAIRED own v xp_v2 DECISION METRIC OVER GW8-10 (prereg/FJ.md; rulings of Thu 12 Nov, B)
-  code b7e4716 (modified tracked files 0); script sha256 330fcb7776442707c7b4e396075aff2335df466374023e148872fd09ab5e8869
-  data: fpl.sqlite sha256 23e7eb739e14c8e3..., projection_log.csv sha256 7125dbf0e47be0b3... (55421 rows); generated 2026-11-12 22:53 UTC
+  code 1855108 (modified tracked files 0); script sha256 8781a8e545ddf196d8381e053f9a3c7709394dd0cf07fc535e9488f001c8a811
+  data: fpl.sqlite sha256 23e7eb739e14c8e3..., projection_log.csv sha256 7125dbf0e47be0b3... (55421 rows); generated 2026-11-27 14:16 UTC
   our actual 15 each gameweek (entry 3073318's picks); each model's XI by its xP, bench in forecast order, the
   captain = highest xP in its XI (doubled), rule_autosubs on realised minutes: fpl_realised.realised_on, unchanged;
   no vice promotion, no chips. d = realised(xp_v2) - realised(own).

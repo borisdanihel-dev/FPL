@@ -8,9 +8,10 @@ Standard library only.
           fpl_bt are imported unchanged, its git history holds the bundle commits, and its commit goes in run.txt
           (without --code, as when tests/test_FJ.py imports this file: the repository this file is in)
   --data  a copy of the data worktree (fpl.sqlite, projection_log.csv)
-  --tie   how equal forecasts are ordered before realised_on: 'slot' (our picks in slot order; the GW10 run as
-          pinned, the default) or 'id' (the lower player id first; the GW15 run, prereg/FJ.md, rulings of Thu 12
-          Nov night). The other order is printed beside it as information.
+  --tie   how ties are settled: 'slot' (realised_on on our picks in slot order; the GW10 run as pinned, the
+          default) or 'id' (the GW15 rule, prereg/FJ.md: the XI of the highest exact sum, on equal sums the
+          lexicographically smallest sorted id list; bench and captain by the lower id; xi_lex, realised_lex).
+          The other rule is printed beside it as information.
 
 method (pinned in prereg/FJ.md before this ran)
   - lockdown guard per gameweek: data_checked = 1 and every fixture finished = 1;
@@ -29,6 +30,8 @@ import sqlite3
 import subprocess
 import sys
 from datetime import datetime, timezone
+from fractions import Fraction
+from itertools import combinations
 
 
 def _arg(argv, name):
@@ -66,10 +69,11 @@ def _utc(text):
     return datetime.fromisoformat(text.replace("Z", "+00:00"))
 
 
-def choice(squad, proj, actual):
-    """The display of realised_on's choice: (XI, bench in order with the keeper first, captain, autosubs)."""
+def choice(squad, proj, actual, tie="slot"):
+    """The display of the run's choice: (XI, bench in order with the keeper first, captain, autosubs) - realised_on's
+    (fpl_chips.xi_and_bench) for 'slot', xi_lex's for 'id'."""
     p = {r["id"]: proj.get(r["id"], 0.0) for r in squad}
-    xi, bench, gk = CH.xi_and_bench([dict(r) for r in squad], p)
+    xi, bench, gk = (xi_lex if tie == "id" else CH.xi_and_bench)([dict(r) for r in squad], p)
     lineup = [{"slot": s, "pos": r["pos"], "id": r["id"], "minutes": actual.get(r["id"], (0, 0))[1]}
               for s, r in enumerate(xi, 1)]
     lineup += [{"slot": s, "pos": r["pos"], "id": r["id"], "minutes": actual.get(r["id"], (0, 0))[1]}
@@ -86,9 +90,60 @@ def ordered(squad, tie):
     return list(squad) if tie == "slot" else sorted(squad, key=lambda r: r["id"])
 
 
+def _exact(v):
+    """A forecast as the decimal it is written as (repr gives the shortest decimal that reads back to the float)."""
+    return Fraction(repr(float(v)))
+
+
+def legal(xi):
+    """1 GK, DEF 3-5, MID 2-5, FWD 1-3."""
+    n = {k: sum(1 for r in xi if r["pos"] == k) for k in (1, 2, 3, 4)}
+    return n[1] == 1 and 3 <= n[2] <= 5 and 2 <= n[3] <= 5 and 1 <= n[4] <= 3
+
+
+def xi_key(xi, val):
+    """xi_lex's order: the highest exact sum first, then the lexicographically smallest sorted id list."""
+    return -sum(val[r["id"]] for r in xi), sorted(r["id"] for r in xi)
+
+
+def xi_lex(squad, proj):
+    """The GW15 tie rule's XI (prereg/FJ.md, pinned Mon 16 Nov): of every formation-legal XI from the 15, the highest
+    sum of the forecasts, compared exactly; on equal sums the one whose sorted player-id list is lexicographically
+    smallest. A missing forecast is 0. Returns (xi, bench outfield in forecast order with the lower id first on equal
+    forecasts, the sub keeper)."""
+    rows = [dict(r, proj=proj.get(r["id"], 0.0)) for r in squad]
+    val = {r["id"]: _exact(r["proj"]) for r in rows}
+    best = min((c for c in combinations(rows, 11) if legal(c)), key=lambda c: xi_key(c, val))
+    xi = sorted(best, key=lambda r: (r["pos"], -val[r["id"]], r["id"]))
+    rest = [r for r in rows if r["id"] not in {x["id"] for x in xi}]
+    gk = [r for r in rest if r["pos"] == 1]
+    bench = sorted((r for r in rest if r["pos"] != 1), key=lambda r: (-val[r["id"]], r["id"]))
+    if len(gk) != 1 or len(bench) != 3:
+        raise MissingInput("the bench is not one keeper and three outfield players")
+    return xi, bench, gk[0]
+
+
+def realised_lex(squad, proj, actual):
+    """realised_on's points from xi_lex's XI and bench: rule_autosubs on the realised minutes, the captain (the
+    highest forecast in the XI, the lower id on equal forecasts) doubled."""
+    xi, bench, gk = xi_lex(squad, proj)
+    lineup = [{"slot": s, "pos": r["pos"], "id": r["id"], "minutes": actual.get(r["id"], (0, 0))[1]}
+              for s, r in enumerate(xi, 1)]
+    lineup += [{"slot": s, "pos": r["pos"], "id": r["id"], "minutes": actual.get(r["id"], (0, 0))[1]}
+               for s, r in enumerate([gk] + list(bench), 12)]
+    pts = sum(actual.get(r["id"], (0.0, 0))[0] for r in xi)
+    for cand, gone in E.rule_autosubs(lineup):
+        pts += actual.get(cand["id"], (0.0, 0))[0] - actual.get(gone["id"], (0.0, 0))[0]
+    cap = max(xi, key=lambda r: (_exact(r["proj"]), -r["id"]))
+    return pts + actual.get(cap["id"], (0.0, 0))[0], cap["id"]
+
+
 def score(squad, own, xp, actual, tie="slot"):
-    """(own's realised points, its captain, xp_v2's, its captain) on our 15 under one tie order."""
+    """(own's realised points, its captain, xp_v2's, its captain) on our 15 under one tie rule: 'slot' (realised_on
+    on our picks in slot order, the GW10 run as pinned) or 'id' (the GW15 rule, realised_lex)."""
     sq = ordered(squad, tie)
+    if tie == "id":
+        return (*realised_lex(sq, own, actual), *realised_lex(sq, xp, actual))
     pts_own, cap_own = RL.realised_on(sq, own, actual)
     pts_v2, cap_v2 = RL.realised_on(sq, xp, actual)
     return pts_own, cap_own, pts_v2, cap_v2
@@ -183,8 +238,8 @@ def main(argv=None):
         out(f"  own: snapshot made {made}; {15 - len(no_own)} of our 15 with a row"
             + (f" (no row, counted 0: {', '.join(web.get(i, str(i)) for i in no_own)})" if no_own else ""))
         out(f"  xp_v2: bundle {h[:7]} (tools {tool[:7]}), fpl_squad.bundle_csv's checks passed")
-        own_c = choice(squad, own, actual)
-        v2_c = choice(squad, {r["id"]: xp[r["id"]] for r in squad}, actual)
+        own_c = choice(squad, own, actual, a.tie)
+        v2_c = choice(squad, {r["id"]: xp[r["id"]] for r in squad}, actual, a.tie)
         out(f"  {'player':<16} {'pos':<4} {'own':>6} {'xp_v2':>6} {'pts':>4} {'min':>4}   own role   xp_v2 role")
         roles = []
         for model, (xi, bench, cap, subs) in (("own", own_c), ("xp_v2", v2_c)):
@@ -222,7 +277,7 @@ def main(argv=None):
     out("  with three gameweeks the percentile interval can only take values from the 10 resample multisets; it is coarse.")
     d_alt = paired([x[0] for x in alt], [x[2] for x in alt])
     b_alt = BT.bootstrap_mean(d_alt)
-    out(f"  tie order: this run '{a.tie}' ({'our picks in slot order' if a.tie == 'slot' else 'the lower player id first'}); "
+    out(f"  tie order: this run '{a.tie}' ({'our picks in slot order' if a.tie == 'slot' else 'the GW15 rule: lowest id, lexicographic across formations'}); "
         f"information, the other order '{other}': own {', '.join(f'{x[0]:.0f}' for x in alt)}, "
         f"xp_v2 {', '.join(f'{x[2]:.0f}' for x in alt)}, d {', '.join(f'{x:+.0f}' for x in d_alt)}; "
         f"mean {b_alt['mean']:+.2f}, 90% [{b_alt['lo']:+.2f}, {b_alt['hi']:+.2f}]: {verdict(b_alt)}")

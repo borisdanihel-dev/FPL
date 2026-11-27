@@ -4754,9 +4754,12 @@ class FreeHit(unittest.TestCase):
         fx = E.week_fixtures(self.d)
         hurt = next(p for p in self.d["all_players"] if p["status"] == "d" and p["team"] != "HUL")
         self.assertNotIn(hurt["id"], own)
-        self.assertEqual(src[self.next][hurt["id"]], "bottomup")
-        self.assertAlmostEqual(pts[self.next][hurt["id"]],
-                               E.project_week(hurt["id"], hurt, inp, fx, self.next, E.ALL_TERMS), 9)
+        # W3fix Ruling 3 amends item N: in the week with own rows, no own row counts 0, never bottomup
+        self.assertEqual((pts[self.next][hurt["id"]], src[self.next][hurt["id"]]), (0.0, "no own"))
+        self.assertGreater(E.project_week(hurt["id"], hurt, inp, fx, self.next, E.ALL_TERMS), 0)
+        self.assertEqual(src[weeks[1]][hurt["id"]], "bottomup")          # a week without own rows: bottomup for all
+        self.assertAlmostEqual(pts[weeks[1]][hurt["id"]],
+                               E.project_week(hurt["id"], hurt, inp, fx, weeks[1], E.ALL_TERMS), 9)
         for pid, v in bu.items():                    # bottomup is the recorded definition
             p = next(p for p in self.d["all_players"] if p["id"] == pid)
             self.assertAlmostEqual(E.project_week(pid, p, inp, fx, self.next, E.ALL_TERMS), v, delta=6e-4)
@@ -4853,7 +4856,7 @@ class FreeHit(unittest.TestCase):
 
     def test_gap_is_fh_minus_ours_by_the_same_metric(self):
         t = E.free_hit_table(self.d, self.log)
-        weeks, pts, _ = E.one_week_points(self.d, self.log)
+        weeks, pts, src_of = E.one_week_points(self.d, self.log)
         ours_ids = E.my_squad_ids(self.d)
         for w in t["weeks"]:
             xi = E._best_xi([{"id": i, "pos": next(p["pos"] for p in self.d["all_players"] if p["id"] == i),
@@ -4862,7 +4865,14 @@ class FreeHit(unittest.TestCase):
             self.assertAlmostEqual(w["gap"], w["fh"]["pts"] - w["ours"], 9)
             self.assertEqual(w["metric"], "own" if w["event"] == self.next else "bottomup")
             status = {p["id"]: p["status"] for p in self.d["all_players"]}
-            self.assertEqual(w["not_a"], sum(1 for p in w["ours_xi"] if status[p["id"]] != "a"))
+            # W3fix point 2: "not a" counts our best XI on item N's frozen metric (before Ruling 3's zero)
+            inp = E.reliability_inputs(E.canonical_from_export(self.d), gws_played=self.d["gameweek"])
+            fx = E.week_fixtures(self.d)
+            by_id = {p["id"]: p for p in self.d["all_players"]}
+            frozen = {i: (E.project_week(i, by_id[i], inp, fx, w["event"], E.ALL_TERMS) or 0.0)
+                      if src_of[w["event"]][i] == "no own" else pts[w["event"]][i] for i in ours_ids}
+            xi_f = E._best_xi([{"id": i, "pos": by_id[i]["pos"], "proj": frozen[i]} for i in ours_ids])
+            self.assertEqual(w["not_a"], sum(1 for p in xi_f if status[p["id"]] != "a"))
 
     def test_flags(self):
         self.assertEqual(E.free_hit_flag(8.0, 0), "")

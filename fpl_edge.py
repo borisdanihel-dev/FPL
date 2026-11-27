@@ -3584,8 +3584,11 @@ def one_week_points(d, log):
     for every player in the export by the frozen one-week metric - `own` as
     recorded in projection_log.csv for that event where it exists, else
     bottomup (the full model, all terms) summed over the week's fixtures; a
-    blank scores 0. src[week][pid] is 'own', 'bottomup' or 'blank'. The log
-    records one week ahead, so only the first week can carry `own`."""
+    blank scores 0. Amended (W3fix Ruling 3, prereg/W3fix.md): in a week
+    that has own rows, a player with no own row counts 0, never bottomup, so
+    each week is on one scale. src[week][pid] is 'own', 'no own', 'bottomup'
+    or 'blank'. The log records one week ahead, so only the first week can
+    carry `own`."""
     weeks = sorted({f["event"] for f in d.get("fixtures_next6") or []})[:6]
     own = defaultdict(dict)
     for r in log:
@@ -3600,6 +3603,9 @@ def one_week_points(d, log):
             pid = p["id"]
             if pid in own[w]:
                 pts[w][pid], src[w][pid] = own[w][pid], "own"
+                continue
+            if own[w] and fx[p["team"]].get(w):          # W3fix Ruling 3: one scale within the week
+                pts[w][pid], src[w][pid] = 0.0, "no own"
                 continue
             v = project_week(pid, p, inp, fx, w, ALL_TERMS)
             pts[w][pid] = v or 0.0
@@ -3829,6 +3835,7 @@ def free_hit_table(d, log):
     gate = [p for p in d["all_players"] if p["status"] == "a" and (p.get("mins_last4") or 0) >= 45]
     spare = [p for p in d["all_players"] if p["status"] == "a"]
     out = {"budget": budget, "weeks": []}
+    inp = fx = None
     for w in weeks:
         def row(p):
             return {"id": p["id"], "name": p["web_name"], "team": p["team"], "pos": p["pos"],
@@ -3836,13 +3843,28 @@ def free_hit_table(d, log):
         fh = best_one_week_xi([row(p) for p in gate], [row(p) for p in spare], budget)
         xi = _best_xi([dict(row(by_id[i]), proj=pts[w][i]) for i in ours_ids])
         ours = sum(p["proj"] for p in xi)
-        not_a = sum(1 for p in xi if p["status"] != "a")
+        # W3fix point 2 (Boris, Thu 19 Nov night): "not a" counts our best XI before Ruling 3's zero - item N's frozen
+        # metric, own where recorded, else bottomup - so an injury crisis still shows; the gap keeps the amended metric
+        frozen = {i: pts[w][i] for i in ours_ids}
+        no_own = [i for i in ours_ids if src[w][i] == "no own"]
+        if no_own:
+            if inp is None:
+                inp = reliability_inputs(canonical_from_export(d), gws_played=d["gameweek"])
+                fx = week_fixtures(d)
+            for i in no_own:
+                frozen[i] = project_week(i, by_id[i], inp, fx, w, ALL_TERMS) or 0.0
+        xi_frozen = _best_xi([dict(row(by_id[i]), proj=frozen[i]) for i in ours_ids])
+        not_a = sum(1 for p in xi_frozen if p["status"] != "a")
         gap = fh["pts"] - ours if fh else None
+        metric = "own" if any(s == "own" for s in src[w].values()) else "bottomup"
         out["weeks"].append({
-            "event": w, "metric": "own" if any(s == "own" for s in src[w].values()) else "bottomup",
+            "event": w, "metric": metric,
             "fh": fh, "ours": ours, "ours_xi": xi,
             "ours_shape": tuple(sum(1 for p in xi if p["pos"] == k) for k in (2, 3, 4)),
-            "not_a": not_a, "gap": gap, "flag": free_hit_flag(gap, not_a)})
+            "not_a": not_a, "gap": gap, "flag": free_hit_flag(gap, not_a),
+            # W3fix Ruling 3's note: who counts 0 for want of an own row (own weeks only)
+            "no_own_ours": [by_id[i]["web_name"] for i in ours_ids if src[w][i] == "no own"] if metric == "own" else [],
+            "no_own_gate": sum(1 for p in gate if src[w][p["id"]] == "no own") if metric == "own" else 0})
     return out
 
 
@@ -3859,6 +3881,12 @@ def free_hit_lines(t):
         shapes = f"{shape(fh['shape']) if fh else '-'} / {shape(w['ours_shape'])}"
         lines.append(f"  GW{w['event']:<3}{w['metric']:10s}{fh_cell}{w['ours']:>7.1f}{gap_cell}"
                      f"{w['not_a']:>7}   {shapes:17s} {w['flag']}".rstrip())
+    for w in t["weeks"]:
+        if w["metric"] == "own":                 # W3fix Ruling 3 (prereg/W3fix.md): the note
+            names = w.get("no_own_ours", [])
+            lines.append(f"    GW{w['event']}: a player with no own forecast counts 0 (W3fix Ruling 3, amending item N): "
+                         f"{len(names)} of our 15{' (' + ', '.join(names) + ')' if names else ''}, "
+                         f"{w.get('no_own_gate', 0)} in the Free Hit gate")
     return lines
 
 
@@ -3883,14 +3911,17 @@ def sec_free_hit(d, horizon, log=None):
         return
     print("  metric  own as recorded in projection_log.csv for that gameweek where it exists")
     print("          (one week ahead), else bottomup (full model, all terms) per fixture;")
-    print("          a blank scores 0. Both sides of the gap use the same metric.")
+    print("          a blank scores 0. In a week with own rows a player with no own row")
+    print("          counts 0, never bottomup (W3fix Ruling 3, amending item N). Both sides")
+    print("          of the gap use the same metric.")
     print("  FH XI   the best legal XI the budget buys around the cheapest legal bench, any")
     print("          formation, at most 3 per club across the fifteen; XI from the usual gate")
     print("          (status 'a', 45+ minutes in the last four). Exact for the XI given that")
     print("          bench: dynamic programme on cost, branch and bound on the club limit.")
     print("  ours    the best XI from our current 15 by the same metric, any formation.")
     print(f"  flag    FH candidate when the gap exceeds {FH_GAP:g} or {FH_NOT_A}+ of our XI are")
-    print("          not status 'a' (today's status, for every week).")
+    print("          not status 'a' (today's status, for every week; counted on our best XI before")
+    print("          Ruling 3's zero, W3fix point 2).")
     print("  The formation is chosen on the sums here, which review D ruled out for the")
     print("  wildcard while DEF is over-spread: read a 5-DEF FH XI in a bottomup week so.")
     print()

@@ -45,6 +45,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fpl_edge as E                                              # noqa: E402
 import fpl_hist as H                                              # noqa: E402
+import fpl_ship                                                   # noqa: E402
 import backtest as BT                                             # noqa: E402
 import hist_pit as PIT                                            # noqa: E402
 from console_utf8 import utf8_console                             # noqa: E402
@@ -125,7 +126,10 @@ def own_week_points(d, log_rows, tick=None, weeks=None):
     fpl_edge.project() on that week's fixture(s) from `tick` - the formula
     record_status uses - for players through the recording gate (status 'a',
     45+ minutes in the last four); a blank or a gated-out player scores 0.
-    src is 'own', 'own-model', 'blank' or 'gate'."""
+    In a week that has own rows, a player through the gate with no own row
+    counts 0 (W3fix Ruling 3, prereg/W3fix.md: one scale, never the
+    formula beside recorded rows). src is 'own', 'no own', 'own-model',
+    'blank' or 'gate'."""
     if tick is None or weeks is None:
         tick, weeks = E.build_ticker(d, 6)
     own = defaultdict(dict)
@@ -147,6 +151,8 @@ def own_week_points(d, log_rows, tick=None, weeks=None):
                 pts[w][pid], src[w][pid] = 0.0, "blank"
             elif p["status"] != "a" or (p.get("mins_last4") or 0) < 45:
                 pts[w][pid], src[w][pid] = 0.0, "gate"
+            elif own[w]:                                     # W3fix Ruling 3
+                pts[w][pid], src[w][pid] = 0.0, "no own"
             else:
                 v = sum(E.project(p, {p["team"]: [f]}, 6, d["gameweek"], priors, personal)[0] for f in fx)
                 pts[w][pid], src[w][pid] = max(0.0, v), "own-model"
@@ -318,6 +324,11 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
         f"next GW{first}, chips left: {', '.join(sorted(chips)) or 'none'}; budget £{budget:.1f}m = bank + selling prices")
     out(f"  xP source: own - the recorded row for GW{first} where the log holds one, else the own")
     out(f"  formula on each week's real fixtures from the fixtures table, GW{first}-GW{LAST_GW} (no proxy weeks).")
+    no_own = sorted(p["web_name"] for p in d["all_players"] if src[first].get(p["id"]) == "no own")
+    if any(s == "own" for s in src[first].values()):
+        out(f"  GW{first} has own rows: a player through the gate with no own row counts 0 that week, never the formula "
+            f"(W3fix Ruling 3): {len(no_own)} in this export"
+            f"{' (' + ', '.join(no_own[:10]) + (f', +{len(no_own) - 10} more' if len(no_own) > 10 else '') + ')' if no_own else ''}.")
     out("  Every Free Hit value: no transfers assumed (our 15 held fixed; an upper bound).")
     v_bb, v_fh, detail = {}, {}, {}
     for w in weeks:
@@ -384,12 +395,22 @@ def live(data_dir, out=print, resamples=RESAMPLES, seed=SEED):
             "one transfer per bench slot, same position, within bank + selling price (bench counts 1.0 in a BB week)")
         for line in bench_prep(d, squad, pts[bb_week], detail[bb_week], budget):
             out(line)
-    # the Free Hit screen (item N, selling budget)
+    # the Free Hit screen (item N, selling budget), on tonight's export (W3fix point 1, Boris, Thu 19 Nov night): the
+    # base screen's own table, so its flag always matches; the calculator above stays on the dated archive
     out("")
-    out("  FREE HIT SCREEN (item N: own where recorded, else bottomup; budget = bank + selling prices)")
-    fh_table = E.free_hit_table(d, E.forecasts(log_rows, d))
-    for line in E.free_hit_lines(fh_table):
-        out(line)
+    tonight = fpl_ship.newest_export(data_dir)
+    if not tonight:
+        out("  FREE HIT SCREEN not built: no working export (fpl_export_gw<N>.json) in the data folder - never last night's")
+    else:
+        with open(tonight, encoding="utf-8", newline="") as fh:
+            dt = json.load(fh)
+        from fpl_squad import _gen          # the export's own time, as CAPTAIN and BAN RISK print it (W3fix answer 4, Fri 27 Nov)
+        out(f"  FREE HIT SCREEN from {os.path.basename(tonight)} (generated {_gen(dt)}) (tonight's export; item N, as amended "
+            "by W3fix Ruling 3: own "
+            "where recorded, 0 for a player without an own row in that week, else bottomup; budget = bank + selling prices)")
+        fh_table = E.free_hit_table(dt, E.forecasts(log_rows, dt))
+        for line in E.free_hit_lines(fh_table):
+            out(line)
     return {"weeks": weeks, "v_bb": v_bb, "v_fh": v_fh, "induction": ind, "next": nxt, "chips": chips,
             "budget": budget, "detail": detail}
 
