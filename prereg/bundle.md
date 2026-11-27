@@ -170,3 +170,68 @@ After the GW12 deadline, runner changes resume (one per night, Boris clicks each
 ### Boris's answer on the captain block, Thu 26 Nov night (verbatim)
 
 Captain block scope: list both top fours (by xp_v2 and by own) plus Gabriel, Calafiori and Haaland, as you proposed. Carry on as planned: the real pass after tonight's nightly, the post with the parked questions in one batch by 10:00 UTC.
+
+## Rulings, Fri 27 Nov (Boris's message verbatim; for this item: GW12 refresh, points 1-4, and Weekend (the GW13-19 S7 and bb_timing re-run; F-N's draft goes to prereg/FN.md))
+
+Rulings — Fri 27 Nov (GW12 deadline 18:30 UTC). Standing rule holds: a WARN/FAIL stops that item only; park it and carry on.
+
+GW12 refresh
+1. Boris dispatches a real run on master, nothing ticked, ~14:00–15:00 UTC. When green, refresh gw12_post points 1–4 on the new data (XI; captain table with xg/bottomup/P10+; transfers gated + Calafiori-lifted + CS-flat; flags) and commit to worklog by 16:30 UTC. Post a short delta vs data 2efc924: anything that moved >0.3 or changed rank.
+2. Flags must include: status/news for all 15, yellow-card counts for our players (Groß), and status of the planner's top targets (Silva BOU, Justin, Tavernier).
+3. Current lean: roll (2 FT for GW13), no chip, captain by the frozen rule. Give the numbers; don't re-argue the lean.
+4. Freeze applies: tools and worklog only until after the deadline.
+
+W3fix answers
+1. Float-sum xi_lex test: yes.
+2. Four minor mutant tests: yes, all four.
+3. Push dry/W3fix at or after 19:30 UTC tonight. The merge needs Boris's click and must finish before 21:00 UTC. If dry run or verifier isn't green by 20:45 UTC, or Boris isn't available, land it Sat 28 in the same 19:30–21:00 UTC window and move runcommit to Sun 29.
+4. CHIPS label shows the generated time: yes.
+5. Changelog wording: accepted.
+
+runcommit answers
+1. Namesake test against the previous export: yes.
+2. FORM MOVERS and GITHUB_SHA tests: yes, both.
+3. Option (b): route all three records through checks.code_commit. No decoy.
+4. Calibration value checks: yes. RMSE and rconst as drafted, computed on exactly the same rows as MAE, with rconst using the same constant as the existing MAE baseline. Write both formulas into the prereg.
+5. "After the GW11 deadline" governs the merge only: confirmed.
+6. Order: W3fix first; runcommit (with the Thomas/Thomas price-moves fix and the RMSE column) the next night. Sun 29 is the buffer. Nothing lands after Mon 30 Nov 12:30 UTC (GW13 freeze).
+
+Weekend (after the deadline, tools only)
+- Re-run S7 and bb_timing for GW13–19 assuming 2 FT in GW13, Thiago back GW14, and Groß's ban risk. Report BB and FH week candidates with and without the Calafiori lift.
+- Draft the F-N prereg (CS shrinkage in the planner) for my review.
+
+## The GW12 refresh, pinned before its code (Fri 27 Nov 12:45 UTC)
+
+- **Data:** Boris's real run of today, accepted when its workflow is green and
+  its STATUS warns of nothing new.
+- **Code:** clean master at the time, worktree `gw12_code`.
+- **Outputs:** everything of the morning (the bundle, `bb_moves.py`,
+  `s7_post_transfer.py`, `bb_timing.py`; point 4's chips included, for the
+  "no chip" numbers) is rerun into `worklog/gw_pass/gw12/refresh/`, each with
+  its run file. The morning's files stay as they are.
+- **The flags (point 2), `flags.py`:**
+  - for all 15: status, chance, news and news time from the export;
+  - for our 15: yellow cards from the export, and S12's caution count with
+    "one booking from a ban" and P(ban) (the BAN RISK rule);
+  - the same status block for Silva (BOU), Justin (LEE) and Tavernier (BOU),
+    and for the top incoming player of each refreshed table if it is not one
+    of them.
+- **The lean's numbers (point 3), no argument:**
+  - roll's score and rank against the best move in each of the four tables;
+  - S7's GW12 values of HOLD, PLAY BB and PLAY FH, its margin and its
+    same-action share;
+  - the frozen captain rule's pick (highest xp_v2 in xp_v2's XI) and the next
+    two.
+- **The delta against data `2efc924`, `delta.py`:** it reads the morning's
+  committed outputs and the refresh's.
+  - A number is listed when it moved by more than 0.3. That covers xp_v2 and
+    own of our 15 for GW12; the captain block's columns; the plan scores and
+    gains in the four tables and the clean-sheet columns; S7's values; and
+    bb_timing's weeks.
+  - A rank is listed when it changed. That covers XI membership and the
+    captains (xp_v2 and own); the order of each table's top five and roll's
+    rank; the captain block's order; S7's actions; and bb_timing's best week.
+  - Probabilities (P(10+), P(cs)) cannot move by 0.3. They are printed side by
+    side and listed on a rank change only.
+- **Deadline:** committed to master (worklog only; the freeze holds) by 16:30
+  UTC, then a short post.

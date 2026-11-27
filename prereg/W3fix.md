@@ -302,3 +302,68 @@ GW12 deadline pass (deadline today Fri 27 Nov 18:30 UTC; GW12 freeze: tools and 
 4. Chips: S7 GW12-19 lines on the current 15 and on the best post-transfer squad, and bb_timing for GW14 v GW15 (the Bench Boost plan is GW14).
 5. Post, no decisions, by 10:00 UTC. After Boris's real run (about 14:00 UTC, after the press conferences): refresh 1-4 and commit before 16:30 UTC.
 After the GW12 deadline, runner changes resume (one per night, Boris clicks each real run): Fri 27 W3fix (with fj-wip's tests); Sat 28 runcommit plus the price-moves name fix plus the RMSE column; Sun 29 free. Then the GW13 freeze from Mon 30 Nov 12:30 UTC. Also draft F-N's prereg and post the parked questions in one batch.
+
+## Rulings, Fri 27 Nov (Boris's message verbatim; for this item: W3fix answers 1-5)
+
+Rulings — Fri 27 Nov (GW12 deadline 18:30 UTC). Standing rule holds: a WARN/FAIL stops that item only; park it and carry on.
+
+GW12 refresh
+1. Boris dispatches a real run on master, nothing ticked, ~14:00–15:00 UTC. When green, refresh gw12_post points 1–4 on the new data (XI; captain table with xg/bottomup/P10+; transfers gated + Calafiori-lifted + CS-flat; flags) and commit to worklog by 16:30 UTC. Post a short delta vs data 2efc924: anything that moved >0.3 or changed rank.
+2. Flags must include: status/news for all 15, yellow-card counts for our players (Groß), and status of the planner's top targets (Silva BOU, Justin, Tavernier).
+3. Current lean: roll (2 FT for GW13), no chip, captain by the frozen rule. Give the numbers; don't re-argue the lean.
+4. Freeze applies: tools and worklog only until after the deadline.
+
+W3fix answers
+1. Float-sum xi_lex test: yes.
+2. Four minor mutant tests: yes, all four.
+3. Push dry/W3fix at or after 19:30 UTC tonight. The merge needs Boris's click and must finish before 21:00 UTC. If dry run or verifier isn't green by 20:45 UTC, or Boris isn't available, land it Sat 28 in the same 19:30–21:00 UTC window and move runcommit to Sun 29.
+4. CHIPS label shows the generated time: yes.
+5. Changelog wording: accepted.
+
+runcommit answers
+1. Namesake test against the previous export: yes.
+2. FORM MOVERS and GITHUB_SHA tests: yes, both.
+3. Option (b): route all three records through checks.code_commit. No decoy.
+4. Calibration value checks: yes. RMSE and rconst as drafted, computed on exactly the same rows as MAE, with rconst using the same constant as the existing MAE baseline. Write both formulas into the prereg.
+5. "After the GW11 deadline" governs the merge only: confirmed.
+6. Order: W3fix first; runcommit (with the Thomas/Thomas price-moves fix and the RMSE column) the next night. Sun 29 is the buffer. Nothing lands after Mon 30 Nov 12:30 UTC (GW13 freeze).
+
+Weekend (after the deadline, tools only)
+- Re-run S7 and bb_timing for GW13–19 assuming 2 FT in GW13, Thiago back GW14, and Groß's ban risk. Report BB and FH week candidates with and without the Calafiori lift.
+- Draft the F-N prereg (CS shrinkage in the planner) for my review.
+
+## Answers of Fri 27 Nov, pinned before their code (Fri 27 Nov 12:40 UTC)
+
+- **Answer 1 (the float-sum test):** a test with a spy on `xi_key` that asserts
+  every value `xi_lex` hands it is a `Fraction` (the verifier's check, re-check
+  section 3). It must be red on both green variants: `val` built with `float`,
+  and an inline float key that bypasses `xi_key`.
+- **Answer 2 (the four minor mutants, re-check Check 6), one test each, each red
+  on its mutant:**
+  1. the screen's log read through the archive's deadlines: a toy whose two
+     exports have different deadlines;
+  2. the frozen value by the three-layer terms rather than bottomup: a toy whose
+     count depends on the scale;
+  3. no working export, with the archive's table printed above the one line: the
+     test checks the section holds that line and no table;
+  4. an export with no readable `generated`: the section prints "unknown" and
+     goes on.
+- **Answer 4 (CHIPS's screen label):** the label prints the working export's
+  generated time in the CAPTAIN and BAN RISK header form (`_gen`: UTC, minutes,
+  "unknown" when unreadable). A test pins it, including the restored-copy case
+  (the time is the copy's own field). The mirror in `tools/chips.py` gets the
+  same label (W2's byte-identity).
+- **Answer 3:** `dry/W3fix` is pushed at or after 19:30 UTC tonight. The merge
+  is on Boris's click and finishes before 21:00 UTC. If the dry run or the
+  verifier is not green by 20:45 UTC, or Boris is not available, it lands Sat 28
+  in the same 19:30-21:00 UTC window and runcommit moves to Sun 29.
+- **Answer 5:** the CHANGELOG entry says the amended screen starts with GW12.
+- **Order:**
+  1. Merge master into `w3fix-wip`.
+  2. Make the changes above; run the suite before and after.
+  3. The verifier's re-check of the new commit, then the write guard.
+  4. The landing list: regenerate `checkpoint.txt` and `run.txt`; CHANGELOG;
+     the report.
+  5. `dry/W3fix` (at or after 19:30 UTC); tag `pre-W3fix`; the merge on
+     Boris's click.
+  6. Boris's real run; the final verifier.
