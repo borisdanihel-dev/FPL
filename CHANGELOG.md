@@ -4627,9 +4627,17 @@ Report `worklog/cc_2026-11-13_S8c_landing.md`.
   header lines.
 - Mutants: 39 of 42 red on `3847ebd`, and mutant 2's second form red on
   `f1c3704`.
-  - The two survivors (the `xi_lex` key ignored; `Fraction(float(v))`) can
-    change the GW15 tie rule's XI on a decimal-but-not-binary tie.
-  - 0 XIs changed in 9,000 random squads. Parked for Boris.
+  - The two survivors (the `xi_lex` key ignored; `Fraction(float(v))`) change
+    no XI. Every XI tied at the top of `xi_lex` holds the same values (legal
+    XIs are the bases of a matroid), so no decimal-but-not-binary tie can sit
+    there. `Fraction(float(v))` therefore never changes the output. The
+    ignored key changes it only through float rounding no forecast reaches
+    (Python 3.14's `sum()` is compensated).
+  - 0 XIs changed in the verifier's 9,000 random squads, and in my 3,000 (1,798
+    with a tie at the top, every one with a single multiset of values).
+  - Corrected Fri 27 Nov 16:10 UTC: the first version of this entry said both
+    can change the XI. Boris's decimal-tie test (ruling of 15:30 UTC) is parked
+    with this correction in `prereg/W3fix.md`; it is not part of this landing.
 
 **Verifier:**
 - Re-checks WARN, WARN, WARN.
