@@ -414,3 +414,24 @@ Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
 - **Session reading (16:30 UTC):** runcommit has no advance approval; it lands on Boris's click. If W3fix lands tonight, runcommit keeps Sat 28 (answer 6's order). If W3fix misses tonight, it lands Tue 1 Dec 19:30-21:00 UTC.
 - **Time label correction:** the "Session reading (16:30 UTC)" above was committed at 16:23:02 UTC (`86e50b3`);
   the label ran ahead of the clock.
+
+## Rulings, Fri 27 Nov 16:30 UTC (Boris's message verbatim; for this item: point 1's order: runcommit merges first on Sat 28, then T1/T2)
+
+Rulings (Fri 27 Nov, 16:30 UTC). Record verbatim.
+
+1. T1/T2 on Sat 28: merge under the advance approval, after runcommit.
+- Clarification of the approval rule (add to BUILD_PLAN.md Part B under point 1): "no other runner change that night" applies only when the item being merged is itself a runner change.
+- A test-only item can merge the same night as a runner change. Test-only means its diff touches only tests/, worklog/, prereg/ or docs, nothing the runner imports or executes, and the verifier confirms that.
+- Order: runcommit first. Then rebase T1/T2 on the merged master and run the full suite on a fresh clone.
+- If 21:00 UTC comes first, T1/T2 wait for the next free night, still approved in advance.
+
+2. W5 naming accepted (W4 stays the later queue item).
+
+3. Recovery dispatch: proposal_recovery_dispatch.md accepted, effective now, with two amendments:
+a. Boris's explicit request in chat overrides rule 2a (recovery only) and rule 5 (not standing in for W5), but never 2b–2f.
+b. Review after W5 has run live for two deadlines.
+Report every dispatch in your next status message.
+
+4. Time-label correction noted; no further action.
+
+Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.

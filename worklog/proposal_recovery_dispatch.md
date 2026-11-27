@@ -1,4 +1,4 @@
-# Proposal: recovery runs dispatched by Claude Code (information; not in use until Boris rules)
+# Recovery runs dispatched by Claude Code: IN FORCE from Fri 27 Nov 16:30 UTC (Boris's ruling, point 3), with the amendments at the end
 
 Boris's rulings of Fri 27 Nov 16:25 UTC, point 4 (verbatim in `prereg/W3fix.md`, `runcommit.md`, `W5.md`).
 Session draft, Fri 27 Nov 16:24 UTC.
@@ -38,3 +38,32 @@ Session draft, Fri 27 Nov 16:24 UTC.
 
 ## Not done
 No dispatch has been made, and none will be made until Boris rules.
+
+## Ruling, Fri 27 Nov 16:30 UTC (Boris's message verbatim; for this file: point 3)
+
+Rulings (Fri 27 Nov, 16:30 UTC). Record verbatim.
+
+1. T1/T2 on Sat 28: merge under the advance approval, after runcommit.
+- Clarification of the approval rule (add to BUILD_PLAN.md Part B under point 1): "no other runner change that night" applies only when the item being merged is itself a runner change.
+- A test-only item can merge the same night as a runner change. Test-only means its diff touches only tests/, worklog/, prereg/ or docs, nothing the runner imports or executes, and the verifier confirms that.
+- Order: runcommit first. Then rebase T1/T2 on the merged master and run the full suite on a fresh clone.
+- If 21:00 UTC comes first, T1/T2 wait for the next free night, still approved in advance.
+
+2. W5 naming accepted (W4 stays the later queue item).
+
+3. Recovery dispatch: proposal_recovery_dispatch.md accepted, effective now, with two amendments:
+a. Boris's explicit request in chat overrides rule 2a (recovery only) and rule 5 (not standing in for W5), but never 2b–2f.
+b. Review after W5 has run live for two deadlines.
+Report every dispatch in your next status message.
+
+4. Time-label correction noted; no further action.
+
+Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
+
+## The rules as amended (session, from the ruling's point 3)
+- a. Boris's explicit request in chat lifts rule 2a (recovery only) and rule 5's first item (not standing in for
+  W5). Rules 2b-2f still hold every time. The log line quotes his request.
+- b. The rules are reviewed after W5 has run live for two deadlines.
+- Every dispatch is reported in the next status message to Boris.
+- "## Not done" above is superseded: from 16:30 UTC a dispatch may be made under these rules. None has been made
+  yet. The log is `worklog/dispatch_log.md`, created with the first dispatch.

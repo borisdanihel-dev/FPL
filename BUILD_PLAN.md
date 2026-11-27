@@ -57,6 +57,21 @@ It lives in the repo root as `BUILD_PLAN.md`.
 - Advance approval never covers changes to the decision rules, chips or transfers.
 - Boris approves in advance under this rule: W3fix tonight (dry run 19:31 UTC from 3fe7500), and T1/T2 (w3tie-wip 82977fe, after rebase) on Sat 28.
 
+**Clarification of the approval rule (RULING Fri 27 Nov 16:30 UTC, point 1, verbatim).**
+
+1. T1/T2 on Sat 28: merge under the advance approval, after runcommit.
+- Clarification of the approval rule (add to BUILD_PLAN.md Part B under point 1): "no other runner change that night" applies only when the item being merged is itself a runner change.
+- A test-only item can merge the same night as a runner change. Test-only means its diff touches only tests/, worklog/, prereg/ or docs, nothing the runner imports or executes, and the verifier confirms that.
+- Order: runcommit first. Then rebase T1/T2 on the merged master and run the full suite on a fresh clone.
+- If 21:00 UTC comes first, T1/T2 wait for the next free night, still approved in advance.
+
+**Recovery dispatch (RULING Fri 27 Nov 16:30 UTC, point 3, verbatim): the rules in `worklog/proposal_recovery_dispatch.md` are in force from 27 Nov, with these amendments.**
+
+3. Recovery dispatch: proposal_recovery_dispatch.md accepted, effective now, with two amendments:
+a. Boris's explicit request in chat overrides rule 2a (recovery only) and rule 5 (not standing in for W5), but never 2b–2f.
+b. Review after W5 has run live for two deadlines.
+Report every dispatch in your next status message.
+
 ## Part C — Decision rules in force now (Boris and the chat; the steps below build the tooling)
 
 1. **Expected points first.** At a 56-point gap with ~31 GWs left, maximise xP. Variance-seeking starts only when the gap exceeds σ_d·√n (σ_d is measured in Step 9; on current assumptions about GW25–27).

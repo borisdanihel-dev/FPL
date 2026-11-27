@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:24 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 16:30 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -149,6 +149,28 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - **gh** (point 4): installed and logged in, with the `workflow` scope.
       The rules proposal is `worklog/proposal_recovery_dispatch.md`. It is not
       in use until Boris rules.
+  - **Update 16:30 UTC: Boris's rulings of 16:30 UTC** are verbatim: point 1
+    and point 3 in BUILD_PLAN.md Part B, and the whole block in W3fix.md,
+    runcommit.md and W5.md.
+    - **T1/T2 merge Sat 28 under the advance approval, after runcommit.**
+      They rebase on the merged master and run the full suite on a fresh
+      clone. A test-only item may merge on a runner-change night. Test-only
+      means it touches only tests/, worklog/, prereg/ or docs, and the
+      verifier confirms that. If 21:00 UTC comes first, they take the next
+      free night, still approved.
+    - **W5's name is accepted.**
+    - **Recovery dispatch is IN FORCE** (`worklog/proposal_recovery_dispatch.md`,
+      amended):
+      - Boris's explicit chat request lifts 2a and rule 5's W5 item, never
+        2b-2f;
+      - the rules are reviewed after W5 has run live for two deadlines;
+      - every dispatch is reported in the next status message;
+      - the log is `worklog/dispatch_log.md`, committed before each
+        dispatch;
+      - `gh` is called by its full path, `C:\Program Files\GitHub CLI\gh.exe`.
+      - No dispatch has been made.
+    - **Tonight is unchanged:** the W3fix dry run is at 19:31 UTC (waiter
+      `b7ma2s4n4`), then the self-merge if every condition holds.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
