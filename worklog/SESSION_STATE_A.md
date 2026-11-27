@@ -47,6 +47,27 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
       header lines differ. If the commit changes, regenerate it.
     - Tonight's landing needs the answer in time for 19:30 UTC. Otherwise
       it lands Sat 28 19:30-21:00 and runcommit moves to Sun 29.
+  - **Update 14:20 UTC.**
+    - **GW12 refresh DONE** (`617e040`) on Boris's run: data `0768766`, 14:00
+      UTC. The delta against `2efc924` lists 0 items.
+    - **W3fix:** Boris's WARN ruling is verbatim (`1b3b52b`). The midfielder
+      toy is `f1c3704`. The narrow re-check is **PASS** (`a552b15`), write
+      guard clean.
+    - **W3fix landing commits on `w3fix-wip`:**
+      - the master merge `1855108`;
+      - `d701c7f`: the checkpoint regenerated, the report
+        `worklog/cc_2026-11-27_W3fix.md` and the CHANGELOG entry (the amended
+        screen starts with GW13).
+    - **New question parked** (`8480eda`): a decimal-tie test for `xi_lex`
+      before GW15.
+    - **Next:**
+      1. `dry/W3fix` at or after 19:30 UTC (`git push origin
+         w3fix-wip:refs/heads/dry/W3fix`), and read back
+         `data-dryrun-W3fix`.
+      2. Tag `pre-W3fix` = master, then merge on Boris's click before
+         21:00 UTC.
+      3. Boris's real run, then the final verifier.
+      4. The "W3fix done" entry; delete the dry branches.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.
