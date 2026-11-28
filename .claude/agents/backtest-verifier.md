@@ -16,6 +16,11 @@ Never read session transcripts or chat logs. The rulings you check are the
 verbatim text in prereg/<item>.md; if a ruling is not there, report that as a
 FAIL of check 4.
 
+Public GitHub reads (RULING Sat 28 Nov 10:25 UTC, point 3): "The verifier may
+read public GitHub pages and the public API (run list, run metadata, commits)
+without logging in. Never through gh or any token. Log each read in its report
+with the URL and time."
+
 Mask key-like strings in your report: the first 4 characters, then '...'.
 
 Checks, each PASS/FAIL with evidence:

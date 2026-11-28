@@ -65,6 +65,25 @@ It lives in the repo root as `BUILD_PLAN.md`.
 - Order: runcommit first. Then rebase T1/T2 on the merged master and run the full suite on a fresh clone.
 - If 21:00 UTC comes first, T1/T2 wait for the next free night, still approved in advance.
 
+**Scope of the advance approval, the ninth pre-merge check (RULING Sat 28 Nov 10:25 UTC, point 2, verbatim).**
+
+2. W3fix decision 1: yes, your reading is right. Add to BUILD_PLAN.md Part B under point 1, and as a ninth pre-merge check:
+"'Never covers changes to the decision rules, chips or transfers' means:
+(a) no chip is played and no transfer is made by anyone but Boris, in the FPL app;
+(b) advance approval cannot introduce or change a decision rule (Part C, the frozen chip rule, the three-layer rule) that hasn't already been ruled.
+An item that implements a change already ruled and recorded verbatim in its prereg may be approved in advance even if it touches chip, captain or transfer code, but only when Boris names that item explicitly."
+
+**The nine pre-merge checks under an advance approval** (session's list of the 16:25 UTC rule, the 16:30 UTC clarification and point 2 above; the rulings govern):
+1. verifier PASS (a WARN or FAIL holds it);
+2. dry run green;
+3. the full suite passes on a fresh clone;
+4. write guard clean;
+5. inside 19:30–21:00 UTC;
+6. not in a deadline freeze;
+7. no other runner change that night (only when the item is itself a runner change);
+8. Boris hasn't revoked it;
+9. the scope line as defined in point 2: the item plays no chip and makes no transfer, and it introduces or changes no decision rule that hasn't been ruled. If it touches chip, captain or transfer code, it implements a change already ruled and recorded verbatim in its prereg, and Boris named that item explicitly.
+
 **Recovery dispatch (RULING Fri 27 Nov 16:30 UTC, point 3, verbatim): the rules in `worklog/proposal_recovery_dispatch.md` are in force from 27 Nov, with these amendments.**
 
 3. Recovery dispatch: proposal_recovery_dispatch.md accepted, effective now, with two amendments:
@@ -230,6 +249,11 @@ committed before the first code commit of the item; if not, verdict FAIL.
 Never read session transcripts or chat logs. The rulings you check are the
 verbatim text in prereg/<item>.md; if a ruling is not there, report that as a
 FAIL of check 4.
+
+Public GitHub reads (RULING Sat 28 Nov 10:25 UTC, point 3): "The verifier may
+read public GitHub pages and the public API (run list, run metadata, commits)
+without logging in. Never through gh or any token. Log each read in its report
+with the URL and time."
 
 Mask key-like strings in your report: the first 4 characters, then '...'.
 

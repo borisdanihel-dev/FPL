@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update Sat 28 Nov 03:54 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update Sat 28 Nov 10:49 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -219,6 +219,25 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
     - **Next, Sat 28:** runcommit on Boris's click (19:30-21:00 UTC), then
       T1/T2 under the advance approval if time allows. Also the weekend
       tools tasks: S7 and bb_timing for GW13-19, and the F-N prereg draft.
+  - **Update Sat 28 Nov 10:49 UTC: Boris's rulings of 10:25 UTC** (verbatim in `prereg/runcommit.md`,
+    `W3fix.md`, `bundle.md` and the new `W6.md`; BUILD_PLAN.md Part B and the agent file; docs only).
+    1. **runcommit is approved in advance** under the 16:25 UTC rule. It lands tonight 19:30-21:00 UTC, first,
+       only if all nine checks hold. T1/T2 follow if there's time, as already approved. This replaces "runcommit
+       on Boris's click" above.
+    2. **The scope line is defined** (BUILD_PLAN.md Part B, verbatim) and is the ninth pre-merge check.
+    3. **The verifier may read public GitHub** without logging in, never through gh or a token, logging each
+       read (agent file and the plan block, verbatim).
+    4. **The window finding:**
+       a. The GW13-19 S7 and bb_timing re-plan runs on Sunday night's nightly, committed Monday, not before.
+          Report Calafiori's P(start) on that data.
+       b. **W6** (the name is the session's proposal): a gameweek enters a player's last-four window only once
+          his team's fixture in it is finished. Queued after W5. Prereg first; Boris names it; the earliest
+          landing is the first free night after the GW13 deadline.
+    - **runcommit in progress:** branch `runcommit-v2` (worktree `scratchpad/rc2`). `7f44c65` cherry-picked
+      onto master cleanly; answers 1-4 built and committed locally; 24 tests green. Next: rebase onto this docs
+      commit, full suite, mutants, recording path, report, re-check, `dry/runcommit`, the nine checks, merge.
+    - **T1/T2:** branch `w3tie-v2` (worktree `scratchpad/w3tie2`), `82977fe` cherry-picked onto master; the test
+      file is byte-identical (blob `4ac7c0a`).
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.

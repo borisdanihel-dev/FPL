@@ -4696,3 +4696,29 @@ No verifier: Boris's answer, received 18:36 UTC. Committed after the W3fix merge
 3. Information: the night after a deadline counts the unplayed gameweek in the last-four window.
 
 The dry branches `dry/W3fix` and `data-dryrun-W3fix` are deleted after this entry.
+
+## 2026-11-28 — Boris's rulings of Sat 28 Nov 10:25 UTC recorded: the scope line defined as the ninth pre-merge check, the verifier's public GitHub reads, W6 queued (docs only)
+
+- **Recorded verbatim:**
+  - `prereg/runcommit.md`: point 1, runcommit approved in advance, landing tonight 19:30–21:00 UTC, first;
+  - `prereg/W3fix.md`: points 2-4 answer the three questions parked at 03:54 UTC;
+  - `prereg/bundle.md`: point 4 a, the GW13-19 S7 and bb_timing re-plan runs on Sunday night's data, committed
+    Monday, not before;
+  - the new `prereg/W6.md`: point 4 b. The name W6 is the session's proposal, the next free W id after W5.
+- **BUILD_PLAN.md Part B:** point 2's meaning of "never covers changes to the decision rules, chips or
+  transfers", verbatim, under the advance-approval rule. The nine pre-merge checks are listed below it (the
+  session's list; the rulings govern).
+- **The verifier's agent file and BUILD_PLAN.md's "Verifier agent" block:** point 3's sentence, verbatim. The
+  verifier may read public GitHub pages and the public API without logging in, never through gh or a token, and
+  logs each read with its URL and time. The agent loads at session start; every launch already says the file on
+  disk governs.
+
+**Measured:**
+- Suite by discovery: 890 OK (skipped 8) before and after.
+- `test_fpl.VerifierAgent` ties the agent file to the plan block byte for byte. On a copy of HEAD with only
+  BUILD_PLAN.md changed it is red ("the verifier block in BUILD_PLAN.md and the agent file differ"); with both
+  changed, green.
+- Each ruling block in the four preregs equals Boris's text exactly. Point 2 in BUILD_PLAN.md and point 3's
+  sentence in both files equal it after collapsing whitespace.
+- No runner or test file changed: the diff is BUILD_PLAN.md, the agent file, four preregs, this file and the
+  state file. It is not a runner change, so it does not count against tonight's runcommit landing.
