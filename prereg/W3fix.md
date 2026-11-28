@@ -634,3 +634,25 @@ Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
    recorded with the last-four window GW9-12, GW12 not yet played (all zeros). The gate holds 289 players where
    GW8-11 would give 304, and levels read about a fifth lower (GW14 bottomup 43.7, was 55.1). The same drop shows
    on 7 Nov under the old code, and the old code records tonight's rows exactly.
+
+## Rulings, Sat 28 Nov 10:25 UTC (Boris's message verbatim; for this item: points 2, 3 and 4 answer the three questions parked at 03:54 UTC; point 1, T1/T2 follow runcommit tonight if there's time)
+
+Rulings (Sat 28 Nov, 10:25 UTC). Record verbatim.
+
+1. Boris approves runcommit in advance under the 16:25 UTC rule. It lands tonight, 19:30–21:00 UTC, first. T1/T2 follow if there's time, as already approved.
+
+2. W3fix decision 1: yes, your reading is right. Add to BUILD_PLAN.md Part B under point 1, and as a ninth pre-merge check:
+"'Never covers changes to the decision rules, chips or transfers' means:
+(a) no chip is played and no transfer is made by anyone but Boris, in the FPL app;
+(b) advance approval cannot introduce or change a decision rule (Part C, the frozen chip rule, the three-layer rule) that hasn't already been ruled.
+An item that implements a change already ruled and recorded verbatim in its prereg may be approved in advance even if it touches chip, captain or transfer code, but only when Boris names that item explicitly."
+
+3. W3fix decision 2: yes. The verifier may read public GitHub pages and the public API (run list, run metadata, commits) without logging in. Never through gh or any token. Log each read in its report with the URL and time. Add this to the agent file.
+
+4. W3fix point 3 (the window counts an unplayed gameweek as zero minutes):
+a. The weekend S7 and bb_timing re-plan for GW13–19 runs on the first nightly after GW12's last match (Sun 29, 16:30 UTC), so Sunday night's data, committed Monday. Not before. The freeze allows tools, so Monday is fine. Report Calafiori's P(start) on that data.
+b. Queue a small item after W5: a gameweek enters a player's last-four window only once his team's fixture in it is finished.
+   Pre-registered replay test: nights with no unfinished gameweek in the window stay byte-identical; only nights between a deadline and that gameweek's last match change.
+   Prereg first. It changes forecast inputs, so it isn't advance-approved: Boris names it when the prereg is ready. Earliest landing is the first free night after the GW13 deadline.
+
+Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.

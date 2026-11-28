@@ -242,3 +242,25 @@ Rulings (Fri 27 Nov, 15:30 UTC):
 1. Changelog wording "starts with GW13": accepted — correct.
 2. Decimal-tie test (0.1+0.2 v 0.3, decided by the id list): yes. Test-only, in the offline checkpoint tool. It must turn both surviving mutants (xi_key result ignored; Fraction(float(v))) red and pass on real code. Not in tonight's W3fix landing. Land it on any non-freeze day before the GW15 freeze; Sun 29 is fine.
 3. GW12 is locked from the refresh: roll, no chip, captain Muharemović, vice De Cuyper, XI and bench as in gw12_post_refresh.md. Nothing more needed for GW12.
+
+## Rulings, Sat 28 Nov 10:25 UTC (Boris's message verbatim; for this item: point 4 a, the GW13–19 S7 and bb_timing re-plan runs on Sunday night's data, committed Monday, not before; report Calafiori's P(start) on that data)
+
+Rulings (Sat 28 Nov, 10:25 UTC). Record verbatim.
+
+1. Boris approves runcommit in advance under the 16:25 UTC rule. It lands tonight, 19:30–21:00 UTC, first. T1/T2 follow if there's time, as already approved.
+
+2. W3fix decision 1: yes, your reading is right. Add to BUILD_PLAN.md Part B under point 1, and as a ninth pre-merge check:
+"'Never covers changes to the decision rules, chips or transfers' means:
+(a) no chip is played and no transfer is made by anyone but Boris, in the FPL app;
+(b) advance approval cannot introduce or change a decision rule (Part C, the frozen chip rule, the three-layer rule) that hasn't already been ruled.
+An item that implements a change already ruled and recorded verbatim in its prereg may be approved in advance even if it touches chip, captain or transfer code, but only when Boris names that item explicitly."
+
+3. W3fix decision 2: yes. The verifier may read public GitHub pages and the public API (run list, run metadata, commits) without logging in. Never through gh or any token. Log each read in its report with the URL and time. Add this to the agent file.
+
+4. W3fix point 3 (the window counts an unplayed gameweek as zero minutes):
+a. The weekend S7 and bb_timing re-plan for GW13–19 runs on the first nightly after GW12's last match (Sun 29, 16:30 UTC), so Sunday night's data, committed Monday. Not before. The freeze allows tools, so Monday is fine. Report Calafiori's P(start) on that data.
+b. Queue a small item after W5: a gameweek enters a player's last-four window only once his team's fixture in it is finished.
+   Pre-registered replay test: nights with no unfinished gameweek in the window stay byte-identical; only nights between a deadline and that gameweek's last match change.
+   Prereg first. It changes forecast inputs, so it isn't advance-approved: Boris names it when the prereg is ready. Earliest landing is the first free night after the GW13 deadline.
+
+Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
