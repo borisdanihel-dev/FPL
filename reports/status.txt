@@ -1,5 +1,5 @@
-STATUS WARN | generated 2026-11-27T14:00:47Z | next deadline GW12 2026-11-27 18:30 UTC / 2026-11-27 19:30 Prague | checks 29/30 | repo 20 MB
- 1 OK   core endpoints: 3 core calls, all HTTP 200
+STATUS WARN | generated 2026-11-28T03:31:57Z | next deadline GW13 2026-12-01 18:30 UTC / 2026-12-01 19:30 Prague | checks 29/30 | repo 21 MB
+ 1 OK   core endpoints: 4 core calls, all HTTP 200
  2 OK   element-summary failures: no element-summary calls tonight (the nightly sync makes none)
  3 OK   player count: 674 players (674 last night)
  4 OK   teams: 20 teams
@@ -10,23 +10,23 @@ STATUS WARN | generated 2026-11-27T14:00:47Z | next deadline GW12 2026-11-27 18:
  9 OK   element key set: 109 keys, unchanged
 10 OK   distinct prices: 46 distinct prices
 11 OK   price step: 674 players against their previous snapshot, every step within 0.1 a night
-12 OK   price changes: 10 price changes
-13 OK   chance of playing 0: 180 of 674 (27%) at chance 0
+12 OK   price changes: 28 price changes
+13 OK   chance of playing 0: 176 of 674 (26%) at chance 0
 14 OK   position changes: no position changes
 15 OK   SQLite integrity: ok
-16 OK   price-history rows: 52045 -> 52045 rows (+0)
+16 OK   price-history rows: 52045 -> 52719 rows (+674)
 17 WARN price-date gaps: 1 day(s) without a snapshot: 2026-11-05
-18 OK   projection-log growth: new rows bottomup +278, bottomup_lambda +278, fpl_ep +674, minutes +278, own +301, xg +278, xp_v2 +301
+18 OK   projection-log growth: new rows bottomup +266, bottomup_lambda +266, fpl_ep +674, minutes +266, own +289, xg +266, xp_v2 +289
 19 OK   projection-log duplicate keys: 0 duplicate keys
-20 OK   forecast rows after the deadline: 0 of 90957 rows at or after their deadline
+20 OK   forecast rows after the deadline: 0 of 93273 rows at or after their deadline
 21 OK   stuck gameweek: none
-22 OK   manager score reconciliation: 77 entry-gameweeks in GW1-GW11, every one equal
+22 OK   manager score reconciliation: 77 entry-gameweeks in GW1-GW11, every one equal; GW12 not locked down: silent mid-gameweek (ruling S3, point 6)
 23 OK   secret in the files to commit: 7 file(s) to commit, none holds a key pattern or the key value
-24 OK   repo size: 20 MB
-25 OK   run duration: 2.1 min
-26 OK   heartbeat: the last status.txt is 10.2 h old
+24 OK   repo size: 21 MB
+25 OK   run duration: 2.3 min
+26 OK   heartbeat: the last status.txt is 13.5 h old
 27 SKIP workflow state: manual: the Actions tab, Boris's weekly glance (a disabled workflow runs no check, and the token has no actions scope)
-28 OK   test gate: 855 tests green
-29 OK   record: own 301, xg 278, minutes 278, bottomup 278, fpl_ep 674, bottomup_lambda 278 (snapshot odds_2026-11-27T1400Z.json.gz, 278 of 278 players with odds-priced fixtures), xp_v2 301 (snapshot odds_2026-11-27T1400Z.json.gz, 10 of 10 fixtures from odds; prior 2025/26 (S11 file), 483 players keyed by code)
-30 OK   odds snapshot: 20 events (20 with totals), 3430 prices, odds/odds_2026-11-27T1400Z.json.gz 12526 bytes; credits used 124, remaining 376, this request 4
-31 OK   report sections: CHIPS 33 lines, LEAGUE 58 lines, CAPTAIN 21 lines, BAN RISK 3 lines, REALISED 6 lines
+28 OK   test gate: 890 tests green
+29 OK   record: own 289, xg 266, minutes 266, bottomup 266, fpl_ep 674, bottomup_lambda 266 (snapshot odds_2026-11-28T0331Z.json.gz, 266 of 266 players with odds-priced fixtures), xp_v2 289 (snapshot odds_2026-11-28T0331Z.json.gz, 10 of 10 fixtures from odds; prior 2025/26 (S11 file), 483 players keyed by code)
+30 OK   odds snapshot: 19 events (19 with totals), 3195 prices, odds/odds_2026-11-28T0331Z.json.gz 11711 bytes; credits used 128, remaining 372, this request 4
+31 OK   report sections: CHIPS 35 lines, LEAGUE 51 lines, CAPTAIN 18 lines, BAN RISK 3 lines, REALISED 7 lines
