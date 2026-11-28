@@ -7,7 +7,7 @@ of `worklog/SESSION_STATE_B.md` on `origin/lane-b`. Updated at the end of
 every item, before the push. A fresh session reads `CLAUDE.md`,
 `BUILD_PLAN.md` and this file, then waits for the next instruction.
 
-- **NOW (Fri 27 Nov, ~04:00 UTC; latest update 19:39 UTC): the GW12 deadline pass** (deadline today
+- **NOW (Fri 27 Nov, ~04:00 UTC; latest update Sat 28 Nov 03:54 UTC): the GW12 deadline pass** (deadline today
   18:30 UTC; GW12 freeze: tools and worklog only). Boris's message and his
   captain-scope answer are verbatim in `prereg/bundle.md` (reading pinned
   before code), the schedule part in `prereg/W3fix.md` and `runcommit.md`
@@ -196,6 +196,29 @@ every item, before the push. A fresh session reads `CLAUDE.md`,
         `data-dryrun-W3fix`.
     - Sat 28: runcommit on Boris's click, then T1/T2 under the advance
       approval.
+  - **Update Sat 28 Nov 03:54 UTC: W3fix DONE.** The first live run was the
+    scheduled nightly on master `99af3cc` (docs only ahead of `7c1cb85`),
+    started 03:29 UTC, and committed data `e67fbb4` at 03:31:59 UTC:
+    29/30 (the standing 5 Nov gap), gate 890.
+    - Final verifier **PASS** (`worklog/verify_W3fix_final.md`; Fable 5.2,
+      high). The write guard was clean: only that file.
+    - The verifier ran read-only commands in `C:\GIT\FPL-data` (log, show,
+      status, grep), with no pull and no write, then worked on copies. It
+      made one unauthenticated GET of the public Actions run list.
+    - The "W3fix done" CHANGELOG entry is in; `dry/W3fix` and
+      `data-dryrun-W3fix` are deleted.
+    - **Parked for Boris** (`prereg/W3fix.md`, exact wording; none blocks):
+      1. The approval rule's scope line ("never covers changes to the
+         decision rules, chips or transfers") against the naming of W3fix.
+         My eight-point check did not test it. From now on the pre-merge
+         list checks it. T1/T2 are tests only.
+      2. Whether the verifier may read the public Actions API.
+      3. Information: the night after a deadline counts the unplayed
+         gameweek in the last-four window (gate 289 where 304; levels about
+         a fifth lower; the same under the old code).
+    - **Next, Sat 28:** runcommit on Boris's click (19:30-21:00 UTC), then
+      T1/T2 under the advance approval if time allows. Also the weekend
+      tools tasks: S7 and bb_timing for GW13-19, and the F-N prereg draft.
   - **Temp cleanup (~06:00 UTC):** it deleted tracked files in the scratch
     worktrees. `w3fix` and `rc` are restored with `git checkout -- .`;
     `fm` and `fj` are not yet.

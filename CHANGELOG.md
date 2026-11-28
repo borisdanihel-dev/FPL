@@ -4665,3 +4665,34 @@ Report `worklog/cc_2026-11-27_W3fix.md`.
 
 No verifier: Boris's answer, received 18:36 UTC. Committed after the W3fix merge (`7c1cb85`) and pushed before
 21:00 UTC with the post-merge worklog post.
+
+## 2026-11-28 — W3fix done: merged under the advance approval, first live run, final verifier PASS (`7c1cb85` merge, tag `pre-W3fix` = `05761f1`; run on `99af3cc`, data `e67fbb4`)
+
+- **The merge.** The session merged W3fix on Fri 27 Nov under Boris's advance approval (rulings of Fri 27 Nov
+  16:25 UTC, point 1; BUILD_PLAN.md Part B). The "W3fix ready" entry's heading says "on Boris's click"; this
+  replaces that.
+  - Pushed 19:38 UTC; GitHub's secret-scan run for the push was created 19:38:46 UTC.
+  - Each condition as checked is in the report's "Landing" section.
+- **The dry run.** `dry/W3fix` from `3fe7500` gave `data-dryrun-W3fix` `136a7a0`: 28/30 (WARNs 17 and 30), gate
+  890, 2,306 GW13 rows.
+- **The first live run.** The scheduled nightly ran on master `99af3cc`: three docs commits ahead of `7c1cb85`,
+  same runner. The 21:40 UTC cron started 5 h 49 min late, at 03:29 UTC Sat 28 Nov. It committed data `e67fbb4`
+  at 03:31:59 UTC, to `data` only.
+
+**Measured:**
+- STATUS WARN 29/30. The one WARN is the standing 5 Nov gap (check 17). Test gate 890 OK.
+- The CHIPS screen label reads `fpl_export_gw12.json (generated 2026-11-28 03:31 UTC)`, the export's own time
+  (answer 4). Thiago is the one of our 15 without a GW13 own row, and counts 0 in the gate (Ruling 3).
+- The recording path did not move. The final verifier replayed the night with the merged code: 93,273 rows, 0 of
+  466,365 cells differ outside `made_at`. The pre-W3fix code (`05761f1`) records the same rows. 0 rows at or
+  after their deadline; 0 duplicate keys.
+- The runner and tests at `7c1cb85` are byte for byte those of `f1c3704` (the narrow re-check's PASS) and of
+  `3fe7500` (the dry run).
+- Final verifier PASS (`worklog/verify_W3fix_final.md`; Fable 5.2, launched at high). Write guard clean.
+
+**Open for Boris** (parked in `prereg/W3fix.md`; none blocks):
+1. The approval rule's scope line (chips) against the naming of W3fix.
+2. Whether the verifier may read the public Actions API.
+3. Information: the night after a deadline counts the unplayed gameweek in the last-four window.
+
+The dry branches `dry/W3fix` and `data-dryrun-W3fix` are deleted after this entry.

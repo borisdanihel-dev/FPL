@@ -617,3 +617,20 @@ Report every dispatch in your next status message.
 4. Time-label correction noted; no further action.
 
 Standing rule holds: a WARN or FAIL stops that item only; park it and carry on.
+
+## Questions parked for Boris (exact wording), Sat 28 Nov 03:54 UTC; from the final verifier (PASS), none blocks
+
+1. **The approval rule's scope line.** "Your 16:25 rule says 'Advance approval never covers changes to the
+   decision rules, chips or transfers', and names W3fix in the same message. W3fix changes the Free Hit screen's
+   metric and the chip calculator's own-week rule (your rulings of 16 and 19 Nov). My eight-point check before
+   the merge did not test that line; the merge relied on your naming W3fix. Confirm that reading (yes), or say
+   how the line applies to items that touch the chip code (no)?"
+   - Session: from now on the pre-merge list under an advance approval also checks the scope line. T1/T2 touch
+     only `tests/test_FJ.py` (the offline checkpoint tool's tests), no chip, transfer or decision code.
+2. **Network reads by the verifier.** "The final verifier made one unauthenticated GET of the public GitHub
+   Actions run list to find the run's commit and the push time; its agent file is silent on this. Allow such
+   reads in the agent file (yes), or keep the verifier to git and files (no)?"
+3. **Information, not W3fix: the night after a deadline** (the verifier's point 4). Tonight's GW13 rows were
+   recorded with the last-four window GW9-12, GW12 not yet played (all zeros). The gate holds 289 players where
+   GW8-11 would give 304, and levels read about a fifth lower (GW14 bottomup 43.7, was 55.1). The same drop shows
+   on 7 Nov under the old code, and the old code records tonight's rows exactly.
